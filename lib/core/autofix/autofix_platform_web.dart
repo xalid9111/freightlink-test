@@ -9,6 +9,9 @@ external void _reload();
 @JS('flAutoFix.hidden')
 external JSBoolean _hidden();
 
+@JS('flAutoFix.standalone')
+external JSBoolean _standalone();
+
 String userAgent() {
   try {
     return _ua().toDart;
@@ -26,6 +29,15 @@ void reloadPage() {
 bool pageHidden() {
   try {
     return _hidden().toDart;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Opened from the home screen (PWA) rather than in a browser tab.
+bool standalone() {
+  try {
+    return _standalone().toDart;
   } catch (_) {
     return false;
   }

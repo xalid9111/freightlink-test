@@ -29,6 +29,7 @@ import '../../features/ads/presentation/profile_catalog.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_edit_screen.dart';
 import '../../features/services/presentation/services_map_screen.dart';
+import '../autofix/autofix.dart';
 import '../autofix/route_error_screen.dart';
 import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
@@ -56,6 +57,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
+    // Dialogs / bottom sheets as AutoFix steps (lib/core/autofix).
+    observers: [AutoFixNavigatorObserver()],
     initialLocation: '/login',
     // Unknown route / broken link → reported to AutoFix + a way back.
     errorBuilder: (context, state) => RouteErrorScreen(location: state.uri.toString(), error: state.error),

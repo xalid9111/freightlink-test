@@ -162,6 +162,9 @@ String? screenFileForRoute(String route) {
 /// characters the server accepts ([0-9a-z_:.-], max 120).
 String fingerprintFor(String kind, String code, String message, {String? route, String? file, int? line}) {
   String clean(String s) => s
+      // Flutter object hashes ("RenderFoo#78ac7") differ per instance of
+      // the same problem; without this one bug becomes many groups.
+      .replaceAll(RegExp(r'#[0-9a-fA-F]{5}\b'), '')
       .toLowerCase()
       .replaceAll(RegExp(r'[0-9a-f]{8}-[0-9a-f-]{27,}'), '') // uuids
       .replaceAll(RegExp(r'\d+'), '') // numbers / ids / times
@@ -212,3 +215,99 @@ Duration backoffFor(int attempt) => switch (attempt) {
 /// while the app is visible means the UI thread was blocked.
 bool isFreeze(Duration expected, Duration actual, {Duration threshold = const Duration(seconds: 4)}) =>
     actual - expected >= threshold;
+
+// ---- diagnostics (kept small and free of personal data) -------------------
+
+/// Removes personal data from text that goes into a report: e-mail
+/// addresses, phone-like numbers, access tokens and URL query strings.
+/// Stack positions such as `main.dart.js:1234:56` are kept.
+String scrubPii(String s) => s
+    .replaceAll(RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'), '<email>')
+    .replaceAll(RegExp(r'\beyJ[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9_-]+){0,2}'), '<token>')
+    .replaceAll(RegExp(r'\b(?:sb_(?:publishable|secret)_)[A-Za-z0-9_-]+'), '<token>')
+    // Phones: "+994 50 123 45 67", "050 123 45 67", or 9+ digits in a row.
+    // Dates, times, error codes and stack positions stay readable.
+    .replaceAll(RegExp(r'\+\d[\d \-]{6,16}\d(?!\w)'), '<num>')
+    .replaceAll(RegExp(r'\b0\d{2}[ -]?\d{3}[ -]?\d{2}[ -]?\d{2}\b'), '<num>')
+    .replaceAll(RegExp(r'(?<![\w:.#/])\d{9,15}(?![\w:])'), '<num>')
+    .replaceAll(RegExp(r'\?[^\s#]*'), '');
+
+/// Route for a report: no query string, ids replaced by `:id`
+/// (`/user/1b2c…` → `/user/:id`).
+String maskRoute(String route) => route
+    .split('?')
+    .first
+    .replaceAll(RegExp(r'[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}'), ':id')
+    .replaceAll(RegExp(r'(?<=/)\d+(?=/|$)'), ':id');
+
+/// The last [max] steps before a problem (screens, taps, dialogs, errors).
+/// The same step repeated right away is kept once with a counter, so a
+/// burst of identical errors does not push the user's steps out.
+class Breadcrumbs {
+  final int max;
+  final List<String> _times = [];
+  final List<String> _steps = [];
+  final List<int> _repeats = [];
+  Breadcrumbs({this.max = 10});
+
+  void add(String time, String step) {
+    final s = scrubPii(step);
+    if (_steps.isNotEmpty && _steps.last == s) {
+      _repeats[_repeats.length - 1]++;
+      return;
+    }
+    _times.add(time);
+    _steps.add(s);
+    _repeats.add(1);
+    if (_steps.length > max) {
+      _times.removeAt(0);
+      _steps.removeAt(0);
+      _repeats.removeAt(0);
+    }
+  }
+
+  @override
+  String toString() => [
+        for (var i = 0; i < _steps.length; i++)
+          '${_times[i]} ${_steps[i]}${_repeats[i] > 1 ? ' ×${_repeats[i]}' : ''}',
+      ].join('\n');
+}
+
+/// Where on the screen a tap was, without anything that is on the screen:
+/// a 3×3 zone plus the position in percent (e.g. `tap ↘ 88%,94%`).
+String tapLabel(double x, double y, double width, double height, {bool swipe = false}) {
+  if (width <= 0 || height <= 0) return swipe ? 'swipe' : 'tap';
+  final px = (x / width * 100).clamp(0, 100).round();
+  final py = (y / height * 100).clamp(0, 100).round();
+  const zones = [
+    ['↖', '↑', '↗'],
+    ['←', '•', '→'],
+    ['↙', '↓', '↘'],
+  ];
+  final zone = zones[(py * 3 ~/ 101)][(px * 3 ~/ 101)];
+  return '${swipe ? 'swipe' : 'tap'} $zone $px%,$py%';
+}
+
+/// Device line for a report: screen in logical pixels, pixel ratio, PWA
+/// or browser tab, language, then the browser's user agent (max 300).
+String deviceSummary({
+  required double width,
+  required double height,
+  required double pixelRatio,
+  required bool standalone,
+  required String language,
+  required String userAgent,
+}) {
+  final head = '${width.round()}×${height.round()} @${pixelRatio.toStringAsFixed(1)} · '
+      '${standalone ? 'pwa' : 'browser'} · $language | ';
+  final out = '$head$userAgent';
+  return out.length > 300 ? out.substring(0, 300) : out;
+}
+
+/// Stack for a report: what Flutter was doing (e.g. "during
+/// performLayout()") first, then the trace, max 4000 characters.
+String stackForReport(String stack, {String? context}) {
+  final head = (context == null || context.isEmpty) ? '' : 'context: $context\n';
+  final out = scrubPii('$head$stack');
+  return out.length > 4000 ? out.substring(0, 4000) : out;
+}

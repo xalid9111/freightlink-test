@@ -96,6 +96,16 @@ void main() {
       expect(a, b);
     });
 
+    test('same Flutter error on different objects → same fingerprint', () {
+      // Live case: "RenderBox was not laid out: minified:a8G#78ac7" and
+      // "…#4cf48" were two groups for one bug.
+      final a = fingerprintFor('runtime', 'minified:hF', 'Bad state: RenderBox was not laid out: minified:a8G#78ac7',
+          route: '/profile');
+      final b = fingerprintFor('runtime', 'minified:hF', 'Bad state: RenderBox was not laid out: minified:a8G#4cf48',
+          route: '/profile');
+      expect(a, b);
+    });
+
     test('only server-accepted characters, max 120', () {
       final fp = fingerprintFor('runtime', 'Ünïcode Error!!', 'x' * 500, route: '/user/ab');
       expect(RegExp(r'^[0-9a-z_:.-]{4,120}$').hasMatch(fp), isTrue);
@@ -124,5 +134,80 @@ void main() {
   test('freeze threshold', () {
     expect(isFreeze(const Duration(seconds: 2), const Duration(seconds: 3)), isFalse);
     expect(isFreeze(const Duration(seconds: 2), const Duration(seconds: 7)), isTrue);
+  });
+
+  group('diagnostics: no personal data', () {
+    test('e-mail, phones, tokens and query strings are removed', () {
+      final out = scrubPii('user a.b@mail.az phone +994 50 123 45 67 / 050 123 45 67 / 0501234567 '
+          'key eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig sb_publishable_AbC123 url /cargo?q=Ali');
+      expect(out, isNot(contains('a.b@mail.az')));
+      expect(out, isNot(contains('123 45 67')));
+      expect(out, isNot(contains('0501234567')));
+      expect(out, isNot(contains('eyJhbGci')));
+      expect(out, isNot(contains('AbC123')));
+      expect(out, isNot(contains('q=Ali')));
+    });
+
+    test('stack positions, dates, times and error codes stay readable', () {
+      const s = 'at A.mx.bj (main.dart.js:97069:13) 2026-10-13 13:29:05 code 42501 RenderFoo#78ac7';
+      expect(scrubPii(s), s);
+    });
+
+    test('ids in routes are masked, query dropped', () {
+      expect(maskRoute('/user/1b2c3d4e-1111-2222-3333-444455556666?tab=x'), '/user/:id');
+      expect(maskRoute('/messages/with/1b2c3d4e-1111-2222-3333-444455556666'), '/messages/with/:id');
+      expect(maskRoute('/cargo/42'), '/cargo/:id');
+      expect(maskRoute('/profile'), '/profile');
+    });
+  });
+
+  group('diagnostics: breadcrumbs', () {
+    test('keeps only the last 10 steps', () {
+      final b = Breadcrumbs(max: 10);
+      for (var i = 0; i < 15; i++) {
+        b.add('12:00:0${i % 10}', 'step $i');
+      }
+      final lines = b.toString().split('\n');
+      expect(lines.length, 10);
+      expect(lines.first, endsWith('step 5'));
+      expect(lines.last, endsWith('step 14'));
+    });
+
+    test('a step repeated right away is kept once with a counter', () {
+      final b = Breadcrumbs(max: 10)
+        ..add('12:00:00', '→ /profile')
+        ..add('12:00:01', '✖ runtime minified:hF')
+        ..add('12:00:01', '✖ runtime minified:hF')
+        ..add('12:00:02', '✖ runtime minified:hF');
+      expect(b.toString(), '12:00:00 → /profile\n12:00:01 ✖ runtime minified:hF ×3');
+    });
+
+    test('personal data in a step is removed', () {
+      final b = Breadcrumbs()..add('12:00:00', 'error for a@b.az');
+      expect(b.toString(), isNot(contains('a@b.az')));
+    });
+  });
+
+  group('diagnostics: device and screen', () {
+    test('tap position is a zone and percent, nothing from the screen', () {
+      expect(tapLabel(360, 30, 390, 844), 'tap ↗ 92%,4%');
+      expect(tapLabel(195, 800, 390, 844), 'tap ↓ 50%,95%');
+      expect(tapLabel(10, 422, 390, 844, swipe: true), 'swipe ← 3%,50%');
+      expect(tapLabel(5, 5, 0, 0), 'tap');
+    });
+
+    test('device line: screen, ratio, pwa, language, then user agent (max 300)', () {
+      final d = deviceSummary(
+          width: 390, height: 844, pixelRatio: 3, standalone: true, language: 'az', userAgent: 'UA ' * 200);
+      expect(d, startsWith('390×844 @3.0 · pwa · az | UA'));
+      expect(d.length, lessThanOrEqualTo(300));
+    });
+
+    test('stack starts with what Flutter was doing, max 4000', () {
+      final s = stackForReport('x' * 5000, context: 'during performLayout() · rendering library');
+      expect(s, startsWith('context: during performLayout() · rendering library\n'));
+      expect(s.length, 4000);
+      expect(stackForReport('trace'), 'trace');
+    });
   });
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,7 +41,8 @@ class AutoFix {
   ProviderContainer? _container;
   GoRouter? _router;
   String _route = '';
-  final List<String> _crumbs = [];
+  final Breadcrumbs _crumbs = Breadcrumbs(max: 10);
+  final Map<int, Offset> _pointerDown = {};
   final Map<String, Map<String, dynamic>> _queue = {};
   final RetryLimiter _retry = RetryLimiter(max: 2, window: const Duration(minutes: 2));
   final RetryLimiter _reconnect = RetryLimiter(max: 3, window: const Duration(minutes: 5));
@@ -66,7 +68,7 @@ class AutoFix {
     final prevFlutter = FlutterError.onError;
     FlutterError.onError = (details) {
       prevFlutter?.call(details); // keep the normal console output
-      capture(details.exception, details.stack, source: 'flutter');
+      capture(details.exception, details.stack, source: 'flutter', context: _describe(details));
     };
     final prevPlatform = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (error, stack) {
@@ -75,6 +77,9 @@ class AutoFix {
       if (kDebugMode) debugPrint('Uncaught: $error\n$stack');
       return true;
     };
+    // Taps / swipes as steps before a problem: only where on the screen,
+    // never what was tapped or typed.
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_onPointer);
     _life = AppLifecycleListener(onShow: _onShow, onResume: _onShow, onHide: _onHide, onPause: _onHide);
     _watchdog = Timer.periodic(const Duration(seconds: 2), (_) => _beat());
     _flushTimer = Timer.periodic(const Duration(seconds: 30), (_) => flush());
@@ -92,18 +97,65 @@ class AutoFix {
     r.routerDelegate.addListener(() {
       try {
         final loc = r.routerDelegate.currentConfiguration.uri.toString();
-        if (loc != _route) {
-          _route = loc;
-          breadcrumb('→ $loc');
+        final masked = maskRoute(loc);
+        if (masked != _route) {
+          _route = masked;
+          breadcrumb('→ $masked');
         }
       } catch (_) {}
     });
   }
 
-  /// Last 15 steps the user took (routes, actions) — shown with a report.
+  /// Last 10 steps the user took (screens, taps, dialogs, errors) — sent
+  /// with a report. Personal data is removed (see [scrubPii]).
   void breadcrumb(String s) {
-    _crumbs.add('${DateTime.now().toIso8601String().substring(11, 19)} $s');
-    if (_crumbs.length > 15) _crumbs.removeAt(0);
+    _crumbs.add(DateTime.now().toIso8601String().substring(11, 19), s);
+  }
+
+  void _onPointer(PointerEvent e) {
+    try {
+      if (e is PointerDownEvent) {
+        if (_pointerDown.length > 10) _pointerDown.clear();
+        _pointerDown[e.pointer] = e.position;
+      } else if (e is PointerUpEvent || e is PointerCancelEvent) {
+        final start = _pointerDown.remove(e.pointer);
+        if (start == null || e is PointerCancelEvent) return;
+        final view = PlatformDispatcher.instance.implicitView;
+        final size = view == null ? Size.zero : view.physicalSize / view.devicePixelRatio;
+        final swipe = (e.position - start).distance > 18;
+        breadcrumb(tapLabel(start.dx, start.dy, size.width, size.height, swipe: swipe));
+      }
+    } catch (_) {}
+  }
+
+  /// What Flutter was doing when the error happened, e.g.
+  /// "during performLayout() · rendering library".
+  static String? _describe(FlutterErrorDetails d) {
+    try {
+      final what = d.context?.toDescription() ?? '';
+      final lib = d.library ?? '';
+      final out = [what, lib].where((s) => s.isNotEmpty).join(' · ');
+      return out.isEmpty ? null : out;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _device() {
+    try {
+      final view = PlatformDispatcher.instance.implicitView;
+      final size = view == null ? Size.zero : view.physicalSize / view.devicePixelRatio;
+      return deviceSummary(
+        width: size.width,
+        height: size.height,
+        pixelRatio: view?.devicePixelRatio ?? 0,
+        standalone: platform.standalone(),
+        language: PlatformDispatcher.instance.locale.languageCode,
+        userAgent: platform.userAgent(),
+      );
+    } catch (_) {
+      return platform.userAgent();
+    }
   }
 
   /// Unknown route / broken link.
@@ -119,11 +171,12 @@ class AutoFix {
     bool messaging = false,
     String? forceKind,
     ProviderBase<Object?>? provider,
+    String? context,
   }) {
     if (_inCapture) return; // never loop on our own errors
     _inCapture = true;
     try {
-      final text = error.toString();
+      final text = scrubPii(error.toString());
       final classified = classifyError(error.runtimeType.toString(), text, messaging: messaging);
       final kind = forceKind ?? classified.kind;
       final stackText = stack?.toString() ?? '';
@@ -148,11 +201,11 @@ class AutoFix {
           'message': classified.message,
           'file': file,
           'line': loc?.line,
-          'stack': stackText.length > 4000 ? stackText.substring(0, 4000) : stackText,
+          'stack': stackForReport(stackText, context: context),
           'route': _route,
-          'breadcrumbs': _crumbs.join('\n'),
+          'breadcrumbs': _crumbs.toString(),
           'app_version': _appVersion,
-          'user_agent': platform.userAgent(),
+          'user_agent': _device(),
           'count': 1,
           'auto_fixed': fixed ? 1 : 0,
         };
@@ -268,6 +321,7 @@ class AutoFix {
   // ---- lifecycle ----------------------------------------------------------
 
   void _onShow() {
+    if (!_visible) breadcrumb('▶ app opened again');
     _visible = true;
     _shownAt = DateTime.now();
     _lastBeat = _shownAt;
@@ -275,6 +329,7 @@ class AutoFix {
   }
 
   void _onHide() {
+    if (_visible) breadcrumb('⏸ app in background');
     _visible = false;
     unawaited(flush());
     // Admin asked for a reload: do it while nobody is looking at the app.
@@ -341,6 +396,9 @@ class AutoFix {
 
   @visibleForTesting
   void dispose() {
+    try {
+      GestureBinding.instance.pointerRouter.removeGlobalRoute(_onPointer);
+    } catch (_) {}
     _flushTimer?.cancel();
     _watchdog?.cancel();
     _poller?.cancel();
@@ -355,5 +413,18 @@ class AutoFixObserver extends ProviderObserver {
     final a = AutoFix.instance;
     a.attachContainer(container);
     a.capture(error, stackTrace, source: 'provider', provider: provider, messaging: a.isChatProvider(provider));
+  }
+}
+
+/// Dialogs and bottom sheets as steps (screens come from the router).
+class AutoFixNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PopupRoute) AutoFix.instance.breadcrumb('↗ dialog opened');
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PopupRoute) AutoFix.instance.breadcrumb('↙ dialog closed');
   }
 }
