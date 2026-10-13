@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/city_picker.dart';
+import '../../../core/widgets/reorder_tile_grid.dart';
 import '../../../models/service_models.dart';
 import '../../../services/geo_service.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -34,6 +36,21 @@ class _NewPhoto {
   final Uint8List bytes;
   final String ext;
   _NewPhoto(this.bytes, this.ext);
+}
+
+/// One photo in the form, in display order: an uploaded one ([url]) or a
+/// new one waiting for "Yadda saxla" ([fresh]). [id] is stable for drag &
+/// drop.
+class _PhotoEntry {
+  final String id;
+  final String? url;
+  final _NewPhoto? fresh;
+  _PhotoEntry.uploaded(String this.url)
+      : id = 'u:$url',
+        fresh = null;
+  _PhotoEntry.added(_NewPhoto this.fresh, int n)
+      : id = 'n:$n',
+        url = null;
 }
 
 class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
@@ -63,8 +80,9 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
   bool _mobile = false;
   bool _is24h = false;
   bool _active = true;
-  List<String> _photos = [];
-  final List<_NewPhoto> _newPhotos = [];
+  /// All photos in the order the owner arranged them (first = main photo).
+  List<_PhotoEntry> _photos = [];
+  int _newCount = 0;
   final List<String> _removedPhotos = [];
 
   @override
@@ -101,7 +119,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         _mobile = p.isMobile;
         _is24h = p.is24h;
         _active = p.isActive;
-        _photos = List.of(p.photos);
+        _photos = [for (final u in p.photos) _PhotoEntry.uploaded(u)];
       } else {
         _kind = widget.initialKind == 'center' ? 'center' : 'individual';
         _mobile = _kind == 'individual';
@@ -165,7 +183,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
   }
 
   Future<void> _addPhoto() async {
-    if (_photos.length + _newPhotos.length >= _maxPhotos) return;
+    if (_photos.length >= _maxPhotos) return;
     final f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, maxHeight: 1600, imageQuality: 80);
     if (f == null) return;
     final bytes = await f.readAsBytes();
@@ -175,7 +193,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
     }
     final name = f.name.toLowerCase();
     final ext = name.endsWith('.png') ? 'png' : (name.endsWith('.webp') ? 'webp' : 'jpg');
-    setState(() => _newPhotos.add(_NewPhoto(bytes, ext)));
+    setState(() => _photos.add(_PhotoEntry.added(_NewPhoto(bytes, ext), _newCount++)));
   }
 
   Future<void> _save() async {
@@ -220,7 +238,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         status: _existing?.status ?? 'pending',
         isVerified: _existing?.isVerified ?? false,
         addedByAdmin: _existing?.addedByAdmin ?? false,
-        photos: _photos,
+        photos: [for (final e in _photos) if (e.url != null) e.url!],
         ratingAvg: 0,
         ratingCount: 0,
       );
@@ -232,11 +250,13 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         saved = await repo.update(_existing!.id, patch);
       }
       // Photos need the profile id (folder) — upload after the row exists.
-      final urls = List<String>.of(_photos);
-      for (final ph in _newPhotos) {
-        urls.add(await repo.uploadPhoto(saved.id, ph.bytes, ph.ext));
+      // New photos are uploaded in place, so the saved order is exactly the
+      // order on screen (drag & drop included).
+      final urls = <String>[];
+      for (final e in _photos) {
+        urls.add(e.url ?? await repo.uploadPhoto(saved.id, e.fresh!.bytes, e.fresh!.ext));
       }
-      if (_newPhotos.isNotEmpty || _removedPhotos.isNotEmpty || _existing == null) {
+      if (_existing == null || _removedPhotos.isNotEmpty || !listEquals(urls, _existing!.photos)) {
         saved = await repo.update(saved.id, {'photos': urls});
       }
       for (final u in _removedPhotos) {
@@ -493,37 +513,44 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                       value: _active,
                       onChanged: (v) => setState(() => _active = v),
                     ),
-                    _Label('${s.t('svc_photos')} (${_photos.length + _newPhotos.length}/$_maxPhotos)'),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final u in _photos)
-                          _Thumb(
-                            image: Image.network(u, fit: BoxFit.cover),
-                            onRemove: () => setState(() {
-                              _photos.remove(u);
-                              _removedPhotos.add(u);
-                            }),
-                          ),
-                        for (final p in _newPhotos)
-                          _Thumb(image: Image.memory(p.bytes, fit: BoxFit.cover), onRemove: () => setState(() => _newPhotos.remove(p))),
-                        if (_photos.length + _newPhotos.length < _maxPhotos)
-                          InkWell(
-                            onTap: _addPhoto,
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              width: 84,
-                              height: 84,
-                              decoration: BoxDecoration(
-                                color: AppColors.card,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.line),
+                    _Label('${s.t('svc_photos')} (${_photos.length}/$_maxPhotos)'),
+                    if (_photos.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(s.t('svc_photos_reorder_hint'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                      ),
+                    ReorderTileGrid(
+                      ids: [for (final e in _photos) e.id],
+                      onReorder: (ids) => setState(() {
+                        final byId = {for (final e in _photos) e.id: e};
+                        _photos = [for (final id in ids) byId[id]!];
+                      }),
+                      tileBuilder: (id) {
+                        final e = _photos.firstWhere((x) => x.id == id);
+                        return _Thumb(
+                          image: e.url != null ? Image.network(e.url!, fit: BoxFit.cover) : Image.memory(e.fresh!.bytes, fit: BoxFit.cover),
+                          onRemove: () => setState(() {
+                            _photos.remove(e);
+                            if (e.url != null) _removedPhotos.add(e.url!);
+                          }),
+                        );
+                      },
+                      trailing: _photos.length < _maxPhotos
+                          ? InkWell(
+                              onTap: _addPhoto,
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                width: 84,
+                                height: 84,
+                                decoration: BoxDecoration(
+                                  color: AppColors.card,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.line),
+                                ),
+                                child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textSoft),
                               ),
-                              child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textSoft),
-                            ),
-                          ),
-                      ],
+                            )
+                          : null,
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),

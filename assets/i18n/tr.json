@@ -775,6 +775,7 @@
   "svc_open_profile": "Profile git",
   "svc_phone": "Telefon",
   "svc_photos": "Fotoğraflar",
+  "svc_photos_reorder_hint": "Sırayı değiştirmek için fotoğrafa basılı tutup sürükleyin. İlk fotoğraf ana fotoğraftır.",
   "svc_pick_category": "En az bir hizmet türü seçin.",
   "svc_pick_location": "Haritada konumunuzu işaretleyin.",
   "svc_place_not_found": "Böyle bir yer bulunamadı.",

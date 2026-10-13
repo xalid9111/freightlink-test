@@ -36,9 +36,20 @@ class GridGeometry {
   final double width;
   final int columns;
   final double gap;
-  const GridGeometry({required this.width, this.columns = 3, this.gap = 8});
 
-  double get tile => math.max(0, (width - gap * (columns - 1)) / columns);
+  /// Fixed tile size (e.g. 84 px thumbnails); null = tiles fill the width.
+  final double? tileSize;
+  const GridGeometry({required this.width, this.columns = 3, this.gap = 8, this.tileSize});
+
+  /// As many fixed-size tiles per row as fit into [width] (at least 1).
+  factory GridGeometry.fixed({required double width, required double tileSize, double gap = 8}) => GridGeometry(
+        width: width,
+        tileSize: tileSize,
+        gap: gap,
+        columns: math.max(1, ((width + gap) / (tileSize + gap)).floor()),
+      );
+
+  double get tile => tileSize ?? math.max(0, (width - gap * (columns - 1)) / columns);
 
   /// Top-left corner of slot [i] (row by row).
   Offset slotOffset(int i) => Offset((i % columns) * (tile + gap), (i ~/ columns) * (tile + gap));

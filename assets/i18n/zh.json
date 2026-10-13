@@ -775,6 +775,7 @@
   "svc_open_profile": "查看主页",
   "svc_phone": "电话",
   "svc_photos": "照片",
+  "svc_photos_reorder_hint": "长按照片并拖动即可调整顺序。第一张照片为主图。",
   "svc_pick_category": "请至少选择一种服务类型。",
   "svc_pick_location": "请在地图上标记您的位置。",
   "svc_place_not_found": "未找到地点。",
