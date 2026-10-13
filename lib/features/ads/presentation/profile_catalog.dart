@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../repositories/profile_page_repository.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import 'catalog_reorder_grid.dart';
 
 /// Pick a photo, write a short caption, upload it to my catalog.
 Future<void> addCatalogPhoto(BuildContext context, WidgetRef ref, AppStrings s) async {
@@ -107,41 +109,14 @@ class CatalogGrid extends ConsumerWidget {
     final items = ref.watch(profileCatalogProvider(userId)).valueOrNull ?? const <CatalogItem>[];
     final shown = limit == null ? items : items.take(isMe ? limit! - 1 : limit!).toList();
     final tiles = <Widget>[
-      if (isMe)
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => addCatalogPhoto(context, ref, s),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.cardAlt,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
-                const SizedBox(height: 6),
-                Text(s.t('catalog_add'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
-              ],
-            ),
-          ),
-        ),
+      if (isMe) _AddPhotoTile(s: s),
       for (var i = 0; i < shown.length; i++)
         InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => CatalogViewer(userId: userId, initialIndex: items.indexOf(shown[i])),
           )),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              shown[i].imageUrl,
-              fit: BoxFit.cover,
-              cacheWidth: 360, // grid thumbnail, not the 1600 px original
-              errorBuilder: (_, __, ___) => Container(color: AppColors.cardAlt, child: const Icon(Icons.broken_image_outlined)),
-            ),
-          ),
+          child: _Thumb(item: shown[i]),
         ),
     ];
     if (tiles.isEmpty) return const SizedBox.shrink();
@@ -156,18 +131,113 @@ class CatalogGrid extends ConsumerWidget {
   }
 }
 
-/// All catalog photos of a user.
-class CatalogScreen extends ConsumerWidget {
+/// The "add photo" tile (owner only).
+class _AddPhotoTile extends ConsumerWidget {
+  final AppStrings s;
+  const _AddPhotoTile({required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => addCatalogPhoto(context, ref, s),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardAlt,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
+            const SizedBox(height: 6),
+            Text(s.t('catalog_add'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One square photo thumbnail.
+class _Thumb extends StatelessWidget {
+  final CatalogItem item;
+  const _Thumb({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Image.network(
+        item.imageUrl,
+        fit: BoxFit.cover,
+        cacheWidth: 360, // grid thumbnail, not the 1600 px original
+        errorBuilder: (_, __, ___) => Container(color: AppColors.cardAlt, child: const Icon(Icons.broken_image_outlined)),
+      ),
+    );
+  }
+}
+
+/// All catalog photos of a user. The owner can also change their order:
+/// press and hold a photo, drag it, then "Yadda saxla".
+class CatalogScreen extends ConsumerStatefulWidget {
   final String userId;
   const CatalogScreen({super.key, required this.userId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CatalogScreen> createState() => _CatalogScreenState();
+}
+
+class _CatalogScreenState extends ConsumerState<CatalogScreen> {
+  /// The order the owner arranged but has not saved yet (null = none).
+  List<String>? _pending;
+  bool _saving = false;
+
+  Future<void> _save(AppStrings s) async {
+    final ids = _pending;
+    if (ids == null || _saving) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
+    try {
+      await ref.read(profilePageRepositoryProvider).reorderCatalog(ids);
+      if (!mounted) return;
+      setState(() => _pending = null);
+      ref.invalidate(profileCatalogProvider(widget.userId));
+      messenger.showSnackBar(SnackBar(content: Text(s.t('catalog_order_saved'))));
+    } catch (_) {
+      // Photos changed on another device meanwhile, no connection, or the
+      // database update (0035) is not installed yet: nothing was changed.
+      ref.invalidate(profileCatalogProvider(widget.userId));
+      messenger.showSnackBar(SnackBar(content: Text(s.t('catalog_order_failed'))));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = widget.userId;
     final s = ref.watch(stringsProvider);
     final async = ref.watch(profileCatalogProvider(userId));
     final isMe = ref.watch(currentUserIdProvider) == userId;
+    final items = async.valueOrNull ?? const <CatalogItem>[];
     return Scaffold(
-      appBar: AppBar(title: Text(s.t('profile_catalog'))),
+      appBar: AppBar(
+        title: Text(s.t('profile_catalog')),
+        actions: [
+          if (isMe && _pending != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _saving
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  : TextButton(onPressed: () => _save(s), child: Text(s.t('catalog_save'))),
+            ),
+        ],
+      ),
       body: async.isLoading && !async.hasValue
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -175,12 +245,31 @@ class CatalogScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(14),
                 children: [
-                  if ((async.valueOrNull ?? const []).isEmpty && !isMe)
+                  if (items.isEmpty && !isMe)
                     Padding(
                       padding: const EdgeInsets.only(top: 60),
                       child: Center(child: Text(s.t('catalog_empty'), style: const TextStyle(color: AppColors.textSoft))),
                     ),
-                  CatalogGrid(userId: userId),
+                  if (isMe && items.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(s.t('catalog_reorder_hint'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                    ),
+                  if (isMe)
+                    CatalogReorderGrid(
+                      items: items,
+                      leading: _AddPhotoTile(s: s),
+                      tileBuilder: (item) => _Thumb(item: item),
+                      onOpen: (item) => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => CatalogViewer(userId: userId, initialIndex: items.indexOf(item)),
+                      )),
+                      onOrderChanged: (ids) {
+                        final server = [for (final i in items) i.id];
+                        setState(() => _pending = listEquals(ids, server) ? null : ids);
+                      },
+                    )
+                  else
+                    CatalogGrid(userId: userId),
                 ],
               ),
             ),
