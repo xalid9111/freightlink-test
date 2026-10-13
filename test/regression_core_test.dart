@@ -70,7 +70,7 @@ void main() {
 
   group('Admin panel sections', () {
     final admin = _read('lib/features/admin/presentation/admin_shell.dart');
-    for (final key in ['cargo', 'users', 'ads', 'ad_templates', 'services', 'autofix', 'audit']) {
+    for (final key in ['cargo', 'users', 'ads', 'ad_templates', 'service_templates', 'services', 'autofix', 'audit']) {
       test('section "$key" is listed and routed', () {
         expect(admin.contains("AdminSection('$key'"), isTrue);
         expect(admin.contains("case '$key':"), isTrue);
@@ -132,6 +132,33 @@ void main() {
       for (final font in RegExp(r"'([^']+)'").allMatches(m!.group(1)!).map((x) => x.group(1)!)) {
         expect(latest!.contains("'$font'"), isTrue, reason: 'server rejects font $font');
       }
+    });
+  });
+
+  group('Service ads: own picture, order, service templates', () {
+    final screen = _read('lib/features/ads/presentation/ad_create_screen.dart');
+    test('own picture failures are explained, never swallowed', () {
+      final start = screen.indexOf('Future<void> _addOwnImage(');
+      final end = screen.indexOf('Widget _orderingOffNote(');
+      expect(start, greaterThan(0));
+      expect(end, greaterThan(start));
+      final body = screen.substring(start, end);
+      expect(body.contains('catch (_)'), isFalse);
+      expect(body.contains('ownImageErrorKey('), isTrue);
+      expect(body.contains("AutoFix.instance.capture(e, st, source: 'ads.own_image')"), isTrue);
+    });
+    test('service ad uses service templates and offers the own picture', () {
+      expect(screen.contains('serviceAdTemplatesProvider : adTemplatesProvider'), isTrue);
+      expect(screen.contains('_ownImageButton(s)'), isTrue);
+      expect(screen.contains('repo.createServiceOrder('), isTrue);
+    });
+    test('admin "Servis şablonları" shows only service backgrounds, new ones for services', () {
+      final panel = _read('lib/features/admin/presentation/admin_ad_templates.dart');
+      expect(panel.contains('standard.where((t) => t.forService)'), isTrue);
+      expect(panel.contains("defaultAudience: audience ?? 'cargo'"), isTrue);
+      expect(panel.contains('widget.template?.audience ?? widget.defaultAudience'), isTrue);
+      final shell = _read('lib/features/admin/presentation/admin_shell.dart');
+      expect(shell.contains("AdminTemplatesPanel(audience: 'service')"), isTrue);
     });
   });
 

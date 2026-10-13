@@ -10,6 +10,13 @@ create temp table t_pub as select * from public.admin_save_ad_template_v2(null, 
 grant select on t_pub to authenticated;
 select public.admin_set_ad_template_audience((select id from t_pub), 'service');
 select public.admin_save_ad_package('d5', '5 gün', 5, 20, true);
+-- "Reklam ver" switched off → the own picture is refused with a clear
+-- reason (the app shows it instead of "could not be uploaded").
+select public.admin_set_ads_ordering_enabled(false);
+select tests.login(:other);
+select tests.check(tests.err($$ select public.create_own_ad_background('https://x/storage/v1/object/public/ads/requests/a0000000-0000-4000-8000-000000000021/0.png') $$) like '%ordering_disabled%',
+  'B0 switch off: own picture refused with ordering_disabled');
+select tests.login(:admin);
 select public.admin_set_ads_ordering_enabled(true);
 
 select tests.login(:other);
