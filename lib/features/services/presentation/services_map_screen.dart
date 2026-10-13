@@ -42,11 +42,18 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   int _zoomBucket = 11;
   bool _mapReady = false;
   List<ServiceProvider> _lastItems = const [];
+  bool _locatedOnce = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The Services tab is built in advance while hidden (TickerMode off).
+    // Ask for the location only when the user actually opens the tab —
+    // the same moment as before, so no early permission prompt.
+    if (!_locatedOnce && TickerMode.of(context)) {
+      _locatedOnce = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
+    }
   }
 
   @override
