@@ -32,6 +32,7 @@ const adminSections = <AdminSection>[
   AdminSection('reports', 'Şikayətlər', Icons.report_outlined),
   AdminSection('ads', 'Reklamlar', Icons.campaign_outlined),
   AdminSection('ad_templates', 'Reklam şablonları', Icons.dashboard_customize_outlined),
+  AdminSection('service_templates', 'Servis şablonları', Icons.photo_library_outlined),
   AdminSection('services', 'Servislər', Icons.home_repair_service_outlined),
   AdminSection('autofix', 'AutoFix (xətalar)', Icons.auto_fix_high),
   AdminSection('audit', 'Audit Log', Icons.history),
@@ -121,6 +122,9 @@ class _AdminLayout extends ConsumerWidget {
         return const AdminAdsPage();
       case 'ad_templates':
         return ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 40), children: const [AdminTemplatesPanel()]);
+      case 'service_templates':
+        return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40), children: const [AdminTemplatesPanel(audience: 'service')]);
       case 'services':
         return const AdminServicesPage();
       case 'autofix':

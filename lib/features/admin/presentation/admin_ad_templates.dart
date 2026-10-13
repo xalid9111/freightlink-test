@@ -28,6 +28,19 @@ Future<Uint8List> cropToAdBanner(ui.Image img) async {
   return data!.buffer.asUint8List();
 }
 
+/// [all] with the backgrounds [a] and [b] (ids) swapping places; nothing
+/// else moves, nothing is added or lost.
+List<AdTemplate> swapTemplates(List<AdTemplate> all, String a, String b) {
+  final out = [...all];
+  final i = out.indexWhere((t) => t.id == a);
+  final j = out.indexWhere((t) => t.id == b);
+  if (i < 0 || j < 0) return out;
+  final t = out[i];
+  out[i] = out[j];
+  out[j] = t;
+  return out;
+}
+
 /// The two independent switches (both OFF at the start):
 ///  * ads in the home load list,
 ///  * the "Reklam ver" entry for customers.
@@ -271,8 +284,15 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
 
 /// Admin → Reklam şablonları: background images for the standard
 /// 1200×400 layout — add, replace, rename, order, on/off, delete.
+///
+/// [audience] 'service' = Admin → Servis şablonları: only the backgrounds
+/// service owners can pick (audience service / all); a new one is for
+/// services by default. null = every background (as before).
 class AdminTemplatesPanel extends ConsumerWidget {
-  const AdminTemplatesPanel({super.key});
+  final String? audience;
+  const AdminTemplatesPanel({super.key, this.audience});
+
+  bool get _forService => audience == 'service';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -280,6 +300,26 @@ class AdminTemplatesPanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_forService) ...[
+          const Text(
+            'Servis reklamı üçün fonlar: servis sahibləri Servis → "Reklam ver" ekranında bunları seçir '
+            '(yanında "Servis" və ya "Hər ikisi" yazılan fonlar). Yeni fon avtomatik "Servis" üçün olur.',
+            style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.4),
+          ),
+          if (ref.watch(adsOrderingEnabledProvider).valueOrNull == false) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.danger.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+              child: const Text(
+                '"Reklam ver" girişi bağlıdır — servislər öz şəklini yükləyə və sifariş verə bilmir. '
+                'Açmaq üçün: Reklamlar → "Reklam ver" girişi.',
+                style: TextStyle(color: AppColors.danger, fontSize: 12.5),
+              ),
+            ),
+          ],
+          const SizedBox(height: 6),
+        ],
         const Text(
           'Standart: 1200×400 px. Loqo (30,120) 160×160 · Şirkət adı (220,45) 440×85 · Fəaliyyət (220,150) 440×75 · '
           'Telefon (220,250) 440×70 · Maşın / mənzərə zonası (690,20) 490×360. '
@@ -300,12 +340,13 @@ class AdminTemplatesPanel extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => EmptyNote('Yüklənmədi — 0023 SQL işə salınıb? ($e)'),
           data: (all) {
-            final list = all.where((t) => t.isStandard).toList()..sort((a, b) => a.sort.compareTo(b.sort));
-            final old = all.where((t) => !t.isStandard).toList();
+            final standard = all.where((t) => t.isStandard).toList()..sort((a, b) => a.sort.compareTo(b.sort));
+            final list = _forService ? standard.where((t) => t.forService).toList() : standard;
+            final old = _forService ? const <AdTemplate>[] : all.where((t) => !t.isStandard).toList();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (list.isEmpty) const EmptyNote('Hələ fon yoxdur'),
+                if (list.isEmpty) EmptyNote(_forService ? 'Hələ servis fonu yoxdur — "Fon əlavə et"' : 'Hələ fon yoxdur'),
                 for (var i = 0; i < list.length; i++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -329,12 +370,12 @@ class AdminTemplatesPanel extends ConsumerWidget {
                                 }, color: list[i].audience == 'service' ? AppColors.blue : AppColors.textSoft),
                                 IconButton(
                                   tooltip: 'Yuxarı',
-                                  onPressed: i == 0 ? null : () => _swap(context, ref, list, i, i - 1),
+                                  onPressed: i == 0 ? null : () => _swap(context, ref, standard, list[i], list[i - 1]),
                                   icon: const Icon(Icons.arrow_upward, size: 20),
                                 ),
                                 IconButton(
                                   tooltip: 'Aşağı',
-                                  onPressed: i == list.length - 1 ? null : () => _swap(context, ref, list, i, i + 1),
+                                  onPressed: i == list.length - 1 ? null : () => _swap(context, ref, standard, list[i], list[i + 1]),
                                   icon: const Icon(Icons.arrow_downward, size: 20),
                                 ),
                                 IconButton(
@@ -386,12 +427,12 @@ class AdminTemplatesPanel extends ConsumerWidget {
     ref.invalidate(serviceAdTemplatesProvider);
   }
 
-  Future<void> _swap(BuildContext context, WidgetRef ref, List<AdTemplate> list, int a, int b) async {
+  /// Swaps [x] and [y] in the full list of backgrounds ([all], sorted) —
+  /// the others keep their places, also when only service backgrounds are
+  /// shown — then renumbers the whole list so the order is always 1..n.
+  Future<void> _swap(BuildContext context, WidgetRef ref, List<AdTemplate> all, AdTemplate x, AdTemplate y) async {
     final repo = ref.read(adsRepositoryProvider);
-    // Renumber the whole list so the order is always 1..n.
-    final order = [...list];
-    final x = order.removeAt(a);
-    order.insert(b, x);
+    final order = swapTemplates(all, x.id, y.id);
     final ok = await runAdmin(context, () async {
       for (var i = 0; i < order.length; i++) {
         final t = order[i];
@@ -416,7 +457,7 @@ class AdminTemplatesPanel extends ConsumerWidget {
   Future<void> _open(BuildContext context, WidgetRef ref, AdTemplate? t, int sort) async {
     final count = ref.read(adminAdTemplatesProvider).valueOrNull?.where((x) => x.isStandard).length ?? 0;
     final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => AdminTemplateEditor(template: t, nextSort: count + 1)),
+      MaterialPageRoute(builder: (_) => AdminTemplateEditor(template: t, nextSort: count + 1, defaultAudience: audience ?? 'cargo')),
     );
     if (saved == true && context.mounted) _refresh(ref);
   }
@@ -427,7 +468,9 @@ class AdminTemplatesPanel extends ConsumerWidget {
 class AdminTemplateEditor extends ConsumerStatefulWidget {
   final AdTemplate? template;
   final int nextSort;
-  const AdminTemplateEditor({super.key, this.template, this.nextSort = 100});
+  /// Audience of a NEW background ('service' from Servis şablonları).
+  final String defaultAudience;
+  const AdminTemplateEditor({super.key, this.template, this.nextSort = 100, this.defaultAudience = 'cargo'});
 
   @override
   ConsumerState<AdminTemplateEditor> createState() => _AdminTemplateEditorState();
@@ -438,7 +481,7 @@ class _AdminTemplateEditorState extends ConsumerState<AdminTemplateEditor> {
   late String? _imageUrl = widget.template?.imageUrl;
   late bool _active = widget.template?.isActive ?? true;
   /// Who may use the background: 'cargo', 'service' or 'all' (0029).
-  late String _audience = widget.template?.audience ?? 'cargo';
+  late String _audience = widget.template?.audience ?? widget.defaultAudience;
   bool _busy = false;
   String? _error;
 

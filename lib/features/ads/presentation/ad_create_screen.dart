@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/autofix/autofix.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -15,6 +16,7 @@ import '../../../models/ad_models.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/ads_repository.dart';
 import 'ad_creative_view.dart';
+import 'ad_error_keys.dart';
 import '../../services/presentation/services_providers.dart' show serviceByIdProvider;
 import 'ads_providers.dart';
 import 'cover_crop_screen.dart';
@@ -381,8 +383,9 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
         if (!mounted) return;
         ref.invalidate(myAdOrdersProvider);
         if (mounted) context.pushReplacement('/ad-order/${order.id}');
-      } catch (e) {
+      } catch (e, st) {
         final k = _errKey(e);
+        if (k.isEmpty) AutoFix.instance.capture(e, st, source: 'ads.service_order');
         _toast(k.isEmpty ? '${s.t('ad_action_failed')}${_errCode(e)}' : s.t('adv_err_$k'));
       } finally {
         if (mounted) setState(() => _busy = false);
@@ -423,8 +426,8 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
     XFile? f;
     try {
       f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2400, maxHeight: 2400, imageQuality: 90);
-    } catch (_) {
-      _toast(s.t('adv_own_image_failed'));
+    } catch (e, st) {
+      _ownImageFailed(s, e, st);
       return;
     }
     if (f == null || !mounted) return;
@@ -440,12 +443,35 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
       final t = await ref.read(adsRepositoryProvider).createOwnBackground(png, uid);
       ref.invalidate(serviceAdTemplatesProvider);
       if (mounted) setState(() => _tpl = t);
-    } catch (_) {
-      _toast(s.t('adv_own_image_failed'));
+    } catch (e, st) {
+      _ownImageFailed(s, e, st);
     } finally {
       if (mounted) setState(() => _ownUploading = false);
     }
   }
+
+  /// Say why the picture was not accepted (never just "failed"): known
+  /// causes get their own text; anything else its short code, and the full
+  /// error goes to Admin → AutoFix.
+  void _ownImageFailed(AppStrings s, Object e, StackTrace st) {
+    final raw = e.toString();
+    final key = ownImageErrorKey(raw);
+    if (key != 'adv_own_image_failed') {
+      _toast(s.t(key));
+      return;
+    }
+    AutoFix.instance.capture(e, st, source: 'ads.own_image');
+    final code = adErrorCode(raw);
+    _toast(code.isEmpty ? s.t(key) : '${s.t(key)} ($code)');
+  }
+
+  Widget _orderingOffNote(AppStrings s) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: AppColors.danger.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+        child: Text(s.t('adv_err_ordering_disabled'), textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+      );
 
   Widget _ownImageButton(AppStrings s) => OutlinedButton.icon(
         onPressed: _ownUploading ? null : () => _addOwnImage(s),
@@ -478,6 +504,9 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
       }
     }
     final durations = _durations(ref.watch(adPackagesProvider).valueOrNull ?? const []);
+    // New order while the admin has "Reklam ver" switched off: the server
+    // refuses pictures and orders (ordering_disabled) — say so up front.
+    final orderingOff = !_admin && !_editing && ref.watch(adsOrderingEnabledProvider).valueOrNull == false;
     final fmt = DateFormat('d MMM yyyy', lang);
     final pkg = _days == null ? null : durations[_days];
     final editOrder = _editing ? ref.watch(myAdOrderProvider(widget.editOrderId!)).valueOrNull : null;
@@ -517,6 +546,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (orderingOff) ...[_orderingOffNote(s), const SizedBox(height: 16)],
                     Text(s.t('adv_no_templates'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
                     if (_forService) ...[
                       const SizedBox(height: 8),
@@ -573,6 +603,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
             children: [
+              if (orderingOff) ...[_orderingOffNote(s), const SizedBox(height: 12)],
               Text(s.t('adv_preview').toUpperCase(), style: adSectionHeader),
               const SizedBox(height: 8),
               AdCreativeView(creative: preview, radius: BorderRadius.circular(14), showPlaceholders: true),
