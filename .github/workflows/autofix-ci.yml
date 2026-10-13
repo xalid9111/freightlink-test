@@ -1,0 +1,58 @@
+name: AutoFix CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unpack project
+        run: |
+          f="$(ls *.zip | head -n 1)"
+          if [ -z "$f" ]; then echo "No ZIP in the repository"; exit 0; fi
+          rm -rf app && mkdir app && unzip -q "$f" -d app
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        working-directory: app
+        run: |
+          printf 'APP_ENV=production\n' > .env
+          flutter pub get
+
+      - name: Analyze
+        id: analyze
+        working-directory: app
+        run: |
+          set +e
+          flutter analyze --no-fatal-infos --no-fatal-warnings > ../analyze.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          tail -n 60 ../analyze.txt
+
+      - name: Tests
+        id: tests
+        working-directory: app
+        run: |
+          set +e
+          flutter test --reporter expanded > ../tests.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          tail -n 60 ../tests.txt
+
+      - name: Report to admin panel
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          AUTOFIX_CI_TOKEN: ${{ secrets.AUTOFIX_CI_TOKEN }}
+          ANALYZE_EXIT: ${{ steps.analyze.outputs.code }}
+          TEST_EXIT: ${{ steps.tests.outputs.code }}
+        run: python3 app/scripts/autofix_ci_report.py analyze.txt tests.txt
