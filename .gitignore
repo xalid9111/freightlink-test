@@ -1,0 +1,36 @@
+# --- Secrets / local config (never commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Flutter / Dart build & tool output ---
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+
+# --- Generated code ---
+*.g.dart
+*.freezed.dart
+
+# --- IDE / editor ---
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# --- OS / misc local files ---
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.zip
+
+# --- Supabase local CLI state ---
+supabase/.temp/
+supabase/.branches/

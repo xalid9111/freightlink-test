@@ -1,0 +1,107 @@
+# AutoFix CI (v2) — regression gate. Reference copy of the active
+#   .github/workflows/autofix-ci.yml   (keep both identical below this header)
+#
+# Runs on EVERY branch and on pull requests (deploy runs only on main).
+# A red result = the new version must NOT be merged / deployed.
+# Checks: static validators, SQL/RLS + data-preservation tests on a
+# throw-away Postgres (never the real Supabase), flutter analyze,
+# flutter test (unit + regression), flutter web build (compile check).
+name: AutoFix CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Static checks (i18n, SQL, Dart structure)
+        id: static
+        run: |
+          set +e
+          python3 scripts/validate_i18n.py && python3 scripts/validate_sql.py && python3 scripts/validate_dart.py
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: SQL / RLS / data-preservation tests (throw-away Postgres)
+        id: sql
+        run: |
+          set +e
+          {
+            bash supabase/tests/local/run_local.sh before &&
+            bash supabase/tests/local/run_local.sh after &&
+            bash supabase/tests/local/50_searchpath_scenarios.sh
+          } > sql.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          grep -E "checks passed|FAIL|ERROR:|identical" sql.txt | tail -n 40
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: |
+          printf 'APP_ENV=ci\n' > .env
+          flutter pub get
+
+      - name: Analyze
+        id: analyze
+        run: |
+          set +e
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          tail -n 60 analyze.txt
+
+      - name: Tests (unit + regression)
+        id: tests
+        run: |
+          set +e
+          flutter test --reporter expanded > tests.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          tail -n 60 tests.txt
+
+      - name: Web build (compile check, not deployed)
+        id: build
+        run: |
+          set +e
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=https://example.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=ci-placeholder \
+            --dart-define=APP_ENV=ci > build.txt 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          tail -n 40 build.txt
+
+      - name: Report to admin panel (red = do not merge / deploy)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          AUTOFIX_CI_TOKEN: ${{ secrets.AUTOFIX_CI_TOKEN }}
+          STATIC_EXIT: ${{ steps.static.outputs.code }}
+          SQL_EXIT: ${{ steps.sql.outputs.code }}
+          ANALYZE_EXIT: ${{ steps.analyze.outputs.code }}
+          TEST_EXIT: ${{ steps.tests.outputs.code }}
+          BUILD_EXIT: ${{ steps.build.outputs.code }}
+        run: python3 scripts/autofix_ci_report.py analyze.txt tests.txt sql.txt build.txt

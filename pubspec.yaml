@@ -1,0 +1,132 @@
+name: freightlink
+description: AI-powered freight marketplace connecting cargo owners with carriers.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Backend / data
+  supabase_flutter: ^2.5.6
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Env / config
+  flutter_dotenv: ^5.1.0
+
+  # Persisted user preferences (selected language, etc.) — pure-Dart
+  # plugin, works on web (localStorage) and mobile, no native token/
+  # account setup required.
+  shared_preferences: ^2.3.2
+
+  # Opens external navigation apps (Google Maps / Apple Maps / Waze)
+  # via platform URL schemes — see lib/services/navigation_service.dart.
+  # No native token/account setup required.
+  url_launcher: ^6.3.0
+
+  # Map (Mapbox first, swappable behind core/services/map_service.dart)
+  # NOT enabled yet — see note below.
+  # mapbox_maps_flutter: ^2.2.0
+
+  # Push notifications
+  # NOT enabled yet — see note below.
+  # firebase_core: ^3.3.0
+  # firebase_messaging: ^15.0.4
+
+  # Localization
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # Models / serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Utils
+  equatable: ^2.0.5
+  logger: ^2.4.0
+  cached_network_image: ^3.4.0
+  image_picker: ^1.1.2
+  file_picker: ^8.0.6
+  intl_phone_field: ^3.2.0
+
+  cupertino_icons: ^1.0.8
+
+
+  # Chat voice messages: recording (MediaRecorder on web) and playback.
+  record: ^6.0.0
+  audioplayers: ^6.1.0
+  # Plain <audio> playback on web (reliable on iPhone Safari / PWA).
+  web: ^1.1.0
+  # Reads a recorded voice note (a blob: URL on web) back as bytes.
+  http: ^1.2.0
+  # "Send my location" in chat (browser geolocation on web).
+  geolocator: ^13.0.1
+  # Cargo route map (OpenStreetMap tiles, no API key).
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+# ------------------------------------------------------------------
+# Why mapbox_maps_flutter / firebase_core / firebase_messaging are
+# commented out (found during Phase 3 "does this actually run"
+# verification, not a scope change):
+#
+# No Dart file imports any of them yet — grep confirms it — they were
+# declared in Phase 1 purely so Phase 10 (Map) and Phase 12
+# (Notifications) wouldn't need a pubspec change later. But declaring
+# them is enough to break a real build before those phases:
+#   - mapbox_maps_flutter needs a Mapbox *downloads* token configured
+#     as a Gradle property before `flutter run` on Android will even
+#     resolve dependencies (it fetches the native SDK from a private
+#     Maven repo) — without it, Gradle sync fails with a 401, for
+#     someone who hasn't touched a single line of map code yet.
+#   - firebase_core / firebase_messaging expect `flutterfire configure`
+#     to have generated firebase_options.dart and platform config
+#     files; recent versions' Gradle integration can fail a build
+#     without them present.
+#
+# Uncomment these when you actually start Phase 10 / Phase 12, after
+# doing that package's one-time external setup (a Mapbox account +
+# downloads token; a Firebase project + `flutterfire configure`).
+# ------------------------------------------------------------------
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.11
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/i18n/
+    - assets/images/
+
+  # The whole app uses ONE font: Arial. Arial itself is a licensed
+  # Monotype font and cannot be shipped inside the app, so the family
+  # "Arial" is served by Liberation Sans (SIL OFL 1.1) — the free font
+  # with exactly Arial's letter widths. Flutter web cannot use the
+  # device's own fonts, so the font has to be bundled. See
+  # assets/fonts/OFL.txt.
+  fonts:
+    - family: Arial
+      fonts:
+        - asset: assets/fonts/LiberationSans-Regular.ttf
+        - asset: assets/fonts/LiberationSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LiberationSans-Italic.ttf
+          style: italic
+        - asset: assets/fonts/LiberationSans-BoldItalic.ttf
+          weight: 700
+          style: italic
