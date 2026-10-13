@@ -1,0 +1,33 @@
+# Supabase CLI project config (scaffold — run `supabase init` to regenerate
+# the full file; this captures the pieces Phase 1 cares about).
+project_id = "freightlink"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[storage]
+enabled = true
+# buckets created in Phase 4/9/19: cargo-documents, truck-documents,
+# driver-documents, insurance, avatars — all private, access via RLS-backed
+# signed URLs, never public.
+
+[auth]
+enabled = true
+enable_signup = true
+# email/password now; Google + Apple providers added in Phase 3.
+
+[realtime]
+enabled = true
+
+# WhatsApp verification PoC (docs/WHATSAPP_VERIFY_POC.md).
+# Meta calls the webhook without a Supabase JWT; it is authenticated by
+# Meta's X-Hub-Signature-256 instead.
+[functions.wa-webhook]
+verify_jwt = false
+
+[functions.wa-verify-start]
+verify_jwt = true

@@ -20,10 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Unpack project
-        run: unzip -o -q "$(ls *.zip | head -n 1)" -d app
-
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -31,7 +27,6 @@ jobs:
           cache: true
 
       - name: Build web
-        working-directory: app
         run: |
           printf 'APP_ENV=production\n' > .env
           flutter pub get
@@ -44,7 +39,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: app/build/web
+          path: build/web
 
   deploy:
     needs: build

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover is required for Flutter's web engine to read
+       CSS env(safe-area-inset-*) on notched iPhones when the PWA runs
+       in standalone mode (Part of PWA requirement: safe-area support). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="FreightLink — AI-powered freight marketplace connecting cargo owners with carriers.">
+
+  <!-- Browser chrome / address-bar color, matches app theme -->
+  <meta name="theme-color" content="#02050C">
+  <meta name="background-color" content="#02050C">
+
+  <!-- iOS "Add to Home Screen" support. iOS does not reliably read
+       manifest.json for installability/icon/display-mode the way
+       Android Chrome does, so these meta tags + the apple-touch-icon
+       link below are required IN ADDITION TO the manifest, not instead
+       of it. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FreightLink">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <!-- Android / general PWA install support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>FreightLink — Yük Marketpleysi</title>
+
+  <style>
+    /* Splash shown while the Flutter engine downloads/boots, so the
+       user sees the brand instead of a blank white page — this is
+       real loading UI, not a fake feature demo. Flutter replaces the
+       whole document body once it takes over, so this doesn't leak
+       into the running app. */
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #02050C;
+    }
+    #app-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      font-family: Arial, 'Liberation Sans', Helvetica, sans-serif;
+      color: #fff;
+      background: #02050C;
+    }
+    #app-loading img {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+    }
+    #app-loading .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255,255,255,0.25);
+      border-top-color: #FF5A1F;
+      border-radius: 50%;
+      animation: fl-spin 0.9s linear infinite;
+    }
+    @keyframes fl-spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="app-loading">
+    <img src="icons/Icon-192.png" alt="FreightLink">
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // Visible boot diagnostics: if anything fails during engine/app
+    // startup, show the actual error ON the splash instead of freezing
+    // on a blank dark screen with no information. Defined here (sync,
+    // before flutter_bootstrap.js) so the bootstrap script can call it.
+    function flShowBootError(msg) {
+      var el = document.getElementById('app-loading');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'app-loading';
+        document.body.appendChild(el);
+      }
+      var box = document.createElement('pre');
+      box.style.cssText = 'color:#FF8A5C;font-size:12px;max-width:90%;' +
+        'white-space:pre-wrap;text-align:center;margin-top:16px;';
+      box.textContent = 'FreightLink start xətası / startup error:\n' + msg;
+      el.appendChild(box);
+    }
+    // Only for errors DURING startup. Once the app is running
+    // (window.flStarted, set in flutter_bootstrap.js) later errors must
+    // never cover the app — e.g. iOS Safari fires a detail-less
+    // cross-origin "Script error." when the share sheet opens.
+    window.addEventListener('error', function (e) {
+      if (window.flStarted) return;
+      if (!e || !e.message || e.message === 'Script error.') return;
+      flShowBootError(e.message);
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      if (window.flStarted) return;
+      flShowBootError(String(e.reason));
+    });
+  </script>
+
+  <!-- Flutter 3.22+ bootstrap. The build turns web/flutter_bootstrap.js
+       (a template) into build/web/flutter_bootstrap.js, injecting
+       flutter.js AND _flutter.buildConfig. Calling _flutter.loader.load()
+       directly from index.html with only flutter.js (the previous
+       version of this file) fails at runtime with "FlutterLoader.load
+       requires _flutter.buildConfig to be set". -->
+  <script>
+    // iPhone Safari: after the microphone has been used, audio keeps
+    // playing through the quiet ear speaker. Switch the page's audio
+    // session to "playback" (loud speaker) whenever something plays, and
+    // back to "play-and-record" just before the microphone is opened.
+    (function () {
+      var session = navigator.audioSession;
+      if (!session) return;
+      // Patch play() itself: the chat's <audio> elements are not attached
+      // to the page, so a document-level 'play' listener would miss them.
+      var proto = window.HTMLMediaElement && HTMLMediaElement.prototype;
+      if (proto && proto.play) {
+        var origPlay = proto.play;
+        proto.play = function () {
+          try { session.type = 'playback'; } catch (e) {}
+          return origPlay.apply(this, arguments);
+        };
+      }
+      var md = navigator.mediaDevices;
+      if (md && md.getUserMedia) {
+        var orig = md.getUserMedia.bind(md);
+        md.getUserMedia = function (c) {
+          try { session.type = 'play-and-record'; } catch (e) {}
+          return orig(c);
+        };
+      }
+    })();
+  </script>
+  <script>
+    // Cargo-feed "wheel" haptic (see lib/core/feedback). No sound.
+    (function () {
+      window.flWheelHaptic = function (kind) {
+        try {
+          if (navigator.vibrate) { navigator.vibrate(kind === 1 ? [10, 30, 10] : 8); return; }
+        } catch (e) {}
+        // iPhone Safari has no vibration API — nothing to do there.
+      };
+    })();
+  </script>
+  <script src="pwa_guard.js"></script>
+  <script src="msg_alert.js"></script>
+  <script src="autofix.js"></script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
