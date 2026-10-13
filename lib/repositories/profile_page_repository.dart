@@ -98,14 +98,28 @@ class ProfilePageRepository {
     }, onConflict: 'user_id');
   }
 
+  /// The owner's chosen order (migration 0035); photos without a saved
+  /// position (new uploads) first, newest first — the same for everyone.
   Future<List<CatalogItem>> catalog(String userId) async {
-    final rows = await _client
-        .from('profile_catalog_items')
-        .select()
-        .eq('user_id', userId)
-        .order('created_at', ascending: false);
+    List<dynamic> rows;
+    try {
+      rows = await _client
+          .from('profile_catalog_items')
+          .select()
+          .eq('user_id', userId)
+          .order('sort_order', ascending: true, nullsFirst: true)
+          .order('created_at', ascending: false);
+    } on PostgrestException catch (e) {
+      // Before migration 0035 there is no sort_order column: old order.
+      if (e.code != '42703' && !e.message.contains('sort_order')) rethrow;
+      rows = await _client
+          .from('profile_catalog_items')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+    }
     return [
-      for (final r in rows as List)
+      for (final r in rows)
         CatalogItem(
           id: '${r['id']}',
           userId: '${r['user_id']}',
@@ -138,6 +152,13 @@ class ProfilePageRepository {
       await _client.storage.from(bucket).remove([path]).catchError((_) => <FileObject>[]);
       rethrow;
     }
+  }
+
+  /// Saves the owner's new photo order in one step (RPC, migration 0035).
+  /// [ids] must be all of the owner's photos, each once — the server
+  /// refuses anything else, so no photo can be lost or duplicated.
+  Future<void> reorderCatalog(List<String> ids) async {
+    await _client.rpc('reorder_catalog', params: {'p_ids': ids});
   }
 
   Future<void> updateCaption(String itemId, String? caption) async {
