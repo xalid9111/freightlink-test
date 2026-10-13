@@ -775,6 +775,7 @@
   "svc_open_profile": "Open profile",
   "svc_phone": "Phone",
   "svc_photos": "Photos",
+  "svc_photos_reorder_hint": "Press and hold a photo, then drag it to change the order. The first photo is the main one.",
   "svc_pick_category": "Choose at least one service type.",
   "svc_pick_location": "Mark your location on the map.",
   "svc_place_not_found": "Place not found.",
