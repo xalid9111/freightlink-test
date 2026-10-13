@@ -76,4 +76,28 @@ void main() {
       expect(p.contains('StreamProvider.autoDispose.family<List<MessageModel>, String>'), isTrue);
     });
   });
+
+  group('First tab switch shows a ready screen (iPhone first-switch flicker)', () {
+    final router = _read('lib/core/router/app_router.dart');
+    bool preloaded(String path) =>
+        RegExp("StatefulShellBranch\\(preload: true, routes: \\[\\s*GoRoute\\(\\s*path: '${RegExp.escape(path)}'")
+            .hasMatch(router);
+
+    test('bottom-bar tabs Messages, Profile, Services are built in advance', () {
+      expect(preloaded('/messages'), isTrue);
+      expect(preloaded('/profile'), isTrue);
+      expect(preloaded('/services'), isTrue);
+    });
+
+    test('tabs not in the bar (Search, Shipments) stay lazy', () {
+      expect(preloaded('/search'), isFalse);
+      expect(preloaded('/shipments'), isFalse);
+    });
+
+    test('Services asks for the location only when the tab is really shown', () {
+      final src = _read('lib/features/services/presentation/services_map_screen.dart');
+      expect(src, contains('TickerMode.of(context)'));
+      expect(src, isNot(contains('void initState() {\n    super.initState();\n    WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));')));
+    });
+  });
 }

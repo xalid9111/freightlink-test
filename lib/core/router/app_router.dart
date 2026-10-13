@@ -247,7 +247,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(path: '/shipments', builder: (context, state) => const ShipmentsScreen()),
           ]),
-          StatefulShellBranch(routes: [
+          // Bottom-bar tabs are built in advance (hidden), so the first tap
+          // on a tab shows a ready screen instead of an empty page that
+          // fills in a moment later (iPhone "flicker" on the first switch).
+          StatefulShellBranch(preload: true, routes: [
             GoRoute(
               path: '/messages',
               builder: (context, state) => const ConversationsScreen(),
@@ -274,12 +277,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ],
             ),
           ]),
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(preload: true, routes: [
             GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
           ]),
           // Branch 5 — Services map (added last so existing branch
           // indices stay unchanged).
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(preload: true, routes: [
             GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),
           ]),
         ],
