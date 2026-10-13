@@ -30,12 +30,27 @@ jobs:
         run: |
           printf 'APP_ENV=production\n' > .env
           flutter pub get
-          flutter build web --release \
+          # APP_VERSION = pubspec version + commit, so every AutoFix report
+          # says exactly which build it came from.
+          flutter build web --release --source-maps \
             --base-href "/${{ github.event.repository.name }}/" \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=APP_ENV=production
+            --dart-define=APP_ENV=production \
+            --dart-define=APP_VERSION=0.1.0+${GITHUB_SHA::7}
           touch build/web/.nojekyll
+          # The source map is NOT published on the site; it is kept as a
+          # workflow artifact to turn minified AutoFix stacks into Dart
+          # file:line (scripts/symbolize_stack.py).
+          mkdir -p sourcemap
+          mv build/web/main.dart.js.map sourcemap/
+          cp build/web/main.dart.js sourcemap/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sourcemap-${{ github.sha }}
+          path: sourcemap/
+          retention-days: 90
 
       - uses: actions/upload-pages-artifact@v3
         with:
