@@ -67,7 +67,10 @@ def main():
     sql_txt = read(sys.argv[3]) if len(sys.argv) > 3 else ""
     build_txt = read(sys.argv[4]) if len(sys.argv) > 4 else ""
     sql_suites = re.findall(r"([^:\n]+ : all \d+ checks passed)", sql_txt)
-    sql_fail = [l.strip() for l in sql_txt.splitlines() if "FAIL" in l or "ERROR:" in l][:40]
+    # "PASS  C1 ... ERROR: ..." lines are passing negative tests (the error
+    # is the expected result), so they are not failures.
+    sql_fail = [l.strip() for l in sql_txt.splitlines()
+                if ("FAIL" in l or "ERROR:" in l) and not l.lstrip().startswith("PASS")][:40]
     sql_exit = os.environ.get("SQL_EXIT", "")
     build_exit = os.environ.get("BUILD_EXIT", "")
     static_exit = os.environ.get("STATIC_EXIT", "")
