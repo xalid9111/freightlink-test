@@ -19,6 +19,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
+import '../../../core/widgets/map_tiles.dart';
 
 /// Create / edit the signed-in user's own service profile. Moderation
 /// fields (status, verified, rating) are never sent — the database
@@ -441,7 +442,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                             onTap: (_, p) => setState(() => _point = p),
                           ),
                           children: [
-                            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'az.freightlink.app'),
+                            const AppTileLayer(),
                             if (_point != null)
                               MarkerLayer(markers: [
                                 Marker(

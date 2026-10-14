@@ -738,6 +738,7 @@
   "svc_gps_denied": "Konum izni verilmedi. Şehir veya adres yazıp arayın.",
   "svc_gps_failed": "Konumunuz belirlenemedi.",
   "svc_gps_retry": "Tekrar",
+  "svc_gps_system_off": "Tarayıcı izin verdi ama konum bulunamadı — cihazda konum servisi kapalı olabilir (Windows: Ayarlar → Gizlilik → Konum; iPhone: Ayarlar → Gizlilik → Konum Servisleri). Veya şehir yazıp arayın.",
   "svc_gps_unavailable": "Konum bulunamadı. Şehir veya adres ile arayın.",
   "svc_hours": "Çalışma saatleri",
   "svc_hours_hint": "ör. Pzt–Cmt 09:00–19:00",

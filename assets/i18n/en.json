@@ -738,6 +738,7 @@
   "svc_gps_denied": "Location permission denied. Search by city or address.",
   "svc_gps_failed": "Could not get your location.",
   "svc_gps_retry": "Retry",
+  "svc_gps_system_off": "The browser allowed it, but no location was found — location may be off on the device (Windows: Settings → Privacy → Location; iPhone: Settings → Privacy → Location Services). Or search by city.",
   "svc_gps_unavailable": "Location not found. Search by city or address.",
   "svc_hours": "Working hours",
   "svc_hours_hint": "e.g. Mon–Sat 09:00–19:00",

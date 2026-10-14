@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../router/browser_nav.dart';
+import 'flag_font.dart';
 
 /// Design tokens for the approved "night map" design (dark navy ground,
 /// orange accent, teal route color — see the FreightLink mobile design
@@ -51,11 +52,14 @@ class AppFonts {
 
   static const family = 'Arial';
 
+  /// Characters Arial does not have: country flags (see flag_font.dart).
+  static const fallback = [kFlagFontFamily];
+
   static TextStyle display({double size = 22, Color? color, FontWeight weight = FontWeight.w800, double? height}) =>
-      TextStyle(fontFamily: family, fontSize: size, color: color, fontWeight: weight, height: height, letterSpacing: 0.2);
+      TextStyle(fontFamily: family, fontFamilyFallback: fallback, fontSize: size, color: color, fontWeight: weight, height: height, letterSpacing: 0.2);
 
   static TextStyle mono({double size = 11, Color? color, FontWeight weight = FontWeight.w700, double letterSpacing = 0.6}) =>
-      TextStyle(fontFamily: family, fontSize: size, color: color, fontWeight: weight, letterSpacing: letterSpacing);
+      TextStyle(fontFamily: family, fontFamilyFallback: fallback, fontSize: size, color: color, fontWeight: weight, letterSpacing: letterSpacing);
 }
 
 class AppTheme {
@@ -64,7 +68,7 @@ class AppTheme {
   /// The app uses this one dark theme everywhere (MaterialApp forces
   /// ThemeMode.dark) — the approved design has no light variant.
   static ThemeData get dark {
-    final base = ThemeData(useMaterial3: true, brightness: Brightness.dark, fontFamily: AppFonts.family);
+    final base = ThemeData(useMaterial3: true, brightness: Brightness.dark, fontFamily: AppFonts.family, fontFamilyFallback: AppFonts.fallback);
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.accentFill,
       brightness: Brightness.dark,
@@ -167,7 +171,8 @@ class AppTheme {
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: AppColors.cardAlt,
         side: const BorderSide(color: AppColors.line),
-        labelStyle: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+        // Chips do not take the text theme's font list → flags fallback here too.
+        labelStyle: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontFamilyFallback: AppFonts.fallback),
       ),
       dividerTheme: const DividerThemeData(color: AppColors.line),
       bottomSheetTheme: const BottomSheetThemeData(backgroundColor: AppColors.card, surfaceTintColor: Colors.transparent),

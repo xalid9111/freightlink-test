@@ -14,6 +14,7 @@ import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/map_tiles.dart';
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -190,7 +191,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                         interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
                       ),
                       children: [
-                        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'az.freightlink.app'),
+                        const AppTileLayer(),
                         MarkerLayer(markers: [
                           Marker(point: LatLng(p.lat, p.lng), width: 44, height: 44, child: ServicePin(type: p.markerType, selected: true, pro: p.isPro)),
                         ]),

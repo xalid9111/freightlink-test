@@ -738,6 +738,7 @@
   "svc_gps_denied": "定位权限被拒绝。请按城市或地址搜索。",
   "svc_gps_failed": "无法获取您的位置。",
   "svc_gps_retry": "重试",
+  "svc_gps_system_off": "浏览器已允许，但未找到位置 — 设备上的定位服务可能已关闭（Windows：设置 → 隐私 → 位置；iPhone：设置 → 隐私 → 定位服务）。或按城市搜索。",
   "svc_gps_unavailable": "未找到位置。请按城市或地址搜索。",
   "svc_hours": "营业时间",
   "svc_hours_hint": "例如 周一至周六 09:00–19:00",

@@ -15,9 +15,8 @@ import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/map_tiles.dart';
 
-const _tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const _userAgent = 'az.freightlink.app';
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
 /// tow trucks, with category chips, filters, a results sheet and
@@ -279,7 +278,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 },
               ),
               children: [
-                TileLayer(urlTemplate: _tileUrl, userAgentPackageName: _userAgent),
+                const AppTileLayer(),
                 if (selected != null && me != null)
                   PolylineLayer(polylines: [
                     Polyline(
@@ -289,7 +288,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                     ),
                   ]),
                 MarkerLayer(markers: _markers(items, me)),
-                RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+                const AppMapAttribution(),
               ],
             ),
           ),
@@ -371,9 +370,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                       ],
                     ),
                   ),
-                  if (loc.state == GpsState.denied || loc.state == GpsState.unavailable) ...[
+                  if (gpsMessageKey(loc.state) != null) ...[
                     const SizedBox(height: 8),
-                    _GpsBanner(s: s, denied: loc.state == GpsState.denied, onRetry: () => _locate()),
+                    _GpsBanner(s: s, messageKey: gpsMessageKey(loc.state)!, onRetry: () => _locate()),
                   ],
                   if (_moved) ...[
                     const SizedBox(height: 8),
@@ -494,9 +493,9 @@ class _CatChip extends StatelessWidget {
 
 class _GpsBanner extends StatelessWidget {
   final AppStrings s;
-  final bool denied;
+  final String messageKey;
   final VoidCallback onRetry;
-  const _GpsBanner({required this.s, required this.denied, required this.onRetry});
+  const _GpsBanner({required this.s, required this.messageKey, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +510,7 @@ class _GpsBanner extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                s.t(denied ? 'svc_gps_denied' : 'svc_gps_unavailable'),
+                s.t(messageKey),
                 style: const TextStyle(fontSize: 12, color: AppColors.urgentFg, height: 1.3),
               ),
             ),

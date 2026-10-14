@@ -10,9 +10,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../models/cargo_model.dart';
 import '../../../../services/geo_service.dart';
 import '../providers/cargo_providers.dart';
+import '../../../../core/widgets/map_tiles.dart';
 
-const _tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const _userAgent = 'az.freightlink.app';
 
 EndpointsKey _keyFor(CargoModel c) => (
       pickupQuery: '${c.pickupCity}, ${Countries.canonical(c.pickupCountry)}',
@@ -168,7 +167,7 @@ class _RouteMapView extends StatelessWidget {
         onTap: onTap == null ? null : (_, point) => onTap!(point),
       ),
       children: [
-        TileLayer(urlTemplate: _tileUrl, userAgentPackageName: _userAgent),
+        const AppTileLayer(),
         PolylineLayer(
           polylines: [
             Polyline(
@@ -184,9 +183,7 @@ class _RouteMapView extends StatelessWidget {
             Marker(point: end, width: 34, height: 34, child: _pin(AppColors.accentFill, 'B')),
           ],
         ),
-        RichAttributionWidget(
-          attributions: [TextSourceAttribution('OpenStreetMap contributors')],
-        ),
+        const AppMapAttribution(),
       ],
     );
   }

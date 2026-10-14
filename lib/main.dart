@@ -9,6 +9,7 @@ import 'core/autofix/autofix.dart';
 import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/flag_font.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
@@ -61,6 +62,8 @@ Future<void> main() async {
       child: const FreightLinkApp(),
     ),
   );
+  // Flags font: in the background, after the first screen.
+  WidgetsBinding.instance.addPostFrameCallback((_) => loadFlagFont());
 }
 
 class FreightLinkApp extends ConsumerWidget {

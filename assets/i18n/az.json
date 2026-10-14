@@ -738,6 +738,7 @@
   "svc_gps_denied": "GPS icazəsi verilməyib. Şəhər və ya ünvan yazıb axtarın.",
   "svc_gps_failed": "Mövqeyinizi təyin etmək olmadı.",
   "svc_gps_retry": "Yenidən",
+  "svc_gps_system_off": "Brauzer icazə verib, amma mövqe tapılmadı — cihazda məkan xidməti bağlı ola bilər (Windows: Parametrlər → Məxfilik → Məkan; iPhone: Ayarlar → Məxfilik → Məkan xidmətləri). Və ya şəhər yazıb axtarın.",
   "svc_gps_unavailable": "Mövqe tapılmadı. Şəhər və ya ünvan üzrə axtarın.",
   "svc_hours": "İş saatları",
   "svc_hours_hint": "məs. B.e–Ş 09:00–19:00",
