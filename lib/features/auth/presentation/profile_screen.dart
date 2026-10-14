@@ -14,6 +14,7 @@ import 'providers/auth_providers.dart';
 import '../../services/presentation/services_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../finance/presentation/finance_providers.dart';
 
 /// Profile (owner's design): title + settings gear, a card with photo,
 /// name, role · country and badges, a contact card (e-mail / phone), the
@@ -122,6 +123,18 @@ class ProfileScreen extends ConsumerWidget {
                 ]),
                 const SizedBox(height: 14),
                 _MenuCard(children: [
+                  // Only the finance owner (server decides; 0037).
+                  if (isAdmin)
+                    Consumer(builder: (context, ref, _) {
+                      if (ref.watch(isFinanceAdminProvider).valueOrNull != true) return const SizedBox.shrink();
+                      return _MenuRow(
+                        icon: Icons.account_balance_wallet_outlined,
+                        iconColor: AppColors.accent,
+                        title: strings.t('pf_finance'),
+                        subtitle: strings.t('pf_finance_sub'),
+                        onTap: () => context.pushOnce('/finance'),
+                      );
+                    }),
                   if (isAdmin)
                     _MenuRow(
                       icon: Icons.admin_panel_settings_outlined,

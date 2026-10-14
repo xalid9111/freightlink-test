@@ -16,6 +16,7 @@ import 'ad_creative_view.dart';
 import 'ads_providers.dart';
 import 'advertise_screen.dart' show AdStageChip, adMoney, adSectionHeader;
 import '../../../core/router/safe_navigation.dart';
+import '../../finance/presentation/card_checkout.dart';
 
 /// One ad order: status timeline, banner, amount, bank / card details and
 /// the receipt upload. Uploading a receipt only sends the order for
@@ -189,6 +190,8 @@ class _AdOrderScreenState extends ConsumerState<AdOrderScreen> {
                 Text(s.t('adv_pay_title').toUpperCase(), style: adSectionHeader),
                 const SizedBox(height: 8),
                 _PaymentCard(order: o, s: s),
+                // Online payment (0037): only when the server opens it for this user.
+                CardCheckoutButton(order: o, s: s),
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : () => _uploadReceipt(s, o),

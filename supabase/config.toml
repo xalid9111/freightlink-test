@@ -31,3 +31,8 @@ verify_jwt = false
 
 [functions.wa-verify-start]
 verify_jwt = true
+
+# Payments (docs/payments/README.md). Card providers call the webhook
+# without a Supabase JWT; it is authenticated by the provider's signature.
+[functions.payments-webhook]
+verify_jwt = false
