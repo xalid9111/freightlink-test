@@ -35,6 +35,12 @@ void main() {
       expect(gpsMessageKey(GpsState.ok), isNull);
       expect(gpsMessageKey(GpsState.locating), isNull);
     });
+    test('the GPS button message says why, not just "failed"', () {
+      for (final f in ['services_map_screen.dart', 'service_edit_screen.dart']) {
+        final src = File('lib/features/services/presentation/$f').readAsStringSync();
+        expect(src.contains("gpsMessageKey(ref.read(userLocationProvider).state) ?? 'svc_gps_failed'"), isTrue, reason: f);
+      }
+    });
     test('web does not use requestPermission (it reports every failure as denied)', () {
       final src = File('lib/features/services/presentation/services_providers.dart').readAsStringSync();
       expect(src.contains('if (!kIsWeb && perm == LocationPermission.denied)'), isTrue);

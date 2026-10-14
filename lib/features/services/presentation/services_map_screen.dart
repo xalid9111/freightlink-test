@@ -68,7 +68,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
     if (!mounted) return;
     if (p == null) {
       if (!initial) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t('svc_gps_failed'))));
+        // Say why (location off on the device / blocked / not found), not just "failed".
+        final why = gpsMessageKey(ref.read(userLocationProvider).state) ?? 'svc_gps_failed';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t(why))));
       }
       return;
     }
