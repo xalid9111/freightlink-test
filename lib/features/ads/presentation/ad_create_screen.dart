@@ -20,6 +20,7 @@ import 'ad_error_keys.dart';
 import '../../services/presentation/services_providers.dart' show serviceByIdProvider;
 import 'ads_providers.dart';
 import 'cover_crop_screen.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 import 'advertise_screen.dart' show adMoney, adSectionHeader;
 
 /// "Reklam yarat" (and "Redaktə et" for an own order): pick a background →
@@ -618,7 +619,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
               section(1, 'adv_step_background'),
               SizedBox(
                 height: 104,
-                child: ListView.separated(
+                child: MouseDragScroll(child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: shownList.length + (_forService && !_admin ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
@@ -677,7 +678,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                       ),
                     );
                   },
-                ),
+                )),
               ),
               section(2, 'adv_step_texts'),
               TextField(

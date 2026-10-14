@@ -3,8 +3,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/widgets/map_tiles.dart';
+import 'package:freightlink/core/widgets/mouse_drag_scroll.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:freightlink/features/services/presentation/gps_logic.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -85,6 +88,75 @@ void main() {
       final theme = File('lib/core/theme/app_theme.dart').readAsStringSync();
       expect(theme.contains('fontFamilyFallback: AppFonts.fallback'), isTrue);
       expect(File('lib/main.dart').readAsStringSync().contains('addPostFrameCallback((_) => loadFlagFont())'), isTrue);
+    });
+  });
+
+  group('Computer without GPS: approximate position by internet connection', () {
+    test('parses geojs (text numbers) and ipwho.is (numbers)', () {
+      expect(parseIpGeo({'latitude': '40.3777', 'longitude': '49.892'}), (40.3777, 49.892));
+      expect(parseIpGeo({'success': true, 'latitude': 40.4, 'longitude': 49.87}), (40.4, 49.87));
+    });
+    test('rejects failures and nonsense', () {
+      expect(parseIpGeo({'success': false, 'message': 'limit'}), isNull);
+      expect(parseIpGeo({'latitude': 'nil'}), isNull);
+      expect(parseIpGeo({'latitude': 0, 'longitude': 0}), isNull);
+      expect(parseIpGeo({'latitude': 95, 'longitude': 10}), isNull);
+      expect(parseIpGeo('x'), isNull);
+    });
+    test('approximate state has its own information text', () {
+      expect(gpsMessageKey(GpsState.approximate), 'svc_gps_approx');
+    });
+    test('used only on the web, never after a real "Block", never for the service address pin', () {
+      final src = File('lib/features/services/presentation/services_providers.dart').readAsStringSync();
+      expect(src.contains('if (allowApprox && kIsWeb && failed != GpsState.denied)'), isTrue);
+      final edit = File('lib/features/services/presentation/service_edit_screen.dart').readAsStringSync();
+      expect(edit.contains('locate(allowApprox: false)'), isTrue);
+    });
+  });
+
+  group('Horizontal rows can be dragged with the mouse (computers)', () {
+    test('every horizontal row is wrapped', () {
+      final files = Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'));
+      for (final f in files) {
+        final s = f.readAsStringSync();
+        final rows = 'scrollDirection: Axis.horizontal'.allMatches(s).length;
+        if (rows == 0) continue;
+        expect('MouseDragScroll(child:'.allMatches(s).length, rows, reason: f.path);
+      }
+    });
+    testWidgets('a mouse drag scrolls the row', (tester) async {
+      final ctrl = ScrollController();
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 40,
+            child: MouseDragScroll(
+              child: ListView(
+                controller: ctrl,
+                scrollDirection: Axis.horizontal,
+                children: [for (var i = 0; i < 30; i++) SizedBox(width: 100, child: Text('chip $i'))],
+              ),
+            ),
+          ),
+        ),
+      ));
+      final g = await tester.startGesture(const Offset(400, 20), kind: PointerDeviceKind.mouse);
+      for (var i = 0; i < 10; i++) {
+        await g.moveBy(const Offset(-30, 0));
+        await tester.pump();
+      }
+      await g.up();
+      await tester.pumpAndSettle();
+      expect(ctrl.offset, greaterThan(100));
+    });
+  });
+
+  group('Services: "Tent təmiri" category', () {
+    test('migration adds it once and the app has its icon', () {
+      final sql = File('supabase/migrations/0036_service_category_tarp.sql').readAsStringSync();
+      expect(sql.contains("'tarp_repair', 'Tent təmiri'"), isTrue);
+      expect(sql.contains('on conflict (id) do nothing'), isTrue);
+      expect(File('lib/features/services/presentation/services_providers.dart').readAsStringSync().contains("'tarp' => Icons.roofing"), isTrue);
     });
   });
 }

@@ -735,6 +735,7 @@
   "svc_finish_profile_body": "Haritada görünmek için konum ve hizmetleri ekleyin.",
   "svc_finish_profile_title": "Servis profilinizi tamamlayın",
   "svc_found": "{n} servis · {km} km",
+  "svc_gps_approx": "Yaklaşık konum (internet bağlantısına göre, şehir düzeyinde). Tam yer için şehir veya adres yazın.",
   "svc_gps_denied": "Konum izni verilmedi. Şehir veya adres yazıp arayın.",
   "svc_gps_failed": "Konumunuz belirlenemedi.",
   "svc_gps_retry": "Tekrar",

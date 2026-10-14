@@ -18,6 +18,7 @@ import '../../../models/ad_models.dart';
 import 'providers/route_filter.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 
 /// The "Home" tab body (bottom-nav branch 0) — the real, live cargo
 /// marketplace, connected to Supabase via marketplaceProvider. No
@@ -304,7 +305,7 @@ class _Hero extends ConsumerWidget {
             const SizedBox(height: 8),
             SizedBox(
               height: 52,
-              child: ListView.separated(
+              child: MouseDragScroll(child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: topRoutes.length > 5 ? 5 : topRoutes.length,
@@ -351,7 +352,7 @@ class _Hero extends ConsumerWidget {
                   ),
                   );
                 },
-              ),
+              )),
             ),
           ],
         ],

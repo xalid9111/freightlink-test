@@ -735,6 +735,7 @@
   "svc_finish_profile_body": "Add your location and services to appear on the map.",
   "svc_finish_profile_title": "Complete your service profile",
   "svc_found": "{n} services · {km} km",
+  "svc_gps_approx": "Approximate location (from your internet connection, city level). Type a city or address for the exact place.",
   "svc_gps_denied": "Location permission denied. Search by city or address.",
   "svc_gps_failed": "Could not get your location.",
   "svc_gps_retry": "Retry",

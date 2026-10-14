@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -66,7 +68,9 @@ class UserLocation {
 class UserLocationController extends StateNotifier<UserLocation> {
   UserLocationController() : super(const UserLocation(GpsState.idle, null));
 
-  Future<LatLng?> locate() async {
+  /// [allowApprox] false = only a real GPS / browser position (e.g. when
+  /// the position is saved as the service's address pin).
+  Future<LatLng?> locate({bool allowApprox = true}) async {
     if (state.state == GpsState.locating) return state.point;
     state = UserLocation(GpsState.locating, state.point);
     try {
@@ -107,7 +111,29 @@ class UserLocationController extends StateNotifier<UserLocation> {
       try {
         now = await Geolocator.checkPermission();
       } catch (_) {}
-      state = UserLocation(gpsStateForError(e, now), state.point);
+      final failed = gpsStateForError(e, now);
+      // Computers often have no GPS / Wi-Fi position: open the map at the
+      // city of the internet connection instead (not after a real "Block").
+      if (allowApprox && kIsWeb && failed != GpsState.denied) {
+        final approx = await _approxByIp();
+        if (approx != null) {
+          state = UserLocation(GpsState.approximate, approx);
+          return approx;
+        }
+      }
+      state = UserLocation(failed, state.point);
+    }
+    return null;
+  }
+
+  static Future<LatLng?> _approxByIp() async {
+    for (final url in ipGeoUrls) {
+      try {
+        final r = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+        if (r.statusCode != 200) continue;
+        final p = parseIpGeo(jsonDecode(r.body));
+        if (p != null) return LatLng(p.$1, p.$2);
+      } catch (_) {}
     }
     return null;
   }
@@ -145,6 +171,7 @@ IconData serviceCategoryIcon(String icon) => switch (icon) {
       'reefer' => Icons.ac_unit,
       'roadside' => Icons.support,
       'ads' => Icons.campaign,
+      'tarp' => Icons.roofing,
       _ => Icons.build,
     };
 

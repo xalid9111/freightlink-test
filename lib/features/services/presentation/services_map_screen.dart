@@ -16,6 +16,7 @@ import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
@@ -350,7 +351,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 34,
-                    child: ListView(
+                    child: MouseDragScroll(child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
                         _CatChip(
@@ -370,7 +371,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                             }),
                           ),
                       ],
-                    ),
+                    )),
                   ),
                   if (gpsMessageKey(loc.state) != null) ...[
                     const SizedBox(height: 8),
@@ -501,19 +502,22 @@ class _GpsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Approximate position (computers): an information, not an error.
+    final info = messageKey == 'svc_gps_approx';
+    final fg = info ? AppColors.text : AppColors.urgentFg;
     return Material(
-      color: AppColors.urgentBg,
+      color: info ? AppColors.cardAlt : AppColors.urgentBg,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
         child: Row(
           children: [
-            const Icon(Icons.location_off, size: 18, color: AppColors.urgentFg),
+            Icon(info ? Icons.location_searching : Icons.location_off, size: 18, color: fg),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 s.t(messageKey),
-                style: const TextStyle(fontSize: 12, color: AppColors.urgentFg, height: 1.3),
+                style: TextStyle(fontSize: 12, color: fg, height: 1.3),
               ),
             ),
             TextButton(onPressed: onRetry, child: Text(s.t('svc_gps_retry'), style: const TextStyle(fontSize: 12))),

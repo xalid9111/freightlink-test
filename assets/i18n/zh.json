@@ -735,6 +735,7 @@
   "svc_finish_profile_body": "添加您的位置和服务，即可显示在地图上。",
   "svc_finish_profile_title": "完善您的服务资料",
   "svc_found": "{n} 个服务 · {km} 公里",
+  "svc_gps_approx": "大致位置（根据网络连接，城市级别）。如需精确位置，请输入城市或地址。",
   "svc_gps_denied": "定位权限被拒绝。请按城市或地址搜索。",
   "svc_gps_failed": "无法获取您的位置。",
   "svc_gps_retry": "重试",

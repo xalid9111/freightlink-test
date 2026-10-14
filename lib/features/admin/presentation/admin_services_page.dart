@@ -497,7 +497,7 @@ class _CategoriesTab extends ConsumerWidget {
     final sort = TextEditingController(text: '${c?.sortOrder ?? 100}');
     var icon = c?.icon ?? 'build';
     var active = c?.isActive ?? true;
-    const icons = ['truck', 'engine', 'electrical', 'tyre', 'battery', 'tow', 'reefer', 'roadside', 'build'];
+    const icons = ['truck', 'engine', 'electrical', 'tyre', 'battery', 'tow', 'reefer', 'roadside', 'tarp', 'build'];
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(

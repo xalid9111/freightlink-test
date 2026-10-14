@@ -146,7 +146,8 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
 
   Future<void> _useGps() async {
     setState(() => _locating = true);
-    final p = await ref.read(userLocationProvider.notifier).locate();
+    // The pin is saved as the service's address: a real position only.
+    final p = await ref.read(userLocationProvider.notifier).locate(allowApprox: false);
     if (!mounted) return;
     setState(() {
       _locating = false;
