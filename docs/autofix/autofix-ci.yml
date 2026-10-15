@@ -5,7 +5,8 @@
 # A red result = the new version must NOT be merged / deployed.
 # Checks: static validators, SQL/RLS + data-preservation tests on a
 # throw-away Postgres (never the real Supabase), flutter analyze,
-# flutter test (unit + regression), flutter web build (compile check).
+# flutter test (unit + regression), flutter web build (compile check),
+# Edge Function tests (Node 22) and the payment dashboard bundles.
 name: AutoFix CI
 
 on:
@@ -37,11 +38,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Static checks (i18n, SQL, Dart structure)
+      # Node 22 runs the Edge Function tests (TypeScript without a build step).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Static checks (i18n, SQL, Dart structure, Edge Function tests)
         id: static
         run: |
           set +e
-          python3 scripts/validate_i18n.py && python3 scripts/validate_sql.py && python3 scripts/validate_dart.py
+          python3 scripts/validate_i18n.py && python3 scripts/validate_sql.py && python3 scripts/validate_dart.py &&
+            python3 scripts/bundle_payment_functions.py --check &&
+            node --experimental-strip-types --test supabase/functions/_shared/payments_test.ts supabase/functions/_shared/wa_verify_test.ts
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
       - name: SQL / RLS / data-preservation tests (throw-away Postgres)

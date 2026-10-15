@@ -34,6 +34,7 @@ import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
 import 'main_shell.dart';
 import 'password_recovery.dart';
+import '../../features/finance/presentation/finance_screen.dart';
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -198,6 +199,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/ad-order/:id',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => AdOrderScreen(id: state.pathParameters['id']!),
+      ),
+      // Profile → Maliyyə və ödənişlər (0037): finance owner only (server-checked).
+      GoRoute(
+        path: '/finance',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const FinanceScreen(),
       ),
       // Services module (migration 0017): profile page, create / edit own
       // service profile, "join as a mechanic / service".
