@@ -12,6 +12,7 @@ import '../../services/presentation/services_providers.dart';
 import '../data/admin_repository.dart';
 import 'admin_widgets.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/map_tiles.dart';
 
 /// Badge numbers for the side menu: pending profiles + pending ownership
 /// claims + open service complaints.
@@ -496,7 +497,7 @@ class _CategoriesTab extends ConsumerWidget {
     final sort = TextEditingController(text: '${c?.sortOrder ?? 100}');
     var icon = c?.icon ?? 'build';
     var active = c?.isActive ?? true;
-    const icons = ['truck', 'engine', 'electrical', 'tyre', 'battery', 'tow', 'reefer', 'roadside', 'build'];
+    const icons = ['truck', 'engine', 'electrical', 'tyre', 'battery', 'tow', 'reefer', 'roadside', 'tarp', 'build'];
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -740,7 +741,7 @@ class _AdminServiceFormState extends ConsumerState<AdminServiceForm> {
                   onTap: (_, pt) => setState(() => _point = pt),
                 ),
                 children: [
-                  TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'az.freightlink.app'),
+                  const AppTileLayer(),
                   if (_point != null)
                     MarkerLayer(markers: [
                       Marker(

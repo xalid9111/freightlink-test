@@ -14,6 +14,8 @@ import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -190,7 +192,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                         interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
                       ),
                       children: [
-                        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'az.freightlink.app'),
+                        const AppTileLayer(),
                         MarkerLayer(markers: [
                           Marker(point: LatLng(p.lat, p.lng), width: 44, height: 44, child: ServicePin(type: p.markerType, selected: true, pro: p.isPro)),
                         ]),
@@ -346,7 +348,7 @@ class _Photos extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 190,
-      child: ListView.separated(
+      child: MouseDragScroll(child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: urls.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -363,7 +365,7 @@ class _Photos extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

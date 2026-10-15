@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/admin_repository.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 
 // ---------------------------------------------------------------------
 // Formatting
@@ -264,7 +265,7 @@ class FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return MouseDragScroll(child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
@@ -279,7 +280,7 @@ class FilterBar extends StatelessWidget {
             ),
         ],
       ),
-    );
+    ));
   }
 }
 

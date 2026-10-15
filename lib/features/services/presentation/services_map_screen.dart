@@ -15,9 +15,9 @@ import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/mouse_drag_scroll.dart';
 
-const _tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const _userAgent = 'az.freightlink.app';
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
 /// tow trucks, with category chips, filters, a results sheet and
@@ -69,7 +69,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
     if (!mounted) return;
     if (p == null) {
       if (!initial) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t('svc_gps_failed'))));
+        // Say why (location off on the device / blocked / not found), not just "failed".
+        final why = gpsMessageKey(ref.read(userLocationProvider).state) ?? 'svc_gps_failed';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t(why))));
       }
       return;
     }
@@ -279,7 +281,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 },
               ),
               children: [
-                TileLayer(urlTemplate: _tileUrl, userAgentPackageName: _userAgent),
+                const AppTileLayer(),
                 if (selected != null && me != null)
                   PolylineLayer(polylines: [
                     Polyline(
@@ -289,7 +291,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                     ),
                   ]),
                 MarkerLayer(markers: _markers(items, me)),
-                RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+                const AppMapAttribution(),
               ],
             ),
           ),
@@ -349,7 +351,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 34,
-                    child: ListView(
+                    child: MouseDragScroll(child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
                         _CatChip(
@@ -369,11 +371,11 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                             }),
                           ),
                       ],
-                    ),
+                    )),
                   ),
-                  if (loc.state == GpsState.denied || loc.state == GpsState.unavailable) ...[
+                  if (gpsMessageKey(loc.state) != null) ...[
                     const SizedBox(height: 8),
-                    _GpsBanner(s: s, denied: loc.state == GpsState.denied, onRetry: () => _locate()),
+                    _GpsBanner(s: s, messageKey: gpsMessageKey(loc.state)!, onRetry: () => _locate()),
                   ],
                   if (_moved) ...[
                     const SizedBox(height: 8),
@@ -494,25 +496,28 @@ class _CatChip extends StatelessWidget {
 
 class _GpsBanner extends StatelessWidget {
   final AppStrings s;
-  final bool denied;
+  final String messageKey;
   final VoidCallback onRetry;
-  const _GpsBanner({required this.s, required this.denied, required this.onRetry});
+  const _GpsBanner({required this.s, required this.messageKey, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
+    // Approximate position (computers): an information, not an error.
+    final info = messageKey == 'svc_gps_approx';
+    final fg = info ? AppColors.text : AppColors.urgentFg;
     return Material(
-      color: AppColors.urgentBg,
+      color: info ? AppColors.cardAlt : AppColors.urgentBg,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
         child: Row(
           children: [
-            const Icon(Icons.location_off, size: 18, color: AppColors.urgentFg),
+            Icon(info ? Icons.location_searching : Icons.location_off, size: 18, color: fg),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                s.t(denied ? 'svc_gps_denied' : 'svc_gps_unavailable'),
-                style: const TextStyle(fontSize: 12, color: AppColors.urgentFg, height: 1.3),
+                s.t(messageKey),
+                style: TextStyle(fontSize: 12, color: fg, height: 1.3),
               ),
             ),
             TextButton(onPressed: onRetry, child: Text(s.t('svc_gps_retry'), style: const TextStyle(fontSize: 12))),

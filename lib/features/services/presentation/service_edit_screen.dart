@@ -19,6 +19,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/services_repository.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
+import '../../../core/widgets/map_tiles.dart';
 
 /// Create / edit the signed-in user's own service profile. Moderation
 /// fields (status, verified, rating) are never sent — the database
@@ -145,14 +146,17 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
 
   Future<void> _useGps() async {
     setState(() => _locating = true);
-    final p = await ref.read(userLocationProvider.notifier).locate();
+    // The pin is saved as the service's address: a real position only.
+    final p = await ref.read(userLocationProvider.notifier).locate(allowApprox: false);
     if (!mounted) return;
     setState(() {
       _locating = false;
       if (p != null) _point = p;
     });
     if (p == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t('svc_gps_failed'))));
+      // Say why (location off on the device / blocked / not found), not just "failed".
+      final why = gpsMessageKey(ref.read(userLocationProvider).state) ?? 'svc_gps_failed';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(stringsProvider).t(why))));
     } else {
       try {
         _mapCtrl.move(p, 15);
@@ -441,7 +445,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                             onTap: (_, p) => setState(() => _point = p),
                           ),
                           children: [
-                            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'az.freightlink.app'),
+                            const AppTileLayer(),
                             if (_point != null)
                               MarkerLayer(markers: [
                                 Marker(
