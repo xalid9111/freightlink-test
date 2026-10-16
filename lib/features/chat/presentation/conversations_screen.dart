@@ -12,6 +12,7 @@ import '../../../models/group_models.dart';
 import '../../../repositories/profile_repository.dart';
 import '../data/chat_delete_repository.dart';
 import '../data/group_repository.dart';
+import 'chat_list_logic.dart';
 import 'providers/chat_providers.dart';
 import 'widgets/message_actions.dart';
 import 'providers/group_providers.dart';
@@ -118,11 +119,12 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     // that person (plus an optional direct chat); they are grouped here and
     // a tap opens ONE thread with all of them (ConversationThreadScreen).
     final items = conversationsAsync.valueOrNull ?? const <ConversationWithCargo>[];
-    final chatPartnerIds = <String>{};
+    // People whose chat row is ON THE SCREEN. A chat I deleted is hidden,
+    // so that person must stay findable in the people search below.
+    final shownPartnerIds = <String>{};
     final byPartner = <String, List<ConversationWithCargo>>{};
     for (final item in items) {
       final otherId = user == null ? item.conversation.carrierUserId : item.conversation.otherParticipant(user.id);
-      chatPartnerIds.add(otherId);
       (byPartner[otherId] ??= []).add(item);
     }
     String routeOf(ConversationWithCargo item) {
@@ -151,15 +153,14 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       final unread = convs.fold<int>(0, (sum, c) => sum + (unreadByConversation[c.conversation.id] ?? 0));
       // Latest activity with this person, and whether any chat with them
       // still has something I have not deleted.
-      var last = latest.conversation.createdAt;
-      var visible = false;
-      for (final c in convs) {
-        final t = activity[c.conversation.id] ?? c.conversation.createdAt;
-        if (t.isAfter(last)) last = t;
-        final cleared = clears[c.conversation.id];
-        if (cleared == null || t.isAfter(cleared)) visible = true;
-      }
-      if (!visible) continue;
+      final state = partnerRowState(
+        [for (final c in convs) (id: c.conversation.id, createdAt: c.conversation.createdAt)],
+        activity: activity,
+        clears: clears,
+      );
+      if (!state.visible) continue;
+      final last = state.last;
+      shownPartnerIds.add(otherId);
       entries.add(_Entry(
         last,
         deletable(
@@ -262,7 +263,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                       loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
                       error: (_, __) => Text(strings.t('home_error_loading')),
                       data: (list) {
-                        final others = list.where((u) => !chatPartnerIds.contains(u.id)).toList();
+                        final others = peopleWithoutShownChats(list, (UserHit u) => u.id, shownPartnerIds);
                         if (others.isEmpty) {
                           return Padding(
                             padding: const EdgeInsets.all(8),
