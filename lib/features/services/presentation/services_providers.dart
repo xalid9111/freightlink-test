@@ -11,9 +11,11 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/service_models.dart';
+import '../../../services/geo_service.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/services_repository.dart';
 import 'gps_logic.dart';
+import 'service_search_logic.dart';
 
 export 'gps_logic.dart' show GpsState, gpsMessageKey;
 
@@ -45,6 +47,56 @@ final serviceReviewsProvider = FutureProvider.family<List<ServiceReview>, String
 
 final serviceNearbyProvider = FutureProvider.autoDispose.family<List<ServiceProvider>, ServiceQuery>((ref, q) {
   return ref.watch(servicesRepositoryProvider).nearby(q);
+});
+
+typedef ServiceSearchKey = ({String q, String lang});
+
+/// Universal search, services part: active + approved services anywhere
+/// (not only inside the map radius), best match first, then nearest.
+/// `distanceKm` = real distance from the user's GPS position, or null when
+/// it is not known (no GPS / approximate position / service without a pin).
+final serviceTextSearchProvider = FutureProvider.autoDispose.family<List<ServiceProvider>, ServiceSearchKey>((ref, key) async {
+  final q = key.q.trim();
+  if (searchTokens(q).isEmpty || q.length < 2) return const [];
+  final me = ref.watch(userLocationProvider.select((l) => l.state == GpsState.ok ? l.point : null));
+  // Typing debounce: a newer keystroke disposes this query → no request.
+  var gone = false;
+  ref.onDispose(() => gone = true);
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  if (gone) return const [];
+  final cats = await ref.watch(serviceCategoriesProvider.future).catchError((_) => const <ServiceCategory>[]);
+  final catIds = [for (final c in cats) if (categoryMatches(q, c.names.values)) c.id];
+  final rows = await ref.read(servicesRepositoryProvider).search(pattern: dbPattern(q), categoryIds: catIds);
+  final hits = <RankedHit<ServiceProvider>>[];
+  for (final p in rows) {
+    final names = [for (final c in cats) if (p.categories.contains(c.id)) ...c.names.values.whereType<String>()];
+    final rank = serviceMatchRank(
+      query: q,
+      name: p.name,
+      city: p.city,
+      address: p.address,
+      country: p.country,
+      specialty: p.specialty,
+      categoryNames: names,
+    );
+    if (rank == null) continue;
+    final km = userDistanceKm(userLat: me?.latitude, userLng: me?.longitude, lat: p.lat, lng: p.lng);
+    hits.add(RankedHit(p.copyWith(distanceKm: () => km), rank, km, p.name));
+  }
+  return sortHits(hits).take(30).toList();
+});
+
+/// Universal search, places part: cities, districts, streets, addresses
+/// in any country (OpenStreetMap), in the app language.
+final placeSuggestionsProvider = FutureProvider.autoDispose.family<List<PlaceSuggestion>, ServiceSearchKey>((ref, key) async {
+  final q = key.q.trim();
+  if (q.length < 3) return const [];
+  // Light use of the free map server: only after typing pauses.
+  var gone = false;
+  ref.onDispose(() => gone = true);
+  await Future<void>.delayed(const Duration(milliseconds: 600));
+  if (gone) return const [];
+  return ref.read(geoServiceProvider).searchPlaces(q, lang: key.lang);
 });
 
 /// Service kind chosen at registration ("Usta / Servis" → individual /

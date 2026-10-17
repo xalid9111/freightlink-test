@@ -12,6 +12,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/service_models.dart';
 import '../../../services/geo_service.dart';
 import '../data/services_repository.dart';
+import 'service_search_logic.dart';
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -37,6 +38,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
 
   ServiceQuery _query = ServiceQuery(lat: kDefaultServiceCenter.latitude, lng: kDefaultServiceCenter.longitude, radiusKm: 100);
   String? _selectedId;
+  /// Service chosen in the universal search; shown (card first) even when
+  /// it is outside the current map area or has no map position.
+  ServiceProvider? _picked;
   bool _moved = false;
   bool _geocoding = false;
   int _zoomBucket = 11;
@@ -46,11 +50,17 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   @override
   void initState() {
     super.initState();
+    _searchFocus.addListener(_onFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
+  }
+
+  void _onFocus() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _searchFocus.removeListener(_onFocus);
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _sheet.dispose();
@@ -97,9 +107,74 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
     setState(() {
       _query = _query.copyWith(lat: p.latitude, lng: p.longitude);
       _selectedId = null;
+      _picked = null;
       _moved = false;
     });
     _moveMap(p, 12);
+  }
+
+  /// Enter in the search box: an exact service name opens that service,
+  /// otherwise the first place found, otherwise the old place lookup.
+  Future<void> _submitSearch() async {
+    final key = (q: _searchCtrl.text.trim(), lang: ref.read(currentLocaleProvider).languageCode);
+    if (key.q.length < 2) return;
+    final services = ref.read(serviceTextSearchProvider(key)).valueOrNull ?? const <ServiceProvider>[];
+    if (services.isNotEmpty && foldText(services.first.name) == foldText(key.q)) {
+      _pickService(services.first);
+      return;
+    }
+    final places = ref.read(placeSuggestionsProvider(key)).valueOrNull ?? const <PlaceSuggestion>[];
+    if (places.isNotEmpty) {
+      _pickPlace(places.first);
+      return;
+    }
+    await _searchPlace();
+  }
+
+  /// A city / district / street / address from the search: the map goes
+  /// there and the nearby services of that area are loaded.
+  void _pickPlace(PlaceSuggestion pl) {
+    _searchFocus.unfocus();
+    final p = LatLng(pl.lat, pl.lng);
+    setState(() {
+      _searchCtrl.text = pl.title;
+      _query = _query.copyWith(lat: p.latitude, lng: p.longitude);
+      _selectedId = null;
+      _picked = null;
+      _moved = false;
+    });
+    _moveMap(p, placeZoom(pl.osmClass, pl.osmType));
+  }
+
+  /// A service from the search (anywhere): its card opens; with a real map
+  /// position the map goes there and nearby services load around it.
+  /// Without a position no pin is drawn (no fake point).
+  void _pickService(ServiceProvider p) {
+    _searchFocus.unfocus();
+    final hasPin = hasRealCoords(p.lat, p.lng);
+    setState(() {
+      _searchCtrl.text = p.name;
+      _picked = p;
+      _selectedId = p.id;
+      if (hasPin) {
+        _query = _query.copyWith(lat: p.lat, lng: p.lng);
+        _moved = false;
+      }
+    });
+    if (hasPin) _moveMap(LatLng(p.lat, p.lng), 14);
+    if (_sheet.isAttached && _sheet.size < 0.4) {
+      _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
+  }
+
+  void _pickCategory(ServiceCategory c) {
+    _searchFocus.unfocus();
+    setState(() {
+      _searchCtrl.clear();
+      _query = _query.copyWith(category: () => c.id);
+      _selectedId = null;
+      _picked = null;
+    });
   }
 
   void _searchHere() {
@@ -114,7 +189,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
 
   void _select(ServiceProvider p) {
     setState(() => _selectedId = p.id);
-    _moveMap(LatLng(p.lat, p.lng), math.max(_mapReady ? _map.camera.zoom : 12, 13));
+    if (hasRealCoords(p.lat, p.lng)) _moveMap(LatLng(p.lat, p.lng), math.max(_mapReady ? _map.camera.zoom : 12, 13));
     if (_sheet.isAttached && _sheet.size < 0.4) {
       _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
@@ -131,8 +206,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   }
 
   /// Simple grid clustering so weak phones never draw hundreds of pins.
-  List<Marker> _markers(List<ServiceProvider> items, LatLng? me) {
+  List<Marker> _markers(List<ServiceProvider> all, LatLng? me) {
     final out = <Marker>[];
+    final items = [for (final p in all) if (hasRealCoords(p.lat, p.lng)) p];
     final zoom = _zoomBucket;
     if (zoom >= 14 || items.length <= 25) {
       for (final p in items) {
@@ -230,14 +306,26 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
         ..addAll(pro)
         ..addAll(rest);
     }
+    // The service picked in the search keeps its real (user) distance and
+    // stays visible while it is selected, even outside the loaded area.
+    final picked = _picked != null && _picked!.id == _selectedId ? _picked : null;
+    if (picked != null) {
+      final i = items.indexWhere((p) => p.id == picked.id);
+      if (i >= 0) {
+        items[i] = picked;
+      } else {
+        items.insert(0, picked);
+      }
+    }
     ServiceProvider? selected;
     for (final p in items) {
       if (p.id == _selectedId) selected = p;
     }
     final me = loc.point;
+    final selectedHasPin = selected != null && hasRealCoords(selected.lat, selected.lng);
 
     RouteInfo? route;
-    if (selected != null && me != null) {
+    if (selected != null && selectedHasPin && me != null) {
       route = ref
           .watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: selected.lat, bLng: selected.lng)))
           .valueOrNull;
@@ -263,7 +351,12 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 },
                 onTap: (_, __) {
                   _searchFocus.unfocus();
-                  if (_selectedId != null) setState(() => _selectedId = null);
+                  if (_selectedId != null) {
+                    setState(() {
+                      _selectedId = null;
+                      _picked = null;
+                    });
+                  }
                 },
                 onPositionChanged: (camera, hasGesture) {
                   final b = camera.zoom.floor();
@@ -282,7 +375,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
               ),
               children: [
                 const AppTileLayer(),
-                if (selected != null && me != null)
+                if (selected != null && selectedHasPin && me != null)
                   PolylineLayer(polylines: [
                     Polyline(
                       points: route?.points ?? [me, LatLng(selected.lat, selected.lng)],
@@ -314,7 +407,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                             controller: _searchCtrl,
                             focusNode: _searchFocus,
                             textInputAction: TextInputAction.search,
-                            onSubmitted: (_) => _searchPlace(),
+                            onSubmitted: (_) => _submitSearch(),
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               isDense: true,
@@ -329,7 +422,10 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                                       ? null
                                       : IconButton(
                                           icon: const Icon(Icons.close, size: 18),
-                                          onPressed: () => setState(_searchCtrl.clear),
+                                          onPressed: () => setState(() {
+                                            _searchCtrl.clear();
+                                            _picked = null;
+                                          }),
                                         )),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                               filled: false,
@@ -348,6 +444,18 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                       ),
                     ],
                   ),
+                  if (_searchFocus.hasFocus && _searchCtrl.text.trim().length >= 2)
+                    TextFieldTapRegion(
+                      child: _SearchSuggestions(
+                        s: s,
+                        lang: lang,
+                        query: _searchCtrl.text.trim(),
+                        categories: cats,
+                        onPlace: _pickPlace,
+                        onService: _pickService,
+                        onCategory: _pickCategory,
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 34,
@@ -834,7 +942,9 @@ class ServiceListCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          !hasGps
+                          !hasRealCoords(p.lat, p.lng)
+                              ? s.t('svc_no_pin')
+                              : !hasGps
                               ? s.t('svc_route_need_gps')
                               : route == null
                                   ? s.t('svc_route_loading')
@@ -854,6 +964,127 @@ class ServiceListCard extends StatelessWidget {
                 ServiceContactBar(p: p, s: s, dense: true),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Suggestions under the search box while typing: matching categories,
+/// services (all active + approved ones, best match first, then nearest)
+/// and places (city, district, street, address — any country).
+class _SearchSuggestions extends ConsumerWidget {
+  final AppStrings s;
+  final String lang;
+  final String query;
+  final List<ServiceCategory> categories;
+  final ValueChanged<PlaceSuggestion> onPlace;
+  final ValueChanged<ServiceProvider> onService;
+  final ValueChanged<ServiceCategory> onCategory;
+
+  const _SearchSuggestions({
+    required this.s,
+    required this.lang,
+    required this.query,
+    required this.categories,
+    required this.onPlace,
+    required this.onService,
+    required this.onCategory,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = (q: query, lang: lang);
+    final services = ref.watch(serviceTextSearchProvider(key));
+    final places = ref.watch(placeSuggestionsProvider(key));
+    final cats = [for (final c in categories) if (categoryMatches(query, c.names.values)) c].take(3).toList();
+    final serviceList = (services.valueOrNull ?? const <ServiceProvider>[]).take(6).toList();
+    final placeList = (places.valueOrNull ?? const <PlaceSuggestion>[]).take(4).toList();
+    final loading = services.isLoading || places.isLoading;
+
+    String catNames(ServiceProvider p) =>
+        [for (final c in categories) if (p.categories.contains(c.id)) c.name(lang)].take(2).join(', ');
+
+    Widget header(String key) => Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+          child: Text(s.t(key).toUpperCase(),
+              style: const TextStyle(fontSize: 11, color: AppColors.textSoft, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+        );
+
+    final children = <Widget>[
+      if (cats.isNotEmpty) ...[
+        header('svc_sugg_categories'),
+        for (final c in cats)
+          ListTile(
+            dense: true,
+            leading: Icon(serviceCategoryIcon(c.icon), color: AppColors.accent),
+            title: Text(c.name(lang), maxLines: 1, overflow: TextOverflow.ellipsis),
+            onTap: () => onCategory(c),
+          ),
+      ],
+      if (serviceList.isNotEmpty) ...[
+        header('svc_sugg_services'),
+        for (final p in serviceList)
+          ListTile(
+            dense: true,
+            leading: Icon(serviceMarkerIcon(p.markerType), color: serviceMarkerColor(p.markerType)),
+            title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+            // City and kind of service tell services with the same name apart.
+            subtitle: Text(
+              [
+                if ((p.city ?? '').trim().isNotEmpty) p.city!.trim(),
+                if (catNames(p).isNotEmpty) catNames(p) else s.t(serviceMarkerLabelKey(p.markerType)),
+              ].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+            ),
+            // Real distance from the user only; nothing when it is unknown.
+            trailing: p.distanceKm == null
+                ? null
+                : Text(fmtKm(p.distanceKm!), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            onTap: () => onService(p),
+          ),
+      ],
+      if (placeList.isNotEmpty) ...[
+        header('svc_sugg_places'),
+        for (final pl in placeList)
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.place_outlined, color: AppColors.blue),
+            title: Text(pl.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: pl.subtitle.isEmpty
+                ? null
+                : Text(pl.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            onTap: () => onPlace(pl),
+          ),
+      ],
+      if (loading)
+        const Padding(
+          padding: EdgeInsets.all(12),
+          child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))),
+        )
+      else if (cats.isEmpty && serviceList.isEmpty && placeList.isEmpty)
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: Text(s.t('svc_sugg_none'), style: const TextStyle(color: AppColors.textSoft)),
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Material(
+        color: AppColors.hero.withValues(alpha: 0.98),
+        elevation: 4,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: math.min(380, MediaQuery.sizeOf(context).height * 0.45)),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.only(bottom: 6),
+            children: children,
           ),
         ),
       ),
