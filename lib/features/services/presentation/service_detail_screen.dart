@@ -11,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/service_models.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/services_repository.dart';
+import 'service_search_logic.dart' show hasRealCoords;
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -180,6 +181,8 @@ class ServiceDetailScreen extends ConsumerWidget {
                         mode: LaunchMode.externalApplication),
                   ),
                 const SizedBox(height: 10),
+                // Mini map only with a real position (no pin at 0,0).
+                if (hasRealCoords(p.lat, p.lng))
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: SizedBox(

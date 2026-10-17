@@ -167,7 +167,8 @@ class ServiceProvider {
 
   static String? _n(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
 
-  ServiceProvider copyWith({List<String>? photos, bool? isActive}) => ServiceProvider(
+  /// [distanceKm]: pass `() => km` to replace the distance (null = unknown).
+  ServiceProvider copyWith({List<String>? photos, bool? isActive, double? Function()? distanceKm}) => ServiceProvider(
         id: id,
         ownerId: ownerId,
         kind: kind,
@@ -196,7 +197,7 @@ class ServiceProvider {
         ratingAvg: ratingAvg,
         ratingCount: ratingCount,
         createdAt: createdAt,
-        distanceKm: distanceKm,
+        distanceKm: distanceKm != null ? distanceKm() : this.distanceKm,
       );
 }
 

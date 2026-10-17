@@ -106,6 +106,30 @@ class ServicesRepository {
     return list.map((r) => ServiceProvider.fromJson(Map<String, dynamic>.from(r as Map))).toList();
   }
 
+  /// Universal search: active, approved services anywhere (not limited to
+  /// the map radius). [pattern] is an `ilike` pattern for name / city /
+  /// address / speciality / country (see dbPattern); [categoryIds] adds
+  /// services of matching categories. Exact matching and ranking happen in
+  /// the app (service_search_logic.dart). RLS hides blocked owners.
+  Future<List<ServiceProvider>> search({String? pattern, List<String> categoryIds = const [], int limit = 200}) async {
+    final ors = <String>[
+      if (pattern != null)
+        for (final col in const ['name', 'city', 'address', 'specialty', 'country']) '$col.ilike.%$pattern%',
+      if (categoryIds.isNotEmpty) 'categories.ov.{${categoryIds.join(',')}}',
+    ];
+    if (ors.isEmpty) return const [];
+    final rows = await _c
+        .from('service_providers')
+        .select(_cols)
+        .eq('status', 'approved')
+        .eq('is_active', true)
+        .or(ors.join(','))
+        .order('name')
+        .limit(limit)
+        .timeout(_timeout);
+    return (rows as List).map((r) => ServiceProvider.fromJson(Map<String, dynamic>.from(r as Map))).toList();
+  }
+
   Future<ServiceProvider?> byId(String id) async {
     final row = await _c.from('service_providers').select(_cols).eq('id', id).maybeSingle().timeout(_timeout);
     if (row == null) return null;

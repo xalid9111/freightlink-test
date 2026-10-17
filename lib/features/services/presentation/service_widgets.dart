@@ -11,6 +11,7 @@ import '../../chat/data/group_repository.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/widgets/call_options.dart';
 import '../../chat/presentation/widgets/location_message.dart';
+import 'service_search_logic.dart' show hasRealCoords;
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -273,7 +274,8 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
           onTap: _opening ? null : () => _messageOptions(canMessage),
         ),
         const SizedBox(width: 6),
-        btn(icon: Icons.directions, label: s.t('svc_route'), onTap: _route),
+        // No map position → no route to a fake point.
+        btn(icon: Icons.directions, label: s.t('svc_route'), onTap: hasRealCoords(widget.p.lat, widget.p.lng) ? _route : null),
       ],
     );
   }

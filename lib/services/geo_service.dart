@@ -125,6 +125,63 @@ extension GeoCitySearch on GeoService {
   }
 }
 
+/// A city, district, street or address found by the Services search.
+class PlaceSuggestion {
+  final String title; // "Nərimanov" / "Atatürk Caddesi 12"
+  final String subtitle; // "Bakı, Azərbaycan"
+  final double lat;
+  final double lng;
+  final String? osmClass;
+  final String? osmType;
+  const PlaceSuggestion({required this.title, required this.subtitle, required this.lat, required this.lng, this.osmClass, this.osmType});
+}
+
+extension GeoPlaceSearch on GeoService {
+  /// Places matching [query] in any country (OpenStreetMap Nominatim), in
+  /// the app language. Empty on error / offline.
+  Future<List<PlaceSuggestion>> searchPlaces(String query, {String lang = 'az', int limit = 5}) async {
+    final q = query.trim();
+    if (q.length < 3) return const [];
+    try {
+      final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
+        'format': 'jsonv2',
+        'limit': '$limit',
+        'addressdetails': '1',
+        'accept-language': '$lang,en',
+        'q': q,
+      });
+      final res = await http.get(uri).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return const [];
+      final out = <PlaceSuggestion>[];
+      for (final item in jsonDecode(res.body) as List<dynamic>) {
+        final m = item as Map<String, dynamic>;
+        final lat = double.tryParse('${m['lat']}');
+        final lng = double.tryParse('${m['lon']}');
+        if (lat == null || lng == null) continue;
+        final display = '${m['display_name'] ?? ''}'.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        final name = '${m['name'] ?? ''}'.trim();
+        final title = name.isNotEmpty ? name : (display.isEmpty ? q : display.first);
+        final a = (m['address'] as Map<String, dynamic>?) ?? const {};
+        final area = [
+          a['city'] ?? a['town'] ?? a['village'] ?? a['county'] ?? a['state'],
+          a['country'],
+        ].whereType<Object>().map((e) => '$e').where((e) => e.isNotEmpty && e != title).toList();
+        out.add(PlaceSuggestion(
+          title: title,
+          subtitle: area.isNotEmpty ? area.join(', ') : display.skip(1).take(2).join(', '),
+          lat: lat,
+          lng: lng,
+          osmClass: m['category'] as String? ?? m['class'] as String?,
+          osmType: (m['addresstype'] ?? m['type']) as String?,
+        ));
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+}
+
 final geoServiceProvider = Provider<GeoService>((ref) => GeoService());
 
 typedef EndpointsKey = ({String pickupQuery, String destQuery, double? pLat, double? pLng, double? dLat, double? dLng});
