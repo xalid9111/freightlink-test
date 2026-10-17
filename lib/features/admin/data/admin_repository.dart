@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import 'rpc_migrations.dart';
 
 /// Single data-access point of the Admin Panel. Reads go through the
 /// normal tables (RLS lets admins see everything — is_admin() policies
@@ -98,7 +99,18 @@ String adminErrorText(Object e) {
   if (raw.contains('not_found')) return 'Qeyd tapılmadı (artıq silinmiş ola bilər).';
   if (raw.contains('invalid_')) return 'Yanlış dəyər göndərildi.';
   if (raw.contains('PGRST202') || raw.contains('Could not find the function')) {
-    return 'Server funksiyası tapılmadı — 0012 SQL hələ işə salınmayıb.';
+    return missingFunctionText(raw);
   }
   return 'Xəta: $raw';
+}
+
+/// "Function not found" (PGRST202): name the function and the SQL file that
+/// creates it, so the owner knows exactly which migration to run.
+String missingFunctionText(String raw) {
+  final fn = RegExp(r'function (?:public\.)?([a-z0-9_]+)').firstMatch(raw)?.group(1);
+  final file = fn == null ? null : kRpcMigration[fn];
+  if (file != null) {
+    return 'Server funksiyası tapılmadı ($fn) — Supabase-də $file SQL faylı işə salınmayıb.';
+  }
+  return 'Server funksiyası tapılmadı${fn == null ? '' : ' ($fn)'} — uyğun SQL faylı işə salınmayıb.';
 }

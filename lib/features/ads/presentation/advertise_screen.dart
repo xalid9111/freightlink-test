@@ -7,7 +7,9 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/ad_models.dart';
+import '../../services/presentation/services_providers.dart' show myServiceProvider;
 import 'ad_creative_view.dart';
+import 'ad_kind_logic.dart';
 import 'ads_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -29,10 +31,12 @@ class _AdvertiseScreenState extends ConsumerState<AdvertiseScreen> {
     final orders = ref.watch(myAdOrdersProvider);
     // The template window opens by itself once, when the page is entered.
     final templates = ref.watch(adTemplatesProvider);
+    final hasService = ref.watch(myServiceProvider).valueOrNull != null;
+    final serviceTemplates = hasService ? ref.watch(serviceAdTemplatesProvider).valueOrNull : null;
     // Admin switch "Reklam ver" (default OFF): no new orders, but customers
     // still see and pay their existing ones.
     final orderingOn = ref.watch(adsOrderingEnabledProvider).valueOrNull ?? false;
-    if (orderingOn && !_autoOpened && (templates.valueOrNull?.isNotEmpty ?? false)) {
+    if (orderingOn && !_autoOpened && ((templates.valueOrNull?.isNotEmpty ?? false) || (serviceTemplates?.isNotEmpty ?? false))) {
       _autoOpened = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) showAdTemplatePicker(context, ref);
@@ -92,100 +96,132 @@ class _AdvertiseScreenState extends ConsumerState<AdvertiseScreen> {
 }
 
 /// "Şablon seçin" window: the admin's active templates; tapping one opens
-/// the editor (texts, logo, colour, dates) with that template.
+/// the editor (texts, logo, colour, dates) with that template. A user with
+/// a service profile also sees the service templates ("Servis reklamı",
+/// selected first) — that ad leads to his own service page.
 Future<void> showAdTemplatePicker(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (ctx) => Consumer(
-      builder: (ctx, ref, _) {
-        final s = ref.watch(stringsProvider);
-        final async = ref.watch(adTemplatesProvider);
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.75,
-          maxChildSize: 0.95,
-          minChildSize: 0.4,
-          builder: (ctx, scroll) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(s.t('adv_pick_template_title'), style: Theme.of(ctx).textTheme.titleMedium)),
-                    IconButton(onPressed: () => Navigator.of(ctx).pop(), icon: const Icon(Icons.close)),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(s.t('adv_pick_template_sub'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
-              ),
-              Expanded(
-                child: async.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (_, __) => Center(child: Text(s.t('home_error_loading'))),
-                  data: (list) => list.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(s.t('adv_no_templates'), textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppColors.textSoft)),
-                          ),
-                        )
-                      : ListView.separated(
-                          controller: scroll,
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                          itemCount: list.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (ctx, i) {
-                            final t = list[i];
-                            return Material(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(14),
-                              clipBehavior: Clip.antiAlias,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.of(ctx).pop();
-                                  context.pushOnce('/ad-create?tpl=${t.id}');
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    AdCreativeView(creative: t.sample()),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                          ),
-                                          if (t.logo != null)
-                                            const Padding(
-                                              padding: EdgeInsets.only(right: 8),
-                                              child: Icon(Icons.image_outlined, size: 16, color: AppColors.textSoft),
-                                            ),
-                                          Text(s.t('adv_pick_this'),
-                                              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
+    builder: (ctx) => _TemplatePicker(open: (route) => context.pushOnce(route)),
   );
+}
+
+class _TemplatePicker extends ConsumerStatefulWidget {
+  final void Function(String route) open;
+  const _TemplatePicker({required this.open});
+
+  @override
+  ConsumerState<_TemplatePicker> createState() => _TemplatePickerState();
+}
+
+class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
+  AdKind? _kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
+    final myService = ref.watch(myServiceProvider).valueOrNull;
+    final kinds = adKindsFor(hasService: myService != null);
+    final kind = kinds.contains(_kind) ? _kind! : kinds.first;
+    final async = ref.watch(kind == AdKind.service ? serviceAdTemplatesProvider : adTemplatesProvider);
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      builder: (ctx, scroll) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
+            child: Row(
+              children: [
+                Expanded(child: Text(s.t('adv_pick_template_title'), style: Theme.of(ctx).textTheme.titleMedium)),
+                IconButton(onPressed: () => Navigator.of(ctx).pop(), icon: const Icon(Icons.close)),
+              ],
+            ),
+          ),
+          if (kinds.length > 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: SegmentedButton<AdKind>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(value: AdKind.service, icon: const Icon(Icons.storefront, size: 18), label: Text(s.t('adv_kind_service'))),
+                  ButtonSegment(value: AdKind.cargo, icon: const Icon(Icons.local_shipping, size: 18), label: Text(s.t('adv_kind_cargo'))),
+                ],
+                selected: {kind},
+                onSelectionChanged: (v) => setState(() => _kind = v.first),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(s.t(kind == AdKind.service ? 'adv_pick_template_sub_service' : 'adv_pick_template_sub'),
+                style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+          ),
+          Expanded(
+            child: async.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => Center(child: Text(s.t('home_error_loading'))),
+              data: (list) => list.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(s.t('adv_no_templates'), textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.textSoft)),
+                      ),
+                    )
+                  : ListView.separated(
+                      controller: scroll,
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (ctx, i) {
+                        final t = list[i];
+                        return Material(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(14),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(ctx).pop();
+                              widget.open(adCreateRoute(kind, t.id, serviceId: myService?.id));
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AdCreativeView(creative: t.sample()),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                      ),
+                                      if (t.logo != null)
+                                        const Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Icon(Icons.image_outlined, size: 16, color: AppColors.textSoft),
+                                        ),
+                                      Text(s.t('adv_pick_this'),
+                                          style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 const adSectionHeader = TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700);
