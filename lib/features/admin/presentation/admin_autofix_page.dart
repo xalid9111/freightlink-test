@@ -53,6 +53,32 @@ Color _kindColor(String k) => switch (k) {
       _ => AppColors.accent,
     };
 
+/// Text of one problem for "Kopyala" (everything needed to fix it).
+String autofixReport(Map<String, dynamic> r) {
+  final b = StringBuffer()
+    ..writeln('Növ: ${_kindLabels[r['kind']] ?? r['kind']}  Kod: ${txt(r['code'])}')
+    ..writeln('Mesaj: ${txt(r['message'])}')
+    ..writeln('Fayl: ${txt(r['file'])}${r['line'] == null ? '' : ':${r['line']}'}')
+    ..writeln('Səhifə: ${txt(r['route'])}')
+    ..writeln('Say: ${r['count']}  İstifadəçi: ${r['users']}  Avtomatik bərpa: ${r['auto_fixed']}')
+    ..writeln('İlk: ${fmtDateTime(r['first_seen_at'])}  Son: ${fmtDateTime(r['last_seen_at'])}')
+    ..writeln('Versiya: ${txt(r['app_version'])}  Brauzer: ${txt(r['user_agent'])}')
+    ..writeln('\nAddımlar:\n${txt(r['breadcrumbs'])}')
+    ..writeln('\nStack:\n${txt(r['stack'])}');
+  return b.toString();
+}
+
+/// "Hamısını kopyala": every problem in the list, numbered, in one text.
+String autofixReportAll(List<Map<String, dynamic>> rows) {
+  final b = StringBuffer('AutoFix — ${rows.length} problem\n');
+  for (var i = 0; i < rows.length; i++) {
+    b
+      ..writeln('\n========== ${i + 1} / ${rows.length} ==========')
+      ..write(autofixReport(rows[i]));
+  }
+  return b.toString();
+}
+
 class AdminAutoFixPage extends ConsumerWidget {
   const AdminAutoFixPage({super.key});
 
@@ -104,7 +130,22 @@ class AdminAutoFixPage extends ConsumerWidget {
             data: (list) => list.isEmpty
                 ? const EmptyNote('Açıq problem yoxdur 👍')
                 : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // All problems shown in the list at once (no picking one by one).
+                      OutlinedButton.icon(
+                        key: const ValueKey('autofix-copy-all'),
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: autofixReportAll(list)));
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('${list.length} problem kopyalandı')));
+                          }
+                        },
+                        icon: const Icon(Icons.copy_all, size: 18),
+                        label: Text('Hamısını kopyala (${list.length})'),
+                      ),
+                      const SizedBox(height: 10),
                       for (final e in list)
                         _ErrorCard(row: e, onChanged: () => ref.invalidate(_autofixErrorsProvider)),
                     ],
@@ -130,19 +171,7 @@ class _ErrorCardState extends State<_ErrorCard> {
 
   Map<String, dynamic> get r => widget.row;
 
-  String _report() {
-    final b = StringBuffer()
-      ..writeln('Növ: ${_kindLabels[r['kind']] ?? r['kind']}  Kod: ${txt(r['code'])}')
-      ..writeln('Mesaj: ${txt(r['message'])}')
-      ..writeln('Fayl: ${txt(r['file'])}${r['line'] == null ? '' : ':${r['line']}'}')
-      ..writeln('Səhifə: ${txt(r['route'])}')
-      ..writeln('Say: ${r['count']}  İstifadəçi: ${r['users']}  Avtomatik bərpa: ${r['auto_fixed']}')
-      ..writeln('İlk: ${fmtDateTime(r['first_seen_at'])}  Son: ${fmtDateTime(r['last_seen_at'])}')
-      ..writeln('Versiya: ${txt(r['app_version'])}  Brauzer: ${txt(r['user_agent'])}')
-      ..writeln('\nAddımlar:\n${txt(r['breadcrumbs'])}')
-      ..writeln('\nStack:\n${txt(r['stack'])}');
-    return b.toString();
-  }
+  String _report() => autofixReport(r);
 
   Future<void> _fix() async {
     final action = autofixActionFor('${r['kind']}');
