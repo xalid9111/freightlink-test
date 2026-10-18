@@ -3,7 +3,7 @@
 --
 -- * market_listings: one sale ad. Owner writes draft / submits it
 --   ("Elanı dərc et" → pending); an ADMIN approves it (active) before
---   anybody else sees it. Owner can edit, mark sold, delete his own ad.
+--   anybody else sees it. Owner can edit, mark sold, delete their own ad.
 --   Editing an active ad sends it back to the admin (pending).
 --   Moderation / VIP / views columns are protected by a trigger: only
 --   admins (and the trusted server functions below) change them.
