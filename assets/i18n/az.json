@@ -995,5 +995,8 @@
   "mk_fav_empty": "Seçilmiş elan yoxdur. Elandakı ürəyə basın.",
   "mk_gearbox_short": "Qutu",
   "mk_published": "Elan dərc edildi və hamıya görünür.",
-  "mk_publish_note": "Elan dərc edilən kimi hamıya görünəcək."
+  "mk_publish_note": "Elan dərc edilən kimi hamıya görünəcək.",
+  "settings_appearance": "Görünüş",
+  "theme_night": "Gecə",
+  "theme_day": "Gündüz"
 }

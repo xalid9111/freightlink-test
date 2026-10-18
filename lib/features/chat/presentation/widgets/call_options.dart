@@ -24,7 +24,7 @@ void showCallOptions(BuildContext context, AppStrings strings, String phone) {
             child: Text(phone, style: AppFonts.mono(size: 14, color: AppColors.textSoft)),
           ),
           ListTile(
-            leading: const Icon(Icons.call, color: AppColors.accent),
+            leading: Icon(Icons.call, color: AppColors.accent),
             title: Text(strings.t('chat_call_phone')),
             onTap: () {
               Navigator.of(ctx).pop();

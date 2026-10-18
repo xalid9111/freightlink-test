@@ -241,8 +241,8 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
             TextButton.icon(
               key: const ValueKey('mk-save-draft'),
               onPressed: _busy || _uploading || !_loaded || _missing ? null : () => _save(s, publish: false),
-              icon: const Icon(Icons.save_outlined, color: AppColors.accent),
-              label: Text(s.t('mk_save'), style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+              icon: Icon(Icons.save_outlined, color: AppColors.accent),
+              label: Text(s.t('mk_save'), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -251,7 +251,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
             : _missing
                 ? Center(
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(s.t(_error ?? 'mk_not_found'), style: const TextStyle(color: AppColors.textSoft)),
+                      Text(s.t(_error ?? 'mk_not_found'), style: TextStyle(color: AppColors.textSoft)),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: () {
@@ -405,7 +405,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                   _Section(
                     n: 6,
                     title: s.t('mk_s_photos'),
-                    trailing: Text('${_d.photos.length} / $kMarketMaxPhotos', style: const TextStyle(color: AppColors.textSoft)),
+                    trailing: Text('${_d.photos.length} / $kMarketMaxPhotos', style: TextStyle(color: AppColors.textSoft)),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       ReorderTileGrid(
                         ids: _d.photos,
@@ -449,14 +449,14 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                                   child: _uploading
                                       ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                                       : Column(mainAxisSize: MainAxisSize.min, children: [
-                                          const Icon(Icons.add, color: AppColors.accent, size: 30),
+                                          Icon(Icons.add, color: AppColors.accent, size: 30),
                                           Text(s.t('mk_add_photo'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
                                         ]),
                                 ),
                               ),
                       ),
                       const SizedBox(height: 6),
-                      Text(s.t('mk_photos_hint'), style: const TextStyle(color: AppColors.textSoft, fontSize: 11.5)),
+                      Text(s.t('mk_photos_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 11.5)),
                     ]),
                   ),
                   _Section(n: 7, title: s.t('mk_s_description'), child: TextField(
@@ -471,7 +471,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                   )),
                   if (_error != null) ...[
                     const SizedBox(height: 4),
-                    Text(s.t(_error!), style: const TextStyle(color: AppColors.danger)),
+                    Text(s.t(_error!), style: TextStyle(color: AppColors.danger)),
                   ],
                   const SizedBox(height: 12),
                   FilledButton.icon(
@@ -484,7 +484,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                     label: Text(s.t('mk_publish'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                   ),
                   const SizedBox(height: 8),
-                  Text(s.t(_orig?.status == MarketStatus.inactive ? 'mk_review_note' : 'mk_publish_note'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                  Text(s.t(_orig?.status == MarketStatus.inactive ? 'mk_review_note' : 'mk_publish_note'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                 ],
               ),
       ),
@@ -600,7 +600,7 @@ class _Note extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: AppColors.urgentBg, borderRadius: BorderRadius.circular(12)),
-      child: Text(text, style: const TextStyle(color: AppColors.urgentFg)),
+      child: Text(text, style: TextStyle(color: AppColors.urgentFg)),
     );
   }
 }

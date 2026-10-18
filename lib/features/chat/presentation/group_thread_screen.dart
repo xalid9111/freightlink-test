@@ -78,7 +78,7 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
           onTap: () => _showInfo(context, strings),
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 19,
                 backgroundColor: AppColors.routeSoft,
                 child: Icon(Icons.groups_2_outlined, color: AppColors.route, size: 20),
@@ -92,9 +92,9 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
                     Text(group?.name ?? strings.t('chat_group'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                     Text(strings.t('chat_group_member_count', {'n': '${members.length}'}),
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ],
                 ),
               ),
@@ -192,7 +192,7 @@ class _SenderName extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.pushOnce('/user/$userId'),
       child: Text(p?.fullName ?? '…',
-          style: const TextStyle(color: AppColors.accent, fontSize: 12.5, fontWeight: FontWeight.w700)),
+          style: TextStyle(color: AppColors.accent, fontSize: 12.5, fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -258,7 +258,7 @@ class _GroupBubble extends StatelessWidget {
             if (!deleted && (text ?? '').isNotEmpty && !_isBareLocation(text!))
               Text(text!, style: const TextStyle(color: Colors.white, fontSize: 14.5)),
             const SizedBox(height: 2),
-            Text(_hhmm(message.createdAt), style: const TextStyle(fontSize: 11, color: ChatColors.meta)),
+            Text(_hhmm(message.createdAt), style: TextStyle(fontSize: 11, color: ChatColors.meta)),
           ],
         ),
       ),
@@ -344,7 +344,7 @@ class _GroupInfoSheet extends ConsumerWidget {
             ],
           ),
           Text(strings.t('chat_group_member_count', {'n': '${members.length}'}),
-              style: const TextStyle(color: AppColors.textSoft)),
+              style: TextStyle(color: AppColors.textSoft)),
           const SizedBox(height: 12),
           if (iAmAdmin)
             FilledButton.icon(
@@ -380,7 +380,7 @@ class _GroupInfoSheet extends ConsumerWidget {
             ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, side: const BorderSide(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, side: BorderSide(color: AppColors.danger)),
             icon: const Icon(Icons.logout),
             label: Text(strings.t('chat_group_leave')),
             onPressed: me == null
@@ -423,12 +423,12 @@ class _MemberRow extends ConsumerWidget {
       leading: UserAvatar(imageUrl: p?.avatarUrl, initials: p?.initials ?? '?', online: online),
       title: Text(isMe ? '${p?.fullName ?? ''} (${strings.t('chat_group_you')})' : (p?.fullName ?? '…'),
           maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: member.isAdmin ? Text(strings.t('chat_group_admin'), style: const TextStyle(color: AppColors.accent)) : null,
+      subtitle: member.isAdmin ? Text(strings.t('chat_group_admin'), style: TextStyle(color: AppColors.accent)) : null,
       trailing: onRemove == null
           ? null
           : IconButton(
               tooltip: strings.t('chat_group_remove'),
-              icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger),
+              icon: Icon(Icons.remove_circle_outline, color: AppColors.danger),
               onPressed: onRemove,
             ),
     );

@@ -78,7 +78,7 @@ Widget _actions(List<Widget> buttons) => Padding(
 
 ButtonStyle get _dangerStyle => OutlinedButton.styleFrom(
       foregroundColor: AppColors.danger,
-      side: const BorderSide(color: AppColors.danger),
+      side: BorderSide(color: AppColors.danger),
     );
 
 // =====================================================================
@@ -98,7 +98,7 @@ class AdminDashboardPage extends ConsumerWidget {
     final cargo = ref.watch(adminCargoProvider).valueOrNull ?? const <JsonRow>[];
     final usersById = indexById(users);
 
-    Widget card(String label, String key, IconData icon, {Color color = AppColors.accent, String? section}) => StatCard(
+    Widget card(String label, String key, IconData icon, {Color? color, String? section}) => StatCard(
           label: label,
           value: stats.hasValue ? (s[key] ?? 0) : null,
           icon: icon,
@@ -114,7 +114,7 @@ class AdminDashboardPage extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(color: AppColors.urgentBg, borderRadius: BorderRadius.circular(10)),
-            child: Text(adminErrorText(stats.error!), style: const TextStyle(color: AppColors.urgentFg)),
+            child: Text(adminErrorText(stats.error!), style: TextStyle(color: AppColors.urgentFg)),
           ),
         Wrap(
           spacing: 10,
@@ -200,7 +200,7 @@ class AdminDashboardPage extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: AdminRow(
-            leading: const Icon(Icons.route_outlined, color: AppColors.route),
+            leading: Icon(Icons.route_outlined, color: AppColors.route),
             title: 'Daşıma · ${_route(cargoById['${r['cargo_id']}'])}',
             subtitle: 'ID ${shortId(r['id'])}',
             chips: [AdminChip.status(r['status'])],
@@ -230,13 +230,13 @@ bool _cargoMatches(String q, JsonRow r, Map<String, JsonRow> users) => adminMatc
     ]);
 
 Widget _cargoRow(BuildContext context, JsonRow c, Map<String, JsonRow> users) => AdminRow(
-      leading: const Icon(Icons.inventory_2_outlined, color: AppColors.accent),
+      leading: Icon(Icons.inventory_2_outlined, color: AppColors.accent),
       title: _route(c),
       subtitle: '${_userName(users, c['owner_id'])} · ${_tons(c['weight_kg'])} · ${_money(c['offered_price'], c['currency'])} · '
           'Yükləmə ${fmtDate(c['pickup_date'])} · Yerləşdirilib ${fmtDateTime(c['created_at'])}',
       chips: [
         AdminChip.status(c['status']),
-        if (c['is_hidden'] == true) const AdminChip('Gizli', color: AppColors.danger),
+        if (c['is_hidden'] == true) AdminChip('Gizli', color: AppColors.danger),
         if (c['is_demo'] == true) const AdminChip('Demo'),
       ],
       dimmed: c['is_hidden'] == true,
@@ -250,15 +250,15 @@ Widget _userRow(BuildContext context, JsonRow u) => AdminRow(
         backgroundImage: (u['avatar_url'] as String?)?.isNotEmpty == true ? NetworkImage(u['avatar_url'] as String) : null,
         child: (u['avatar_url'] as String?)?.isNotEmpty == true
             ? null
-            : const Icon(Icons.person_outline, size: 18, color: AppColors.textSoft),
+            : Icon(Icons.person_outline, size: 18, color: AppColors.textSoft),
       ),
       title: txt(u['full_name']),
       subtitle: '${txt(u['email'])} · ${txt(u['phone'])} · Qeydiyyat ${fmtDate(u['created_at'])}',
       chips: [
         AdminChip(roleLabel(u['role']), color: u['role'] == 'admin' ? AppColors.accent : AppColors.blue),
-        if (u['is_verified'] == true) const AdminChip('Təsdiqli ✓', color: AppColors.online),
-        if (u['is_blocked'] == true) const AdminChip('Bloklu', color: AppColors.danger),
-        if (u['is_active'] == false) const AdminChip('Deaktiv', color: AppColors.danger),
+        if (u['is_verified'] == true) AdminChip('Təsdiqli ✓', color: AppColors.online),
+        if (u['is_blocked'] == true) AdminChip('Bloklu', color: AppColors.danger),
+        if (u['is_active'] == false) AdminChip('Deaktiv', color: AppColors.danger),
       ],
       dimmed: u['is_active'] == false,
       onTap: () => showUserDetail(context, u['id'] as String),
@@ -321,7 +321,7 @@ Future<void> showCargoDetail(BuildContext context, String id) {
         children: [
           Wrap(spacing: 6, children: [
             AdminChip.status(cargo['status']),
-            if (hidden) const AdminChip('Gizli', color: AppColors.danger),
+            if (hidden) AdminChip('Gizli', color: AppColors.danger),
           ]),
           const SizedBox(height: 8),
           KV('Marşrut', _route(cargo)),
@@ -395,7 +395,7 @@ Future<void> showCargoDetail(BuildContext context, String id) {
             ),
           ]),
           SectionTitle('Təkliflər (${offers.length})'),
-          if (offers.isEmpty) const Text('Təklif yoxdur', style: TextStyle(color: AppColors.textSoft)),
+          if (offers.isEmpty) Text('Təklif yoxdur', style: TextStyle(color: AppColors.textSoft)),
           for (final o in offers)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -473,7 +473,7 @@ Future<void> _editCargo(BuildContext context, JsonRow c) async {
                       decoration: InputDecoration(labelText: labels[e.key]),
                     ),
                   ),
-                if (error != null) Text(error!, style: const TextStyle(color: AppColors.danger)),
+                if (error != null) Text(error!, style: TextStyle(color: AppColors.danger)),
               ],
             ),
           ),
@@ -605,9 +605,9 @@ Future<void> showUserDetail(BuildContext context, String id) {
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 4, children: [
             AdminChip(roleLabel(u['role']), color: AppColors.blue),
-            if (u['is_verified'] == true) const AdminChip('Təsdiqli ✓', color: AppColors.online),
-            if (blocked) const AdminChip('Bloklu', color: AppColors.danger),
-            if (!active) const AdminChip('Deaktiv', color: AppColors.danger),
+            if (u['is_verified'] == true) AdminChip('Təsdiqli ✓', color: AppColors.online),
+            if (blocked) AdminChip('Bloklu', color: AppColors.danger),
+            if (!active) AdminChip('Deaktiv', color: AppColors.danger),
           ]),
           const SizedBox(height: 8),
           KV('E-poçt', u['email']),
@@ -702,10 +702,10 @@ Future<void> showUserDetail(BuildContext context, String id) {
             ),
           ]),
           SectionTitle('Yükləri (${myCargo.length})'),
-          if (myCargo.isEmpty) const Text('Yük yoxdur', style: TextStyle(color: AppColors.textSoft)),
+          if (myCargo.isEmpty) Text('Yük yoxdur', style: TextStyle(color: AppColors.textSoft)),
           for (final c in myCargo.take(30)) Padding(padding: const EdgeInsets.only(bottom: 6), child: _cargoRow(ctx, c, users)),
           SectionTitle('Təklifləri (${offers.length})'),
-          if (offers.isEmpty) const Text('Təklif yoxdur', style: TextStyle(color: AppColors.textSoft)),
+          if (offers.isEmpty) Text('Təklif yoxdur', style: TextStyle(color: AppColors.textSoft)),
           for (final o in offers.take(30))
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -717,7 +717,7 @@ Future<void> showUserDetail(BuildContext context, String id) {
               ),
             ),
           SectionTitle('Daşımaları (${shipments.length})'),
-          if (shipments.isEmpty) const Text('Daşıma yoxdur', style: TextStyle(color: AppColors.textSoft)),
+          if (shipments.isEmpty) Text('Daşıma yoxdur', style: TextStyle(color: AppColors.textSoft)),
           for (final s in shipments.take(30))
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -843,7 +843,7 @@ class _AdminShipmentsPageState extends ConsumerState<AdminShipmentsPage> {
             : [
                 for (final s in list)
                   AdminRow(
-                    leading: const Icon(Icons.route_outlined, color: AppColors.route),
+                    leading: Icon(Icons.route_outlined, color: AppColors.route),
                     title: _route(cargo['${s['cargo_id']}']),
                     subtitle: '${_userName(users, cargo['${s['cargo_id']}']?['owner_id'])} → '
                         '${_userName(users, carrierUsers['${s['carrier_id']}'])} · ${_money(s['agreed_price'], s['currency'])} · '
@@ -955,7 +955,7 @@ class _AdminOffersPageState extends ConsumerState<AdminOffersPage> {
             : [
                 for (final o in list)
                   AdminRow(
-                    leading: const Icon(Icons.request_quote_outlined, color: AppColors.accent),
+                    leading: Icon(Icons.request_quote_outlined, color: AppColors.accent),
                     title: _route(cargo['${o['cargo_id']}']),
                     subtitle: '${_userName(users, carrierUsers['${o['carrier_id']}'])} · ${_money(o['offered_price'], o['currency'])} · '
                         '${fmtDateTime(o['created_at'])}',
@@ -1062,7 +1062,7 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
             : [
                 for (final r in list)
                   AdminRow(
-                    leading: const Icon(Icons.report_outlined, color: AppColors.danger),
+                    leading: Icon(Icons.report_outlined, color: AppColors.danger),
                     title: txt(r['reason']),
                     subtitle: '${_targetLabels[r['target_type']] ?? txt(r['target_type'])} ${shortId(r['target_id'])} · '
                         '${_userName(users, r['reporter_id'])} · ${fmtDateTime(r['created_at'])}',
@@ -1170,7 +1170,7 @@ class AdminAuditPage extends ConsumerWidget {
           .toList();
       return _Page(
         title: 'Audit Log (${list.length})',
-        header: const [
+        header: [
           Text('Admin tərəfindən edilən bütün dəyişikliklər. Yazılar yalnız serverdə yaradılır və dəyişdirilə bilməz.',
               style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
         ],
@@ -1179,7 +1179,7 @@ class AdminAuditPage extends ConsumerWidget {
             : [
                 for (final a in list)
                   AdminRow(
-                    leading: const Icon(Icons.history, color: AppColors.textSoft),
+                    leading: Icon(Icons.history, color: AppColors.textSoft),
                     title: _actionLabels[a['action']] ?? txt(a['action']),
                     subtitle: '${_userName(users, a['admin_id'])} · ${txt(a['entity_type'])} ${shortId(a['entity_id'])} · ${fmtDateTime(a['created_at'])}',
                     chips: [if (a['note'] != null) AdminChip('Qeyd: ${a['note']}')],
@@ -1210,7 +1210,7 @@ Widget _jsonBox(Object? v) => Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.line)),
-      child: SelectableText(prettyJson(v), style: const TextStyle(fontFamily: 'Arial', fontSize: 12, color: AppColors.text)),
+      child: SelectableText(prettyJson(v), style: TextStyle(fontFamily: 'Arial', fontSize: 12, color: AppColors.text)),
     );
 
 // =====================================================================
@@ -1297,7 +1297,7 @@ class _AdminSystemPageState extends ConsumerState<AdminSystemPage> {
           ),
         ),
         const SectionTitle('Təhlükəsizlik'),
-        const Text(
+        Text(
           '• Bütün admin əməliyyatları serverdə is_admin() ilə yoxlanılır (SECURITY DEFINER RPC).\n'
           '• Tətbiqdə service-role açarı yoxdur.\n'
           '• Hər dəyişiklik Audit Log-a yazılır.\n'

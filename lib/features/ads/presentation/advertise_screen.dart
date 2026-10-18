@@ -60,7 +60,7 @@ class _AdvertiseScreenState extends ConsumerState<AdvertiseScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
         children: [
           if (orderingOn) ...[
-            Text(s.t('adv_intro'), style: const TextStyle(color: AppColors.textSoft, height: 1.4)),
+            Text(s.t('adv_intro'), style: TextStyle(color: AppColors.textSoft, height: 1.4)),
             const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: () => showAdTemplatePicker(context, ref),
@@ -74,18 +74,18 @@ class _AdvertiseScreenState extends ConsumerState<AdvertiseScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(12)),
-              child: Text(s.t('adv_ordering_closed'), style: const TextStyle(color: AppColors.textSoft, height: 1.4)),
+              child: Text(s.t('adv_ordering_closed'), style: TextStyle(color: AppColors.textSoft, height: 1.4)),
             ),
           const SizedBox(height: 22),
           Text(s.t('ad_my_orders').toUpperCase(), style: adSectionHeader),
           const SizedBox(height: 8),
           orders.when(
             loading: () => const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
-            error: (_, __) => Text(s.t('home_error_loading'), style: const TextStyle(color: AppColors.textSoft)),
+            error: (_, __) => Text(s.t('home_error_loading'), style: TextStyle(color: AppColors.textSoft)),
             data: (list) => list.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Text(s.t('ad_no_orders'), style: const TextStyle(color: AppColors.textSoft)),
+                    child: Text(s.t('ad_no_orders'), style: TextStyle(color: AppColors.textSoft)),
                   )
                 : Column(children: [for (final o in list) AdOrderTile(order: o, s: s)]),
           ),
@@ -159,7 +159,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(s.t(kind == AdKind.service ? 'adv_pick_template_sub_service' : 'adv_pick_template_sub'),
-                style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
           ),
           Expanded(
             child: async.when(
@@ -170,7 +170,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(s.t('adv_no_templates'), textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSoft)),
+                            style: TextStyle(color: AppColors.textSoft)),
                       ),
                     )
                   : ListView.separated(
@@ -201,12 +201,12 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
                                         child: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                                       ),
                                       if (t.logo != null)
-                                        const Padding(
-                                          padding: EdgeInsets.only(right: 8),
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: 8),
                                           child: Icon(Icons.image_outlined, size: 16, color: AppColors.textSoft),
                                         ),
                                       Text(s.t('adv_pick_this'),
-                                          style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+                                          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
                                     ],
                                   ),
                                 ),
@@ -224,7 +224,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
   }
 }
 
-const adSectionHeader = TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700);
+final adSectionHeader = TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700);
 
 String adMoney(double v, String c) => '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} $c';
 
@@ -308,13 +308,13 @@ class AdOrderTile extends ConsumerWidget {
                           Text('${s.t('adv_order')} ${o.number}', style: const TextStyle(fontWeight: FontWeight.w800)),
                           const SizedBox(height: 2),
                           Text('${adMoney(o.price, o.currency)} · ${s.t('ad_days', {'n': '${o.days}'})} · $date',
-                              style: const TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
                         ],
                       ),
                     ),
                     AdStageChip(stage: o.stage, s: s),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                    Icon(Icons.chevron_right, color: AppColors.textSoft),
                   ],
                 ),
               ),
@@ -349,7 +349,7 @@ class _HowItWorks extends StatelessWidget {
                     width: 20,
                     height: 20,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle),
                     child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
                   ),
                   const SizedBox(width: 8),

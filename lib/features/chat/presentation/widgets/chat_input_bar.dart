@@ -160,7 +160,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_photo')),
               onTap: () {
                 Navigator.of(ctx).pop();
@@ -168,7 +168,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_camera_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_camera')),
               onTap: () {
                 Navigator.of(ctx).pop();
@@ -176,7 +176,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.my_location, color: AppColors.accent),
+              leading: Icon(Icons.my_location, color: AppColors.accent),
               title: Text(s.t('chat_attach_location')),
               subtitle: Text(s.t('chat_attach_location_hint')),
               onTap: () {
@@ -185,7 +185,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.insert_drive_file_outlined, color: AppColors.accent),
+              leading: Icon(Icons.insert_drive_file_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_file')),
               onTap: () {
                 Navigator.of(ctx).pop();
@@ -369,13 +369,13 @@ class _ChatInputBarState extends State<ChatInputBar> {
             IconButton(
               tooltip: s.t('common_cancel'),
               onPressed: () => _stopRecording(send: false),
-              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              icon: Icon(Icons.delete_outline, color: AppColors.danger),
             ),
-            Container(width: 10, height: 10, decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle)),
+            Container(width: 10, height: 10, decoration: BoxDecoration(color: AppColors.danger, shape: BoxShape.circle)),
             const SizedBox(width: 8),
             Text(_fmt(_elapsed), style: AppFonts.mono(size: 15, color: AppColors.text)),
             const SizedBox(width: 10),
-            Expanded(child: Text(s.t('chat_recording'), style: const TextStyle(color: AppColors.textSoft))),
+            Expanded(child: Text(s.t('chat_recording'), style: TextStyle(color: AppColors.textSoft))),
             IconButton.filled(
               onPressed: () => _stopRecording(send: true),
               icon: const Icon(Icons.send),
@@ -392,7 +392,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
           IconButton(
             tooltip: s.t('chat_attach_file'),
             onPressed: _busy ? null : _openAttachMenu,
-            icon: const Icon(Icons.attach_file, color: AppColors.textSoft),
+            icon: Icon(Icons.attach_file, color: AppColors.textSoft),
           ),
           Expanded(
             child: TextField(

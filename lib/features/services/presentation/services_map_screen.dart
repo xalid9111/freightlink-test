@@ -726,7 +726,7 @@ class _ResultsSheet extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       child: ListTile(
                         dense: true,
-                        leading: const Icon(Icons.storefront, color: AppColors.route),
+                        leading: Icon(Icons.storefront, color: AppColors.route),
                         title: Text(s.t('svc_finish_profile_title'), style: const TextStyle(fontWeight: FontWeight.w700)),
                         subtitle: Text(s.t('svc_finish_profile_body')),
                         trailing: const Icon(Icons.chevron_right),
@@ -744,7 +744,7 @@ class _ResultsSheet extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Text(s.t('svc_load_failed'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                    Text(s.t('svc_load_failed'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                     const SizedBox(height: 8),
                     OutlinedButton(onPressed: onRetry, child: Text(s.t('common_try_again'))),
                   ],
@@ -761,9 +761,9 @@ class _ResultsSheet extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: Column(
                   children: [
-                    const Icon(Icons.search_off, size: 36, color: AppColors.textSoft),
+                    Icon(Icons.search_off, size: 36, color: AppColors.textSoft),
                     const SizedBox(height: 8),
-                    Text(s.t('svc_none_here'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                    Text(s.t('svc_none_here'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                     const SizedBox(height: 10),
                     if (query.radiusKm < 1000) OutlinedButton(onPressed: onWiden, child: Text(s.t('svc_widen'))),
                   ],
@@ -896,7 +896,7 @@ class ServiceListCard extends StatelessWidget {
                           [s.t(serviceMarkerLabelKey(type)), if (cats.isNotEmpty) cats].join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSoft),
                         ),
                         const SizedBox(height: 4),
                         Wrap(
@@ -916,7 +916,7 @@ class ServiceListCard extends StatelessWidget {
                               color: p.isActive ? AppColors.online : AppColors.textSoft,
                               iconSize: 8,
                             ),
-                            if (p.is24h) _Meta(icon: Icons.schedule, text: '24/7'),
+                            if (p.is24h) const _Meta(icon: Icons.schedule, text: '24/7'),
                           ],
                         ),
                       ],
@@ -926,7 +926,7 @@ class ServiceListCard extends StatelessWidget {
                     tooltip: s.t('svc_details'),
                     visualDensity: VisualDensity.compact,
                     onPressed: () => context.pushOnce('/service/${p.id}'),
-                    icon: const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                    icon: Icon(Icons.chevron_right, color: AppColors.textSoft),
                   ),
                 ],
               ),
@@ -938,7 +938,7 @@ class ServiceListCard extends StatelessWidget {
                   decoration: BoxDecoration(color: AppColors.routeSoft, borderRadius: BorderRadius.circular(10)),
                   child: Row(
                     children: [
-                      const Icon(Icons.route, size: 18, color: AppColors.route),
+                      Icon(Icons.route, size: 18, color: AppColors.route),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -954,7 +954,7 @@ class ServiceListCard extends StatelessWidget {
                                           'time': route!.durationMin == null ? '—' : _duration(route!.durationMin!),
                                         })
                                       : s.t('svc_route_straight', {'km': fmtKm(route!.distanceKm)}),
-                          style: const TextStyle(fontSize: 12.5, color: AppColors.newFg),
+                          style: TextStyle(fontSize: 12.5, color: AppColors.newFg),
                         ),
                       ),
                     ],
@@ -1009,7 +1009,7 @@ class _SearchSuggestions extends ConsumerWidget {
     Widget header(String key) => Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
           child: Text(s.t(key).toUpperCase(),
-              style: const TextStyle(fontSize: 11, color: AppColors.textSoft, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+              style: TextStyle(fontSize: 11, color: AppColors.textSoft, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
         );
 
     final children = <Widget>[
@@ -1038,12 +1038,12 @@ class _SearchSuggestions extends ConsumerWidget {
               ].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+              style: TextStyle(fontSize: 12, color: AppColors.textSoft),
             ),
             // Real distance from the user only; nothing when it is unknown.
             trailing: p.distanceKm == null
                 ? null
-                : Text(fmtKm(p.distanceKm!), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                : Text(fmtKm(p.distanceKm!), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
             onTap: () => onService(p),
           ),
       ],
@@ -1052,11 +1052,11 @@ class _SearchSuggestions extends ConsumerWidget {
         for (final pl in placeList)
           ListTile(
             dense: true,
-            leading: const Icon(Icons.place_outlined, color: AppColors.blue),
+            leading: Icon(Icons.place_outlined, color: AppColors.blue),
             title: Text(pl.title, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: pl.subtitle.isEmpty
                 ? null
-                : Text(pl.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                : Text(pl.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
             onTap: () => onPlace(pl),
           ),
       ],
@@ -1068,7 +1068,7 @@ class _SearchSuggestions extends ConsumerWidget {
       else if (cats.isEmpty && serviceList.isEmpty && placeList.isEmpty)
         Padding(
           padding: const EdgeInsets.all(14),
-          child: Text(s.t('svc_sugg_none'), style: const TextStyle(color: AppColors.textSoft)),
+          child: Text(s.t('svc_sugg_none'), style: TextStyle(color: AppColors.textSoft)),
         ),
     ];
 
@@ -1095,9 +1095,10 @@ class _SearchSuggestions extends ConsumerWidget {
 class _Meta extends StatelessWidget {
   final IconData icon;
   final String text;
-  final Color color;
+  final Color? _color;
   final double iconSize;
-  const _Meta({required this.icon, required this.text, this.color = AppColors.textSoft, this.iconSize = 13});
+  const _Meta({required this.icon, required this.text, Color? color, this.iconSize = 13}) : _color = color;
+  Color get color => _color ?? AppColors.textSoft;
 
   @override
   Widget build(BuildContext context) {
@@ -1106,7 +1107,7 @@ class _Meta extends StatelessWidget {
       children: [
         Icon(icon, size: iconSize, color: color),
         const SizedBox(width: 3),
-        Text(text, style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+        Text(text, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
       ],
     );
   }
@@ -1140,7 +1141,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     final s = widget.s;
     Widget title(String k) => Padding(
           padding: const EdgeInsets.only(top: 14, bottom: 6),
-          child: Text(s.t(k), style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSoft, fontSize: 12.5)),
+          child: Text(s.t(k), style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSoft, fontSize: 12.5)),
         );
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),

@@ -197,7 +197,7 @@ class _CityPickerSheetState extends ConsumerState<CityPickerSheet> {
                         padding: const EdgeInsets.all(20),
                         child: Text(
                           _query.length < 3 ? s.t('city_type_more') : s.t('city_not_found'),
-                          style: const TextStyle(color: AppColors.textSoft),
+                          style: TextStyle(color: AppColors.textSoft),
                         ),
                       ),
                   ],
@@ -220,6 +220,6 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Text(text.toUpperCase(),
-            style: const TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
       );
 }

@@ -189,7 +189,7 @@ class _CountrySheetState extends ConsumerState<_CountrySheet> {
               const SizedBox(height: 8),
               Expanded(
                 child: list.isEmpty
-                    ? Center(child: Text(s.t('phone_country_not_found'), style: const TextStyle(color: AppColors.textSoft)))
+                    ? Center(child: Text(s.t('phone_country_not_found'), style: TextStyle(color: AppColors.textSoft)))
                     : ListView.builder(
                         itemCount: list.length,
                         itemBuilder: (context, i) {
@@ -205,7 +205,7 @@ class _CountrySheetState extends ConsumerState<_CountrySheet> {
                                 Text('+${c.dial}', style: const TextStyle(fontWeight: FontWeight.w700)),
                                 if (sel) ...[
                                   const SizedBox(width: 6),
-                                  const Icon(Icons.check, color: AppColors.accent, size: 18),
+                                  Icon(Icons.check, color: AppColors.accent, size: 18),
                                 ],
                               ],
                             ),

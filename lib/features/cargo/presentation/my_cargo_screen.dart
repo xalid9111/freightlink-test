@@ -57,7 +57,7 @@ class MyCargoScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           Text(status == statusKey ? c.status : status,
-                              style: const TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
                           const Spacer(),
                           if (const ['new', 'carrier_found', 'agreed'].contains(c.status))
                             TextButton.icon(

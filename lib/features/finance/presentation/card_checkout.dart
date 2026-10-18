@@ -131,11 +131,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
-              child: Text(s.t('pay_test_banner'), style: const TextStyle(color: AppColors.blue, fontSize: 12.5)),
+              child: Text(s.t('pay_test_banner'), style: TextStyle(color: AppColors.blue, fontSize: 12.5)),
             ),
             const SizedBox(height: 10),
           ],
-          Text(s.t('pay_amount'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+          Text(s.t('pay_amount'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
           Text(money(widget.order.price, widget.order.currency), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
           if (p == null) ...[
@@ -181,10 +181,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             _Result(payment: p, s: s),
           if (_errorKey != null) ...[
             const SizedBox(height: 10),
-            Text(s.t(_errorKey!), style: const TextStyle(color: AppColors.danger)),
+            Text(s.t(_errorKey!), style: TextStyle(color: AppColors.danger)),
           ],
           const SizedBox(height: 10),
-          Text(s.t('pay_server_note'), style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+          Text(s.t('pay_server_note'), style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
         ]),
       ),
     );

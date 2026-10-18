@@ -78,10 +78,10 @@ class _SponsoredBannerState extends ConsumerState<SponsoredBanner> {
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.cardAlt,
                   alignment: Alignment.center,
-                  child: Text(p?.fullName ?? '', style: const TextStyle(color: AppColors.textSoft)),
+                  child: Text(p?.fullName ?? '', style: TextStyle(color: AppColors.textSoft)),
                 ),
                 loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : const ColoredBox(color: AppColors.cardAlt),
+                    progress == null ? child : ColoredBox(color: AppColors.cardAlt),
               ),
               Positioned(
                 top: 6,
@@ -135,10 +135,10 @@ class AdPlaceholder extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSoft),
+                Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSoft),
                 const SizedBox(width: 8),
                 Text(strings.t('ad_place_here'),
-                    style: const TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

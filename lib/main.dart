@@ -10,6 +10,7 @@ import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/flag_font.dart';
+import 'core/theme/theme_mode.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
@@ -50,6 +51,9 @@ Future<void> main() async {
   // loads every locale bundled with the intl package.
   await initializeDateFormatting();
 
+  // 5. Day / night mode chosen in Settings (night unless changed).
+  await loadSavedTheme();
+
   // Firebase.initializeApp() and Mapbox.setAccessToken() are added
   // in Phase 10 / Phase 12 once those features are implemented —
   // this project only proves the boot sequence and DI wiring are
@@ -78,10 +82,10 @@ class FreightLinkApp extends ConsumerWidget {
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      // The approved design is dark-only (night map palette).
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      // Night = the approved dark design; day = chosen in Settings.
+      theme: AppTheme.current,
+      darkTheme: AppTheme.current,
+      themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark,
       routerConfig: router,
       locale: locale,
       localizationsDelegates: const [

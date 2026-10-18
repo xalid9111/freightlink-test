@@ -295,7 +295,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                 child: Text(otherName ?? strings.t('nav_messages'),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                               ),
                               if (otherProfile?.isVerified == true) ...[
                                 const SizedBox(width: 4),
@@ -422,7 +422,7 @@ class _TopicMarker extends StatelessWidget {
                   child: Text(label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -507,7 +507,7 @@ class _MessageBubble extends StatelessWidget {
               children: [
                 Text(
                   _hhmm(message.createdAt),
-                  style: const TextStyle(fontSize: 11, color: ChatColors.meta),
+                  style: TextStyle(fontSize: 11, color: ChatColors.meta),
                 ),
                 if (isMine && !deleted) ...[
                   const SizedBox(width: 4),

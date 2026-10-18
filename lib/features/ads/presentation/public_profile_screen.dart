@@ -208,18 +208,18 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                           Text(p.fullName.isEmpty ? '—' : p.fullName,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
                                           const SizedBox(height: 4),
                                           Wrap(
                                             crossAxisAlignment: WrapCrossAlignment.center,
                                             spacing: 6,
                                             children: [
                                               if (roleText != null)
-                                                Text(roleText, style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                                                Text(roleText, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                                               if (country != null) ...[
-                                                if (roleText != null) const Text('•', style: TextStyle(color: AppColors.textSoft)),
-                                                const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
-                                                Text(country.name(lang), style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                                                if (roleText != null) Text('•', style: TextStyle(color: AppColors.textSoft)),
+                                                Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
+                                                Text(country.name(lang), style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                                               ],
                                             ],
                                           ),
@@ -305,7 +305,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 if (isMe && catalog.isEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
-                                    child: Text(s.t('catalog_empty_me'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                                    child: Text(s.t('catalog_empty_me'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                                   ),
                                 CatalogGrid(userId: widget.userId, limit: 6),
                               ],
@@ -329,7 +329,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                   _InfoRow(icon: Icons.place_outlined, text: details!.address!),
                                 if (hasPhone) _InfoRow(icon: Icons.call_outlined, text: contactPhone!),
                                 if (isMe && (details?.isEmpty ?? true))
-                                  Text(s.t('profile_info_empty_me'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                                  Text(s.t('profile_info_empty_me'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                               ],
                             ),
                           ),
@@ -353,7 +353,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             loading: () => const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())),
                             error: (_, __) => Text(s.t('home_error_loading')),
                             data: (list) => list.isEmpty
-                                ? Text(s.t('profile_no_open_loads'), style: const TextStyle(color: AppColors.textSoft))
+                                ? Text(s.t('profile_no_open_loads'), style: TextStyle(color: AppColors.textSoft))
                                 : Column(
                                     children: [
                                       for (final c in list)
@@ -395,7 +395,7 @@ class _TitleRow extends StatelessWidget {
           _SquareButton(icon: Icons.arrow_back, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onTap: onBack),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
+            child: Text(title, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
           ),
           if (action != null) action!,
         ],
@@ -416,7 +416,7 @@ class _SquareButton extends StatelessWidget {
       color: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(color: AppColors.line),
       ),
       child: IconButton(tooltip: tooltip, icon: Icon(icon, color: AppColors.text), onPressed: onTap),
     );
@@ -494,15 +494,15 @@ class _MenuRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                   if ((subtitle ?? '').isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(subtitle!, style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                    Text(subtitle!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                   ],
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+            Icon(Icons.chevron_right, color: AppColors.textSoft),
           ],
         ),
       ),
@@ -516,11 +516,11 @@ class _CoverPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F4C5C), Color(0xFF14323F), AppColors.background],
+          colors: [const Color(0xFF0F4C5C), const Color(0xFF14323F), AppColors.background],
         ),
       ),
     );

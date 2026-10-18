@@ -88,9 +88,9 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
         const SizedBox(height: 12),
         async.when(
           loading: () => const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
-          error: (e, _) => Text('Yüklənmədi: $e (0040_market.sql işə salınıbmı?)', style: const TextStyle(color: AppColors.danger)),
+          error: (e, _) => Text('Yüklənmədi: $e (0040_market.sql işə salınıbmı?)', style: TextStyle(color: AppColors.danger)),
           data: (list) => list.isEmpty
-              ? const Padding(padding: EdgeInsets.all(24), child: Text('Elan yoxdur.', style: TextStyle(color: AppColors.textSoft)))
+              ? Padding(padding: const EdgeInsets.all(24), child: Text('Elan yoxdur.', style: TextStyle(color: AppColors.textSoft)))
               : Column(children: [
                   for (final l in list)
                     Card(
@@ -110,7 +110,7 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
                                   Text('#${l.listingNo} · ${l.title}', maxLines: 1, overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontWeight: FontWeight.w800)),
                                   Text('${marketPrice(l.price, l.currency)} · ${l.city ?? '—'} · ${l.photos.length} şəkil · ${l.views} baxış',
-                                      style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                                      style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                                   Text('Status: ${_labels[l.status]}${l.vipActive() ? ' · VIP${l.vipUntil == null ? '' : ' (${l.vipUntil!.day}.${l.vipUntil!.month})'}' : ''}',
                                       style: const TextStyle(fontSize: 12)),
                                 ]),

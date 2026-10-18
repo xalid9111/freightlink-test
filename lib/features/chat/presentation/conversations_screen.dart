@@ -248,7 +248,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                           Text(strings.t('messages_empty_title')),
                           const SizedBox(height: 6),
                           Text(strings.t('chat_empty_hint'),
-                              textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                              textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                         ],
                       ),
                     ),
@@ -257,7 +257,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
                       child: Text(strings.t('chat_people').toUpperCase(),
-                          style: const TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                          style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
                     ),
                     people.when(
                       loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
@@ -267,7 +267,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                         if (others.isEmpty) {
                           return Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text(strings.t('chat_search_nobody'), style: const TextStyle(color: AppColors.textSoft)),
+                            child: Text(strings.t('chat_search_nobody'), style: TextStyle(color: AppColors.textSoft)),
                           );
                         }
                         return Column(
@@ -283,7 +283,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                   subtitle: u.role == null ? null : Text(strings.t('role_label_${u.role}')),
                                   trailing: _opening == u.id
                                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                      : const Icon(Icons.chat_bubble_outline, color: AppColors.accent),
+                                      : Icon(Icons.chat_bubble_outline, color: AppColors.accent),
                                   onTap: () => _openDirect(u, strings),
                                 ),
                               ),
@@ -375,7 +375,7 @@ class _GroupTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 24,
                 backgroundColor: AppColors.routeSoft,
                 child: Icon(Icons.groups_2_outlined, color: AppColors.route),
@@ -388,9 +388,9 @@ class _GroupTile extends StatelessWidget {
                     Text(group.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                     const SizedBox(height: 3),
-                    Text(label, style: const TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
+                    Text(label, style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
                   ],
                 ),
               ),
@@ -459,7 +459,7 @@ class _ConversationTile extends ConsumerWidget {
                                 name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
                               ),
                             ),
                             if (profile?.isVerified == true) ...[
@@ -473,7 +473,7 @@ class _ConversationTile extends ConsumerWidget {
                           route,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13.5, color: AppColors.textSoft),
+                          style: TextStyle(fontSize: 13.5, color: AppColors.textSoft),
                         ),
                       ],
                     ),

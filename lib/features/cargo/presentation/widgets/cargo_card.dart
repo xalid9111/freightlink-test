@@ -58,11 +58,11 @@ class CargoCard extends ConsumerWidget {
                       '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)}  →  ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'.trim(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                      style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.text),
                     ),
                     const SizedBox(height: 3),
                     Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                     if (owner != null && owner.fullName.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       // Tap the name → the owner's profile page.
@@ -73,7 +73,7 @@ class CargoCard extends ConsumerWidget {
                         children: [
                           Flexible(
                             child: Text(owner.fullName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                           ),
                           if (owner.isVerified) ...[
                             const SizedBox(width: 3),
@@ -91,10 +91,10 @@ class CargoCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 22, color: AppColors.text, height: 1)),
-                  Text(cargo.currency, style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                  Text(cargo.currency, style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                 ],
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSoft),
+              Icon(Icons.chevron_right, color: AppColors.textSoft),
             ],
           ),
         ),
@@ -156,7 +156,7 @@ class CargoCard extends ConsumerWidget {
                           owner.fullName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.text),
+                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.text),
                         ),
                       ),
                       if (owner.isVerified) ...[
@@ -203,7 +203,7 @@ class CargoCard extends ConsumerWidget {
               const SizedBox(height: 9),
               Row(
                 children: [
-                  Text('${strings.t('card_pickup')} ', style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  Text('${strings.t('card_pickup')} ', style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   Text(dateFmt.format(cargo.pickupDate), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   const Spacer(),
                   if (cargo.distanceKm != null)
@@ -220,7 +220,7 @@ class CargoCard extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.$1, style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                          Text(s.$1, style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                           Text(s.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                         ],
                       ),
@@ -234,7 +234,7 @@ class CargoCard extends ConsumerWidget {
                 children: [
                   Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 28, color: AppColors.text)),
                   const SizedBox(width: 5),
-                  Text(cargo.currency, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  Text(cargo.currency, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   const Spacer(),
                   FilledButton(
                     onPressed: onTap,
@@ -283,7 +283,7 @@ class _Point extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(country.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: AppFonts.display(size: 21, color: AppColors.text, height: 1.05)),
-              Text(city, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              Text(city, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
             ],
           ),
         ),
@@ -315,7 +315,7 @@ class _DashedLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CustomPaint(size: Size(1.5, double.infinity), painter: _DashPainter(vertical: true, color: AppColors.route));
+    return CustomPaint(size: const Size(1.5, double.infinity), painter: _DashPainter(vertical: true, color: AppColors.route));
   }
 }
 
@@ -324,7 +324,7 @@ class _DashedDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       height: 1,
       width: double.infinity,
       child: CustomPaint(painter: _DashPainter(vertical: false, color: AppColors.line)),

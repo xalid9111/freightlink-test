@@ -98,7 +98,7 @@ Future<void> showNavigationPicker(BuildContext context, AppStrings strings, Chat
                 },
               ),
           ListTile(
-            leading: const Icon(Icons.open_in_new, color: AppColors.textSoft),
+            leading: Icon(Icons.open_in_new, color: AppColors.textSoft),
             title: Text(strings.t('chat_location_open_link')),
             onTap: () {
               Navigator.of(ctx).pop();
@@ -138,8 +138,8 @@ class LocationCard extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(color: AppColors.routeSoft, shape: BoxShape.circle),
-              child: const Icon(Icons.location_on, color: AppColors.route),
+              decoration: BoxDecoration(color: AppColors.routeSoft, shape: BoxShape.circle),
+              child: Icon(Icons.location_on, color: AppColors.route),
             ),
             const SizedBox(width: 10),
             Expanded(

@@ -141,7 +141,7 @@ class _ProvidersTabState extends ConsumerState<_ProvidersTab> {
               if (p.isPro) const AdminChip('PRO servis', color: kProGold),
               AdminChip(p.isCenter ? 'Servis mərkəzi' : 'Fərdi usta'),
               if (p.addedByAdmin) const AdminChip('Admin əlavə edib'),
-              if (p.isUnclaimed) const AdminChip('Sahibsiz', color: AppColors.accent),
+              if (p.isUnclaimed) AdminChip('Sahibsiz', color: AppColors.accent),
               AdminChip(p.isActive ? 'Aktiv' : 'Qeyri-aktiv', color: p.isActive ? AppColors.online : AppColors.textSoft),
             ]),
             const SizedBox(height: 10),
@@ -292,8 +292,8 @@ class _ProvidersTabState extends ConsumerState<_ProvidersTab> {
                       dimmed: p.status == 'suspended' || p.status == 'rejected',
                       chips: [
                         AdminChip(_statusLabels[p.status] ?? p.status, color: _statusColor(p.status)),
-                        if (p.isVerified) const AdminChip('✓ Sahib təsdiqli', color: AppColors.blue),
-                        if (p.isUnclaimed) const AdminChip('Sahibsiz', color: AppColors.accent),
+                        if (p.isVerified) AdminChip('✓ Sahib təsdiqli', color: AppColors.blue),
+                        if (p.isUnclaimed) AdminChip('Sahibsiz', color: AppColors.accent),
                         if (p.ratingCount > 0) AdminChip('★ ${p.ratingAvg.toStringAsFixed(1)} (${p.ratingCount})'),
                       ],
                       onTap: () => _openDetail(p),
@@ -348,7 +348,7 @@ class _ClaimsTabState extends ConsumerState<_ClaimsTab> {
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text('İstifadəçilər admin əlavə etdiyi servislərə "Bu mənim biznesimdir" ilə iddia göndərir. Təsdiqlənəndə servis onun hesabına bağlanır.',
                     style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               ),
@@ -689,8 +689,8 @@ class _AdminServiceFormState extends ConsumerState<AdminServiceForm> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 60),
         children: [
           if (p == null)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 'Admin əlavə etdiyi servis "Təsdiqlənməyib" nişanı ilə görünür. Real sahibi tətbiqdə "Bu mənim biznesimdir" ilə iddia göndərir; təsdiqləyəndə servis onun hesabına bağlanır. Kənar mənbələrdən məlumatı yalnız icazə və istifadə şərtlərinə uyğun daxil edin.',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSoft, height: 1.35),
@@ -762,7 +762,7 @@ class _AdminServiceFormState extends ConsumerState<AdminServiceForm> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text('${_point!.latitude.toStringAsFixed(5)}, ${_point!.longitude.toStringAsFixed(5)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
             ),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Mobil xidmət (yerə gəlir)'), value: _mobile, onChanged: (v) => setState(() => _mobile = v)),
           if (_mobile) field(_radius, 'Xidmət radiusu (km)', type: TextInputType.number),

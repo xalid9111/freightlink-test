@@ -95,8 +95,9 @@ Color statusColor(Object? s) {
 
 class AdminChip extends StatelessWidget {
   final String label;
-  final Color color;
-  const AdminChip(this.label, {super.key, this.color = AppColors.textSoft});
+  final Color? _color;
+  const AdminChip(this.label, {super.key, Color? color}) : _color = color;
+  Color get color => _color ?? AppColors.textSoft;
 
   factory AdminChip.status(Object? status, {Key? key}) =>
       AdminChip(statusLabel(status), key: key, color: statusColor(status));
@@ -119,9 +120,10 @@ class StatCard extends StatelessWidget {
   final String label;
   final Object? value;
   final IconData icon;
-  final Color color;
+  final Color? _color;
   final VoidCallback? onTap;
-  const StatCard({super.key, required this.label, required this.value, required this.icon, this.color = AppColors.accent, this.onTap});
+  const StatCard({super.key, required this.label, required this.value, required this.icon, Color? color, this.onTap}) : _color = color;
+  Color get color => _color ?? AppColors.accent;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +147,7 @@ class StatCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(value == null ? '…' : '$value', style: AppFonts.mono(size: 22, color: AppColors.text, letterSpacing: 0)),
               const SizedBox(height: 2),
-              Text(label, style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+              Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             ],
           ),
         ),
@@ -167,7 +169,7 @@ class SectionTitle extends StatelessWidget {
         children: [
           Expanded(
             child: Text(text.toUpperCase(),
-                style: const TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
           ),
           if (trailing != null) trailing!,
         ],
@@ -189,9 +191,9 @@ class KV extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 150, child: Text(label, style: const TextStyle(color: AppColors.textSoft, fontSize: 13))),
+          SizedBox(width: 150, child: Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 13))),
           Expanded(
-            child: value is Widget ? value as Widget : SelectableText(txt(value), style: const TextStyle(color: AppColors.text, fontSize: 13)),
+            child: value is Widget ? value as Widget : SelectableText(txt(value), style: TextStyle(color: AppColors.text, fontSize: 13)),
           ),
         ],
       ),
@@ -233,11 +235,11 @@ class AdminRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14)),
+                          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14)),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
                         Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                            style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                       ],
                       if (chips.isNotEmpty) ...[
                         const SizedBox(height: 6),
@@ -246,7 +248,7 @@ class AdminRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onTap != null) const Icon(Icons.chevron_right, color: AppColors.textSoft, size: 20),
+                if (onTap != null) Icon(Icons.chevron_right, color: AppColors.textSoft, size: 20),
               ],
             ),
           ),
@@ -290,7 +292,7 @@ class EmptyNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 28),
-        child: Center(child: Text(text, style: const TextStyle(color: AppColors.textSoft))),
+        child: Center(child: Text(text, style: TextStyle(color: AppColors.textSoft))),
       );
 }
 
@@ -408,7 +410,7 @@ Future<void> showDetail(BuildContext context, {required String title, required W
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.line),
+          Divider(height: 1, color: AppColors.line),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),

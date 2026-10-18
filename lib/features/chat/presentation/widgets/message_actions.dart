@@ -34,13 +34,13 @@ Future<void> showMessageActions({
               onTap: () => Navigator.pop(ctx, 'copy'),
             ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: AppColors.danger),
+            leading: Icon(Icons.delete_outline, color: AppColors.danger),
             title: Text(strings.t('chat_delete_for_me')),
             onTap: () => Navigator.pop(ctx, 'me'),
           ),
           if (isMine && !isDeleted)
             ListTile(
-              leading: const Icon(Icons.delete_forever_outlined, color: AppColors.danger),
+              leading: Icon(Icons.delete_forever_outlined, color: AppColors.danger),
               title: Text(strings.t('chat_delete_for_everyone')),
               onTap: () => Navigator.pop(ctx, 'everyone'),
             ),
@@ -164,11 +164,11 @@ class DeletedMessageText extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.block, size: 15, color: ChatColors.meta),
+        Icon(Icons.block, size: 15, color: ChatColors.meta),
         const SizedBox(width: 6),
         Flexible(
           child: Text(strings.t('chat_message_deleted'),
-              style: const TextStyle(color: ChatColors.meta, fontStyle: FontStyle.italic, fontSize: 14)),
+              style: TextStyle(color: ChatColors.meta, fontStyle: FontStyle.italic, fontSize: 14)),
         ),
       ],
     );
@@ -202,7 +202,7 @@ class ChatDateChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(color: ChatColors.dateChip, borderRadius: BorderRadius.circular(8)),
-          child: Text(label, style: const TextStyle(color: ChatColors.meta, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          child: Text(label, style: TextStyle(color: ChatColors.meta, fontSize: 12.5, fontWeight: FontWeight.w600)),
         ),
       ),
     );

@@ -995,5 +995,8 @@
   "mk_fav_empty": "No favourites yet. Tap the heart on an ad.",
   "mk_gearbox_short": "Gearbox",
   "mk_published": "The ad is published and visible to everyone.",
-  "mk_publish_note": "The ad is visible to everyone as soon as it is published."
+  "mk_publish_note": "The ad is visible to everyone as soon as it is published.",
+  "settings_appearance": "Appearance",
+  "theme_night": "Night",
+  "theme_day": "Day"
 }

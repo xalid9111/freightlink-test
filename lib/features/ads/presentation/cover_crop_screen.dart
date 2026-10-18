@@ -169,7 +169,7 @@ class _CoverCropScreenState extends State<CoverCropScreen> {
                     child: Text(
                       s.t('cover_crop_hint'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5),
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 13.5),
                     ),
                   ),
                   Padding(

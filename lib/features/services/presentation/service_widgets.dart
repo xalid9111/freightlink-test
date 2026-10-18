@@ -187,12 +187,12 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
               child: Text(s.t('svc_msg_title'), style: Theme.of(ctx).textTheme.titleMedium),
             ),
             ListTile(
-              leading: const Icon(Icons.chat_bubble_outline, color: AppColors.accent),
+              leading: Icon(Icons.chat_bubble_outline, color: AppColors.accent),
               title: Text(s.t('svc_msg_in_app')),
               subtitle: canChat
                   ? null
                   : Text(s.t(isMine ? 'svc_msg_own' : 'svc_msg_no_owner'),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               enabled: canChat,
               onTap: canChat
                   ? () {
@@ -205,7 +205,7 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
               leading: const Icon(Icons.forum_outlined, color: Color(0xFF25D366)),
               title: Text(s.t('svc_msg_whatsapp')),
               subtitle: wa == null
-                  ? Text(s.t('svc_msg_no_whatsapp'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft))
+                  ? Text(s.t('svc_msg_no_whatsapp'), style: TextStyle(fontSize: 12, color: AppColors.textSoft))
                   : null,
               enabled: wa != null,
               onTap: wa == null
@@ -303,7 +303,7 @@ class ServiceLegend extends StatelessWidget {
                 child: Icon(serviceMarkerIcon(t), size: 10, color: t == ServiceMarkerType.tow ? Colors.black : Colors.white),
               ),
               const SizedBox(width: 4),
-              Text(s.t(serviceMarkerLabelKey(t)), style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
+              Text(s.t(serviceMarkerLabelKey(t)), style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
             ],
           ),
       ],

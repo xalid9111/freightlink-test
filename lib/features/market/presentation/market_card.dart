@@ -41,7 +41,7 @@ class MarketPhoto extends StatelessWidget {
     final placeholder = Container(
       color: AppColors.cardAlt,
       alignment: Alignment.center,
-      child: const Icon(Icons.local_shipping_outlined, color: AppColors.textSoft, size: 36),
+      child: Icon(Icons.local_shipping_outlined, color: AppColors.textSoft, size: 36),
     );
     if (url == null) return placeholder;
     return Image.network(
@@ -147,16 +147,16 @@ class MarketCard extends ConsumerWidget {
                     Text(compact ? [l.brand, l.model].whereType<String>().join(' ') : l.title,
                         maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
                     if (compact && l.year != null)
-                      Text('${l.year}', style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                      Text('${l.year}', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                     const SizedBox(height: 2),
                     Text(marketPrice(l.price, l.currency),
-                        style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
+                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
                     const SizedBox(height: 2),
                     Text(
                       [if (l.mileageKm != null) marketKm(l.mileageKm), if (place.isNotEmpty) place].join(' · '),
                       maxLines: compact ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.textSoft, fontSize: 12),
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 12),
                     ),
                   ],
                 ),
