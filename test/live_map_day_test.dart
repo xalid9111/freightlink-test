@@ -38,4 +38,15 @@ void main() {
     }
     expect(File('scripts/make_day_map.py').existsSync(), isTrue);
   });
+
+  test('day cloud scene: clouds above / below the map, light, never at night', () {
+    for (final f in ['world_map_day_top.jpg', 'world_map_day_bottom.jpg']) {
+      final bytes = File('assets/images/$f').readAsBytesSync();
+      expect(_jpegSize(bytes).$1, kDayImgW.toInt(), reason: '$f: same width as the map, so they join');
+      expect(bytes.length, lessThan(40 * 1024), reason: f);
+    }
+    final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
+    expect(home.contains('if (!show) return child;'), isTrue);
+    expect(home.contains('padding: EdgeInsets.only(top: day ? 0 : topPad, bottom: 16)'), isTrue);
+  });
 }
