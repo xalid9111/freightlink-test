@@ -65,7 +65,7 @@ void main() {
     });
     test('TIR Bazarı is a separate part, loaded only when opened', () {
       final router = _read('lib/core/router/app_router.dart');
-      expect(router.contains("market_home_screen.dart' deferred as market;"), isTrue);
+      expect(router.contains("market_module.dart' deferred as market;"), isTrue);
       expect(router.contains('market.loadLibrary'), isTrue);
     });
     test('narrow screens / iPhone: labels shrink, safe area respected', () {

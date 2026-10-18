@@ -35,7 +35,7 @@ import 'main_shell.dart';
 import 'password_recovery.dart';
 import '../../features/finance/presentation/finance_screen.dart';
 import '../widgets/deferred_page.dart';
-import '../../features/market/presentation/market_home_screen.dart' deferred as market;
+import '../../features/market/presentation/market_module.dart' deferred as market;
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -236,6 +236,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/my-cargo',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const MyCargoScreen(),
+      ),
+      // TIR Bazarı pages (deferred module, full screen like the other forms).
+      GoRoute(
+        path: '/market/new',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketEditScreen()),
+      ),
+      GoRoute(
+        path: '/market/edit/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeferredPage(
+          load: market.loadLibrary,
+          builder: (_) => market.MarketEditScreen(listingId: state.pathParameters['id']),
+        ),
+      ),
+      GoRoute(
+        path: '/market/l/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeferredPage(
+          load: market.loadLibrary,
+          builder: (_) => market.MarketDetailScreen(listingId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/market/mine',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MyMarketListingsScreen()),
+      ),
+      GoRoute(
+        path: '/market/favorites',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketFavoritesScreen()),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell, location: state.uri.path),

@@ -92,4 +92,10 @@ const kRpcMigration = <String, String>{
   'unlock_contact': '0006_monetization.sql',
   'update_my_ad_order_v2': '0023_ads_standard_layout.sql',
   'set_my_activities': '0039_user_activities.sql',
+  'market_search': '0040_market.sql',
+  'market_similar': '0040_market.sql',
+  'market_record_view': '0040_market.sql',
+  'admin_market_set_status': '0040_market.sql',
+  'admin_market_set_vip': '0040_market.sql',
+  'admin_market_delete': '0040_market.sql',
 };
