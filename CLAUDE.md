@@ -99,3 +99,7 @@ files to the owner separately (they are run by hand in the SQL editor).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".
+- One account for everyone: no role step at signup. In Profil the user
+  turns on any combination of Daşıyıcı · Yük verən · Usta / Servis · Satış
+  (users.activities, 0039). Turning one off deletes nothing and never
+  closes existing chats; users.role is kept as it was.

@@ -91,4 +91,5 @@ const kRpcMigration = <String, String>{
   'submit_ad_receipt': '0021_ad_templates_receipts.sql',
   'unlock_contact': '0006_monetization.sql',
   'update_my_ad_order_v2': '0023_ads_standard_layout.sql',
+  'set_my_activities': '0039_user_activities.sql',
 };

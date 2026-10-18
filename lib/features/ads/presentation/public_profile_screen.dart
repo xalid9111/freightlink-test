@@ -23,6 +23,8 @@ import 'ads_providers.dart';
 import 'cover_crop_screen.dart';
 import 'profile_catalog.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../auth/data/activities_repository.dart';
+import '../../auth/domain/activities.dart';
 
 /// A user's / company's FreightLink page, in the same design language as
 /// the Profile tab (title row, rounded cards, the same profile card, menu
@@ -123,6 +125,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final hasPhone = (contactPhone ?? '').isNotEmpty;
 
     final lang = ref.watch(currentLocaleProvider).languageCode;
+    // One account, several activities (0039); the old signup role only
+    // while those are not available.
+    final acts = activitiesWire(ref.watch(userActivitiesProvider(widget.userId)).valueOrNull ?? const <Activity>{});
+    final roleText = acts.isNotEmpty
+        ? acts.map((w) => s.t('act_$w')).join(' · ')
+        : (p?.role == null ? null : s.t('role_label_${p!.role}'));
     final country = hasPhone ? PhoneCountries.split(contactPhone)?.country : null;
 
     return Scaffold(
@@ -206,11 +214,10 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                             crossAxisAlignment: WrapCrossAlignment.center,
                                             spacing: 6,
                                             children: [
-                                              if (p.role != null)
-                                                Text(s.t('role_label_${p.role}'),
-                                                    style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                                              if (roleText != null)
+                                                Text(roleText, style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                                               if (country != null) ...[
-                                                if (p.role != null) const Text('•', style: TextStyle(color: AppColors.textSoft)),
+                                                if (roleText != null) const Text('•', style: TextStyle(color: AppColors.textSoft)),
                                                 const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
                                                 Text(country.name(lang), style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                                               ],

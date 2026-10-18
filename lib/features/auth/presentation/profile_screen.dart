@@ -11,6 +11,9 @@ import '../../../repositories/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'providers/auth_providers.dart';
+import 'widgets/activity_buttons.dart';
+import '../data/activities_repository.dart';
+import '../domain/activities.dart';
 import '../../services/presentation/services_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -71,13 +74,22 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+                // Daşıyıcı · Yük verən · Usta / Servis · Satış (any combination).
+                ActivityButtons(s: strings),
+                const SizedBox(height: 14),
                 _ProfileCard(
                   userId: user.id,
                   fallbackName: user.fullName,
                   fallbackPhone: user.phone,
                   email: user.email,
-                  roleLabel: _roleLabel(strings, user.role),
+                  // One account: what the user does, not the old signup role
+                  // (admins keep their label).
+                  roleLabel: isAdmin
+                      ? _roleLabel(strings, user.role)
+                      : activitiesWire(ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{})
+                          .map((w) => strings.t('act_$w'))
+                          .join(' · '),
                   strings: strings,
                 ),
                 const SizedBox(height: 14),

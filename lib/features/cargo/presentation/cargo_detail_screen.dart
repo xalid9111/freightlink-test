@@ -21,6 +21,8 @@ import '../../../repositories/credits_repository.dart';
 import '../../../repositories/offer_repository.dart';
 import '../../../repositories/shipment_repository.dart';
 import '../../../services/navigation_service.dart';
+import '../../auth/data/activities_repository.dart';
+import '../../auth/domain/activities.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../carrier/presentation/providers/carrier_providers.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
@@ -578,11 +580,21 @@ class _CarrierOfferSectionState extends ConsumerState<_CarrierOfferSection> {
   @override
   Widget build(BuildContext context) {
     final carrierIdAsync = ref.watch(myCarrierIdProvider);
+    // "Daşıyıcı" in Profil (0039) turns the offer form on; any account can.
+    final activities = ref.watch(myActivitiesProvider);
+    final carrierOn = (activities.valueOrNull ?? const <Activity>{}).contains(Activity.carrier);
     return carrierIdAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (carrierId) {
-        if (carrierId == null) return const SizedBox.shrink();
+        if (!activities.hasValue) return const SizedBox.shrink();
+        // Not a carrier (yet): one tap turns "Daşıyıcı" on.
+        if (carrierId == null) return _BecomeCarrier(strings: widget.strings);
+        if (!carrierOn) {
+          // Turned off: earlier offers on this load stay visible.
+          final past = ref.watch(myOfferHistoryProvider(CarrierCargoKey(widget.cargo.id, carrierId))).valueOrNull ?? const [];
+          if (past.isEmpty) return _BecomeCarrier(strings: widget.strings);
+        }
         final historyAsync = ref.watch(myOfferHistoryProvider(CarrierCargoKey(widget.cargo.id, carrierId)));
 
         return historyAsync.when(
@@ -659,6 +671,58 @@ class _CarrierOfferSectionState extends ConsumerState<_CarrierOfferSection> {
 /// Accepting an offer also creates the shipment (ShipmentRepository) —
 /// the acceptance test's "owner responds" step needs the offer to
 /// actually move the workflow forward, not just flip a status flag.
+/// "Təklif vermək üçün Daşıyıcı fəaliyyətini aktiv edin" — one tap turns
+/// it on (Profil, 0039) and the offer form appears.
+class _BecomeCarrier extends ConsumerStatefulWidget {
+  final AppStrings strings;
+  const _BecomeCarrier({required this.strings});
+
+  @override
+  ConsumerState<_BecomeCarrier> createState() => _BecomeCarrierState();
+}
+
+class _BecomeCarrierState extends ConsumerState<_BecomeCarrier> {
+  bool _busy = false;
+
+  Future<void> _enable() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(myActivitiesProvider.notifier).enable(Activity.carrier);
+      ref.invalidate(myCarrierIdProvider);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.strings.t('act_save_failed'))));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.strings;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+            const SizedBox(width: 10),
+            Expanded(child: Text(s.t('act_offer_need_carrier'), style: const TextStyle(fontSize: 13.5))),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: _busy ? null : _enable,
+              child: _busy
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(s.t('act_enable')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _OffersReceivedSection extends ConsumerStatefulWidget {
   final CargoModel cargo;
   final AppStrings strings;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../auth/data/activities_repository.dart';
+import '../../auth/domain/activities.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/constants/countries.dart';
@@ -146,7 +148,10 @@ class _ShipmentTileState extends ConsumerState<_ShipmentTile> {
 
     final user = ref.watch(currentUserProvider);
     final isOwner = user != null && cargo != null && cargo.ownerId == user.id;
-    final isCarrier = user != null && !isOwner && user.role == 'carrier';
+    // The other side of a shipment is its carrier — old role "carrier" or
+    // any account with the "Daşıyıcı" activity (0039).
+    final carrierOn = (ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{}).contains(Activity.carrier);
+    final isCarrier = user != null && !isOwner && (user.role == 'carrier' || carrierOn);
     final next = _nextStatus(isOwner: isOwner, isCarrier: isCarrier, status: shipment.status);
 
     return Card(

@@ -116,10 +116,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final strings = ref.watch(stringsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.t('register_title_prefix', {'role': _roleLabel(strings)})),
+        title: Text(widget.serviceKind != null
+            ? strings.t('register_title_prefix', {'role': _roleLabel(strings)})
+            : strings.t('register_title')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/role-select'),
+          onPressed: () => context.go('/login'),
         ),
       ),
       body: SafeArea(
@@ -134,7 +136,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      strings.t(widget.serviceKind != null ? 'svc_register_note' : 'register_role_locked_note'),
+                      strings.t(widget.serviceKind != null ? 'svc_register_note' : 'register_unified_note'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 16),
