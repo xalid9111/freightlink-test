@@ -1,19 +1,25 @@
 """Day map of the home live map (the owner's design picture).
 
-Usage (from the repo root): python3 scripts/make_day_map.py <picture.png>
+Usage (from the repo root):
+  python3 scripts/make_day_map.py <picture.png> <ne_50m_admin_0_countries.geojson>
+(geojson: github.com/nvkelso/natural-earth-vector, geojson/)
 Writes:
-* assets/images/world_map_day.jpg — the picture as it is (its clouds fade
-  to white at the edges); the near-white outer rim is set to pure white
-  (#FFFFFF, the day page colour) so no edge can show on any screen;
+* assets/images/world_map_day.jpg — the picture, zoomed in (owner's choice
+  "Variant 3": most of the cloud margin cut, edges fade to pure white
+  #FFFFFF = the day page colour) with a slightly paler sea (saturation
+  -35 % outside the land, land colours untouched);
 * lib/features/cargo/presentation/widgets/live_map_day_geo.dart — the
   live-map hubs (live_map.dart, same order) and city lights placed on the
   picture, via a smooth warp fitted to the landmarks marked on it below.
 Needs numpy + Pillow."""
-import re, sys
+import json, re, sys
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 SRC = sys.argv[1]
+COUNTRIES = sys.argv[2]
+CROP = (240, 165, 1470, 800)  # left, top, right, bottom on the picture
+SEA_KEEP = 0.65               # sea keeps 65 % of its colour saturation
 
 # Landmarks on the picture: (x, y) : (lat, lon)
 LM = {
@@ -93,12 +99,38 @@ sb = src[src.index('const List<Offset> _sparks = ['):]; sb = sb[:sb.index('];')]
 sparks = np.array(re.findall(r'Offset\((\d+), (\d+)\)', sb), float)
 day_sparks = tps(night / 1000, day, 0.001)(sparks / 1000)  # night px -> day px through the hubs
 
+def ss(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
 im = Image.open(SRC).convert('RGB')
-W, H = im.size
-a = np.asarray(im, float)
-lift = np.clip((a.min(-1) - 244) / 8, 0, 1)[..., None]  # 244..252 -> blend to pure white
+# Land mask from the countries, drawn through the same warp, a little wider
+# than the coast so no country colour is touched.
+mask = Image.new('L', im.size, 0)
+draw = ImageDraw.Draw(mask)
+for f in json.load(open(COUNTRIES))['features']:
+    if f['properties'].get('ADMIN') == 'Antarctica':
+        continue
+    g = f['geometry']
+    for poly in ([g['coordinates']] if g['type'] == 'Polygon' else g['coordinates']):
+        ring = np.array(poly[0])
+        if len(ring) < 3 or not -169 < ring[:, 0].mean() < 178:  # pieces across the date line
+            continue
+        draw.polygon([tuple(p) for p in to_pic(lonlat(ring[:, ::-1].copy()))], fill=255)
+land = np.asarray(mask.filter(ImageFilter.MaxFilter(25)).filter(ImageFilter.GaussianBlur(10)), float) / 255
+a = np.asarray(im, float) / 255
+a = a + (a.max(-1)[..., None] - a) * ((1 - SEA_KEEP) * (1 - land))[..., None]  # paler sea
+a = a[CROP[1]:CROP[3], CROP[0]:CROP[2]] * 255
+H, W = a.shape[:2]
+yy, xx = np.mgrid[0:H, 0:W]
+edge = ss(0, 60, np.minimum(np.minimum(xx, W - 1 - xx), np.minimum(yy, H - 1 - yy)))[..., None]
+a = a * edge + 255 * (1 - edge)  # soft fade to the white page
+lift = np.clip((a.min(-1) - 244) / 8, 0, 1)[..., None]  # near-white -> pure white
 a = a + (255 - a) * lift * lift * (3 - 2 * lift)
 Image.fromarray(a.clip(0, 255).astype(np.uint8)).save('assets/images/world_map_day.jpg', quality=84, optimize=True, progressive=True)
+day = day - np.array(CROP[:2])
+day_sparks = day_sparks - np.array(CROP[:2])
 
 
 def fmt(arr):
@@ -111,7 +143,7 @@ open('lib/features/cargo/presentation/widgets/live_map_day_geo.dart', 'w').write
 //
 // Day-mode geometry of the home live map: the same hubs (same order as
 // _hubs in live_map.dart) and city lights, placed on the day picture
-// (assets/images/world_map_day.jpg, {W}×{H}, the owner's design).
+// (assets/images/world_map_day.jpg, {W}×{H}, the owner's design, zoomed in).
 
 const double kDayImgW = {W}, kDayImgH = {H};
 
