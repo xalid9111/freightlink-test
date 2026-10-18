@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' show AuthChangeEvent;
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
-import '../../features/auth/presentation/role_select_screen.dart';
 import '../../features/auth/presentation/profile_screen.dart';
 import '../../features/auth/presentation/settings_screen.dart';
 import '../../features/auth/presentation/change_password_screen.dart';
@@ -114,9 +113,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const ChangePasswordScreen(),
       ),
+      // No "Hansı işlə məşğulsunuz?" step any more: one account for
+      // everyone, activities are chosen in Profil (0039). Old links land
+      // on the registration form.
       GoRoute(
         path: '/role-select',
-        builder: (context, state) => const RoleSelectScreen(),
+        redirect: (context, state) => '/register',
       ),
       GoRoute(
         path: '/register',

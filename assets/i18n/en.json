@@ -858,5 +858,16 @@
   "truck_open": "Flatbed",
   "truck_ref": "Reefer",
   "truck_tanker": "Tanker",
-  "truck_tent": "Curtain-side"
+  "truck_tent": "Curtain-side",
+  "act_carrier": "Carrier",
+  "act_shipper": "Shipper",
+  "act_service": "Mechanic / Service",
+  "act_seller": "Selling",
+  "act_save_failed": "Could not save. Please try again.",
+  "act_service_hint": "Mechanic / Service is on. Create your service profile too.",
+  "act_service_create": "Create",
+  "act_offer_need_carrier": "Turn on the \"Carrier\" activity to make offers.",
+  "act_enable": "Turn on",
+  "register_title": "Sign up",
+  "register_unified_note": "One account for everything. After signing up choose your activities in Profile: Carrier, Shipper, Mechanic / Service, Selling."
 }

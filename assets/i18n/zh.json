@@ -858,5 +858,16 @@
   "truck_open": "平板车",
   "truck_ref": "冷藏车",
   "truck_tanker": "罐车",
-  "truck_tent": "侧帘车"
+  "truck_tent": "侧帘车",
+  "act_carrier": "承运人",
+  "act_shipper": "货主",
+  "act_service": "维修 / 服务",
+  "act_seller": "出售",
+  "act_save_failed": "保存失败，请重试。",
+  "act_service_hint": "已开启“维修 / 服务”。请同时创建服务资料。",
+  "act_service_create": "创建",
+  "act_offer_need_carrier": "开启“承运人”即可报价。",
+  "act_enable": "开启",
+  "register_title": "注册",
+  "register_unified_note": "一个账户，全部功能。注册后在个人资料中选择：承运人、货主、维修 / 服务、出售。"
 }

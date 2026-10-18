@@ -141,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         Text(strings.t('login_no_account')),
                         TextButton(
-                          onPressed: () => context.go('/role-select'),
+                          onPressed: () => context.go('/register'), // one account for everyone (0039)
                           child: Text(strings.t('login_signup_link')),
                         ),
                       ],

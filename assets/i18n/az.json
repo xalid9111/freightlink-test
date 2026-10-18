@@ -858,5 +858,16 @@
   "truck_open": "Açıq platforma",
   "truck_ref": "Refrijerator",
   "truck_tanker": "Sistern",
-  "truck_tent": "Tent"
+  "truck_tent": "Tent",
+  "act_carrier": "Daşıyıcı",
+  "act_shipper": "Yük verən",
+  "act_service": "Usta / Servis",
+  "act_seller": "Satış",
+  "act_save_failed": "Seçim yadda saxlanmadı. Yenidən cəhd edin.",
+  "act_service_hint": "Usta / Servis seçildi. Servis profilinizi də yaradın.",
+  "act_service_create": "Yarat",
+  "act_offer_need_carrier": "Təklif vermək üçün \"Daşıyıcı\" fəaliyyətini aktiv edin.",
+  "act_enable": "Aktiv et",
+  "register_title": "Qeydiyyat",
+  "register_unified_note": "Bir hesab — bütün imkanlar. Qeydiyyatdan sonra Profildə fəaliyyətlərinizi seçin: Daşıyıcı, Yük verən, Usta / Servis, Satış."
 }

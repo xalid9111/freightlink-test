@@ -858,5 +858,16 @@
   "truck_open": "Açık kasa",
   "truck_ref": "Frigorifik",
   "truck_tanker": "Tanker",
-  "truck_tent": "Tenteli"
+  "truck_tent": "Tenteli",
+  "act_carrier": "Taşıyıcı",
+  "act_shipper": "Yük veren",
+  "act_service": "Usta / Servis",
+  "act_seller": "Satış",
+  "act_save_failed": "Seçim kaydedilemedi. Tekrar deneyin.",
+  "act_service_hint": "Usta / Servis seçildi. Servis profilinizi de oluşturun.",
+  "act_service_create": "Oluştur",
+  "act_offer_need_carrier": "Teklif vermek için \"Taşıyıcı\" faaliyetini açın.",
+  "act_enable": "Aç",
+  "register_title": "Kayıt",
+  "register_unified_note": "Tek hesap — tüm imkânlar. Kayıttan sonra Profil’de faaliyetlerinizi seçin: Taşıyıcı, Yük veren, Usta / Servis, Satış."
 }
