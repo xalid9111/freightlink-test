@@ -932,7 +932,7 @@
   "mk_photos_hint": "Ən çox 20 şəkil. Sırasını dəyişmək üçün şəkli basıb saxlayın və sürüşdürün. Birinci şəkil əsas şəkildir.",
   "mk_description_hint": "Vəziyyəti, təmir tarixçəsi, əlavə avadanlıq...",
   "mk_publish": "Elanı dərc et",
-  "mk_review_note": "Elan admin təsdiqindən sonra hamıya görünəcək.",
+  "mk_review_note": "Elan admin tərəfindən dayandırılıb: yenidən admin yoxlamasına göndəriləcək.",
   "mk_err_brand": "Markanı seçin",
   "mk_err_model": "Modeli seçin",
   "mk_err_year": "Buraxılış ilini yazın",
@@ -964,7 +964,7 @@
   "mk_ago_months": "{n} ay əvvəl",
   "mk_ago_years": "{n} il əvvəl",
   "mk_status_draft": "Qaralama — elan hələ dərc olunmayıb.",
-  "mk_status_pending": "Admin təsdiqi gözlənilir. Təsdiqdən sonra hamıya görünəcək.",
+  "mk_status_pending": "Elan admin yoxlamasındadır.",
   "mk_status_rejected": "Elan təsdiqlənmədi. Düzəldib yenidən göndərə bilərsiniz.",
   "mk_status_inactive": "Elan admin tərəfindən dayandırılıb.",
   "mk_status_sold": "Elan \"Satılıb\" kimi qeyd olunub.",
@@ -993,5 +993,7 @@
   "mk_untitled": "Adsız elan",
   "mk_my_empty": "Hələ satış elanınız yoxdur.",
   "mk_fav_empty": "Seçilmiş elan yoxdur. Elandakı ürəyə basın.",
-  "mk_gearbox_short": "Qutu"
+  "mk_gearbox_short": "Qutu",
+  "mk_published": "Elan dərc edildi və hamıya görünür.",
+  "mk_publish_note": "Elan dərc edilən kimi hamıya görünəcək."
 }

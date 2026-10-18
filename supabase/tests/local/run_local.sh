@@ -19,7 +19,7 @@ DB="${TEST_DB:-freightlink_test}"
 MODE="${1:-after}"
 export PGOPTIONS="${PGOPTIONS:-} -c client_min_messages=warning"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -q)
-NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql)
+NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql 0041_market_autopublish.sql)
 
 if [[ "$DB" != *test* ]]; then echo "Refusing: TEST_DB must contain 'test'"; exit 2; fi
 
@@ -88,6 +88,7 @@ suites() {
   "${PSQL[@]}" -d "$DB" -v mig38="$MIG/0038_ad_template_audience_fn.sql" -f "$HERE/76_ad_template_audience_fn.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -v mig39="$MIG/0039_user_activities.sql" -f "$HERE/77_user_activities.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/78_market.sql" >/dev/null
+  "${PSQL[@]}" -d "$DB" -v mig41="$MIG/0041_market_autopublish.sql" -f "$HERE/79_market_autopublish.sql" >/dev/null
   PGOPTIONS="-c client_min_messages=notice" "${PSQL[@]}" -d "$DB" -f "$HERE/../messaging_audit_test.sql" 2>&1 \
     | grep -E "ALL MESSAGING|FAILED|ERROR" | sed 's/^/messaging_audit_test: /'
 }

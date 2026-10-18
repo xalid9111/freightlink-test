@@ -307,6 +307,15 @@ String marketKm(int? v) => v == null ? '—' : '${v.toString().replaceAllMapped(
 /// Years offered in the form: next model year down to 1980.
 List<int> marketYears([DateTime? now]) => [for (var y = (now ?? DateTime.now()).year + 1; y >= 1980; y--) y];
 
+/// Status after "Elanı dərc et" (null = keep it): visible at once, no
+/// admin approval (owner decision); an ad the admin deactivated only goes
+/// back to the admin.
+MarketStatus? marketPublishStatus(MarketStatus? current) => switch (current) {
+      null || MarketStatus.draft || MarketStatus.pending || MarketStatus.rejected => MarketStatus.active,
+      MarketStatus.inactive => MarketStatus.pending,
+      MarketStatus.active || MarketStatus.sold => null,
+    };
+
 /// Moves photo [from] to position [to] (form: change the order).
 List<String> movePhoto(List<String> photos, int from, int to) {
   if (from < 0 || from >= photos.length || to < 0 || to >= photos.length || from == to) return [...photos];

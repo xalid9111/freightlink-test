@@ -67,7 +67,9 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     setState(() => _busy = true);
     final id = await _openChat(s, l);
     if (mounted) setState(() => _busy = false);
-    if (id != null && mounted) context.pushOnce('/messages/$id');
+    // Root-level chat page: this screen is above the tab shell, a tab route
+    // ('/messages/..') would open UNDER it (black screen, no input).
+    if (id != null && mounted) context.pushOnce('/chat/$id');
   }
 
   /// "Təklif et": price offer as a chat message to the seller.
@@ -119,7 +121,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('mk_offer_sent'))));
-      context.pushOnce('/messages/$convId');
+      context.pushOnce('/chat/$convId');
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('chat_send_failed'))));
     } finally {

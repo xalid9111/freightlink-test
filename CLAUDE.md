@@ -104,3 +104,6 @@ files to the owner separately (they are run by hand in the SQL editor).
   turns on any combination of Daşıyıcı · Yük verən · Usta / Servis · Satış
   (users.activities, 0039). Turning one off deletes nothing and never
   closes existing chats; users.role is kept as it was.
+- TIR Bazarı sale ads are published at once, no admin approval (owner,
+  18.10.2026, 0041); the admin moderates afterwards (deactivate, VIP,
+  delete). Chat from an ad opens the full-screen `/chat/:id`.

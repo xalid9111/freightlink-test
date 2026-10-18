@@ -23,7 +23,7 @@ class AdminMarketPage extends ConsumerStatefulWidget {
 }
 
 class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
-  MarketStatus? _status = MarketStatus.pending;
+  MarketStatus? _status;
 
   static const _labels = {
     null: 'Hamısı',
