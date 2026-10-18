@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/constants/currencies.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -46,6 +47,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   bool _customTons = false;
   String? _truck;
   DateTime? _pickupDate;
+  String _currency = kDefaultCargoCurrency;
 
   CargoModel? _original;
   bool _loaded = false;
@@ -67,6 +69,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     _from = PickedPlace.fromStored(c.pickupCity, c.pickupCountry);
     _to = PickedPlace.fromStored(c.destinationCity, c.destinationCountry);
     _priceCtrl.text = c.offeredPrice.toStringAsFixed(0);
+    _currency = cargoCurrencyOrDefault(c.currency);
     _noteCtrl.text = c.description ?? '';
     _cargoTypeCtrl.text = c.cargoType ?? '';
     _volumeCtrl.text = c.volumeM3 == null ? '' : c.volumeM3!.toStringAsFixed(0);
@@ -188,7 +191,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         pickupDate: _pickupDate!,
         deliveryDeadline: o?.deliveryDeadline,
         offeredPrice: double.parse(_priceCtrl.text.trim().replaceAll(',', '.')),
-        currency: 'USD', // all prices are in US dollars
+        currency: _currency, // chosen next to the price (USD by default)
         description: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
         distanceKm: (pickupChanged || destChanged) ? null : o?.distanceKm,
         status: o?.status ?? 'new',
@@ -330,15 +333,39 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
               ),
 
               const SizedBox(height: 18),
-              _Label(strings.t('create_price')),
-              TextFormField(
-                controller: _priceCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(suffixText: 'USD'),
-                validator: (v) {
-                  final p = double.tryParse((v ?? '').trim().replaceAll(',', '.'));
-                  return (p == null || p < 0) ? strings.t('field_required') : null;
-                },
+              // Without "(USD)": the currency is picked next to the price.
+              _Label(strings.t('create_price_cur')),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _priceCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) {
+                        final p = double.tryParse((v ?? '').trim().replaceAll(',', '.'));
+                        return (p == null || p < 0) ? strings.t('field_required') : null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Currency of the price (USD by default).
+                  SizedBox(
+                    width: 104,
+                    child: DropdownButtonFormField<String>(
+                      // Re-created once an edited load is loaded, so its saved currency shows.
+                      key: ValueKey('cargo-currency-${_original?.id}'),
+                      initialValue: _currency,
+                      isExpanded: true,
+                      items: [
+                        for (final c in cargoCurrencyChoices(_currency)) DropdownMenuItem(value: c, child: Text(c)),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _currency = v);
+                      },
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 18),

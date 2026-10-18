@@ -342,6 +342,7 @@
   "create_pickup_country": "Страна загрузки",
   "create_pickup_date": "Дата загрузки",
   "create_price": "Предлагаемая цена (USD)",
+  "create_price_cur": "Предлагаемая цена",
   "create_section_cargo": "Данные груза",
   "create_section_destination": "Данные доставки",
   "create_section_pickup": "Данные загрузки",

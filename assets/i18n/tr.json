@@ -342,6 +342,7 @@
   "create_pickup_country": "Yükleme ülkesi",
   "create_pickup_date": "Yükleme tarihi",
   "create_price": "Teklif edilen fiyat (USD)",
+  "create_price_cur": "Teklif edilen fiyat",
   "create_section_cargo": "Yük bilgileri",
   "create_section_destination": "Teslimat bilgileri",
   "create_section_pickup": "Yükleme bilgileri",
