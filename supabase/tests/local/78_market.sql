@@ -1,5 +1,6 @@
--- TIR BAZARI — 0040: sale ads, admin approval, VIP, views, favourites,
--- similar ads, reports. Rolled back at the end.
+-- TIR BAZARI — 0040 + 0041: sale ads (published at once, admin
+-- moderates afterwards), VIP, views, favourites, similar ads, reports.
+-- Rolled back at the end.
 \set admin   '''a0000000-0000-4000-8000-000000000001'''
 \set seller  '''a0000000-0000-4000-8000-000000000012'''
 \set buyer   '''a0000000-0000-4000-8000-000000000021'''
@@ -11,9 +12,9 @@
 begin;
 set role authenticated;
 select tests.login(:seller);
--- A seller cannot make his ad VIP / active / counted by himself.
+-- A seller cannot make their ad VIP / counted, nor insert it as sold.
 insert into public.market_listings (id, category, brand, model, year, mileage_km, price, currency, country, city, status, is_vip, views, photos)
-values (:l1, 'truck', 'DAF', 'XF 106', 2017, 420000, 32500, 'EUR', 'Azerbaijan', 'Baku', 'active', true, 999, '{a.jpg,b.jpg}');
+values (:l1, 'truck', 'DAF', 'XF 106', 2017, 420000, 32500, 'EUR', 'Azerbaijan', 'Baku', 'sold', true, 999, '{a.jpg,b.jpg}');
 select tests.check((select status = 'draft' and not is_vip and views = 0 and owner_id = :seller and listing_no >= 10001
                     from public.market_listings where id = :l1), 'M1 new ad = draft, no VIP, no fake views, own owner');
 select tests.check(tests.err($$ insert into public.market_listings (category, brand, photos)
@@ -23,19 +24,20 @@ select tests.login(:buyer);
 select tests.check(not exists (select 1 from public.market_listings where id = :l1), 'M2 a draft is private');
 
 select tests.login(:seller);
-update public.market_listings set status = 'pending' where id = :l1;           -- "Elanı dərc et"
-select tests.check((select status from public.market_listings where id = :l1) = 'pending', 'M3 publish → waits for the admin');
-select tests.check(tests.err(format($$ update public.market_listings set status = 'active' where id = %L $$, :l1)) like '%invalid_status_change%',
-  'M4 the owner cannot approve himself');
+update public.market_listings set status = 'active' where id = :l1;            -- "Elanı dərc et"
+select tests.check((select status = 'active' and published_at is not null from public.market_listings where id = :l1),
+  'M3 publish → visible at once, no admin approval (0041)');
+select tests.check(tests.err(format($$ update public.market_listings set status = 'inactive' where id = %L $$, :l1)) like '%invalid_status_change%',
+  'M4 the owner cannot set admin states');
 
 select tests.login(:buyer);
-select tests.check(not exists (select 1 from public.market_listings where id = :l1)
-                   and (select count(*) = 0 from public.market_search()), 'M4b pending ad not shown to others / in the feed');
+select tests.check(exists (select 1 from public.market_listings where id = :l1)
+                   and (select count(*) = 1 from public.market_search()), 'M4b published ad is shown to others / in the feed');
 select tests.check(tests.err(format($$ select public.admin_market_set_status(%L, 'active') $$, :l1)) like '%admin_only%', 'M4c only admins approve');
 
 select tests.login(:admin);
 select public.admin_market_set_status(:l1, 'active');
-select tests.check((select status = 'active' and published_at is not null from public.market_listings where id = :l1), 'M5 admin approves');
+select tests.check((select status = 'active' and published_at is not null from public.market_listings where id = :l1), 'M5 admin can (re)activate');
 
 select tests.login(:buyer);
 select tests.check((select count(*) = 1 from public.market_search()), 'M5b approved ad is in the feed');
@@ -54,7 +56,7 @@ select tests.check((select count(*) = 0 from public.market_favorites), 'M8b favo
 update public.market_listings set views = 5000, is_vip = true where id = :l1;
 select tests.check((select views = 1 and not is_vip from public.market_listings where id = :l1), 'M10 owner cannot change views / VIP');
 update public.market_listings set price = 31000 where id = :l1;
-select tests.check((select status = 'pending' and price = 31000 from public.market_listings where id = :l1), 'M11 editing a published ad → admin again');
+select tests.check((select status = 'active' and price = 31000 from public.market_listings where id = :l1), 'M11 editing a published ad keeps it visible');
 
 -- Two more ads for order / similar checks.
 insert into public.market_listings (id, category, brand, model, year, price, status) values
@@ -84,6 +86,10 @@ select tests.check((select count(*) = 2 from public.market_search()) and not exi
 
 select tests.login(:seller);
 select tests.check((select admin_note = 'duplicate' from public.market_listings where id = :l2), 'M16b owner sees why');
+select tests.check(tests.err(format($$ update public.market_listings set status = 'active' where id = %L $$, :l2)) like '%invalid_status_change%',
+  'M16c owner cannot re-publish an ad the admin deactivated');
+update public.market_listings set status = 'pending' where id = :l2;
+select tests.check((select status = 'pending' from public.market_listings where id = :l2), 'M16d … only send it back to the admin');
 update public.market_listings set status = 'sold' where id = :l1;
 select tests.check((select status = 'sold' and sold_at is not null from public.market_listings where id = :l1), 'M17 owner marks sold');
 select tests.login(:buyer);
@@ -102,5 +108,5 @@ select tests.check(not exists (select 1 from public.market_listings where id = :
                    and exists (select 1 from public.admin_audit_log where action = 'market.delete'), 'M20 admin delete is logged');
 reset role;
 
-select tests.summary('TIR BAZARI (0040)');
+select tests.summary('TIR BAZARI (0040 + 0041)');
 rollback;

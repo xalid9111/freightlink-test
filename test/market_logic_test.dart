@@ -137,7 +137,34 @@ void main() {
     });
   });
 
+  group('publish (0041: no admin approval)', () {
+    test('"Elanı dərc et" puts the ad online at once', () {
+      for (final c in [null, MarketStatus.draft, MarketStatus.pending, MarketStatus.rejected]) {
+        expect(marketPublishStatus(c), MarketStatus.active, reason: '$c');
+      }
+    });
+    test('an ad the admin deactivated only goes back to the admin', () {
+      expect(marketPublishStatus(MarketStatus.inactive), MarketStatus.pending);
+    });
+    test('editing an active or sold ad keeps its status', () {
+      expect(marketPublishStatus(MarketStatus.active), isNull);
+      expect(marketPublishStatus(MarketStatus.sold), isNull);
+    });
+    test('database: owner publishes at once, admin states stay protected', () {
+      final sql = _read('supabase/migrations/0041_market_autopublish.sql');
+      expect(sql.contains("(new.status = 'active' and old.status in ('draft', 'pending', 'rejected'))"), isTrue);
+      expect(sql.contains("'inactive'))"), isTrue);
+      expect(RegExp(r'\b(drop table|truncate|delete from)\b', caseSensitive: false).hasMatch(sql), isFalse);
+    });
+  });
+
   group('guards', () {
+    test('"Mesaj yaz" / offer open the full-screen chat (not a tab route under the page)', () {
+      final d = _read('lib/features/market/presentation/market_detail_screen.dart');
+      expect(d.contains("pushOnce('/chat/\$id')"), isTrue);
+      expect(d.contains("pushOnce('/chat/\$convId')"), isTrue);
+      expect(d.contains("pushOnce('/messages/"), isFalse);
+    });
     test('dynamic texts exist in all 6 languages', () {
       final keys = [
         for (final c in MarketCategory.values) c.labelKey,
@@ -167,7 +194,7 @@ void main() {
       expect(a.contains("AdminSection('market'"), isTrue);
       expect(a.contains('market.AdminMarketPage()'), isTrue);
     });
-    test('sale ads go to admin approval; owner cannot set VIP / status', () {
+    test('sale ads: RLS + guard trigger; owner cannot set VIP / admin states', () {
       final sql = _read('supabase/migrations/0040_market.sql');
       expect(sql.contains('market_listing_guard'), isTrue);
       expect(sql.contains("'pending'"), isTrue);

@@ -193,7 +193,8 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       ref.invalidate(marketListingProvider(saved.id));
       ref.invalidate(marketFeedProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(publish ? 'mk_sent_review' : 'mk_saved_draft'))));
+      final msg = !publish ? 'mk_saved_draft' : (saved.status == MarketStatus.pending ? 'mk_sent_review' : 'mk_published');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(msg))));
       context.pop();
     } catch (_) {
       if (mounted) setState(() => _error = 'mk_save_failed');
@@ -453,7 +454,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                     label: Text(s.t('mk_publish'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                   ),
                   const SizedBox(height: 8),
-                  Text(s.t('mk_review_note'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                  Text(s.t(_orig?.status == MarketStatus.inactive ? 'mk_review_note' : 'mk_publish_note'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
                 ],
               ),
       ),

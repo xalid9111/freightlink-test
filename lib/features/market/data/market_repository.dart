@@ -58,15 +58,13 @@ class MarketRepository {
     return _list(rows);
   }
 
-  /// Saves a draft (new or existing); [publish] sends it to the admin.
+  /// Saves a draft (new or existing); [publish] puts it online at once
+  /// (0041), or back to the admin if the admin had deactivated it.
   Future<MarketListing> save(MarketDraft d, {String? id, required bool publish, MarketStatus? current}) async {
     final data = d.toJson();
     if (publish) {
-      // draft / rejected / inactive → pending. An active ad goes back to
-      // the admin by itself when edited (database trigger).
-      if (current == null || current == MarketStatus.draft || current == MarketStatus.rejected || current == MarketStatus.inactive) {
-        data['status'] = 'pending';
-      }
+      final next = marketPublishStatus(current);
+      if (next != null) data['status'] = next.name;
     } else if (current == null) {
       data['status'] = 'draft';
     } else if (current == MarketStatus.pending || current == MarketStatus.rejected) {

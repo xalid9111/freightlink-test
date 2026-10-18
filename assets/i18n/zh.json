@@ -932,7 +932,7 @@
   "mk_photos_hint": "最多20张照片。长按照片并拖动可调整顺序。第一张为封面。",
   "mk_description_hint": "车况、保养记录、附加配置...",
   "mk_publish": "发布信息",
-  "mk_review_note": "信息经管理员审核后对所有人可见。",
+  "mk_review_note": "该信息已被管理员停用：将重新提交管理员审核。",
   "mk_err_brand": "请选择品牌",
   "mk_err_model": "请选择型号",
   "mk_err_year": "请填写年份",
@@ -964,7 +964,7 @@
   "mk_ago_months": "{n} 个月前",
   "mk_ago_years": "{n} 年前",
   "mk_status_draft": "草稿 — 尚未发布。",
-  "mk_status_pending": "等待管理员审核，审核后对所有人可见。",
+  "mk_status_pending": "信息正在由管理员审核。",
   "mk_status_rejected": "信息未通过审核，可修改后重新提交。",
   "mk_status_inactive": "该信息已被管理员停用。",
   "mk_status_sold": "该信息已标记为已售出。",
@@ -993,5 +993,7 @@
   "mk_untitled": "未命名信息",
   "mk_my_empty": "您还没有出售信息。",
   "mk_fav_empty": "暂无收藏。点击信息上的爱心即可收藏。",
-  "mk_gearbox_short": "变速箱"
+  "mk_gearbox_short": "变速箱",
+  "mk_published": "信息已发布，所有人可见。",
+  "mk_publish_note": "信息发布后立即对所有人可见。"
 }

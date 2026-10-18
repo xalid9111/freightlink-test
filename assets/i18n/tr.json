@@ -932,7 +932,7 @@
   "mk_photos_hint": "En fazla 20 fotoğraf. Sırayı değiştirmek için basılı tutup sürükleyin. İlk fotoğraf kapaktır.",
   "mk_description_hint": "Durumu, bakım geçmişi, ek donanım...",
   "mk_publish": "İlanı yayınla",
-  "mk_review_note": "İlan yönetici onayından sonra herkese görünecek.",
+  "mk_review_note": "İlan yönetici tarafından durduruldu: yeniden yönetici kontrolüne gönderilecek.",
   "mk_err_brand": "Markayı seçin",
   "mk_err_model": "Modeli seçin",
   "mk_err_year": "Model yılını girin",
@@ -964,7 +964,7 @@
   "mk_ago_months": "{n} ay önce",
   "mk_ago_years": "{n} yıl önce",
   "mk_status_draft": "Taslak — ilan henüz yayınlanmadı.",
-  "mk_status_pending": "Yönetici onayı bekleniyor. Onaydan sonra herkese görünecek.",
+  "mk_status_pending": "İlan yönetici kontrolünde.",
   "mk_status_rejected": "İlan onaylanmadı. Düzeltip tekrar gönderebilirsiniz.",
   "mk_status_inactive": "İlan yönetici tarafından durduruldu.",
   "mk_status_sold": "İlan \"Satıldı\" olarak işaretlendi.",
@@ -993,5 +993,7 @@
   "mk_untitled": "Başlıksız ilan",
   "mk_my_empty": "Henüz satış ilanınız yok.",
   "mk_fav_empty": "Favori ilan yok. İlandaki kalbe dokunun.",
-  "mk_gearbox_short": "Şanzıman"
+  "mk_gearbox_short": "Şanzıman",
+  "mk_published": "İlan yayınlandı, herkes görebilir.",
+  "mk_publish_note": "İlan yayınlanır yayınlanmaz herkese görünecek."
 }
