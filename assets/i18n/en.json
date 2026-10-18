@@ -342,6 +342,7 @@
   "create_pickup_country": "Pickup country",
   "create_pickup_date": "Pickup date",
   "create_price": "Offered price (USD)",
+  "create_price_cur": "Offered price",
   "create_section_cargo": "Cargo details",
   "create_section_destination": "Destination details",
   "create_section_pickup": "Pickup details",

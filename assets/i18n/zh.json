@@ -342,6 +342,7 @@
   "create_pickup_country": "装货国家",
   "create_pickup_date": "装货日期",
   "create_price": "报价（美元）",
+  "create_price_cur": "报价",
   "create_section_cargo": "货物信息",
   "create_section_destination": "目的地信息",
   "create_section_pickup": "装货信息",

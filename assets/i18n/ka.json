@@ -342,6 +342,7 @@
   "create_pickup_country": "დატვირთვის ქვეყანა",
   "create_pickup_date": "დატვირთვის თარიღი",
   "create_price": "შემოთავაზებული ფასი (USD)",
+  "create_price_cur": "შემოთავაზებული ფასი",
   "create_section_cargo": "ტვირთის დეტალები",
   "create_section_destination": "გადმოტვირთვის დეტალები",
   "create_section_pickup": "დატვირთვის დეტალები",
