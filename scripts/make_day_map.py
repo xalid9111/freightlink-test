@@ -5,9 +5,12 @@ Usage (from the repo root):
 (geojson: github.com/nvkelso/natural-earth-vector, geojson/)
 Writes:
 * assets/images/world_map_day.jpg — the picture, zoomed in (owner's choice
-  "Variant 3": most of the cloud margin cut, edges fade to pure white
-  #FFFFFF = the day page colour) with a slightly paler sea (saturation
-  -35 % outside the land, land colours untouched);
+  "Variant 3") with a slightly paler sea (saturation -35 % outside the
+  land, land colours untouched);
+* assets/images/world_map_day_top.jpg / world_map_day_bottom.jpg — the
+  clouds above and below it (from the picture's own cloud strips): one
+  cloud scene behind the home title, map and counters that fades to pure
+  white (#FFFFFF, the day page) at the top and bottom;
 * lib/features/cargo/presentation/widgets/live_map_day_geo.dart — the
   live-map hubs (live_map.dart, same order) and city lights placed on the
   picture, via a smooth warp fitted to the landmarks marked on it below.
@@ -120,15 +123,41 @@ for f in json.load(open(COUNTRIES))['features']:
         draw.polygon([tuple(p) for p in to_pic(lonlat(ring[:, ::-1].copy()))], fill=255)
 land = np.asarray(mask.filter(ImageFilter.MaxFilter(25)).filter(ImageFilter.GaussianBlur(10)), float) / 255
 a = np.asarray(im, float) / 255
-a = a + (a.max(-1)[..., None] - a) * ((1 - SEA_KEEP) * (1 - land))[..., None]  # paler sea
-a = a[CROP[1]:CROP[3], CROP[0]:CROP[2]] * 255
-H, W = a.shape[:2]
-yy, xx = np.mgrid[0:H, 0:W]
-edge = ss(0, 60, np.minimum(np.minimum(xx, W - 1 - xx), np.minimum(yy, H - 1 - yy)))[..., None]
-a = a * edge + 255 * (1 - edge)  # soft fade to the white page
-lift = np.clip((a.min(-1) - 244) / 8, 0, 1)[..., None]  # near-white -> pure white
-a = a + (255 - a) * lift * lift * (3 - 2 * lift)
-Image.fromarray(a.clip(0, 255).astype(np.uint8)).save('assets/images/world_map_day.jpg', quality=84, optimize=True, progressive=True)
+a = (a + (a.max(-1)[..., None] - a) * ((1 - SEA_KEEP) * (1 - land))[..., None]) * 255  # paler sea
+pale = Image.fromarray(a.clip(0, 255).astype(np.uint8))
+X0, Y0, X1, Y1 = CROP
+W, H = X1 - X0, Y1 - Y0
+
+
+def band(box):
+    """A cloud strip of the picture, scaled to the map width."""
+    c = pale.crop(box)
+    return np.asarray(c.resize((W, round(c.height * W / c.width)), Image.LANCZOS), float)
+
+
+def vjoin(top, bottom, n):
+    w = ss(0, 1, np.linspace(0, 1, n))[:, None, None]
+    return np.concatenate([top[:-n], top[-n:] * (1 - w) + bottom[:n] * w, bottom[n:]], 0)
+
+
+# One cloud scene, top to bottom: clouds behind the title, the map, clouds
+# behind the counters. The extra clouds come from the picture itself (its
+# strips above and below the map). Cut into three pictures that join
+# seamlessly when all are shown at the screen width.
+above, below = band((0, 10, pale.width, 175)), band((560, 805, pale.width, pale.height))
+top = vjoin(vjoin(below[::-1, ::-1], above, 40), a[:Y0, X0:X1], 50)
+bottom = vjoin(a[Y1:, X0:X1], below, 40)
+scene = np.concatenate([top, a[Y0:Y1, X0:X1], bottom], 0)
+T, n = top.shape[0], scene.shape[0]
+y = np.arange(n)[:, None, None]
+scene = scene + (255 - scene) * (0.40 * ss(T - 60, 0, y))  # lighter behind the title (readable text)
+scene = scene + (255 - scene) * ss(40, 0, y)               # white at the very top
+scene = scene + (255 - scene) * ss(n - 90, n - 4, y)       # white where the page continues
+lift = np.clip((scene.min(-1) - 244) / 8, 0, 1)[..., None]  # near-white -> pure white
+scene = scene + (255 - scene) * lift * lift * (3 - 2 * lift)
+scene = scene.clip(0, 255).astype(np.uint8)
+for name, part in (('world_map_day_top', scene[:T]), ('world_map_day', scene[T:T + H]), ('world_map_day_bottom', scene[T + H:])):
+    Image.fromarray(part).save(f'assets/images/{name}.jpg', quality=84, optimize=True, progressive=True)
 day = day - np.array(CROP[:2])
 day_sparks = day_sparks - np.array(CROP[:2])
 

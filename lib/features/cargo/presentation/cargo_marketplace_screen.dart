@@ -216,15 +216,28 @@ class _Hero extends ConsumerWidget {
 
     String stat(int n) => loaded ? '$n' : '—';
 
+    // Day mode: title, map and counters stand in one cloud scene (the
+    // clouds above / below the map are separate pictures that continue it).
+    final day = AppColors.isDay;
+    final topPad = MediaQuery.of(context).padding.top + 10;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.hero,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
       ),
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, bottom: 16),
+      padding: EdgeInsets.only(top: day ? 0 : topPad, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _DayScene(
+            show: day,
+            asset: 'assets/images/world_map_day_top.jpg',
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+            padding: EdgeInsets.only(top: day ? topPad : 0),
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -263,8 +276,18 @@ class _Hero extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 6),
+            ]),
+            ),
+          ),
           // Full width, edge to edge; edges fade into the page colour.
           LiveMap(liveLabel: strings.t('map_live_badge')),
+          _DayScene(
+            show: day,
+            asset: 'assets/images/world_map_day_bottom.jpg',
+            alignment: Alignment.topCenter,
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
           const SizedBox(height: 14),
           // Three live counters (all real numbers from the database).
           Padding(
@@ -299,6 +322,8 @@ class _Hero extends ConsumerWidget {
                 _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
               ],
             ),
+          ),
+            ]),
           ),
           if (topRoutes.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -361,6 +386,28 @@ class _Hero extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Day mode: [child] drawn on a cloud picture shown at the screen width
+/// ([alignment] = the edge that touches the map, so the clouds continue the
+/// map's own). Night: just [child].
+class _DayScene extends StatelessWidget {
+  final bool show;
+  final String asset;
+  final Alignment alignment;
+  final Widget child;
+  const _DayScene({required this.show, required this.asset, required this.alignment, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!show) return child;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
+      ),
+      child: child,
     );
   }
 }
