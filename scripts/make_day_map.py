@@ -1,15 +1,123 @@
 """Day map of the home live map (owner's design picture).
 
 Usage (from the repo root): python3 scripts/make_day_map.py <picture.png>
-Writes assets/images/world_map_day.jpg and
-lib/features/cargo/presentation/widgets/live_map_day_geo.dart: the live-map
-hubs (live_map.dart, same order) and city lights placed on the picture, via
-a smooth warp fitted to landmarks marked on the picture below. Needs numpy +
-Pillow."""
+Writes:
+* assets/images/world_map_day.jpg — the picture framed by soft white
+  cumulus clouds (extra room around it, so no country / hub is covered);
+* assets/images/clouds_day_top.jpg / clouds_day_bottom.jpg — clouds behind
+  the home title and the counters (they fade to white where they meet the
+  map and the page);
+* lib/features/cargo/presentation/widgets/live_map_day_geo.dart — the
+  live-map hubs (live_map.dart, same order) and city lights placed on the
+  picture, via a smooth warp fitted to landmarks marked on it below.
+Deterministic (fixed seeds). Needs numpy + Pillow."""
 import re, sys
 import numpy as np
 from PIL import Image
 SRC = sys.argv[1]
+
+def fbm(w, h, seed, base=5, octaves=5, persist=0.55):
+    rng = np.random.default_rng(seed); out = np.zeros((h, w)); amp = 1; tot = 0
+    for o in range(octaves):
+        gw = int(base * 2**o * max(1, w / h)) + 2; gh = int(base * 2**o) + 2
+        g = Image.fromarray((rng.random((gh, gw)) * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC)
+        out += amp * np.asarray(g, float) / 255; tot += amp; amp *= persist
+    out /= tot
+    return (out - out.min()) / (out.max() - out.min())
+def ss(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t)
+
+def cumulus(w, h, clusters, seed, scale=0.5):
+    """clusters: (cx, cy, size) in px. Returns alpha, rgb (h, w)."""
+    rng = np.random.default_rng(seed)
+    W, H = int(w * scale), int(h * scale)
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    dens = np.zeros((H, W)); lum = np.zeros((H, W))
+    for cx, cy, size in clusters:
+        n = int(10 + size / 12)
+        for _ in range(n):
+            # puffs: wider than tall, bigger on top of the cluster
+            ox = rng.normal(0, size * 0.55); oy = rng.normal(0, size * 0.22)
+            r = size * rng.uniform(0.22, 0.5) * (1.15 if oy < 0 else 0.9)
+            bx, by, br = (cx + ox) * scale, (cy + oy) * scale, r * scale
+            x0, x1 = int(max(0, bx - 2 * br)), int(min(W, bx + 2 * br)); y0, y1 = int(max(0, by - 2 * br)), int(min(H, by + 2 * br))
+            if x0 >= x1 or y0 >= y1: continue
+            sx = xx[y0:y1, x0:x1]; sy = yy[y0:y1, x0:x1]
+            q = ((sx - bx) ** 2 + (sy - by) ** 2) / (br * br)
+            g = np.clip(1 - q, 0, 1) ** 1.6
+            # lit from the top: each puff bright on top, a bit grey underneath
+            l = ss(0.9, -0.6, (sy - by) / br)
+            dens[y0:y1, x0:x1] += g
+            lum[y0:y1, x0:x1] += g * l
+    lum = np.where(dens > 1e-6, lum / np.maximum(dens, 1e-6), 1)
+    n = fbm(W, H, seed + 3, base=8)
+    a = ss(0.10, 0.55, dens * (0.8 + 0.4 * n))
+    br = np.clip(0.55 + 0.45 * lum, 0, 1) * (0.94 + 0.06 * n)
+    top = np.array([255, 255, 255.]); low = np.array([206, 222, 240.])
+    rgb = low + (top - low) * br[..., None]
+    up = lambda arr: np.asarray(Image.fromarray(arr.astype(np.float32)).resize((w, h), Image.BICUBIC))
+    A = np.clip(up(a), 0, 1); RGB = np.stack([up(rgb[..., i]) for i in range(3)], -1)
+    return A, np.clip(RGB, 0, 255)
+
+def edge_clusters(w, h, rng, step, inset, size, sides='tblr'):
+    cl = []
+    if 't' in sides:
+        for x in np.arange(-step / 2, w + step, step): cl.append((x + rng.uniform(-step / 3, step / 3), -inset * 0.2 + rng.uniform(0, inset), size * rng.uniform(0.8, 1.25)))
+    if 'b' in sides:
+        for x in np.arange(-step / 2, w + step, step): cl.append((x + rng.uniform(-step / 3, step / 3), h + inset * 0.2 - rng.uniform(0, inset), size * rng.uniform(0.8, 1.25)))
+    if 'l' in sides:
+        for y in np.arange(0, h + step, step * 0.8): cl.append((rng.uniform(-inset * 0.3, inset * 0.6), y, size * rng.uniform(0.8, 1.2)))
+    if 'r' in sides:
+        for y in np.arange(0, h + step, step * 0.8): cl.append((w - rng.uniform(-inset * 0.3, inset * 0.6), y, size * rng.uniform(0.8, 1.2)))
+    return cl
+
+PAD = (40, 70, 40, 80)  # left, top, right, bottom: room for the clouds around the map
+
+def map_with_clouds(src, dst, seed=11):
+    pic = Image.open(src).convert('RGB'); pw, ph = pic.size
+    L, T, R, B = PAD; w, h = pw + L + R, ph + T + B
+    canvas = Image.new('RGB', (w, h), (255, 255, 255)); canvas.paste(pic, (L, T))
+    im = np.asarray(canvas, float)
+    # soften the picture's own rectangle into the sky colour
+    yy, xx = np.mgrid[0:h, 0:w]
+    din = np.minimum(np.minimum(xx - L, L + pw - 1 - xx), np.minimum(yy - T, T + ph - 1 - yy))
+    k = ss(-4, 26, din)[..., None]
+    sky = np.array([255, 255, 255.])
+    im = im * k + sky * (1 - k)
+    rng = np.random.default_rng(seed)
+    cl = []
+    cl += [(x + rng.uniform(-50, 50), rng.uniform(0, T * 0.7), rng.uniform(60, 95)) for x in np.arange(-40, w + 130, 130)]
+    cl += [(x + rng.uniform(-50, 50), h - rng.uniform(0, B * 0.55), rng.uniform(55, 85)) for x in np.arange(-40, w + 120, 120)]
+    cl += [(rng.uniform(-30, L + 30), y + rng.uniform(-30, 30), rng.uniform(60, 100)) for y in np.arange(40, h, 120)]
+    cl += [(w - rng.uniform(-30, R + 30), y + rng.uniform(-30, 30), rng.uniform(60, 100)) for y in np.arange(40, h, 120)]
+    A, RGB = cumulus(w, h, cl, seed)
+    yy, xx = np.mgrid[0:h, 0:w]
+    d = np.minimum(np.minimum(xx, w - 1 - xx) / 30.0, np.minimum(yy, h - 1 - yy) / 40.0)
+    A = np.maximum(A, ss(1.0, 0.0, d))           # the very border is all cloud / white
+    out = im * (1 - A[..., None]) + RGB * A[..., None]
+    edge = ss(0.35, 0.0, d)[..., None]           # outermost pixels pure white
+    out = out * (1 - edge) + 255 * edge
+    Image.fromarray(out.clip(0, 255).astype(np.uint8)).save(dst, quality=84, optimize=True, progressive=True)
+
+def backdrop(dst, w, h, top, seed):
+    rng = np.random.default_rng(seed)
+    yy, xx = np.mgrid[0:h, 0:w]; y = yy / h
+    if top:
+        sky = ss(0.75, 0.0, y)
+        base = np.stack([255 - 34 * sky, 255 - 16 * sky, 255 - 3 * sky], -1)
+        cl = [(x + rng.uniform(-60, 60), h * rng.uniform(0.55, 0.95), rng.uniform(90, 150)) for x in np.arange(0, w + 150, 150)]
+        cl += [(x + rng.uniform(-80, 80), h * rng.uniform(0.05, 0.35), rng.uniform(50, 90)) for x in np.arange(80, w, 320)]
+        fade = ss(0.86, 1.0, y)
+    else:
+        base = np.full((h, w, 3), 255.0)
+        cl = [(x + rng.uniform(-60, 60), h * rng.uniform(0.05, 0.30), rng.uniform(60, 100)) for x in np.arange(0, w + 150, 150)]
+        fade = np.maximum(ss(0.10, 0.0, y), ss(0.65, 1.0, y))
+    A, RGB = cumulus(w, h, cl, seed)
+    out = base * (1 - A[..., None]) + RGB * A[..., None]
+    out = out * (1 - fade[..., None]) + 255 * fade[..., None]
+    Image.fromarray(out.clip(0, 255).astype(np.uint8)).save(dst, quality=84, optimize=True, progressive=True)
+
+
 # landmarks on the owner's picture: (img x, y) : (lat, lon)
 LM = {
  (133,308):(34.05,-118.24),   # Los Angeles dot
@@ -65,7 +173,9 @@ sb=sb[:sb.index('];')]
 sparks=np.array([(int(a),int(b)) for a,b in re.findall(r'Offset\((\d+), (\d+)\)',sb)],float)
 g=tps(night/1000,day,0.001)
 dsp=g(sparks/1000)
-W,H=im.size
+# the picture sits inside the cloud frame at (PAD left, PAD top)
+day = day + np.array([PAD[0], PAD[1]]); dsp = dsp + np.array([PAD[0], PAD[1]])
+W, H = im.size[0] + PAD[0] + PAD[2], im.size[1] + PAD[1] + PAD[3]
 def fmt(arr):
     out=[]
     for i in range(0,len(arr),5):
@@ -77,7 +187,8 @@ dart=f'''import 'dart:ui' show Offset;
 //
 // Day-mode geometry of the home live map: the same hubs (same order as
 // _hubs in live_map.dart) and city lights, placed on the day picture
-// (assets/images/world_map_day.jpg, {W}×{H}, the owner's design).
+// (assets/images/world_map_day.jpg, {W}×{H}: the owner's design framed by
+// clouds).
 
 const double kDayImgW = {W}, kDayImgH = {H};
 
@@ -90,5 +201,7 @@ const List<Offset> kDaySparks = [
 ];
 '''
 open('lib/features/cargo/presentation/widgets/live_map_day_geo.dart','w').write(dart)
-im.save('assets/images/world_map_day.jpg',quality=84,optimize=True,progressive=True)
+map_with_clouds(SRC, 'assets/images/world_map_day.jpg')
+backdrop('assets/images/clouds_day_top.jpg', 1170, 420, True, 3)
+backdrop('assets/images/clouds_day_bottom.jpg', 1170, 360, False, 5)
 print('hubs',len(day),'sparks',len(dsp), 'outside', int(((dsp[:,0]<0)|(dsp[:,0]>W)|(dsp[:,1]<0)|(dsp[:,1]>H)).sum()))

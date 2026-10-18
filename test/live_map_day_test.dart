@@ -36,4 +36,15 @@ void main() {
     }
     expect(File('scripts/make_day_map.py').existsSync(), isTrue);
   });
+
+  test('day clouds: framed map, clouds behind title and counters, light, never at night', () {
+    for (final f in ['clouds_day_top.jpg', 'clouds_day_bottom.jpg']) {
+      final bytes = File('assets/images/$f').readAsBytesSync();
+      expect(bytes.length, lessThan(60 * 1024), reason: f);
+    }
+    final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
+    expect(home.contains('child: !day\n          ? content'), isTrue);
+    expect(home.contains('if (!show) return child;'), isTrue);
+    expect(home.contains('_DayClouds(\n            show: day,'), isTrue);
+  });
 }

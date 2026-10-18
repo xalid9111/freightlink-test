@@ -216,12 +216,10 @@ class _Hero extends ConsumerWidget {
 
     String stat(int n) => loaded ? '$n' : '—';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.hero,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
-      ),
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, bottom: 16),
+    final topInset = MediaQuery.of(context).padding.top;
+    final day = AppColors.isDay;
+    final content = Padding(
+      padding: EdgeInsets.only(top: topInset + 10, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -267,7 +265,10 @@ class _Hero extends ConsumerWidget {
           LiveMap(liveLabel: strings.t('map_live_badge')),
           const SizedBox(height: 14),
           // Three live counters (all real numbers from the database).
-          Padding(
+          // Day mode: soft clouds behind them, joining the map's clouds.
+          _DayClouds(
+            show: day,
+            child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
@@ -299,6 +300,7 @@ class _Hero extends ConsumerWidget {
                 _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
               ],
             ),
+          ),
           ),
           if (topRoutes.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -362,6 +364,63 @@ class _Hero extends ConsumerWidget {
         ],
       ),
     );
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.hero,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
+      ),
+      child: !day
+          ? content
+          : Stack(children: [
+              // Day mode: sky and clouds behind the title (fades to white
+              // where the map's own clouds begin).
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: topInset + 104,
+                child: const IgnorePointer(
+                  child: Image(
+                    image: AssetImage('assets/images/clouds_day_top.jpg'),
+                    fit: BoxFit.cover,
+                    alignment: Alignment.bottomCenter,
+                    gaplessPlayback: true,
+                  ),
+                ),
+              ),
+              content,
+            ]),
+    );
+  }
+}
+
+/// Day mode: a cloud band behind [child] (the home counters), reaching a
+/// little above and below it; static picture, no effect at night.
+class _DayClouds extends StatelessWidget {
+  final bool show;
+  final Widget child;
+  const _DayClouds({required this.show, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!show) return child;
+    return Stack(clipBehavior: Clip.none, children: [
+      const Positioned(
+        top: -26,
+        left: 0,
+        right: 0,
+        height: 112,
+        child: IgnorePointer(
+          child: Image(
+            image: AssetImage('assets/images/clouds_day_bottom.jpg'),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            gaplessPlayback: true,
+          ),
+        ),
+      ),
+      child,
+    ]);
   }
 }
 
