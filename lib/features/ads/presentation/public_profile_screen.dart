@@ -520,7 +520,9 @@ class _CoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [const Color(0xFF0F4C5C), const Color(0xFF14323F), AppColors.background],
+          colors: AppColors.isDay
+              ? [const Color(0xFFBFE3EC), const Color(0xFFE2F1F5), AppColors.background]
+              : [const Color(0xFF0F4C5C), const Color(0xFF14323F), AppColors.background],
         ),
       ),
     );

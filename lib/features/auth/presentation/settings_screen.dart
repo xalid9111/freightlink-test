@@ -66,9 +66,9 @@ Future<void> showLanguagePicker(BuildContext context, WidgetRef ref, AppStrings 
   );
 }
 
-/// Day mode is offered to everyone once every screen is adapted to it;
-/// until then only admins see the switch (to try it on their phone).
-const kDayModeForEveryone = false;
+/// Day mode is offered to everyone (every screen is adapted, owner
+/// 18.10.2026). false = only admins see the switch again.
+const kDayModeForEveryone = true;
 
 /// Ayarlar: notifications & sounds, haptic, language, appearance,
 /// password, privacy.

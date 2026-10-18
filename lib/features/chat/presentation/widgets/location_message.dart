@@ -121,8 +121,8 @@ class LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = isMine ? Colors.white : AppColors.text;
-    final sub = isMine ? Colors.white.withValues(alpha: 0.8) : AppColors.textSoft;
+    final fg = isMine ? ChatColors.text : AppColors.text;
+    final sub = isMine ? ChatColors.text.withValues(alpha: 0.8) : AppColors.textSoft;
     return InkWell(
       onTap: () => showNavigationPicker(context, strings, location),
       borderRadius: BorderRadius.circular(10),

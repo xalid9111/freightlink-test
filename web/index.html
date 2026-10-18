@@ -69,7 +69,20 @@
       animation: fl-spin 0.9s linear infinite;
     }
     @keyframes fl-spin { to { transform: rotate(360deg); } }
+    /* Day mode (Settings → Görünüş): light splash, no dark flash. */
+    html.day, html.day body, html.day #app-loading { background: #FFFFFF; color: #0F1B2D; }
+    html.day #app-loading .spinner { border-color: rgba(15,27,45,0.15); border-top-color: #FF5A1F; }
   </style>
+  <script>
+    // The app keeps the choice in localStorage (SharedPreferences key
+    // app_theme_mode); read it before the first paint.
+    try {
+      if (localStorage.getItem('flutter.app_theme_mode') === '"day"') {
+        document.documentElement.classList.add('day');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FFFFFF');
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <div id="app-loading">
