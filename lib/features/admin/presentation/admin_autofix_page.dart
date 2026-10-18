@@ -16,13 +16,41 @@ import 'admin_widgets.dart';
 
 final _autofixShowAllProvider = StateProvider.autoDispose<bool>((ref) => false);
 
+/// Open problems nobody has hit for this many days are marked solved by
+/// the system (0042). If one happens again it is open again on its own.
+const kAutofixAutoResolveDays = 3;
+
 final _autofixErrorsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final all = ref.watch(_autofixShowAllProvider);
+  try {
+    await SupabaseConfig.client.rpc('admin_autofix_auto_resolve', params: {'p_days': kAutofixAutoResolveDays});
+  } catch (_) {
+    // 0042 not run yet: the list still works as before.
+  }
   var q = SupabaseConfig.client.from('app_errors').select();
   if (!all) q = q.eq('status', 'open');
   final rows = await q.order('last_seen_at', ascending: false).limit(100);
   return [for (final r in rows as List) Map<String, dynamic>.from(r as Map)];
 });
+
+final _autofixFixedCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  // After the errors provider, so the automatic check has already run.
+  await ref.watch(_autofixErrorsProvider.future);
+  final rows = await SupabaseConfig.client.from('app_errors').select('id').eq('status', 'fixed').limit(1000);
+  return (rows as List).length;
+});
+
+/// Status chip of a card: who solved it is shown for "fixed".
+String? autofixStatusLabel(Map<String, dynamic> r) {
+  switch ('${r['status']}') {
+    case 'fixed':
+      return r['resolved_by'] == null ? 'həll olunub (avtomatik)' : 'həll olunub';
+    case 'ignored':
+      return 'gizlədilib';
+    default:
+      return null;
+  }
+}
 
 final _autofixCiProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final rows = await SupabaseConfig.client.from('autofix_ci_runs').select().order('id', ascending: false).limit(5);
@@ -87,9 +115,11 @@ class AdminAutoFixPage extends ConsumerWidget {
     final showAll = ref.watch(_autofixShowAllProvider);
     final errors = ref.watch(_autofixErrorsProvider);
     final ci = ref.watch(_autofixCiProvider);
+    final fixedCount = ref.watch(_autofixFixedCountProvider).valueOrNull ?? 0;
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(_autofixErrorsProvider);
+        ref.invalidate(_autofixFixedCountProvider);
         ref.invalidate(_autofixCiProvider);
       },
       child: ListView(
@@ -120,6 +150,17 @@ class AdminAutoFixPage extends ConsumerWidget {
               ),
             ],
           ),
+          if (fixedCount > 0) ...[
+            const SizedBox(height: 10),
+            // Deletes ONLY problems marked solved (by the admin or by the
+            // system); open and hidden ones are never touched (0042).
+            OutlinedButton.icon(
+              key: const ValueKey('autofix-delete-fixed'),
+              onPressed: () => _deleteFixed(context, ref, fixedCount),
+              icon: Icon(Icons.delete_sweep_outlined, size: 18, color: AppColors.danger),
+              label: Text('Həll olunanları sil ($fixedCount)', style: TextStyle(color: AppColors.danger)),
+            ),
+          ],
           const SizedBox(height: 10),
           errors.when(
             loading: () => const Padding(padding: EdgeInsets.all(30), child: Center(child: CircularProgressIndicator())),
@@ -155,6 +196,31 @@ class AdminAutoFixPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _deleteFixed(BuildContext context, WidgetRef ref, int count) async {
+  final ok = await confirmAction(
+    context,
+    'Həll olunanları sil',
+    '$count həll olunmuş xəta silinsin?\n\nYalnız "həll olunub" olan xətalar silinir. Açıq və gizlədilmiş '
+        'xətalara toxunulmur. İstifadəçi məlumatları silinmir. Xəta yenidən baş versə, yenidən yazılacaq.',
+    ok: 'Sil',
+    danger: true,
+  );
+  if (!ok) return;
+  try {
+    final n = await SupabaseConfig.client.rpc('admin_autofix_delete_fixed');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$n həll olunmuş xəta silindi')));
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinmədi: ${adminErrorText(e)}')));
+    }
+  }
+  if (!context.mounted) return;
+  ref.invalidate(_autofixErrorsProvider);
+  ref.invalidate(_autofixFixedCountProvider);
 }
 
 class _ErrorCard extends StatefulWidget {
@@ -225,7 +291,7 @@ class _ErrorCardState extends State<_ErrorCard> {
               if ('${r['code']}'.isNotEmpty) AdminChip('${r['code']}'),
               AdminChip('${r['count']}× · ${r['users']} istifadəçi'),
               if ((r['auto_fixed'] as num? ?? 0) > 0) AdminChip('avtomatik bərpa: ${r['auto_fixed']}', color: AppColors.online),
-              if (status != 'open') AdminChip(status == 'fixed' ? 'həll olunub' : 'gizlədilib', color: AppColors.online),
+              if (autofixStatusLabel(r) case final label?) AdminChip(label, color: AppColors.online),
             ],
           ),
           const SizedBox(height: 8),
