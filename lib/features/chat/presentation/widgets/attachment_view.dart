@@ -22,7 +22,7 @@ class AttachmentView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final urlAsync = ref.watch(attachmentUrlProvider(message.attachmentPath!));
-    final fg = isMine ? Colors.white : AppColors.text;
+    final fg = isMine ? ChatColors.text : AppColors.text;
 
     switch (message.attachmentType) {
       case 'image':

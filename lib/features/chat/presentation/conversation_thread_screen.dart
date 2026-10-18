@@ -497,7 +497,7 @@ class _MessageBubble extends StatelessWidget {
             if (!deleted && (message.message ?? '').isNotEmpty && !_isBareLocation(message.message!))
               Text(
                 message.message!,
-                style: const TextStyle(color: Colors.white, fontSize: 14.5),
+                style: TextStyle(color: ChatColors.text, fontSize: 14.5),
               ),
             const SizedBox(height: 2),
             // Send time (HH:mm, device local time) and, on my own

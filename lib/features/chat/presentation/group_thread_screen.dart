@@ -256,7 +256,7 @@ class _GroupBubble extends StatelessWidget {
                 child: LocationCard(location: loc, isMine: isMine, strings: strings),
               ),
             if (!deleted && (text ?? '').isNotEmpty && !_isBareLocation(text!))
-              Text(text!, style: const TextStyle(color: Colors.white, fontSize: 14.5)),
+              Text(text!, style: TextStyle(color: ChatColors.text, fontSize: 14.5)),
             const SizedBox(height: 2),
             Text(_hhmm(message.createdAt), style: TextStyle(fontSize: 11, color: ChatColors.meta)),
           ],

@@ -19,8 +19,8 @@ void main() {
       0xFFC93D0C, 0xFF2BB3A9, 0xFF0F2B2A, 0xFF3BA3FF, 0xFF4ADE80, 0xFFFF6B6B, 0xFF3A1A10, 0xFFFF8A5C, 0xFF0F2B2A, 0xFF5FD4C9,
     ]);
     const c = ChatPalette.dark;
-    expect([c.background, c.dots, c.mine, c.theirs, c.meta, c.readTick, c.dateChip].map((x) => x.toARGB32()).toList(),
-        [0xFF0B141A, 0xFF13212A, 0xFF005C4B, 0xFF1F2C34, 0xFF8696A0, 0xFF53BDEB, 0xFF182229]);
+    expect([c.background, c.dots, c.mine, c.theirs, c.meta, c.readTick, c.dateChip, c.text].map((x) => x.toARGB32()).toList(),
+        [0xFF0B141A, 0xFF13212A, 0xFF005C4B, 0xFF1F2C34, 0xFF8696A0, 0xFF53BDEB, 0xFF182229, 0xFFFFFFFF]);
   });
 
   test('night is the default; only a saved "day" switches', () {
@@ -51,14 +51,18 @@ void main() {
     expect(ratio(p.text, p.card), greaterThan(7));
     expect(ratio(p.textSoft, p.card), greaterThan(4.5));
     expect(ratio(Colors.white, p.accentFill), greaterThan(3));
+    // Chat: message text on my bubble and on theirs.
+    const c = ChatPalette.light;
+    expect(ratio(c.text, c.mine), greaterThan(7));
+    expect(ratio(c.text, c.theirs), greaterThan(7));
   });
 
-  test('saved before the first screen; Settings switch (admins only until every screen is ready)', () {
+  test('saved before the first screen; Settings switch for everyone', () {
     final main = File('lib/main.dart').readAsStringSync();
     expect(main.indexOf('await loadSavedTheme();') < main.indexOf('runApp('), isTrue);
     expect(main.contains('themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark'), isTrue);
     final settings = File('lib/features/auth/presentation/settings_screen.dart').readAsStringSync();
-    expect(settings.contains('const kDayModeForEveryone = false;'), isTrue);
+    expect(settings.contains('const kDayModeForEveryone = true;'), isTrue);
     expect(settings.contains('onSelectionChanged: (v) => chooseTheme(day: v.first)'), isTrue);
     // Stored on the device only, never on the server.
     final mode = File('lib/core/theme/theme_mode.dart').readAsStringSync();

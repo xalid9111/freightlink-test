@@ -123,8 +123,9 @@ class AppColors {
 
 /// WhatsApp-like chat palette, so chats feel familiar.
 class ChatPalette {
-  final Color background, dots, mine, theirs, meta, readTick, dateChip;
+  final Color background, dots, mine, theirs, meta, readTick, dateChip, text;
   const ChatPalette({
+    required this.text,
     required this.background,
     required this.dots,
     required this.mine,
@@ -135,6 +136,7 @@ class ChatPalette {
   });
 
   static const dark = ChatPalette(
+    text: Color(0xFFFFFFFF), // message text on both bubbles
     background: Color(0xFF0B141A),
     dots: Color(0xFF13212A),
     mine: Color(0xFF005C4B),
@@ -145,6 +147,7 @@ class ChatPalette {
   );
 
   static const light = ChatPalette(
+    text: Color(0xFF111B21),
     background: Color(0xFFEFEAE2),
     dots: Color(0xFFE2DBD0),
     mine: Color(0xFFD9FDD3),
@@ -165,6 +168,7 @@ class ChatColors {
   static Color get meta => _p.meta;
   static Color get readTick => _p.readTick;
   static Color get dateChip => _p.dateChip;
+  static Color get text => _p.text;
 }
 
 /// The whole app uses ONE font: Arial (bundled; see pubspec.yaml).
