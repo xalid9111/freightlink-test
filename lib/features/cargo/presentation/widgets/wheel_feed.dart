@@ -28,6 +28,18 @@ class WheelSignals {
   static double offset = 0;
 }
 
+/// True when [box] and every box above it already has a size, so
+/// `localToGlobal` can run. Right after a page transition is rebuilt its
+/// new SlideTransition box is not laid out yet; asking through it threw
+/// "RenderBox was not laid out" (AutoFix, /cargo /market /services ...).
+bool wheelBoxReady(RenderObject? box) {
+  if (box is! RenderBox || !box.attached || !box.hasSize) return false;
+  for (RenderObject? p = box.parent; p != null; p = p.parent) {
+    if (p is RenderBox && !p.hasSize) return false;
+  }
+  return true;
+}
+
 class WheelController {
   final Map<int, _WheelItemState> _items = {};
   final ValueNotifier<bool> lite = ValueNotifier(false);
@@ -117,7 +129,7 @@ class _WheelScopeState extends ConsumerState<WheelScope> {
 
   double? _viewportCenter(ScrollMetrics _, BuildContext scrollContext) {
     final box = scrollContext.findRenderObject();
-    if (box is! RenderBox || !box.hasSize || !box.attached) return null;
+    if (box is! RenderBox || !wheelBoxReady(box)) return null;
     return box.localToGlobal(Offset(0, box.size.height / 2)).dy;
   }
 
@@ -210,7 +222,7 @@ class _WheelItemState extends State<WheelItem> {
   /// Untransformed centre (global y) and height of this item.
   ({double center, double height})? _measure() {
     final box = context.findRenderObject();
-    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    if (box is! RenderBox || !wheelBoxReady(box)) return null;
     return (center: box.localToGlobal(Offset(0, box.size.height / 2)).dy, height: box.size.height);
   }
 
@@ -232,7 +244,7 @@ class _WheelItemState extends State<WheelItem> {
         double d = 0;
         final me = _measure();
         final vp = scrollable.context.findRenderObject();
-        if (me != null && vp is RenderBox && vp.attached && vp.hasSize) {
+        if (me != null && vp is RenderBox && wheelBoxReady(vp)) {
           final vpCenter = vp.localToGlobal(Offset(0, vp.size.height / 2)).dy;
           d = ((me.center - vpCenter) / (vp.size.height / 2)).clamp(-1.3, 1.3);
         }
