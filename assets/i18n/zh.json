@@ -995,5 +995,8 @@
   "mk_fav_empty": "暂无收藏。点击信息上的爱心即可收藏。",
   "mk_gearbox_short": "变速箱",
   "mk_published": "信息已发布，所有人可见。",
-  "mk_publish_note": "信息发布后立即对所有人可见。"
+  "mk_publish_note": "信息发布后立即对所有人可见。",
+  "settings_appearance": "外观",
+  "theme_night": "夜间",
+  "theme_day": "日间"
 }

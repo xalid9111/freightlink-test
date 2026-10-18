@@ -69,7 +69,7 @@ class AdminAutoFixPage extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         children: [
-          const Text(
+          Text(
             'AutoFix tətbiqlərdə baş verən xətaları toplayır. Təhlükəsiz hallarda özü düzəldir '
             '(yenidən qoşulma, məhdud təkrar sorğu, sessiyanın yenilənməsi). Kod xətalarını '
             'avtomatik düzəltmir — onlar üçün fayl, sətir və loglar göstərilir.',
@@ -99,7 +99,7 @@ class AdminAutoFixPage extends ConsumerWidget {
             loading: () => const Padding(padding: EdgeInsets.all(30), child: Center(child: CircularProgressIndicator())),
             error: (e, _) => Text(
               'Yüklənmədi: ${adminErrorText(e)}\n(0034_autofix.sql işə salınıbmı?)',
-              style: const TextStyle(color: AppColors.danger),
+              style: TextStyle(color: AppColors.danger),
             ),
             data: (list) => list.isEmpty
                 ? const EmptyNote('Açıq problem yoxdur 👍')
@@ -204,13 +204,13 @@ class _ErrorCardState extends State<_ErrorCard> {
           const SizedBox(height: 6),
           Text(
             'Fayl: ${file ?? '— (tapılmadı)'}${line == null ? '' : ' · sətir $line'}',
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft),
+            style: TextStyle(fontSize: 12.5, color: AppColors.textSoft),
           ),
           if (file != null && file.startsWith('≈'))
-            const Text('≈ = stack oxunmadı (minified build); xəta zamanı açıq olan ekranın faylı göstərilir',
+            Text('≈ = stack oxunmadı (minified build); xəta zamanı açıq olan ekranın faylı göstərilir',
                 style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
           Text('Səhifə: ${txt(r['route'])} · son: ${fmtDateTime(r['last_seen_at'])}',
-              style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
           if (_open) ...[
             const SizedBox(height: 8),
             const Text('Addımlar (son hərəkətlər):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
@@ -220,7 +220,7 @@ class _ErrorCardState extends State<_ErrorCard> {
             SelectableText(txt(r['stack']), style: AppFonts.mono(size: 11, weight: FontWeight.w400)),
             const SizedBox(height: 6),
             Text('Versiya: ${txt(r['app_version'])}\nBrauzer: ${txt(r['user_agent'])}',
-                style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
           ],
           const SizedBox(height: 10),
           if (status == 'open')
@@ -237,7 +237,7 @@ class _ErrorCardState extends State<_ErrorCard> {
                       color: AppColors.urgentBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Avtomatik düzəliş mümkün deyil — bu kod xətasıdır, manual müdaxilə lazımdır. '
                       'Fayl, sətir və logları kopyalayıb düzəliş üçün göndərin.',
                       style: TextStyle(color: AppColors.urgentFg, fontSize: 12.5),
@@ -329,7 +329,7 @@ class _CiCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.fact_check_outlined, color: AppColors.accent),
+              Icon(Icons.fact_check_outlined, color: AppColors.accent),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text('GitHub yoxlaması (analyze + testlər)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -340,10 +340,10 @@ class _CiCard extends StatelessWidget {
           const SizedBox(height: 6),
           async.when(
             loading: () => const LinearProgressIndicator(),
-            error: (e, _) => Text('Yüklənmədi: ${adminErrorText(e)}', style: const TextStyle(color: AppColors.danger)),
+            error: (e, _) => Text('Yüklənmədi: ${adminErrorText(e)}', style: TextStyle(color: AppColors.danger)),
             data: (runs) {
               if (runs.isEmpty) {
-                return const Text('Hələ nəticə yoxdur. "AutoFix CI" workflow-u GitHub-a əlavə olunub açar təyin ediləndən sonra görünəcək.',
+                return Text('Hələ nəticə yoxdur. "AutoFix CI" workflow-u GitHub-a əlavə olunub açar təyin ediləndən sonra görünəcək.',
                     style: TextStyle(color: AppColors.textSoft, fontSize: 12.5));
               }
               return Column(
@@ -371,7 +371,7 @@ class _CiCard extends StatelessWidget {
                                 style: const TextStyle(fontSize: 12.5),
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                            Icon(Icons.chevron_right, color: AppColors.textSoft),
                           ],
                         ),
                       ),

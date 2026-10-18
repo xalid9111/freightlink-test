@@ -103,11 +103,11 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                   sliver: SliverList.list(children: [
                     Row(
                       children: [
-                        const Icon(Icons.local_shipping, color: AppColors.accent, size: 26),
+                        Icon(Icons.local_shipping, color: AppColors.accent, size: 26),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(s.t('nav_market'),
-                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.text)),
+                              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.text)),
                         ),
                         IconButton(
                           tooltip: s.t('mk_favorites'),
@@ -163,8 +163,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         TextButton(
                           onPressed: () => context.pushOnce('/market/mine'),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Text(s.t('mk_my_ads'), style: const TextStyle(color: AppColors.textSoft)),
-                            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                            Text(s.t('mk_my_ads'), style: TextStyle(color: AppColors.textSoft)),
+                            Icon(Icons.chevron_right, color: AppColors.textSoft),
                           ]),
                         ),
                       ],
@@ -190,7 +190,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Column(children: [
-                        Text(s.t('home_error_loading'), style: const TextStyle(color: AppColors.textSoft)),
+                        Text(s.t('home_error_loading'), style: TextStyle(color: AppColors.textSoft)),
                         TextButton(onPressed: _refresh, child: Text(s.t('common_try_again'))),
                       ]),
                     ),
@@ -200,7 +200,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
                       child: Text(s.t('mk_empty'),
-                          textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft, height: 1.4)),
+                          textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft, height: 1.4)),
                     ),
                   )
                 else
@@ -304,7 +304,7 @@ class _VipTile extends StatelessWidget {
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
                   if (l.year != null) Text('${l.year}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
                   Text(marketPrice(l.price, l.currency),
-                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
+                      style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
                 ],
               ),
             ),
@@ -340,7 +340,7 @@ class _SellBanner extends StatelessWidget {
             label: Text(s.t('mk_new_ad'), style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
           const SizedBox(width: 6),
-          const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+          Icon(Icons.local_shipping_outlined, color: AppColors.accent),
         ],
       ),
     );
@@ -406,7 +406,7 @@ class _SearchBox extends StatelessWidget {
         onSubmitted: onSubmit,
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: const Icon(Icons.search, color: AppColors.accent),
+          prefixIcon: Icon(Icons.search, color: AppColors.accent),
           suffixIcon: IconButton(
             icon: Icon(Icons.tune, color: highlighted ? AppColors.accent : AppColors.text),
             onPressed: onFilters,
@@ -414,9 +414,9 @@ class _SearchBox extends StatelessWidget {
           filled: true,
           fillColor: AppColors.card,
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.line)),
+              borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.line)),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.line)),
+              borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.line)),
         ),
       ),
     );

@@ -122,7 +122,7 @@ class _BottomBar extends StatelessWidget {
     return Material(
       color: AppColors.hero,
       child: DecoratedBox(
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
         child: SafeArea(
           top: false,
           child: SizedBox(
@@ -264,10 +264,10 @@ class _RestrictedBanner extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.block, color: AppColors.urgentFg, size: 20),
+              Icon(Icons.block, color: AppColors.urgentFg, size: 20),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(lines.join('\n'), style: const TextStyle(color: AppColors.urgentFg, fontSize: 13, height: 1.35)),
+                child: Text(lines.join('\n'), style: TextStyle(color: AppColors.urgentFg, fontSize: 13, height: 1.35)),
               ),
             ],
           ),

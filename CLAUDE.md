@@ -94,7 +94,10 @@ files to the owner separately (they are run by hand in the SQL editor).
 - Bottom bar: Yüklər · Servislər · TIR Bazarı (centre) · Mesajlar ·
   Profil (owner, 18.10.2026). "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
-- Dark theme only (light mode postponed). App font: Arial (Liberation
+- Night (dark) theme is the default and its look never changes; Day
+  mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
+  Colours only via `AppColors` / `ChatColors` (palette getters, see
+  `app_theme.dart`), never hard-coded. App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.
 - Ad banner layout 1200×400 coordinates never change.
 - Messages tab lists only chats the user is part of (even for admins).

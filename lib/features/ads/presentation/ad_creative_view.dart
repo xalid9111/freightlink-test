@@ -63,11 +63,11 @@ class _StandardBanner extends StatelessWidget {
                 Image.network(
                   c.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.cardAlt),
-                  loadingBuilder: (context, child, p) => p == null ? child : const ColoredBox(color: AppColors.cardAlt),
+                  errorBuilder: (_, __, ___) => ColoredBox(color: AppColors.cardAlt),
+                  loadingBuilder: (context, child, p) => p == null ? child : ColoredBox(color: AppColors.cardAlt),
                 )
               else
-                const ColoredBox(color: AppColors.cardAlt),
+                ColoredBox(color: AppColors.cardAlt),
               // 2) soft dark gradient behind the text area, fading into the photo
               Positioned(
                 left: 0,
@@ -241,9 +241,9 @@ class _LegacyBanner extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (c.imageUrl.isNotEmpty)
-                Image.network(c.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.cardAlt))
+                Image.network(c.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => ColoredBox(color: AppColors.cardAlt))
               else
-                const ColoredBox(color: AppColors.cardAlt),
+                ColoredBox(color: AppColors.cardAlt),
               if (c.logo != null && (c.logoUrl != null || placeholders))
                 Positioned(
                   left: c.logo!.x * w,

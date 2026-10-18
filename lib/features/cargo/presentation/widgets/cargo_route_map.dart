@@ -93,7 +93,7 @@ class CargoRouteMap extends ConsumerWidget {
                 ? Center(
                     child: endpointsAsync.isLoading
                         ? const CircularProgressIndicator(strokeWidth: 2)
-                        : Text(strings.t('map_unavailable'), style: const TextStyle(color: AppColors.textSoft)),
+                        : Text(strings.t('map_unavailable'), style: TextStyle(color: AppColors.textSoft)),
                   )
                 : GestureDetector(
                     onTap: open,
@@ -113,12 +113,12 @@ class CargoRouteMap extends ConsumerWidget {
                         ? '${strings.t('map_road_distance')}: ${_fmtKm(route.distanceKm)} km'
                             '${route.durationMin != null ? ' · ${_fmtDuration(route.durationMin!, strings)}' : ''}'
                         : '${strings.t('map_straight_distance')}: ${_fmtKm(route.distanceKm)} km',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text),
                   ),
                 if (approx)
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
-                    child: Text(strings.t('map_approx_note'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                    child: Text(strings.t('map_approx_note'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ),
               ],
             ),
@@ -263,7 +263,7 @@ class _RouteMapScreenState extends ConsumerState<RouteMapScreen> {
                     onSelectionChanged: (v) => setState(() => _editingA = v.first),
                   ),
                   const SizedBox(height: 6),
-                  Text(s.t('map_edit_hint'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                  Text(s.t('map_edit_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                 ],
               ),
             ),
@@ -305,7 +305,7 @@ class _RouteMapScreenState extends ConsumerState<RouteMapScreen> {
                             route.isRoad
                                 ? '${s.t('map_road_distance')}${route.durationMin != null ? ' · ${_fmtDuration(route.durationMin!, s)}' : ''}'
                                 : s.t('map_straight_distance'),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSoft),
                           ),
                       ],
                     ),

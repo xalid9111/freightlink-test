@@ -81,7 +81,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
         Text('Reklamlar', style: AppFonts.display(size: 26, color: AppColors.text)),
         const SizedBox(height: 4),
         Text('Banner ölçüsü: ${AdBannerSpec.width}×${AdBannerSpec.height} px (3:1). Yük siyahısındakı yeri və müddəti: "Reklamın yeri və müddəti" → Tənzimlə.',
-            style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+            style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
         const SizedBox(height: 12),
         const HomeAdsSwitchCard(),
         const SizedBox(height: 12),
@@ -126,7 +126,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: AdminRow(
-            leading: const Icon(Icons.campaign_outlined, color: AppColors.accent),
+            leading: Icon(Icons.campaign_outlined, color: AppColors.accent),
             title: '${o.number} · ${_name(users, o.advertiserId)} · ${o.packageName} · ${_money(o.price, o.currency)}',
             subtitle: '${fmtDateTime(o.createdAt.toIso8601String())} · ${_payLabels[o.paymentStatus] ?? o.paymentStatus}'
                 '${(o.paymentReference ?? '').isEmpty ? '' : ' · Ref: ${o.paymentReference}'}',
@@ -149,8 +149,8 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
     final stats = ref.watch(myAdStatsProvider).valueOrNull ?? const {};
     return [
       if (ordered.length > 1)
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
           child: Text('Sıra: 1-ci reklam yük siyahısındakı 1-ci reklam yerində çıxır, 2-ci — 2-ci yerdə və s. '
               '↑ ↓ ilə dəyişin. Sıra dəyişmə vaxtı: "Reklamın yeri və müddəti" → Tənzimlə.',
               style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
@@ -212,11 +212,11 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text('${fmtDateTime(a.startsAt.toUtc().toIso8601String())} → ${fmtDateTime(a.endsAt.toUtc().toIso8601String())}',
-                          style: const TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                          style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
                       Text(
                         '${a.destinationType == 'external' ? (a.destinationUrl ?? '—') : 'FreightLink profili'}'
                         '${a.orderId != null && stats[a.orderId] != null ? ' · ${stats[a.orderId]!.impressions} baxış · ${stats[a.orderId]!.clicks} klik' : ''}',
-                        style: const TextStyle(color: AppColors.textSoft, fontSize: 12.5),
+                        style: TextStyle(color: AppColors.textSoft, fontSize: 12.5),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -376,8 +376,8 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
             KV('Hədəf ölkələr', o.targetCountries.isEmpty ? 'Hamısı' : o.targetCountries.join(', ')),
             if (((o.routeFrom ?? '').isNotEmpty && Countries.find(o.routeFrom) == null) ||
                 ((o.routeTo ?? '').isNotEmpty && Countries.find(o.routeTo) == null))
-              const Padding(
-                padding: EdgeInsets.only(bottom: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Text('⚠ Marşrut tanınmır — reklam heç bir yükdə görünməyəcək. "Redaktə et" ilə düzəldin.',
                     style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w600)),
               ),
@@ -399,13 +399,13 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
             KV('Məbləğ', _money(o.price, o.currency)),
             if (o.receiptPath != null) ...[
               const SizedBox(height: 8),
-              const Text('Qəbz (müştəri yükləyib — pulu bankda yoxlayın):', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+              Text('Qəbz (müştəri yükləyib — pulu bankda yoxlayın):', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
               const SizedBox(height: 6),
               Consumer(builder: (ctx, ref, _) {
                 final url = ref.watch(adReceiptUrlProvider(o.receiptPath!));
                 return url.when(
                   loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
-                  error: (e, _) => Text('Qəbz açılmadı: $e', style: const TextStyle(color: AppColors.danger)),
+                  error: (e, _) => Text('Qəbz açılmadı: $e', style: TextStyle(color: AppColors.danger)),
                   data: (u) => GestureDetector(
                     onTap: () => launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication),
                     child: ClipRRect(
@@ -700,7 +700,7 @@ class _AdEditorState extends ConsumerState<_AdEditor> {
                           color: AppColors.cardAlt,
                           alignment: Alignment.center,
                           child: Text('${AdBannerSpec.width} × ${AdBannerSpec.height}',
-                              style: const TextStyle(color: AppColors.textSoft)),
+                              style: TextStyle(color: AppColors.textSoft)),
                         )
                       : Image.network(_imageUrl!, fit: BoxFit.cover),
                 ),
@@ -713,8 +713,8 @@ class _AdEditorState extends ConsumerState<_AdEditor> {
                     : const Icon(Icons.upload_outlined),
                 label: Text(_imageUrl == null ? 'Banner şəklini yüklə' : 'Şəkli dəyiş'),
               ),
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
                 child: Text('İstənilən şəkil olar — avtomatik ortadan kəsilib 1350×300 edilir. Vacib yazını ortaya qoyun; sol yuxarı küncdə "SPONSORLU", sağ yuxarıda mavi tık olur.',
                     style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
               ),
@@ -753,7 +753,7 @@ class _AdEditorState extends ConsumerState<_AdEditor> {
                 value: _active,
                 onChanged: (v) => setState(() => _active = v),
               ),
-              if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.danger)),
+              if (_error != null) Text(_error!, style: TextStyle(color: AppColors.danger)),
             ],
           ),
         ),
@@ -856,7 +856,7 @@ class _SettingsPanelState extends ConsumerState<_SettingsPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionTitle('Qiymətlər (5 / 15 / 30 gün)'),
-        const Text('"Reklam yarat"-da müştəri yalnız 5, 15 və 30 günlük paketləri görür. Qiyməti yazın və "Müştərilərə göstər"-i açın — qiyməti 0 olan paket göstərilmir.',
+        Text('"Reklam yarat"-da müştəri yalnız 5, 15 və 30 günlük paketləri görür. Qiyməti yazın və "Müştərilərə göstər"-i açın — qiyməti 0 olan paket göstərilmir.',
             style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.35)),
         const SizedBox(height: 8),
         pk.when(

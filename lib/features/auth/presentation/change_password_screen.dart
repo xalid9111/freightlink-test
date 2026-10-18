@@ -57,7 +57,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle_outline, color: AppColors.online, size: 36),
+          icon: Icon(Icons.check_circle_outline, color: AppColors.online, size: 36),
           title: Text(strings.t('pw_success_title')),
           content: Text(strings.t('pw_success_body')),
           actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('pw_ok')))],
@@ -349,7 +349,7 @@ class _OAuthOnlyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.key_off_outlined, size: 36, color: AppColors.accent),
+            Icon(Icons.key_off_outlined, size: 36, color: AppColors.accent),
             const SizedBox(height: 10),
             Text(strings.t('pw_oauth_title'), textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),

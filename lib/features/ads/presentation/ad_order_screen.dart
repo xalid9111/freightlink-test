@@ -40,12 +40,12 @@ class _AdOrderScreenState extends ConsumerState<AdOrderScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_library_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_photo')),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_camera_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_camera')),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
@@ -202,7 +202,7 @@ class _AdOrderScreenState extends ConsumerState<AdOrderScreen> {
                   label: Text(s.t('adv_upload_receipt')),
                 ),
                 const SizedBox(height: 6),
-                Text(s.t('adv_receipt_note'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                Text(s.t('adv_receipt_note'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               ],
               if (stage == AdStage.reviewing) ...[
                 const SizedBox(height: 14),
@@ -249,7 +249,7 @@ class _Line extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 120, child: Text(label, style: const TextStyle(color: AppColors.textSoft, fontSize: 13))),
+          SizedBox(width: 120, child: Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 13))),
           Expanded(
             child: Text(value,
                 style: TextStyle(fontSize: strong ? 17 : 13.5, fontWeight: strong ? FontWeight.w800 : FontWeight.w500)),
@@ -310,7 +310,7 @@ class _PaymentCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.t('adv_amount'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                    Text(s.t('adv_amount'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                     Text(adMoney(order.price, order.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                   ],
                 ),
@@ -318,7 +318,7 @@ class _PaymentCard extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(s.t('adv_pay_reference'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  Text(s.t('adv_pay_reference'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   InkWell(
                     onTap: () => copy(order.number),
                     child: Row(
@@ -326,7 +326,7 @@ class _PaymentCard extends ConsumerWidget {
                       children: [
                         Text(order.number, style: AppFonts.mono(size: 16, color: AppColors.accent)),
                         const SizedBox(width: 4),
-                        const Icon(Icons.copy, size: 14, color: AppColors.textSoft),
+                        Icon(Icons.copy, size: 14, color: AppColors.textSoft),
                       ],
                     ),
                   ),
@@ -334,12 +334,12 @@ class _PaymentCard extends ConsumerWidget {
               ),
             ],
           ),
-          const Divider(height: 22, color: AppColors.line),
+          Divider(height: 22, color: AppColors.line),
           info.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, __) => Text(s.t('ad_payment_info_missing')),
             data: (text) => text == null
-                ? Text(s.t('ad_payment_info_missing'), style: const TextStyle(color: AppColors.textSoft))
+                ? Text(s.t('ad_payment_info_missing'), style: TextStyle(color: AppColors.textSoft))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -370,7 +370,7 @@ class _ReceiptPreview extends ConsumerWidget {
     final url = ref.watch(adReceiptUrlProvider(path));
     return url.when(
       loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
-      error: (_, __) => const Icon(Icons.receipt_long, size: 40, color: AppColors.textSoft),
+      error: (_, __) => Icon(Icons.receipt_long, size: 40, color: AppColors.textSoft),
       data: (u) => GestureDetector(
         onTap: () => launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication),
         child: ClipRRect(
@@ -379,7 +379,7 @@ class _ReceiptPreview extends ConsumerWidget {
             u,
             height: 180,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(Icons.receipt_long, size: 40, color: AppColors.textSoft),
+            errorBuilder: (_, __, ___) => Icon(Icons.receipt_long, size: 40, color: AppColors.textSoft),
           ),
         ),
       ),

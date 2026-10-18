@@ -344,7 +344,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(12)),
-                        child: Text(s.t('svc_create_intro'), style: const TextStyle(fontSize: 13, color: AppColors.textSoft, height: 1.35)),
+                        child: Text(s.t('svc_create_intro'), style: TextStyle(fontSize: 13, color: AppColors.textSoft, height: 1.35)),
                       ),
                     const SizedBox(height: 14),
                     _Label(s.t('svc_kind')),
@@ -418,7 +418,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                         Expanded(
                           child: Text(
                             _point == null ? s.t('svc_map_hint_empty') : s.t('svc_map_hint'),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSoft),
                           ),
                         ),
                         TextButton.icon(
@@ -521,7 +521,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                     if (_photos.length > 1)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(s.t('svc_photos_reorder_hint'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                        child: Text(s.t('svc_photos_reorder_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                       ),
                     ReorderTileGrid(
                       ids: [for (final e in _photos) e.id],
@@ -551,14 +551,14 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(color: AppColors.line),
                                 ),
-                                child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textSoft),
+                                child: Icon(Icons.add_a_photo_outlined, color: AppColors.textSoft),
                               ),
                             )
                           : null,
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),
-                      Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                      Text(_error!, style: TextStyle(color: AppColors.danger)),
                     ],
                     const SizedBox(height: 20),
                     FilledButton(
@@ -593,7 +593,7 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 14, bottom: 8),
         child: Text(text.toUpperCase(),
-            style: const TextStyle(color: AppColors.textSoft, fontSize: 11.5, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.textSoft, fontSize: 11.5, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
       );
 }
 
@@ -647,7 +647,7 @@ class ServiceJoinScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           children: [
             if (p != null) ...[
-              Text(s.t('svc_join_have'), style: const TextStyle(color: AppColors.textSoft)),
+              Text(s.t('svc_join_have'), style: TextStyle(color: AppColors.textSoft)),
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () => context.pushReplacement('/service/${p.id}'),
@@ -655,7 +655,7 @@ class ServiceJoinScreen extends ConsumerWidget {
                 label: Text(s.t('svc_my_service')),
               ),
             ] else ...[
-              Text(s.t('svc_join_intro'), style: const TextStyle(color: AppColors.textSoft, height: 1.4)),
+              Text(s.t('svc_join_intro'), style: TextStyle(color: AppColors.textSoft, height: 1.4)),
               const SizedBox(height: 16),
               _JoinCard(
                 icon: Icons.handyman_outlined,

@@ -91,9 +91,9 @@ class ServiceDetailScreen extends ConsumerWidget {
                               ServiceTrustBadge(p: p, s: s),
                               if (p.isPro) const ServiceProBadge(),
                               Text(s.t(p.isCenter ? 'svc_kind_center' : 'svc_kind_individual'),
-                                  style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                                  style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                               if (p.isMobile)
-                                Text('· ${s.t('svc_mobile_service')}', style: const TextStyle(color: AppColors.accent, fontSize: 13)),
+                                Text('· ${s.t('svc_mobile_service')}', style: TextStyle(color: AppColors.accent, fontSize: 13)),
                             ],
                           ),
                         ],
@@ -124,12 +124,12 @@ class ServiceDetailScreen extends ConsumerWidget {
                     const SizedBox(width: 6),
                     Text(
                       p.ratingCount == 0 ? s.t('svc_no_reviews') : '${p.ratingAvg.toStringAsFixed(1)} · ${s.t('svc_reviews_n', {'n': '${p.ratingCount}'})}',
-                      style: const TextStyle(color: AppColors.textSoft, fontSize: 13),
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 13),
                     ),
                     const Spacer(),
                     Icon(Icons.circle, size: 9, color: p.isActive ? AppColors.online : AppColors.textSoft),
                     const SizedBox(width: 4),
-                    Text(s.t(p.isActive ? 'svc_active' : 'svc_inactive'), style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                    Text(s.t(p.isActive ? 'svc_active' : 'svc_inactive'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -330,7 +330,7 @@ class _InfoRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                  Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                   const SizedBox(height: 2),
                   Text(value, style: const TextStyle(fontSize: 14, height: 1.35)),
                 ],
@@ -449,18 +449,18 @@ class _AdvertiseCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.campaign, color: AppColors.accent),
+            Icon(Icons.campaign, color: AppColors.accent),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(s.t('svc_advertise_title'), style: const TextStyle(fontWeight: FontWeight.w700)),
-                  Text(s.t('svc_advertise_hint'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  Text(s.t('svc_advertise_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+            Icon(Icons.chevron_right, color: AppColors.textSoft),
           ],
         ),
       ),
@@ -572,7 +572,7 @@ class _Reviews extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(s.t('svc_reviews').toUpperCase(),
-                  style: const TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
             ),
             if (!isOwner)
               TextButton.icon(
@@ -587,7 +587,7 @@ class _Reviews extends ConsumerWidget {
         else if (list.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(s.t('svc_no_reviews_yet'), style: const TextStyle(color: AppColors.textSoft)),
+            child: Text(s.t('svc_no_reviews_yet'), style: TextStyle(color: AppColors.textSoft)),
           )
         else
           for (final r in list)
@@ -604,11 +604,11 @@ class _Reviews extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Text(
                         '${r.createdAt.toLocal().day.toString().padLeft(2, '0')}.${r.createdAt.toLocal().month.toString().padLeft(2, '0')}.${r.createdAt.toLocal().year}',
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft),
+                        style: TextStyle(fontSize: 11.5, color: AppColors.textSoft),
                       ),
                       if (r.userId == uid) ...[
                         const Spacer(),
-                        Text(s.t('svc_your_review'), style: const TextStyle(fontSize: 11.5, color: AppColors.accent)),
+                        Text(s.t('svc_your_review'), style: TextStyle(fontSize: 11.5, color: AppColors.accent)),
                       ],
                     ],
                   ),
@@ -648,7 +648,7 @@ class _ClaimButtonState extends ConsumerState<_ClaimButton> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(s.t('svc_claim_body'), style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+              Text(s.t('svc_claim_body'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
               const SizedBox(height: 10),
               TextField(controller: phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: s.t('svc_phone'))),
               const SizedBox(height: 8),

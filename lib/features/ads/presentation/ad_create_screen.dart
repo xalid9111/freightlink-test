@@ -471,7 +471,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: AppColors.danger.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
         child: Text(s.t('adv_err_ordering_disabled'), textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+            style: TextStyle(color: AppColors.danger, fontSize: 12.5)),
       );
 
   Widget _ownImageButton(AppStrings s) => OutlinedButton.icon(
@@ -548,10 +548,10 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (orderingOff) ...[_orderingOffNote(s), const SizedBox(height: 16)],
-                    Text(s.t('adv_no_templates'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                    Text(s.t('adv_no_templates'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                     if (_forService) ...[
                       const SizedBox(height: 8),
-                      Text(s.t('adv_own_image_or'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                      Text(s.t('adv_own_image_or'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                       const SizedBox(height: 16),
                       _ownImageButton(s),
                     ],
@@ -613,7 +613,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                  child: Text(s.t('adv_edit_review_note'), style: const TextStyle(color: AppColors.blue, fontSize: 12.5)),
+                  child: Text(s.t('adv_edit_review_note'), style: TextStyle(color: AppColors.blue, fontSize: 12.5)),
                 ),
               ],
               section(1, 'adv_step_background'),
@@ -642,7 +642,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                             children: [
                               _ownUploading
                                   ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
-                                  : const Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
+                                  : Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
                               const SizedBox(height: 6),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -713,7 +713,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(s.t('adv_logo_rules'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              Text(s.t('adv_logo_rules'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: [
@@ -738,7 +738,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
               // the app uses only Arial, so it is hidden.
               if (AdStandardLayout.fonts.length > 1) ...[
                 const SizedBox(height: 10),
-                Text(s.t('adv_font'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                Text(s.t('adv_font'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -757,7 +757,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  SizedBox(width: 72, child: Text(s.t('adv_size'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft))),
+                  SizedBox(width: 72, child: Text(s.t('adv_size'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft))),
                   Expanded(
                     child: Slider(
                       value: st.size,
@@ -771,14 +771,14 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   SizedBox(width: 44, child: Text('${(st.size * 100).round()}%', style: const TextStyle(fontSize: 12))),
                 ],
               ),
-              Text(s.t('adv_color'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+              Text(s.t('adv_color'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
               const SizedBox(height: 6),
               _ColorPicker(
                 value: st.color,
                 onChanged: (c) => setState(() => _style[_styleLine] = st.copyWith(color: c)),
               ),
               const SizedBox(height: 4),
-              Text(s.t('adv_shadow_note'), style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+              Text(s.t('adv_shadow_note'), style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
               if (!_editing && (_forService || _adminServiceAd)) ...[
                 section(5, 'ad_destination'),
                 Container(
@@ -790,7 +790,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.home_repair_service_outlined, color: AppColors.accent),
+                      Icon(Icons.home_repair_service_outlined, color: AppColors.accent),
                       const SizedBox(width: 10),
                       Expanded(child: Text(s.t('adv_service_destination'), style: const TextStyle(fontSize: 13))),
                     ],
@@ -811,7 +811,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(s.t('adv_service_countries_hint'), style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                Text(s.t('adv_service_countries_hint'), style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
               ],
               if (!_editing && !_forService && !_adminServiceAd) ...[
                 section(5, 'ad_destination'),
@@ -832,7 +832,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   ),
                 ],
                 section(6, 'ad_targeting'),
-                Text(s.t('ad_target_countries'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                Text(s.t('ad_target_countries'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -864,7 +864,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   onChanged: (v) => setState(() => _routeTo = v),
                 ),
                 const SizedBox(height: 4),
-                Text(s.t('ad_route_hint'), style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                Text(s.t('ad_route_hint'), style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                 if (_admin && _legacyRoute != null) ...[
                   const SizedBox(height: 6),
                   Container(
@@ -873,7 +873,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                     child: Text(
                       'Köhnə marşrut dəyəri tanınmadı: "$_legacyRoute". Bu səbəbdən reklam heç bir yükə uyğun gəlmirdi. '
                       'Ölkə seçin və ya "${s.t('ad_route_any')}" saxlayın, sonra yadda saxlayın.',
-                      style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+                      style: TextStyle(color: AppColors.danger, fontSize: 12.5),
                     ),
                   ),
                 ],
@@ -903,7 +903,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
               if (!_editing && !_admin) ...[
                 section(7, 'adv_step_duration'),
                 if (durations.isEmpty)
-                  Text(s.t('adv_no_prices'), style: const TextStyle(color: AppColors.textSoft))
+                  Text(s.t('adv_no_prices'), style: TextStyle(color: AppColors.textSoft))
                 else
                   Wrap(
                     spacing: 8,
@@ -922,7 +922,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                 if (pkg != null) ...[
                   const SizedBox(height: 8),
                   Text(s.t('adv_starts_on_approval', {'days': '${pkg.days}'}),
-                      style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                      style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                 ],
                 const SizedBox(height: 14),
                 TextField(controller: _note, maxLines: 2, decoration: InputDecoration(labelText: s.t('ad_note_label'))),
@@ -934,27 +934,27 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          decoration: const BoxDecoration(color: AppColors.hero, border: Border(top: BorderSide(color: AppColors.line))),
+          decoration: BoxDecoration(color: AppColors.hero, border: Border(top: BorderSide(color: AppColors.line))),
           child: Row(
             children: [
               Expanded(
                 child: _admin
-                    ? const Text('Dəyişikliklər yadda saxlanan kimi reklamda görünür.',
+                    ? Text('Dəyişikliklər yadda saxlanan kimi reklamda görünür.',
                         style: TextStyle(fontSize: 12, color: AppColors.textSoft))
                     : _editing
-                    ? Text(s.t('adv_edit_hint'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft))
+                    ? Text(s.t('adv_edit_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft))
                     : Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.t('adv_total'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                          Text(s.t('adv_total'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                           Text(
                             pkg != null ? adMoney(pkg.price, pkg.currency) : '—',
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                           ),
                           if (pkg != null)
                             Text(s.t('adv_starts_after_approval_short', {'days': '${pkg.days}'}),
-                                style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                                style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                         ],
                       ),
               ),
@@ -1035,7 +1035,7 @@ class _ColorPicker extends StatelessWidget {
         ),
         Row(
           children: [
-            const Icon(Icons.brightness_6, size: 16, color: AppColors.textSoft),
+            Icon(Icons.brightness_6, size: 16, color: AppColors.textSoft),
             Expanded(
               child: Slider(
                 value: hsl.lightness,

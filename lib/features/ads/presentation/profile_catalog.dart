@@ -150,9 +150,9 @@ class _AddPhotoTile extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
+            Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
             const SizedBox(height: 6),
-            Text(s.t('catalog_add'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            Text(s.t('catalog_add'), textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
           ],
         ),
       ),
@@ -248,12 +248,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   if (items.isEmpty && !isMe)
                     Padding(
                       padding: const EdgeInsets.only(top: 60),
-                      child: Center(child: Text(s.t('catalog_empty'), style: const TextStyle(color: AppColors.textSoft))),
+                      child: Center(child: Text(s.t('catalog_empty'), style: TextStyle(color: AppColors.textSoft))),
                     ),
                   if (isMe && items.length > 1)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(s.t('catalog_reorder_hint'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                      child: Text(s.t('catalog_reorder_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                     ),
                   if (isMe)
                     CatalogReorderGrid(

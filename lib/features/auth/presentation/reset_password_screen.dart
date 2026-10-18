@@ -124,7 +124,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle_outline, color: AppColors.online, size: 36),
+          icon: Icon(Icons.check_circle_outline, color: AppColors.online, size: 36),
           title: Text(strings.t('pw_success_title')),
           content: Text(strings.t('pw_reset_success_body')),
           actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('pw_ok')))],
@@ -169,7 +169,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         ]);
       case _Phase.invalid:
         body = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Icon(Icons.link_off, size: 40, color: AppColors.accent),
+          Icon(Icons.link_off, size: 40, color: AppColors.accent),
           const SizedBox(height: 12),
           Text(_error ?? strings.t('error_pw_link_invalid'), textAlign: TextAlign.center),
           const SizedBox(height: 16),
@@ -177,7 +177,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         ]);
       case _Phase.notRecovery:
         body = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Icon(Icons.info_outline, size: 40, color: AppColors.accent),
+          Icon(Icons.info_outline, size: 40, color: AppColors.accent),
           const SizedBox(height: 12),
           Text(strings.t('pw_reset_use_change'), textAlign: TextAlign.center),
           const SizedBox(height: 16),

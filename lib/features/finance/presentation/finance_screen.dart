@@ -32,9 +32,9 @@ class _Denied extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Maliyyə və ödənişlər')),
-        body: const Center(
+        body: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Text('Bu bölmə yalnız maliyyə admininə açıqdır.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
           ),
         ),
@@ -125,7 +125,7 @@ Future<bool> showReauthDialog(BuildContext context, WidgetRef ref) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Bank hesabı və ödəniş ayarlarını dəyişmək üçün parolunuzu yenidən daxil edin.',
+            Text('Bank hesabı və ödəniş ayarlarını dəyişmək üçün parolunuzu yenidən daxil edin.',
                 style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
             const SizedBox(height: 12),
             TextField(
@@ -190,9 +190,9 @@ class _TestBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
-        child: const Row(children: [
+        child: Row(children: [
           Icon(Icons.science_outlined, color: AppColors.blue, size: 18),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(child: Text(text, style: TextStyle(color: AppColors.blue, fontSize: 12.5))),
         ]),
       );
@@ -254,12 +254,12 @@ class _DashboardTab extends ConsumerWidget {
                         Row(children: [
                           Icon(icon, size: 18, color: color),
                           const SizedBox(width: 6),
-                          Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSoft))),
+                          Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSoft))),
                         ]),
                         const SizedBox(height: 6),
                         FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
                             child: Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))),
-                        if (hint != null) Text(hint, style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                        if (hint != null) Text(hint, style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                       ]),
                     ),
                   );
@@ -282,7 +282,7 @@ class _DashboardTab extends ConsumerWidget {
                       success: 'Köçürmə sorğusu göndərildi'),
                 ),
                 const SizedBox(height: 4),
-                const Text('Köçürmə yalnız real provayder və təsdiqlənmiş bank hesabı qoşulandan sonra işləyir.',
+                Text('Köçürmə yalnız real provayder və təsdiqlənmiş bank hesabı qoşulandan sonra işləyir.',
                     style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
               ]);
             }),
@@ -331,7 +331,7 @@ void _showPayment(BuildContext context, FinancePayment p) {
   Widget line(String k, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 130, child: Text(k, style: const TextStyle(color: AppColors.textSoft, fontSize: 13))),
+          SizedBox(width: 130, child: Text(k, style: TextStyle(color: AppColors.textSoft, fontSize: 13))),
           Expanded(child: SelectableText(v, style: const TextStyle(fontSize: 13))),
         ]),
       );
@@ -476,7 +476,7 @@ class _AccountsTab extends ConsumerWidget {
           label: const Text('Bank kartı / biznes hesabı əlavə et'),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Kartın tam nömrəsi və CVV soruşulmur və saxlanılmır. Yeni hesab real provayder onu öz təhlükəsiz '
           'mexanizmi ilə yoxlayana qədər "Təsdiq gözləyir" vəziyyətində qalır.',
           style: TextStyle(fontSize: 12, color: AppColors.textSoft),
@@ -502,9 +502,9 @@ class _AccountTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(financeRepositoryProvider);
     final status = switch (a.status) {
-      'verified' => const AdminChip('Təsdiqlənib', color: AppColors.online),
+      'verified' => AdminChip('Təsdiqlənib', color: AppColors.online),
       'disabled' => const AdminChip('Deaktiv'),
-      _ => const AdminChip('Təsdiq gözləyir', color: AppColors.blue),
+      _ => AdminChip('Təsdiq gözləyir', color: AppColors.blue),
     };
     return Opacity(
       opacity: a.isDisabled ? 0.55 : 1,
@@ -517,13 +517,13 @@ class _AccountTile extends ConsumerWidget {
               Icon(a.isCard ? Icons.credit_card : Icons.business, color: AppColors.accent),
               const SizedBox(width: 10),
               Expanded(child: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w700))),
-              if (a.isPrimary) ...[const AdminChip('Əsas', color: AppColors.accent), const SizedBox(width: 6)],
+              if (a.isPrimary) ...[AdminChip('Əsas', color: AppColors.accent), const SizedBox(width: 6)],
               status,
             ]),
             const SizedBox(height: 4),
             Text(
               [a.holderName, if (a.bankName != null) a.bankName!, if (a.voen != null) 'VÖEN ${a.voen}'].join(' · '),
-              style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+              style: TextStyle(fontSize: 12, color: AppColors.textSoft),
             ),
             if (!a.isDisabled)
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -674,10 +674,10 @@ class _AddAccountSheetState extends ConsumerState<_AddAccountSheet> {
                 onSelectionChanged: (v) => setState(() => _brand = v.first),
               ),
               const SizedBox(height: 6),
-              const Text('Tam kart nömrəsi və CVV burada daxil edilmir — onları yalnız provayderin təhlükəsiz səhifəsi qəbul edəcək.',
+              Text('Tam kart nömrəsi və CVV burada daxil edilmir — onları yalnız provayderin təhlükəsiz səhifəsi qəbul edəcək.',
                   style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
             ],
-            if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: AppColors.danger))),
+            if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: TextStyle(color: AppColors.danger))),
             const SizedBox(height: 14),
             FilledButton(
               onPressed: _busy ? null : _save,
@@ -737,7 +737,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
               onSelectionChanged: (v) => setState(() => _mode = v.first),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Test: ödəniş axını daxili test provayderi ilə işləyir, yalnız siz görürsünüz, real pul çıxılmır və sifarişlər dəyişmir. '
               'Canlı rejim real provayder qoşulandan sonra açılacaq.',
               style: TextStyle(fontSize: 12, color: AppColors.textSoft),
@@ -745,11 +745,11 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
             const SizedBox(height: 16),
             const Text('Provayder', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
-            const ListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.science_outlined, color: AppColors.blue),
-              title: Text('Daxili test provayderi'),
-              subtitle: Text('Payriff / Epoint / Stripe — qoşulmayıb (açarlar yalnız serverdə saxlanılacaq)'),
+              title: const Text('Daxili test provayderi'),
+              subtitle: const Text('Payriff / Epoint / Stripe — qoşulmayıb (açarlar yalnız serverdə saxlanılacaq)'),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -798,9 +798,9 @@ class _ProviderRequirements extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.line)),
-        child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Real provayder qoşmaq üçün lazım olanlar', style: TextStyle(fontWeight: FontWeight.w700)),
-          SizedBox(height: 6),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Real provayder qoşmaq üçün lazım olanlar', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
           Text(
             '• Provayderlə müqavilə (Apple Pay, Google Pay, Visa/Mastercard dəstəyi ilə)\n'
             '• Merchant ID, gizli API açarı və webhook imza açarı — yalnız Supabase → Edge Functions → Secrets-ə yazılır\n'
@@ -846,14 +846,14 @@ class _AuditTab extends ConsumerWidget {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   children: [
-                    const Text('Maliyyə əməliyyatları jurnalı (dəyişdirilə və silinə bilməz)',
+                    Text('Maliyyə əməliyyatları jurnalı (dəyişdirilə və silinə bilməz)',
                         style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                     const SizedBox(height: 8),
                     for (final r in rows)
                       ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.history, size: 18, color: AppColors.textSoft),
+                        leading: Icon(Icons.history, size: 18, color: AppColors.textSoft),
                         title: Text(auditActionAz('${r['action']}'), style: const TextStyle(fontWeight: FontWeight.w600)),
                         subtitle: Text(
                           '${DateTime.tryParse('${r['created_at']}') == null ? '' : fmt.format(DateTime.parse('${r['created_at']}').toLocal())}'

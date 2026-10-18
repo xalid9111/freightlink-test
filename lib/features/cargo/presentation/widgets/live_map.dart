@@ -4,6 +4,8 @@ import 'dart:ui' show FrameTiming;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../../core/theme/app_theme.dart';
+import 'live_map_day_geo.dart';
 import 'wheel_feed.dart';
 
 /// Home "live world map".
@@ -33,6 +35,11 @@ class LiveMap extends StatefulWidget {
   @override
   State<LiveMap> createState() => _LiveMapState();
 }
+
+/// Background picture: night lights (night mode) or the colourful
+/// country map (day mode, world_map_day.jpg — the owner's design; its hub
+/// positions are in live_map_day_geo.dart).
+String liveMapImage({required bool day}) => day ? 'assets/images/world_map_day.jpg' : 'assets/images/world_map.jpg';
 
 /// Size of assets/images/world_map.jpg: the world cropped tight to the
 /// continents (no empty margins), so the map looks big on a phone.
@@ -193,6 +200,20 @@ class _Flash {
   double born = -10;
 }
 
+/// Map geometry per mode: night = the night-lights picture with the hubs
+/// above; day = the owner's colourful picture with the same hubs placed
+/// on it (live_map_day_geo.dart). Routes, trucks and effects are the same.
+class _MapGeo {
+  final List<Offset> hubs, sparks;
+  final double w, h;
+  final Offset crop;
+  const _MapGeo({required this.hubs, required this.sparks, required this.w, required this.h, required this.crop});
+}
+
+const _nightGeo = _MapGeo(hubs: _hubs, sparks: _sparks, w: _imgW, h: _imgH, crop: _crop);
+const _dayGeo = _MapGeo(hubs: kDayHubs, sparks: kDaySparks, w: kDayImgW, h: kDayImgH, crop: Offset.zero);
+_MapGeo get _geo => AppColors.isDay ? _dayGeo : _nightGeo;
+
 class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   static const int _maxTrucks = 15;
   static const int _liteTrucks = 8;
@@ -202,8 +223,8 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   final _rng = math.Random();
   late final List<_Truck> _trucks = List.generate(_maxTrucks, (i) => _place(_Truck(), i, _rng.nextDouble() * 0.9));
   final List<_Flash> _flashes = List.generate(16, (_) => _Flash());
-  late final List<double> _sparkPhase = List.generate(_sparks.length, (_) => _rng.nextDouble() * 6.28);
-  late final List<double> _sparkSpeed = List.generate(_sparks.length, (_) => 0.6 + _rng.nextDouble() * 1.2);
+  late final List<double> _sparkPhase = List.generate(_geo.sparks.length, (_) => _rng.nextDouble() * 6.28);
+  late final List<double> _sparkSpeed = List.generate(_geo.sparks.length, (_) => 0.6 + _rng.nextDouble() * 1.2);
   late final AnimationController _badge =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
   int _colorTurn = 0;
@@ -261,15 +282,15 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
 
   /// New route for [tr]: two hubs not too close and not across half the globe.
   _Truck _place(_Truck tr, int turn, double startT) {
-    final i = _rng.nextInt(_hubs.length);
-    var j = _rng.nextInt(_hubs.length);
+    final i = _rng.nextInt(_geo.hubs.length);
+    var j = _rng.nextInt(_geo.hubs.length);
     var guard = 0;
     while (guard++ < 40) {
-      final d = (_hubs[i] - _hubs[j]).distance;
+      final d = (_geo.hubs[i] - _geo.hubs[j]).distance;
       if (j != i && d > 60 && d < 620) break;
-      j = _rng.nextInt(_hubs.length);
+      j = _rng.nextInt(_geo.hubs.length);
     }
-    final a = _hubs[i], b = _hubs[j];
+    final a = _geo.hubs[i], b = _geo.hubs[j];
     final d = math.max(1.0, (b - a).distance);
     final n = Offset(-(b.dy - a.dy) / d, (b.dx - a.dx) / d);
     final lift = math.min(0.32 * d, 120.0) * (n.dy > 0 ? -1 : 1); // arc bends upwards
@@ -312,7 +333,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
       _nextPing = now + 0.25 + _rng.nextDouble() * 0.45;
       final f = _flashes[_flashTurn++ % _flashes.length];
       f
-        ..hub = _rng.nextInt(_hubs.length)
+        ..hub = _rng.nextInt(_geo.hubs.length)
         ..color = _truckColors[_rng.nextInt(_truckColors.length)]
         ..born = now;
     }
@@ -322,14 +343,15 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: _imgW / _imgH,
+      aspectRatio: _geo.w / _geo.h,
       child: Stack(
         fit: StackFit.expand,
         children: [
           // Static background (sea already in the panel colour in the image).
+          // Day mode: the colourful political map, same layout / hubs.
           RepaintBoundary(
             child: Image.asset(
-              'assets/images/world_map.jpg',
+              liveMapImage(day: AppColors.isDay),
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => const SizedBox.shrink(),
@@ -350,7 +372,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
+                color: AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : Colors.black.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _green.withValues(alpha: 0.35)),
               ),
@@ -397,11 +419,11 @@ class _MapPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final now = time.value;
     final isLite = lite();
-    final sx = size.width / _imgW, sy = size.height / _imgH;
+    final sx = size.width / _geo.w, sy = size.height / _geo.h;
     // One size unit: the preview canvas (1040 px wide, factor 1.4) scaled
     // to this widget, so sizes look the same as in the approved preview.
     final s = size.width / 1040 * 1.4;
-    Offset px(Offset p) => Offset((p.dx - _crop.dx) * sx, (p.dy - _crop.dy) * sy);
+    Offset px(Offset p) => Offset((p.dx - _geo.crop.dx) * sx, (p.dy - _geo.crop.dy) * sy);
 
     final stroke = Paint()
       ..style = PaintingStyle.stroke
@@ -411,11 +433,11 @@ class _MapPainter extends CustomPainter {
 
     // 1) Twinkling city lights.
     final sparkUnit = size.width / 1040;
-    for (var i = 0; i < _sparks.length; i++) {
+    for (var i = 0; i < _geo.sparks.length; i++) {
       final v = math.sin(now * sparkSpeed[i] * math.pi + sparkPhase[i]);
       if (v < 0.55) continue;
       final a = (v - 0.55) / 0.45;
-      final p = Offset(_sparks[i].dx * sx, _sparks[i].dy * sy);
+      final p = Offset(_geo.sparks[i].dx * sx, _geo.sparks[i].dy * sy);
       fill.color = const Color(0xFFFF9A3C).withValues(alpha: 0.28 * a);
       canvas.drawCircle(p, (4 + a * 3) * sparkUnit, fill);
       fill.color = const Color(0xFFFFD9A0).withValues(alpha: a);
@@ -423,8 +445,8 @@ class _MapPainter extends CustomPainter {
     }
 
     // 2) Hubs: two pulsing rings + a glowing core.
-    for (var i = 0; i < _hubs.length; i++) {
-      final p = px(_hubs[i]);
+    for (var i = 0; i < _geo.hubs.length; i++) {
+      final p = px(_geo.hubs[i]);
       final big = _bigHubs.contains(i);
       final col = big ? _orange : _blue;
       final r0 = (big ? 4.2 : 3.0) * s;
@@ -512,7 +534,7 @@ class _MapPainter extends CustomPainter {
       stroke
         ..strokeWidth = 2.2 * s
         ..color = f.color.withValues(alpha: (1 - q) * 0.9);
-      canvas.drawCircle(px(_hubs[f.hub]), (6 + q * 26) * s, stroke);
+      canvas.drawCircle(px(_geo.hubs[f.hub]), (6 + q * 26) * s, stroke);
     }
   }
 

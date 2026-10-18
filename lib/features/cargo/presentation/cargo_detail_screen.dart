@@ -71,7 +71,7 @@ class _RouteEnd extends StatelessWidget {
           textAlign: alignEnd ? TextAlign.end : TextAlign.start,
           style: AppFonts.display(size: 24, color: AppColors.text, height: 1.05),
         ),
-        Text(Cities.label(city, localeCode), style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+        Text(Cities.label(city, localeCode), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
       ],
     );
   }
@@ -112,7 +112,7 @@ class _DetailBody extends ConsumerWidget {
                         if (cargo.distanceKm != null)
                           Text('${cargo.distanceKm!.toStringAsFixed(0)} km', style: AppFonts.mono(color: AppColors.route)),
                         const SizedBox(height: 4),
-                        const Icon(Icons.arrow_forward, color: AppColors.route, size: 22),
+                        Icon(Icons.arrow_forward, color: AppColors.route, size: 22),
                       ],
                     ),
                     Expanded(child: _RouteEnd(value: cargo.destinationCountry, city: cargo.destinationCity, localeCode: localeCode, alignEnd: true)),
@@ -127,9 +127,9 @@ class _DetailBody extends ConsumerWidget {
                   children: [
                     Text(cargo.offeredPrice.toStringAsFixed(0), style: AppFonts.display(size: 36, color: AppColors.text, height: 1)),
                     const SizedBox(width: 6),
-                    Text(cargo.currency, style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                    Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                     const Spacer(),
-                    Text(strings.t('detail_offered_price'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                    Text(strings.t('detail_offered_price'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ],
                 ),
               ],
@@ -360,7 +360,7 @@ class _OwnerContactSection extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                            Icon(Icons.chevron_right, color: AppColors.textSoft),
                           ],
                         ),
                         ),
@@ -373,9 +373,9 @@ class _OwnerContactSection extends ConsumerWidget {
                           constraints: const BoxConstraints(minHeight: 44),
                           child: Row(
                             children: [
-                              const Icon(Icons.phone_outlined, size: 20, color: AppColors.accent),
+                              Icon(Icons.phone_outlined, size: 20, color: AppColors.accent),
                               const SizedBox(width: 10),
-                              Expanded(child: Text(phone, style: const TextStyle(fontSize: 15, color: AppColors.text))),
+                              Expanded(child: Text(phone, style: TextStyle(fontSize: 15, color: AppColors.text))),
                             ],
                           ),
                         ),
@@ -411,7 +411,7 @@ class _ContactLine extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: AppColors.accent),
             const SizedBox(width: 10),
-            Expanded(child: Text(value, style: const TextStyle(fontSize: 15, color: AppColors.text))),
+            Expanded(child: Text(value, style: TextStyle(fontSize: 15, color: AppColors.text))),
           ],
         ),
       ),
@@ -706,7 +706,7 @@ class _BecomeCarrierState extends ConsumerState<_BecomeCarrier> {
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+            Icon(Icons.local_shipping_outlined, color: AppColors.accent),
             const SizedBox(width: 10),
             Expanded(child: Text(s.t('act_offer_need_carrier'), style: const TextStyle(fontSize: 13.5))),
             const SizedBox(width: 8),
@@ -837,7 +837,7 @@ class _OffersReceivedSectionState extends ConsumerState<_OffersReceivedSection> 
                           ),
                           IconButton(
                             tooltip: widget.strings.t('detail_message_carrier'),
-                            icon: const Icon(Icons.chat_bubble_outline, color: AppColors.accent),
+                            icon: Icon(Icons.chat_bubble_outline, color: AppColors.accent),
                             onPressed: _openingChat ? null : () => _messageCarrier(o.carrierId),
                           ),
                           if (o.status == 'pending') ...[
@@ -941,7 +941,7 @@ class _OwnerActionsState extends ConsumerState<_OwnerActions> {
         ],
         Expanded(
           child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, side: const BorderSide(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, side: BorderSide(color: AppColors.danger)),
             onPressed: _busy ? null : _delete,
             icon: const Icon(Icons.delete_outline),
             label: Text(s.t('cargo_delete')),

@@ -70,7 +70,7 @@ class _PeoplePickerState extends ConsumerState<PeoplePicker> {
         if (_query.length < 2)
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(s.t('chat_search_min_chars'), style: const TextStyle(color: AppColors.textSoft)),
+            child: Text(s.t('chat_search_min_chars'), style: TextStyle(color: AppColors.textSoft)),
           )
         else
           results.when(
@@ -81,7 +81,7 @@ class _PeoplePickerState extends ConsumerState<PeoplePicker> {
               if (shown.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text(s.t('chat_search_nobody'), style: const TextStyle(color: AppColors.textSoft)),
+                  child: Text(s.t('chat_search_nobody'), style: TextStyle(color: AppColors.textSoft)),
                 );
               }
               return Column(

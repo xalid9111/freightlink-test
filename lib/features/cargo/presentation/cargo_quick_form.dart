@@ -419,7 +419,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                  child: Text(_error!, style: TextStyle(color: AppColors.danger)),
                 ),
               const SizedBox(height: 12),
               FilledButton(
@@ -443,7 +443,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        child: Text(text, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
       );
 }
 
@@ -527,25 +527,25 @@ class _RouteEndButton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: cross,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
             const SizedBox(height: 4),
             if (p == null)
               Text(strings.t('city_pick'),
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.accent))
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.accent))
             else ...[
               Text(
                 '${p.flag.isEmpty ? '' : '${p.flag} '}${p.cityLabel(lang)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.text),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.text),
               ),
               Text(
                 p.countryLabel(lang),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSoft),
+                style: TextStyle(fontSize: 12, color: AppColors.textSoft),
               ),
             ],
           ],

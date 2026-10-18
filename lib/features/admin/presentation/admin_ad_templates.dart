@@ -98,7 +98,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(v ? onText : offText, style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                Text(v ? onText : offText, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               ],
             ),
           ),
@@ -131,7 +131,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                        Text(hint, style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                        Text(hint, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                       ],
                     ),
                   ),
@@ -183,14 +183,14 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                       repeat
                           ? 'Reklam az olanda eyni reklam bir neçə yerdə çıxır.'
                           : 'Hər reklam yalnız bir yerdə çıxır. Reklamdan çox yer varsa, artıq yerlər boş qalır.',
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.textSoft),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSoft),
                     ),
                   ),
-                  const Text('Reklamların sırasını Reklamlar → "Reklamlar" siyahısında ↑ ↓ düymələri ilə dəyişin. '
+                  Text('Reklamların sırasını Reklamlar → "Reklamlar" siyahısında ↑ ↓ düymələri ilə dəyişin. '
                       'Az yük olanda birinci reklam son yükdən sonra çıxır.',
                       style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                   const SizedBox(height: 10),
-                  const Text('Önizləmə', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+                  Text('Önizləmə', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
                   const SizedBox(height: 6),
                   ...rows,
                 ],
@@ -259,14 +259,14 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.tune, color: AppColors.accent),
+              Icon(Icons.tune, color: AppColors.accent),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Reklamın yeri və müddəti', style: TextStyle(fontWeight: FontWeight.w700)),
-                    Text(_layoutText(layout), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                    Text(_layoutText(layout), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ],
                 ),
               ),
@@ -301,7 +301,7 @@ class AdminTemplatesPanel extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_forService) ...[
-          const Text(
+          Text(
             'Servis reklamı üçün fonlar: servis sahibləri Servis → "Reklam ver" ekranında bunları seçir '
             '(yanında "Servis" və ya "Hər ikisi" yazılan fonlar). Yeni fon avtomatik "Servis" üçün olur.',
             style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.4),
@@ -311,7 +311,7 @@ class AdminTemplatesPanel extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.danger.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-              child: const Text(
+              child: Text(
                 '"Reklam ver" girişi bağlıdır — servislər öz şəklini yükləyə və sifariş verə bilmir. '
                 'Açmaq üçün: Reklamlar → "Reklam ver" girişi.',
                 style: TextStyle(color: AppColors.danger, fontSize: 12.5),
@@ -320,7 +320,7 @@ class AdminTemplatesPanel extends ConsumerWidget {
           ],
           const SizedBox(height: 6),
         ],
-        const Text(
+        Text(
           'Standart: 1200×400 px. Loqo (30,120) 160×160 · Şirkət adı (220,45) 440×85 · Fəaliyyət (220,150) 440×75 · '
           'Telefon (220,250) 440×70 · Maşın / mənzərə zonası (690,20) 490×360. '
           'Fonda yazı, loqo və telefon olmamalıdır — onları müştəri əlavə edir.',
@@ -557,7 +557,7 @@ class _AdminTemplateEditorState extends ConsumerState<AdminTemplateEditor> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 60),
         children: [
-          const Text('Önizləmə (nümunə mətnlə, loqo yeri boş)', style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          Text('Önizləmə (nümunə mətnlə, loqo yeri boş)', style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
           const SizedBox(height: 6),
           AdCreativeView(creative: preview, radius: BorderRadius.circular(12), showPlaceholders: true),
           const SizedBox(height: 10),
@@ -571,7 +571,7 @@ class _AdminTemplateEditorState extends ConsumerState<AdminTemplateEditor> {
           const SizedBox(height: 10),
           TextField(controller: _name, maxLength: 80, decoration: const InputDecoration(labelText: 'Fonun adı (müştəri görür)')),
           const SizedBox(height: 4),
-          const Text('Kim üçündür', style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          Text('Kim üçündür', style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
           const SizedBox(height: 6),
           SegmentedButton<String>(
             segments: const [
@@ -588,7 +588,7 @@ class _AdminTemplateEditorState extends ConsumerState<AdminTemplateEditor> {
             value: _active,
             onChanged: (v) => setState(() => _active = v),
           ),
-          if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.danger)),
+          if (_error != null) Text(_error!, style: TextStyle(color: AppColors.danger)),
           const SizedBox(height: 12),
           FilledButton(onPressed: _busy ? null : _save, child: const Text('Yadda saxla')),
           if (widget.template != null) ...[

@@ -83,11 +83,11 @@ class _Denied extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_outline, size: 48, color: AppColors.danger),
+              Icon(Icons.lock_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: 12),
               Text('Giriş qadağandır', style: AppFonts.display(size: 26, color: AppColors.text)),
               const SizedBox(height: 6),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+              Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
               const SizedBox(height: 18),
               FilledButton(onPressed: () => context.go('/cargo'), child: const Text('Tətbiqə qayıt')),
             ],
@@ -161,7 +161,7 @@ class _AdminLayout extends ConsumerWidget {
       onSelect: (k) => _open(context, k),
     );
 
-    final search = _SearchField(key: const ValueKey('admin-search'));
+    const search = _SearchField(key: const ValueKey('admin-search'));
 
     final notifications = IconButton(
       tooltip: 'Şikayətlər və reklam sifarişləri',
@@ -178,14 +178,14 @@ class _AdminLayout extends ConsumerWidget {
         body: Row(
           children: [
             SizedBox(width: 240, child: nav),
-            const VerticalDivider(width: 1, color: AppColors.line),
+            VerticalDivider(width: 1, color: AppColors.line),
             Expanded(
               child: Column(
                 children: [
                   Container(
                     height: 64,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.hero,
                       border: Border(bottom: BorderSide(color: AppColors.line)),
                     ),
@@ -213,9 +213,9 @@ class _AdminLayout extends ConsumerWidget {
       appBar: AppBar(
         title: Text(current.label),
         actions: [notifications],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 8), child: search),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: Padding(padding: EdgeInsets.fromLTRB(12, 0, 12, 8), child: search),
         ),
       ),
       drawer: Drawer(backgroundColor: AppColors.hero, child: SafeArea(child: nav)),
@@ -244,7 +244,7 @@ class _SideNav extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
             child: Row(
               children: [
-                const Icon(Icons.local_shipping, color: AppColors.accent),
+                Icon(Icons.local_shipping, color: AppColors.accent),
                 const SizedBox(width: 8),
                 Text('FreightLink', style: AppFonts.display(size: 20, color: AppColors.text)),
                 const SizedBox(width: 6),
@@ -283,9 +283,9 @@ class _SideNav extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.line),
+          Divider(height: 1, color: AppColors.line),
           ListTile(
-            leading: const Icon(Icons.arrow_back, color: AppColors.textSoft),
+            leading: Icon(Icons.arrow_back, color: AppColors.textSoft),
             title: const Text('Tətbiqə qayıt'),
             onTap: () => context.go('/cargo'),
           ),
@@ -347,14 +347,14 @@ class _AdminBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircleAvatar(radius: 16, backgroundColor: AppColors.accentFill, child: Icon(Icons.shield_outlined, size: 18, color: Colors.white)),
+        CircleAvatar(radius: 16, backgroundColor: AppColors.accentFill, child: const Icon(Icons.shield_outlined, size: 18, color: Colors.white)),
         const SizedBox(width: 8),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name.isEmpty ? 'Admin' : name, style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13)),
-            const Text('Administrator', style: TextStyle(color: AppColors.textSoft, fontSize: 11)),
+            Text(name.isEmpty ? 'Admin' : name, style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13)),
+            Text('Administrator', style: TextStyle(color: AppColors.textSoft, fontSize: 11)),
           ],
         ),
       ],

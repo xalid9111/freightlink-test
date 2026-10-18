@@ -242,7 +242,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       body: async.isLoading && l == null
           ? const Center(child: CircularProgressIndicator())
           : l == null
-              ? Center(child: Text(s.t('mk_not_found'), style: const TextStyle(color: AppColors.textSoft)))
+              ? Center(child: Text(s.t('mk_not_found'), style: TextStyle(color: AppColors.textSoft)))
               : _body(context, s, lang, l, me),
       bottomNavigationBar: l == null ? null : _actions(s, l, me),
     );
@@ -340,7 +340,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             Row(children: [
               Expanded(
                 child: Text(marketPrice(l.price, l.currency),
-                    style: const TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.w900)),
+                    style: TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.w900)),
               ),
               InkWell(
                 onTap: () {
@@ -349,9 +349,9 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 },
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Text('${s.t('mk_ad_no')}: #${l.listingNo}',
-                      style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                   const SizedBox(width: 4),
-                  const Icon(Icons.copy, size: 16, color: AppColors.textSoft),
+                  Icon(Icons.copy, size: 16, color: AppColors.textSoft),
                 ]),
               ),
             ]),
@@ -379,7 +379,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
               Text(l.description!.trim(),
                   maxLines: _descOpen ? null : 3,
                   overflow: _descOpen ? TextOverflow.visible : TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.textSoft, fontSize: 15, height: 1.4)),
+                  style: TextStyle(color: AppColors.textSoft, fontSize: 15, height: 1.4)),
             ],
             const SizedBox(height: 16),
             Text(s.t('mk_location'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
@@ -391,13 +391,13 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.line)),
               child: Row(children: [
-                const Icon(Icons.location_on, color: AppColors.danger, size: 30),
+                Icon(Icons.location_on, color: AppColors.danger, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(placeText, style: const TextStyle(fontWeight: FontWeight.w700)),
                     // Honest: the pin is the city, not an exact address.
-                    Text(s.t('mk_location_city_only'), style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                    Text(s.t('mk_location_city_only'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                   ]),
                 ),
                 if (l.lat != null && l.lng != null)
@@ -443,7 +443,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration:
-                const BoxDecoration(color: AppColors.hero, border: Border(top: BorderSide(color: AppColors.line))),
+                BoxDecoration(color: AppColors.hero, border: Border(top: BorderSide(color: AppColors.line))),
             child: Row(children: children),
           ),
         );
@@ -471,7 +471,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         IconButton(
           tooltip: s.t('mk_delete'),
           onPressed: () => _delete(s, l),
-          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+          icon: Icon(Icons.delete_outline, color: AppColors.danger),
         ),
       ]);
     }
@@ -488,7 +488,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.accent,
-            side: const BorderSide(color: AppColors.accentFill),
+            side: BorderSide(color: AppColors.accentFill),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
           onPressed: phone.isEmpty ? null : () => showCallOptions(context, s, phone),
@@ -586,7 +586,7 @@ class _Specs extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
                 Icon(icon, color: AppColors.accent, size: 22),
                 const SizedBox(height: 4),
-                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                 const SizedBox(height: 2),
                 // Long values (e.g. "1 250 000 km") shrink instead of being cut.
                 FittedBox(
@@ -632,13 +632,13 @@ class _SellerCard extends ConsumerWidget {
                 Wrap(spacing: 10, children: [
                   if (online)
                     Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.circle, size: 9, color: AppColors.online),
+                      Icon(Icons.circle, size: 9, color: AppColors.online),
                       const SizedBox(width: 4),
-                      Text(s.t('mk_online'), style: const TextStyle(color: AppColors.online, fontSize: 12.5)),
+                      Text(s.t('mk_online'), style: TextStyle(color: AppColors.online, fontSize: 12.5)),
                     ]),
                   if (p?.isVerified == true)
                     Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.verified, size: 15, color: AppColors.online),
+                      Icon(Icons.verified, size: 15, color: AppColors.online),
                       const SizedBox(width: 4),
                       Text(s.t('mk_verified'), style: const TextStyle(fontSize: 12.5)),
                     ]),
@@ -676,8 +676,8 @@ class _Similar extends ConsumerWidget {
                 context.go('/market');
               },
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(s.t('mk_see_all'), style: const TextStyle(color: AppColors.accent)),
-                const Icon(Icons.arrow_forward, size: 18, color: AppColors.accent),
+                Text(s.t('mk_see_all'), style: TextStyle(color: AppColors.accent)),
+                Icon(Icons.arrow_forward, size: 18, color: AppColors.accent),
               ]),
             ),
           ]),
@@ -773,6 +773,6 @@ class _Meta extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 18, color: AppColors.textSoft),
         const SizedBox(width: 5),
-        Text(text, style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+        Text(text, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
       ]);
 }

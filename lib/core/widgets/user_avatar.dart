@@ -71,9 +71,9 @@ class EarlyMemberChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 13, color: AppColors.accent),
+          Icon(Icons.star_rounded, size: 13, color: AppColors.accent),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
         ],
       ),
     );

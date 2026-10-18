@@ -58,17 +58,17 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(strings.t('profile_title'),
-                          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
+                          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
                     ),
                     Material(
                       color: AppColors.card,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: AppColors.line),
+                        side: BorderSide(color: AppColors.line),
                       ),
                       child: IconButton(
                         tooltip: strings.t('settings_title'),
-                        icon: const Icon(Icons.settings_outlined, color: AppColors.text),
+                        icon: Icon(Icons.settings_outlined, color: AppColors.text),
                         onPressed: () => context.pushOnce('/settings'),
                       ),
                     ),
@@ -276,7 +276,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(strings.t('profile_phone_hint'), style: const TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                Text(strings.t('profile_phone_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                 const SizedBox(height: 12),
                 IntlPhoneField(
                   initialCountryCode: 'AZ',
@@ -291,7 +291,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                   },
                 ),
                 if (error != null)
-                  Text(error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                  Text(error!, style: TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
             ),
             actions: [
@@ -381,7 +381,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                                 padding: EdgeInsets.all(7),
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
-                            : const Icon(Icons.photo_camera, size: 16, color: AppColors.text),
+                            : Icon(Icons.photo_camera, size: 16, color: AppColors.text),
                       ),
                     ),
                   ],
@@ -398,13 +398,13 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                           child: Text(name,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
                         ),
                         IconButton(
                           tooltip: strings.t('profile_name_edit'),
                           visualDensity: VisualDensity.compact,
                           onPressed: () => _editName(name),
-                          icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSoft),
+                          icon: Icon(Icons.edit_outlined, size: 20, color: AppColors.textSoft),
                         ),
                       ],
                     ),
@@ -412,11 +412,11 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       spacing: 6,
                       children: [
-                        Text(widget.roleLabel, style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                        Text(widget.roleLabel, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                         if (country != null) ...[
-                          const Text('•', style: TextStyle(color: AppColors.textSoft)),
-                          const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
-                          Text(country.name(lang), style: const TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                          Text('•', style: TextStyle(color: AppColors.textSoft)),
+                          Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
+                          Text(country.name(lang), style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
                         ],
                       ],
                     ),
@@ -457,7 +457,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(children: [
-                          const Icon(Icons.mail_outline, size: 22, color: AppColors.text),
+                          Icon(Icons.mail_outline, size: 22, color: AppColors.text),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Text(widget.email, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15)),
@@ -465,7 +465,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                         ]),
                         const SizedBox(height: 12),
                         Row(children: [
-                          const Icon(Icons.phone_outlined, size: 22, color: AppColors.text),
+                          Icon(Icons.phone_outlined, size: 22, color: AppColors.text),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Text(
@@ -478,7 +478,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: AppColors.textSoft),
+                  Icon(Icons.chevron_right, color: AppColors.textSoft),
                 ],
               ),
             ),
@@ -575,12 +575,12 @@ class _MenuRow extends StatelessWidget {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: titleColor ?? AppColors.text)),
                   if ((subtitle ?? '').isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(subtitle!, style: const TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                    Text(subtitle!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                   ],
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+            Icon(Icons.chevron_right, color: AppColors.textSoft),
           ],
         ),
       ),

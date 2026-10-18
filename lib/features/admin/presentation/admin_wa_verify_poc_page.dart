@@ -126,7 +126,7 @@ class _AdminWaVerifyPocPageState extends State<AdminWaVerifyPocPage> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.urgentFg),
           ),
-          child: const Text(
+          child: Text(
             'TEST / PROOF OF CONCEPT. Qeydiyyata, girişə və profilə toxunmur. '
             'Nəticə profilə yazılmır. Məqsəd: Meta webhook-u göndərənin real nömrəsini verirmi?',
             style: TextStyle(color: AppColors.urgentFg, fontSize: 13, fontWeight: FontWeight.w700),
@@ -147,11 +147,11 @@ class _AdminWaVerifyPocPageState extends State<AdminWaVerifyPocPage> {
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: AppColors.danger)),
+          Text(_error!, style: TextStyle(color: AppColors.danger)),
         ],
         if (_waLink != null) ...[
           const SizedBox(height: 16),
-          const Text(
+          Text(
             '1) "WhatsApp-ı aç" düyməsini basın.\n'
             '2) Bu nömrənin WhatsApp-ından hazır mesajı DƏYİŞMƏDƏN göndərin.\n'
             '3) Nəticə aşağıda avtomatik görünəcək (10 dəqiqə etibarlıdır).',
@@ -212,11 +212,11 @@ class _ResultCard extends StatelessWidget {
               Expanded(child: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w700))),
             ]),
             const SizedBox(height: 10),
-            Text('Nömrə: ${r?['phone_e164'] ?? '—'}', style: const TextStyle(color: AppColors.textSoft)),
-            Text('Webhook-da göndərən: $kindText', style: const TextStyle(color: AppColors.textSoft)),
+            Text('Nömrə: ${r?['phone_e164'] ?? '—'}', style: TextStyle(color: AppColors.textSoft)),
+            Text('Webhook-da göndərən: $kindText', style: TextStyle(color: AppColors.textSoft)),
             Text('BSUID var: ${r?['has_bsuid'] == null ? '—' : (r!['has_bsuid'] == true ? 'bəli' : 'xeyr')}',
-                style: const TextStyle(color: AppColors.textSoft)),
-            Text('Cəhdlər: ${r?['attempts'] ?? 0}', style: const TextStyle(color: AppColors.textSoft)),
+                style: TextStyle(color: AppColors.textSoft)),
+            Text('Cəhdlər: ${r?['attempts'] ?? 0}', style: TextStyle(color: AppColors.textSoft)),
           ],
         ),
       ),

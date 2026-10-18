@@ -34,7 +34,7 @@ class MyMarketListingsScreen extends ConsumerWidget {
               ? ListView(children: [
                   Padding(
                     padding: const EdgeInsets.all(32),
-                    child: Text(s.t('mk_my_empty'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                    child: Text(s.t('mk_my_empty'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                   ),
                 ])
               : ListView.separated(
@@ -61,15 +61,15 @@ class MyMarketListingsScreen extends ConsumerWidget {
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text(l.title.isEmpty ? s.t('mk_untitled') : l.title,
                                     maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                                Text(marketPrice(l.price, l.currency), style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800)),
+                                Text(marketPrice(l.price, l.currency), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
                                 Row(children: [
                                   _StatusChip(status: l.status, label: s.t('mk_state_${l.status.name}')),
                                   if (l.vipActive()) ...[const SizedBox(width: 6), const VipBadge()],
                                   const Spacer(),
-                                  const Icon(Icons.visibility_outlined, size: 15, color: AppColors.textSoft),
+                                  Icon(Icons.visibility_outlined, size: 15, color: AppColors.textSoft),
                                   const SizedBox(width: 3),
-                                  Text('${l.views}', style: const TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                                  Text('${l.views}', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                                 ]),
                               ]),
                             ),
@@ -78,7 +78,7 @@ class MyMarketListingsScreen extends ConsumerWidget {
                               IconButton(
                                 key: ValueKey('mk-edit-${l.id}'),
                                 tooltip: s.t('mk_edit'),
-                                icon: const Icon(Icons.edit_outlined, color: AppColors.accent),
+                                icon: Icon(Icons.edit_outlined, color: AppColors.accent),
                                 onPressed: () => context.pushOnce('/market/edit/${l.id}'),
                               ),
                           ]),
@@ -132,7 +132,7 @@ class MarketFavoritesScreen extends ConsumerWidget {
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text(s.t('mk_fav_empty'), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSoft)),
+                  child: Text(s.t('mk_fav_empty'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                 ),
               )
             : GridView.builder(

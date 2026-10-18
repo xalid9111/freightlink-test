@@ -73,7 +73,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                     const Spacer(),
                     if (marketplaceAsync.hasValue)
                       Text(strings.t('home_results', {'count': '${shown.length}'}),
-                          style: const TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                          style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                   ],
                 ),
               ),
@@ -109,7 +109,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
                         child: Column(
                           children: [
-                            const Icon(Icons.search_off, size: 40, color: AppColors.textSoft),
+                            Icon(Icons.search_off, size: 40, color: AppColors.textSoft),
                             const SizedBox(height: 10),
                             Text(strings.t('route_no_results'), textAlign: TextAlign.center),
                             const SizedBox(height: 10),
@@ -217,9 +217,9 @@ class _Hero extends ConsumerWidget {
     String stat(int n) => loaded ? '$n' : '—';
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.hero,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
       ),
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, bottom: 16),
       child: Column(
@@ -229,7 +229,7 @@ class _Hero extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
+                Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
                 const SizedBox(width: 4),
                 Text.rich(TextSpan(children: [
                   TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
@@ -246,7 +246,7 @@ class _Hero extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
+                  Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
                   const SizedBox(width: 7),
                   Text(strings.t('home_live_map'), style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2)),
                 ]),
@@ -254,7 +254,7 @@ class _Hero extends ConsumerWidget {
                 Text.rich(
                   TextSpan(children: [
                     TextSpan(text: '${strings.t('home_hero_1')} '),
-                    TextSpan(text: strings.t('home_hero_2'), style: const TextStyle(color: AppColors.accent)),
+                    TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
                     TextSpan(text: ' ${strings.t('home_hero_3')}'),
                   ]),
                   style: AppFonts.display(size: 20, color: AppColors.text, height: 1.1),
@@ -304,7 +304,7 @@ class _Hero extends ConsumerWidget {
             const SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(strings.t('home_popular_routes'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSoft)),
+              child: Text(strings.t('home_popular_routes'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSoft)),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -339,7 +339,7 @@ class _Hero extends ConsumerWidget {
                       children: [
                         if (from != null) Text(from.flag, style: const TextStyle(fontSize: 18)),
                         if (from != null && to != null)
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Text('→', style: TextStyle(color: AppColors.accent))),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text('→', style: TextStyle(color: AppColors.accent))),
                         if (to != null) Text(to.flag, style: const TextStyle(fontSize: 18)),
                         const SizedBox(width: 8),
                         Column(
@@ -348,7 +348,7 @@ class _Hero extends ConsumerWidget {
                           children: [
                             Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                             Text(strings.t('home_route_count', {'count': '${routeCounts[r]}'}),
-                                style: const TextStyle(fontSize: 10.5, color: AppColors.textSoft)),
+                                style: TextStyle(fontSize: 10.5, color: AppColors.textSoft)),
                           ],
                         ),
                       ],
@@ -394,15 +394,15 @@ class _AddLoadButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
             const SizedBox(width: 8),
             Container(
               width: 52,
               height: 52,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.accentFill,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
               ),
               child: const Icon(Icons.add, color: Colors.white, size: 32),
             ),
@@ -446,7 +446,7 @@ class _StatCard extends StatelessWidget {
                 Icon(icon, size: 12, color: color),
                 const SizedBox(width: 4),
                 Text(value,
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
               ],
             ),
           ),
@@ -573,12 +573,12 @@ class _RouteSearch extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(strings.t(isFrom ? 'route_from' : 'route_to'),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                    style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                 Text(
                   _label(code, lang, strings.t('route_any_country')),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text),
                 ),
               ],
             ),
@@ -597,10 +597,10 @@ class _RouteSearch extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.search, size: 18, color: AppColors.accent),
+                  Icon(Icons.search, size: 18, color: AppColors.accent),
                   const SizedBox(width: 6),
                   Text(strings.t('route_search_title'),
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.text)),
+                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.text)),
                   const Spacer(),
                   if (filter.isActive)
                     TextButton(
@@ -617,7 +617,7 @@ class _RouteSearch extends ConsumerWidget {
                     tooltip: strings.t('route_swap'),
                     onPressed: () => ref.read(routeFilterProvider.notifier).state =
                         RouteFilter(from: filter.to, to: filter.from),
-                    icon: const Icon(Icons.swap_horiz, color: AppColors.accent),
+                    icon: Icon(Icons.swap_horiz, color: AppColors.accent),
                   ),
                   countryButton(isFrom: false),
                 ],
@@ -638,7 +638,7 @@ class _RouteSearch extends ConsumerWidget {
               ],
               if (saved.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                Text(strings.t('route_my_routes'), style: const TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                Text(strings.t('route_my_routes'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,

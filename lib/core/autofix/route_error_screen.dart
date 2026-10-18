@@ -35,7 +35,7 @@ class _RouteErrorScreenState extends ConsumerState<RouteErrorScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.link_off, size: 48, color: AppColors.textSoft),
+                Icon(Icons.link_off, size: 48, color: AppColors.textSoft),
                 const SizedBox(height: 12),
                 Text(s.t('autofix_route_missing'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 16),

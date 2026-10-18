@@ -8,7 +8,10 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/localization/localization_service.dart';
 import '../../../core/notify/notify_settings.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_mode.dart';
+import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 
 /// Each language in its own native name (deliberately not translated).
@@ -63,7 +66,12 @@ Future<void> showLanguagePicker(BuildContext context, WidgetRef ref, AppStrings 
   );
 }
 
-/// Ayarlar: notifications & sounds, haptic, language, password, privacy.
+/// Day mode is offered to everyone once every screen is adapted to it;
+/// until then only admins see the switch (to try it on their phone).
+const kDayModeForEveryone = false;
+
+/// Ayarlar: notifications & sounds, haptic, language, appearance,
+/// password, privacy.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -117,6 +125,29 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+          if (kDayModeForEveryone || ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin) ...[
+            const SizedBox(height: 14),
+            _Section(
+              icon: AppColors.isDay ? Icons.light_mode : Icons.dark_mode,
+              iconColor: AppColors.accent,
+              title: s.t('settings_appearance'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                  child: SegmentedButton<bool>(
+                    key: const ValueKey('theme-mode'),
+                    segments: [
+                      ButtonSegment(value: false, icon: const Icon(Icons.dark_mode_outlined), label: Text(s.t('theme_night'))),
+                      ButtonSegment(value: true, icon: const Icon(Icons.light_mode_outlined), label: Text(s.t('theme_day'))),
+                    ],
+                    selected: {AppColors.isDay},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (v) => chooseTheme(day: v.first),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           _Section(
             icon: Icons.lock,
@@ -129,7 +160,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(s.t('settings_notif_note'), style: const TextStyle(color: AppColors.textSoft, fontSize: 12, height: 1.35)),
+            child: Text(s.t('settings_notif_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12, height: 1.35)),
           ),
         ],
       ),
@@ -159,7 +190,7 @@ class _Section extends StatelessWidget {
       ),
     ];
     for (final c in children) {
-      rows.add(const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.line));
+      rows.add(Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.line));
       rows.add(c);
     }
     return Container(
@@ -224,10 +255,10 @@ class _LinkRow extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
             if (value != null) ...[
-              Text(value!, style: const TextStyle(color: AppColors.textSoft, fontSize: 14)),
+              Text(value!, style: TextStyle(color: AppColors.textSoft, fontSize: 14)),
               const SizedBox(width: 6),
             ],
-            const Icon(Icons.chevron_right, color: AppColors.textSoft),
+            Icon(Icons.chevron_right, color: AppColors.textSoft),
           ],
         ),
       ),
