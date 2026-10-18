@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/live_map.dart';
+import 'package:freightlink/features/cargo/presentation/widgets/live_map_day_geo.dart';
 
 /// Width / height from a JPEG's SOF header.
 (int, int) _jpegSize(Uint8List b) {
@@ -22,12 +23,17 @@ void main() {
     expect(liveMapImage(day: true), 'assets/images/world_map_day.jpg');
   });
 
-  test('day map has the same layout as the night map (hubs, routes and trucks line up), light for iPhone', () {
-    final night = File('assets/images/world_map.jpg').readAsBytesSync();
+  test('day picture (owner design): every hub and city light is placed on it, light for iPhone', () {
     final day = File('assets/images/world_map_day.jpg').readAsBytesSync();
-    expect(_jpegSize(day), _jpegSize(night));
-    expect(_jpegSize(day), (1220, 580));
-    expect(day.length, lessThan(200 * 1024));
+    expect(_jpegSize(day), (kDayImgW.toInt(), kDayImgH.toInt()));
+    expect(day.length, lessThan(300 * 1024));
+    // Same hubs as the night map (same order), all on the picture.
+    final night = File('lib/features/cargo/presentation/widgets/live_map.dart').readAsStringSync();
+    final hubBlock = night.substring(night.indexOf('const List<Offset> _hubs = ['), night.indexOf('];', night.indexOf('const List<Offset> _hubs = [')));
+    expect(kDayHubs.length, RegExp(r'Offset\(').allMatches(hubBlock).length);
+    for (final p in [...kDayHubs, ...kDaySparks]) {
+      expect(p.dx >= 0 && p.dx <= kDayImgW && p.dy >= 0 && p.dy <= kDayImgH, isTrue, reason: '$p');
+    }
     expect(File('scripts/make_day_map.py').existsSync(), isTrue);
   });
 }
