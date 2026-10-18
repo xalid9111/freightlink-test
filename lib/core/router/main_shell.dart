@@ -59,12 +59,16 @@ class MainShell extends ConsumerWidget {
       if (after.any((m) => !known.contains(m.id) && m.senderId != uid)) alert();
     });
     // Branch indices: Loads 0, Search 1, Shipments 2, Messages 3,
-    // Profile 4, Services 5. Search and Shipments are NOT in the bar on
-    // purpose (owner's decision): the load search already sits on the Loads
-    // page under the map. Their routes stay so existing links still work.
+    // Profile 4, Services 5, TIR Bazarı 6. Search and Shipments are NOT in
+    // the bar on purpose (owner's decision): the load search already sits
+    // on the Loads page under the map. Their routes stay so existing links
+    // still work. Owner's layout: Yüklər · Servislər · TIR Bazarı (centre)
+    // · Mesajlar · Profil; "Yük əlavə et" (+) sits on the Loads page under
+    // the map.
     final items = <_NavItem>[
       _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
       _NavItem(5, Icons.home_repair_service_outlined, Icons.home_repair_service, strings.t('nav_services')),
+      _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market')),
       _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread.toInt()),
       _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
     ];
@@ -79,8 +83,6 @@ class MainShell extends ConsumerWidget {
         bottomNavigationBar: _BottomBar(
           items: items,
           current: navigationShell.currentIndex,
-          addTooltip: strings.t('nav_add_cargo'),
-          onAdd: () => context.pushOnce('/cargo/create'),
           onTap: (branch) {
             // One tap = one tab switch (iPhone sometimes delivers a tap twice).
             if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
@@ -113,9 +115,7 @@ class _BottomBar extends StatelessWidget {
   final List<_NavItem> items;
   final int current;
   final ValueChanged<int> onTap;
-  final VoidCallback onAdd;
-  final String addTooltip;
-  const _BottomBar({required this.items, required this.current, required this.onTap, required this.onAdd, required this.addTooltip});
+  const _BottomBar({required this.items, required this.current, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -129,33 +129,8 @@ class _BottomBar extends StatelessWidget {
             height: 62,
             child: Row(
               children: [
-                for (var i = 0; i < items.length; i++) ...[
-                  // Orange "+" (add a load) in the middle of the bar.
-                  if (i == items.length ~/ 2) Expanded(child: _addButton()),
-                  Expanded(child: _slot(items[i], items[i].branch == current)),
-                ],
+                for (final it in items) Expanded(child: _slot(it, it.branch == current)),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _addButton() {
-    return Center(
-      child: Tooltip(
-        message: addTooltip,
-        child: Material(
-          color: AppColors.accentFill,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onAdd,
-            child: const SizedBox(
-              width: 48,
-              height: 48,
-              child: Icon(Icons.add, color: Colors.white, size: 30),
             ),
           ),
         ),

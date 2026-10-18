@@ -46,18 +46,27 @@ void main() {
 
   group('Bottom bar (owner-approved layout)', () {
     final shell = _read('lib/core/router/main_shell.dart');
-    test('tabs: Loads(0) · Services(5) · Messages(3) · Profile(4)', () {
-      for (final b in ['_NavItem(0,', '_NavItem(5,', '_NavItem(3,', '_NavItem(4,']) {
-        expect(shell.contains(b), isTrue, reason: '$b missing');
+    test('tabs: Loads(0) · Services(5) · TIR Bazarı(6, centre) · Messages(3) · Profile(4)', () {
+      final order = ['_NavItem(0,', '_NavItem(5,', '_NavItem(6,', '_NavItem(3,', '_NavItem(4,'];
+      var at = -1;
+      for (final b in order) {
+        final i = shell.indexOf(b);
+        expect(i > at, isTrue, reason: '$b missing or out of order');
+        at = i;
       }
     });
     test('Search(1) and Shipments(2) stay out of the bar (owner decision)', () {
       expect(shell.contains('_NavItem(1,'), isFalse);
       expect(shell.contains('_NavItem(2,'), isFalse);
     });
-    test('orange + in the middle opens "add load"', () {
-      expect(shell.contains("context.pushOnce('/cargo/create')"), isTrue);
-      expect(shell.contains('_addButton'), isTrue);
+    test('"Yük əlavə et" (+) on the Loads page under the map opens "add load"', () {
+      final loads = _read('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
+      expect(loads.contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue);
+    });
+    test('TIR Bazarı is a separate part, loaded only when opened', () {
+      final router = _read('lib/core/router/app_router.dart');
+      expect(router.contains("market_module.dart' deferred as market;"), isTrue);
+      expect(router.contains('market.loadLibrary'), isTrue);
     });
     test('narrow screens / iPhone: labels shrink, safe area respected', () {
       expect(shell.contains('FittedBox'), isTrue);
