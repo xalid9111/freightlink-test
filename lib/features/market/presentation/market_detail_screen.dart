@@ -105,7 +105,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     setState(() => _busy = true);
     try {
       final convId = await _openChat(s, l);
-      final me = ref.read(currentUserIdProvider);
+      final me = ref.read(currentUserIdProvider) ?? ref.read(marketRepositoryProvider).myId;
       if (convId == null || me == null) return;
       await ref.read(messageRepositoryProvider).send(
             conversationId: convId,
@@ -224,7 +224,9 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     final lang = ref.watch(currentLocaleProvider).languageCode;
-    final me = ref.watch(currentUserIdProvider);
+    // Owner check from the session too: the profile row may still be
+    // loading, and the owner must always get Redaktə et / Sil.
+    final me = ref.watch(currentUserIdProvider) ?? ref.read(marketRepositoryProvider).myId;
     final async = ref.watch(marketListingProvider(widget.listingId));
     final l = async.valueOrNull;
 
