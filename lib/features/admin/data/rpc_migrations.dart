@@ -4,6 +4,8 @@
 const kRpcMigration = <String, String>{
   'add_chat_group_members': '0014_groups_direct_chat_usd.sql',
   'admin_ad_counts': '0015_ads.sql',
+  'admin_autofix_auto_resolve': '0042_autofix_cleanup.sql',
+  'admin_autofix_delete_fixed': '0042_autofix_cleanup.sql',
   'admin_autofix_run': '0034_autofix.sql',
   'admin_autofix_set_ci_token': '0034_autofix.sql',
   'admin_autofix_set_status': '0034_autofix.sql',
