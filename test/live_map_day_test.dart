@@ -24,6 +24,8 @@ void main() {
   });
 
   test('day picture (owner design): every hub and city light is placed on it, light for iPhone', () {
+    // No extra cloud pictures: the owner's picture already fades to white.
+    expect(File('assets/images/clouds_day_top.jpg').existsSync(), isFalse);
     final day = File('assets/images/world_map_day.jpg').readAsBytesSync();
     expect(_jpegSize(day), (kDayImgW.toInt(), kDayImgH.toInt()));
     expect(day.length, lessThan(300 * 1024));
@@ -35,16 +37,5 @@ void main() {
       expect(p.dx >= 0 && p.dx <= kDayImgW && p.dy >= 0 && p.dy <= kDayImgH, isTrue, reason: '$p');
     }
     expect(File('scripts/make_day_map.py').existsSync(), isTrue);
-  });
-
-  test('day clouds: framed map, clouds behind title and counters, light, never at night', () {
-    for (final f in ['clouds_day_top.jpg', 'clouds_day_bottom.jpg']) {
-      final bytes = File('assets/images/$f').readAsBytesSync();
-      expect(bytes.length, lessThan(60 * 1024), reason: f);
-    }
-    final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-    expect(home.contains('child: !day\n          ? content'), isTrue);
-    expect(home.contains('if (!show) return child;'), isTrue);
-    expect(home.contains('_DayClouds(\n            show: day,'), isTrue);
   });
 }
