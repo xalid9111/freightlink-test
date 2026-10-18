@@ -57,6 +57,14 @@ update public.market_listings set views = 5000, is_vip = true where id = :l1;
 select tests.check((select views = 1 and not is_vip from public.market_listings where id = :l1), 'M10 owner cannot change views / VIP');
 update public.market_listings set price = 31000 where id = :l1;
 select tests.check((select status = 'active' and price = 31000 from public.market_listings where id = :l1), 'M11 editing a published ad keeps it visible');
+update public.market_listings
+   set brand = 'DAF', model = 'XF 106', year = 2018, mileage_km = 350000, engine_l = 12.9, power_hp = 480, gearbox = 'automatic',
+       fuel = 'diesel', currency = 'USD', country = 'Azerbaijan', city = 'Ganja', lat = 40.68, lng = 46.36, phone = '+994501112233',
+       description = 'yenilənib', photos = '{b.jpg,a.jpg,c.jpg}'
+ where id = :l1;
+select tests.check((select status = 'active' and year = 2018 and city = 'Ganja' and photos = '{b.jpg,a.jpg,c.jpg}' and views = 1
+                    and published_at is not null from public.market_listings where id = :l1),
+  'M11b owner edits every field of a published ad (form save), stays visible, views kept');
 
 -- Two more ads for order / similar checks.
 insert into public.market_listings (id, category, brand, model, year, price, status) values

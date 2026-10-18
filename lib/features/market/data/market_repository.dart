@@ -17,6 +17,9 @@ class MarketRepository {
 
   String? get _me => _c.auth.currentUser?.id;
 
+  /// The signed-in user's id straight from the session (no profile fetch).
+  String? get myId => _me;
+
   List<MarketListing> _list(Object? res) =>
       (res is List ? res : const []).map((r) => MarketListing.fromJson(Map<String, dynamic>.from(r as Map))).toList();
 

@@ -165,6 +165,16 @@ void main() {
       expect(d.contains("pushOnce('/chat/\$convId')"), isTrue);
       expect(d.contains("pushOnce('/messages/"), isFalse);
     });
+    test('owner can edit: from "Mənim elanlarım" and from the ad page', () {
+      final list = _read('lib/features/market/presentation/market_lists_screens.dart');
+      expect(list.contains("onPressed: () => context.pushOnce('/market/edit/\${l.id}')"), isTrue);
+      final d = _read('lib/features/market/presentation/market_detail_screen.dart');
+      expect(d.contains("onPressed: () => context.pushOnce('/market/edit/\${l.id}')"), isTrue);
+      // Owner recognised from the session even before the profile row loads.
+      expect(d.contains('ref.watch(currentUserIdProvider) ?? ref.read(marketRepositoryProvider).myId'), isTrue);
+      final e = _read('lib/features/market/presentation/market_edit_screen.dart');
+      expect(e.contains('_missing'), isTrue);
+    });
     test('dynamic texts exist in all 6 languages', () {
       final keys = [
         for (final c in MarketCategory.values) c.labelKey,

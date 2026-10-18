@@ -57,6 +57,9 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
 
   bool get _editing => widget.listingId != null;
 
+  /// Editing, but the ad could not be loaded: no form (nothing to save).
+  bool get _missing => _editing && _orig == null;
+
   @override
   void initState() {
     super.initState();
@@ -70,7 +73,19 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       setState(() => _loaded = true);
       return;
     }
-    final l = await ref.read(marketRepositoryProvider).byId(widget.listingId!);
+    MarketListing? l;
+    try {
+      l = await ref.read(marketRepositoryProvider).byId(widget.listingId!);
+    } catch (_) {
+      // Network hiccup: show "try again" instead of an endless spinner.
+      if (mounted) {
+        setState(() {
+          _loaded = true;
+          _error = 'home_error_loading';
+        });
+      }
+      return;
+    }
     if (!mounted) return;
     if (l == null) {
       setState(() {
@@ -80,6 +95,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       return;
     }
     _orig = l;
+    _error = null;
     _d = MarketDraft.from(l);
     _brandOther = l.brand != null && !marketBrands(l.category).contains(l.brand);
     _modelOther = l.model != null && !marketModels(l.category, l.brand).contains(l.model);
@@ -224,7 +240,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
           actions: [
             TextButton.icon(
               key: const ValueKey('mk-save-draft'),
-              onPressed: _busy || _uploading || !_loaded ? null : () => _save(s, publish: false),
+              onPressed: _busy || _uploading || !_loaded || _missing ? null : () => _save(s, publish: false),
               icon: const Icon(Icons.save_outlined, color: AppColors.accent),
               label: Text(s.t('mk_save'), style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
             ),
@@ -232,7 +248,21 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
+            : _missing
+                ? Center(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Text(s.t(_error ?? 'mk_not_found'), style: const TextStyle(color: AppColors.textSoft)),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _loaded = false);
+                          _load();
+                        },
+                        child: Text(s.t('common_try_again')),
+                      ),
+                    ]),
+                  )
+                : ListView(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 32),
                 children: [
                   if (_orig?.status == MarketStatus.rejected && (_orig?.adminNote ?? '').isNotEmpty)

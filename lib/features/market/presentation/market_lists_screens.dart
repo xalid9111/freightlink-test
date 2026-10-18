@@ -73,6 +73,14 @@ class MyMarketListingsScreen extends ConsumerWidget {
                                 ]),
                               ]),
                             ),
+                            // Edit straight from the list (also on the ad page).
+                            if (l.status != MarketStatus.sold)
+                              IconButton(
+                                key: ValueKey('mk-edit-${l.id}'),
+                                tooltip: s.t('mk_edit'),
+                                icon: const Icon(Icons.edit_outlined, color: AppColors.accent),
+                                onPressed: () => context.pushOnce('/market/edit/${l.id}'),
+                              ),
                           ]),
                         ),
                       ),
