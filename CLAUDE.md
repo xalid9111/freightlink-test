@@ -50,8 +50,8 @@ pull request). Never claim they passed before the run is green.
    - GitHub (branch): AutoFix CI must be **green** (analyze 0 errors, all
      tests, SQL suites, web build).
 6. **Critical paths to check every time** (tests + manual list for the
-   owner on iPhone Safari/PWA): Loads (Yüklər), Services (Servislər), the
-   orange **+** (Yük əlavə et), Messages (open, send, delete, back), Profile
+   owner on iPhone Safari/PWA): Loads (Yüklər), Services (Servislər), TIR Bazarı, the
+   orange **+** (Yük əlavə et, under the map), Messages (open, send, delete, back), Profile
    + Settings, Ads (create, own picture, order), Admin panel sections,
    back navigation / no freezes on a narrow screen.
 7. **Red = stop.** If any test or the build fails, the version is NOT
@@ -91,8 +91,9 @@ files to the owner separately (they are run by hand in the SQL editor).
 
 ## 5. Owner decisions to keep
 
-- Bottom bar: Yüklər · Servislər · orange **+** (add load, centre) ·
-  Mesajlar · Profil. Search and Shipments are not in the bar.
+- Bottom bar: Yüklər · Servislər · TIR Bazarı (centre) · Mesajlar ·
+  Profil (owner, 18.10.2026). "Yük əlavə et" (orange +) is on the Loads
+  page under the live map. Search and Shipments are not in the bar.
 - Dark theme only (light mode postponed). App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.
 - Ad banner layout 1200×400 coordinates never change.

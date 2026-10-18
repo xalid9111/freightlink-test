@@ -34,6 +34,8 @@ import 'go_router_refresh_stream.dart';
 import 'main_shell.dart';
 import 'password_recovery.dart';
 import '../../features/finance/presentation/finance_screen.dart';
+import '../widgets/deferred_page.dart';
+import '../../features/market/presentation/market_home_screen.dart' deferred as market;
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -290,6 +292,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           // indices stay unchanged).
           StatefulShellBranch(routes: [
             GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),
+          ]),
+          // Branch 6 — TIR Bazarı: a separate part of the app, downloaded
+          // only when the tab is opened (deferred).
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/market',
+              builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketHomeScreen()),
+            ),
           ]),
         ],
       ),

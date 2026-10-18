@@ -869,5 +869,7 @@
   "act_offer_need_carrier": "开启“承运人”即可报价。",
   "act_enable": "开启",
   "register_title": "注册",
-  "register_unified_note": "一个账户，全部功能。注册后在个人资料中选择：承运人、货主、维修 / 服务、出售。"
+  "register_unified_note": "一个账户，全部功能。注册后在个人资料中选择：承运人、货主、维修 / 服务、出售。",
+  "nav_market": "卡车市场",
+  "market_coming": "卡车市场正在准备中。很快您就可以在这里发布和搜索卡车、挂车和工程机械的出售信息。"
 }

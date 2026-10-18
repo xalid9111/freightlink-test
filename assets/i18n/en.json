@@ -869,5 +869,7 @@
   "act_offer_need_carrier": "Turn on the \"Carrier\" activity to make offers.",
   "act_enable": "Turn on",
   "register_title": "Sign up",
-  "register_unified_note": "One account for everything. After signing up choose your activities in Profile: Carrier, Shipper, Mechanic / Service, Selling."
+  "register_unified_note": "One account for everything. After signing up choose your activities in Profile: Carrier, Shipper, Mechanic / Service, Selling.",
+  "nav_market": "Truck Market",
+  "market_coming": "The Truck Market is being prepared. Soon you can post and search sale ads for trucks, trailers and machinery here."
 }

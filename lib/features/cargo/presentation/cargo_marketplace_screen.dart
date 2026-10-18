@@ -293,6 +293,10 @@ class _Hero extends ConsumerWidget {
                   label: strings.t('home_stat_24h'),
                   onTap: () => _scrollToFeed(),
                 ),
+                const Spacer(),
+                // "Yük əlavə et" — the add-load button (was the orange + in
+                // the bottom bar; same form: /cargo/create).
+                _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
               ],
             ),
           ),
@@ -373,6 +377,42 @@ void _scrollToFeed() {
 
 /// Tiny counter pill (~4 mm tall, ~1 cm wide): coloured icon + number.
 /// The label is kept as a tooltip / screen-reader text.
+/// "Yük əlavə et" + big orange round "+" (under the live map).
+class _AddLoadButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _AddLoadButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: onTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 8),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                color: AppColors.accentFill,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;

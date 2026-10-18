@@ -869,5 +869,7 @@
   "act_offer_need_carrier": "Təklif vermək üçün \"Daşıyıcı\" fəaliyyətini aktiv edin.",
   "act_enable": "Aktiv et",
   "register_title": "Qeydiyyat",
-  "register_unified_note": "Bir hesab — bütün imkanlar. Qeydiyyatdan sonra Profildə fəaliyyətlərinizi seçin: Daşıyıcı, Yük verən, Usta / Servis, Satış."
+  "register_unified_note": "Bir hesab — bütün imkanlar. Qeydiyyatdan sonra Profildə fəaliyyətlərinizi seçin: Daşıyıcı, Yük verən, Usta / Servis, Satış.",
+  "nav_market": "TIR Bazarı",
+  "market_coming": "TIR Bazarı hazırlanır. Tezliklə burada yük maşını, qoşqu və texnika satış elanlarını yerləşdirə və axtara biləcəksiniz."
 }

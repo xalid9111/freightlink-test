@@ -869,5 +869,7 @@
   "act_offer_need_carrier": "Teklif vermek için \"Taşıyıcı\" faaliyetini açın.",
   "act_enable": "Aç",
   "register_title": "Kayıt",
-  "register_unified_note": "Tek hesap — tüm imkânlar. Kayıttan sonra Profil’de faaliyetlerinizi seçin: Taşıyıcı, Yük veren, Usta / Servis, Satış."
+  "register_unified_note": "Tek hesap — tüm imkânlar. Kayıttan sonra Profil’de faaliyetlerinizi seçin: Taşıyıcı, Yük veren, Usta / Servis, Satış.",
+  "nav_market": "TIR Pazarı",
+  "market_coming": "TIR Pazarı hazırlanıyor. Yakında burada tır, dorse ve iş makinesi satış ilanları verebilecek ve arayabileceksiniz."
 }
