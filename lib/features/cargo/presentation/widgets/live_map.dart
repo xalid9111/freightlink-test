@@ -4,6 +4,7 @@ import 'dart:ui' show FrameTiming;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import 'wheel_feed.dart';
 
 /// Home "live world map".
@@ -33,6 +34,11 @@ class LiveMap extends StatefulWidget {
   @override
   State<LiveMap> createState() => _LiveMapState();
 }
+
+/// Background picture: night lights (night mode) or the colourful
+/// country map (day mode, world_map_day.jpg — Natural Earth countries
+/// drawn onto this same layout so every hub below sits on its city).
+String liveMapImage({required bool day}) => day ? 'assets/images/world_map_day.jpg' : 'assets/images/world_map.jpg';
 
 /// Size of assets/images/world_map.jpg: the world cropped tight to the
 /// continents (no empty margins), so the map looks big on a phone.
@@ -327,9 +333,10 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
         fit: StackFit.expand,
         children: [
           // Static background (sea already in the panel colour in the image).
+          // Day mode: the colourful political map, same layout / hubs.
           RepaintBoundary(
             child: Image.asset(
-              'assets/images/world_map.jpg',
+              liveMapImage(day: AppColors.isDay),
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => const SizedBox.shrink(),
@@ -350,7 +357,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
+                color: AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : Colors.black.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _green.withValues(alpha: 0.35)),
               ),
