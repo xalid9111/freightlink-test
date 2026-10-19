@@ -159,4 +159,14 @@ void main() {
       expect(File('lib/features/services/presentation/services_providers.dart').readAsStringSync().contains("'tarp' => Icons.roofing"), isTrue);
     });
   });
+
+  group('Services: "Ehtiyat hissələri satışı" category', () {
+    test('migration adds it once, first in the list, and the app has its icon', () {
+      final sql = File('supabase/migrations/0043_service_category_spare_parts.sql').readAsStringSync();
+      expect(sql.contains("'spare_parts', 'Ehtiyat hissələri satışı'"), isTrue);
+      expect(sql.contains("'parts', 0)"), isTrue);
+      expect(sql.contains('on conflict (id) do nothing'), isTrue);
+      expect(File('lib/features/services/presentation/services_providers.dart').readAsStringSync().contains("'parts' => Icons.inventory_2"), isTrue);
+    });
+  });
 }
