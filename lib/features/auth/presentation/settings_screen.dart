@@ -12,6 +12,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_mode.dart';
 import '../../../core/theme/ui_scale.dart';
+import '../../../core/layout/desktop_layout.dart';
+import '../../../core/layout/desktop_preview.dart';
 import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -166,6 +168,26 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ],
+          // Desktop preview on a phone — test only, admins (owner, 19.10.2026).
+          if (ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin &&
+              (ref.watch(desktopPreviewProvider) || !isDesktopLayout(context))) ...[
+            const SizedBox(height: 14),
+            _Section(
+              icon: Icons.desktop_windows_outlined,
+              iconColor: AppColors.accent,
+              title: s.t('desk_preview_title'),
+              children: [
+                SwitchListTile(
+                  key: const ValueKey('desktop-preview-switch'),
+                  value: ref.watch(desktopPreviewProvider),
+                  onChanged: (v) => ref.read(desktopPreviewProvider.notifier).set(v),
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: AppColors.accentFill,
+                  title: Text(s.t('desk_preview_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, height: 1.35)),
                 ),
               ],
             ),

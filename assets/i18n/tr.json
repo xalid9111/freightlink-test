@@ -1006,5 +1006,8 @@
   "desk_search_loads_hint": "Yük, şehir, ülke veya rota ara...",
   "desk_find_loads": "Yükleri ara",
   "desk_dark_mode": "Koyu mod",
-  "desk_light_mode": "Açık mod"
+  "desk_light_mode": "Açık mod",
+  "desk_preview_title": "Masaüstü görünüm (test)",
+  "desk_preview_hint": "Telefonda bilgisayar görünümünü görmek için (1440 px). İki parmakla büyüt / küçült, yana kaydır.",
+  "desk_preview_exit": "Mobil görünüm"
 }

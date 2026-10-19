@@ -1006,5 +1006,8 @@
   "desk_search_loads_hint": "搜索货物、城市、国家或路线...",
   "desk_find_loads": "查找货物",
   "desk_dark_mode": "深色模式",
-  "desk_light_mode": "浅色模式"
+  "desk_light_mode": "浅色模式",
+  "desk_preview_title": "桌面视图（测试）",
+  "desk_preview_hint": "在手机上查看电脑版布局（1440 px）。双指缩放，左右滑动。",
+  "desk_preview_exit": "手机视图"
 }
