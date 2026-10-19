@@ -14,6 +14,12 @@ AutoDisposeStreamProvider<List<JsonRow>> _live(String table, {int limit = 500}) 
     });
 
 final adminUsersProvider = _live('users', limit: 2000);
+
+/// Founder accounts (0045): locked for every other admin.
+final adminFounderIdsProvider = FutureProvider.autoDispose<Set<String>>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(adminRepositoryProvider).founderIds();
+});
 final adminCargoProvider = _live('cargo', limit: 1000);
 final adminOffersProvider = _live('offers', limit: 1000);
 final adminShipmentsProvider = _live('shipments', limit: 1000);
