@@ -7,6 +7,7 @@ import 'package:freightlink/core/layout/desktop_layout.dart';
 import 'package:freightlink/core/layout/desktop_preview.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
+import 'package:freightlink/core/router/main_shell.dart';
 import 'package:freightlink/features/cargo/presentation/cargo_marketplace_screen.dart';
 import 'package:freightlink/models/cargo_model.dart';
 
@@ -115,6 +116,42 @@ void main() {
       expect(DesktopPreviewController().state, isFalse);
       final settings = File('lib/features/auth/presentation/settings_screen.dart').readAsStringSync();
       expect(settings.contains('ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin &&\n              (ref.watch(desktopPreviewProvider)'), isTrue);
+    });
+  });
+
+  group('Inner pages keep the left menu on a computer', () {
+    testWidgets('phone: the page is shown as before, no menu', (tester) async {
+      await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(size: Size(390, 844)),
+            child: DeskFrame(section: 6, child: Text('page')),
+          ),
+        ),
+      ));
+      expect(find.text('page'), findsOneWidget);
+      expect(find.byType(Row), findsNothing);
+    });
+    test('detail and edit pages are wrapped; login / admin are not', () {
+      final r = File('lib/core/router/app_router.dart').readAsStringSync();
+      String route(String path) {
+        final i = r.indexOf("path: '$path'");
+        return r.substring(i, r.indexOf('GoRoute(', i));
+      }
+      for (final (path, section) in [
+        ('/market/l/:id', 6), ('/load/:id', 0), ('/service/:id', 5), ('/chat/:id', 3), ('/settings', 4),
+      ]) {
+        expect(route(path).contains('DeskFrame(section: $section,'), isTrue, reason: path);
+      }
+      for (final path in ['/login', '/admin']) {
+        expect(route(path).contains('DeskFrame'), isFalse, reason: path);
+      }
+    });
+    test('ad page: two columns on a computer, phone layout and bottom buttons unchanged', () {
+      final d = File('lib/features/market/presentation/market_detail_screen.dart').readAsStringSync();
+      expect(d.contains('if (isDesktopLayout(context)) return _desktopBody(s, l, me, head, rest);'), isTrue);
+      expect(d.contains('bottomNavigationBar: l == null || isDesktopLayout(context) ? null : _actions(s, l, me),'), isTrue);
+      expect(d.contains('Widget _gallery(MarketListing l, {double ratio = 1.7})'), isTrue);
     });
   });
 }

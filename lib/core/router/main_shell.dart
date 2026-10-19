@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../localization/app_strings.dart';
 import '../localization/locale_controller.dart';
 import '../presence/online_users.dart';
 import '../../features/chat/presentation/providers/chat_providers.dart';
@@ -68,13 +69,7 @@ class MainShell extends ConsumerWidget {
     // still work. Owner's layout: Yüklər · Servislər · TIR Bazarı (centre)
     // · Mesajlar · Profil; "Yük əlavə et" (+) sits on the Loads page under
     // the map.
-    final items = <_NavItem>[
-      _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
-      _NavItem(5, Icons.home_repair_service_outlined, Icons.home_repair_service, strings.t('nav_services')),
-      _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market')),
-      _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread.toInt()),
-      _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
-    ];
+    final items = _navItems(strings, unread.toInt());
     void goTo(int branch) {
       // One tap = one tab switch (iPhone sometimes delivers a tap twice).
       if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
@@ -122,6 +117,59 @@ class MainShell extends ConsumerWidget {
           current: navigationShell.currentIndex,
           onTap: goTo,
         ),
+      ),
+    );
+  }
+}
+
+List<_NavItem> _navItems(AppStrings strings, int unread) => <_NavItem>[
+      _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
+      _NavItem(5, Icons.home_repair_service_outlined, Icons.home_repair_service, strings.t('nav_services')),
+      _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market')),
+      _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread),
+      _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
+    ];
+
+/// Start page of each section in the sidebar (shell branch → path).
+const kDeskSectionPaths = <int, String>{0: '/cargo', 5: '/services', 6: '/market', 3: '/messages', 4: '/profile'};
+
+/// Computer view of a page opened outside the tabs (a TIR Bazarı ad, a
+/// load, a chat, a form…): the left sidebar stays on screen (owner) and
+/// the page sits beside it at a comfortable width instead of stretching
+/// over the whole window. [section] is the sidebar item shown as active.
+/// Phones and tablets get the page unchanged.
+class DeskFrame extends ConsumerWidget {
+  final int section;
+  final double maxWidth;
+  final Widget child;
+  const DeskFrame({super.key, required this.section, required this.child, this.maxWidth = 1100});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!isDesktopLayout(context)) return child;
+    final strings = ref.watch(stringsProvider);
+    final unread = (ref.watch(unreadCountProvider).valueOrNull ?? 0) + ref.watch(groupUnreadTotalProvider);
+    return Scaffold(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SideNav(
+            items: _navItems(strings, unread.toInt()),
+            current: section,
+            onTap: (branch) {
+              if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
+              context.go(kDeskSectionPaths[branch] ?? '/cargo');
+            },
+          ),
+          Expanded(
+            child: ColoredBox(
+              color: AppColors.background,
+              child: Center(
+                child: ConstrainedBox(constraints: BoxConstraints(maxWidth: maxWidth), child: child),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

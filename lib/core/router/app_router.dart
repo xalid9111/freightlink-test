@@ -108,12 +108,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const SettingsScreen(),
+        builder: (context, state) => const DeskFrame(section: 4, child: SettingsScreen()),
       ),
       GoRoute(
         path: '/change-password',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ChangePasswordScreen(),
+        builder: (context, state) => const DeskFrame(section: 4, child: ChangePasswordScreen()),
       ),
       // No "Hansı işlə məşğulsunuz?" step any more: one account for
       // everyone, activities are chosen in Profil (0039). Old links land
@@ -136,12 +136,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cargo/create',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const CargoQuickForm(),
+        builder: (context, state) => const DeskFrame(section: 0, child: CargoQuickForm()),
       ),
       GoRoute(
         path: '/cargo-edit/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => CargoQuickForm(editCargoId: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 0, child: CargoQuickForm(editCargoId: state.pathParameters['id']!)),
       ),
       // Admin Panel — separate full-screen area, outside the bottom-nav
       // shell. Access is enforced on the server (is_admin()).
@@ -161,113 +161,113 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/load/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => CargoDetailScreen(cargoId: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 0, child: CargoDetailScreen(cargoId: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/chat/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ConversationThreadScreen(conversationId: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 3, child: ConversationThreadScreen(conversationId: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/chat-group/:gid',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => GroupThreadScreen(groupId: state.pathParameters['gid']!),
+        builder: (context, state) => DeskFrame(section: 3, child: GroupThreadScreen(groupId: state.pathParameters['gid']!)),
       ),
       GoRoute(
         path: '/user/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => PublicProfileScreen(userId: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 4, child: PublicProfileScreen(userId: state.pathParameters['id']!)),
       ),
       // WhatsApp-style catalog of a user's work (store icon in chats).
       GoRoute(
         path: '/user/:id/catalog',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => CatalogScreen(userId: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 4, child: CatalogScreen(userId: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/ads',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AdvertiseScreen(),
+        builder: (context, state) => const DeskFrame(section: 4, child: AdvertiseScreen()),
       ),
       // Reklam yarat (template) and one order (payment / receipt / status).
       GoRoute(
         path: '/ad-create',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => AdCreateScreen(
+        builder: (context, state) => DeskFrame(section: 4, child: AdCreateScreen(
           initialTemplateId: state.uri.queryParameters['tpl'],
           editOrderId: state.uri.queryParameters['order'],
           serviceId: state.uri.queryParameters['service'],
-        ),
+        )),
       ),
       GoRoute(
         path: '/ad-order/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => AdOrderScreen(id: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 4, child: AdOrderScreen(id: state.pathParameters['id']!)),
       ),
       // Profile → Maliyyə və ödənişlər (0037): finance owner only (server-checked).
       GoRoute(
         path: '/finance',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const FinanceScreen(),
+        builder: (context, state) => const DeskFrame(section: 4, child: FinanceScreen()),
       ),
       // Services module (migration 0017): profile page, create / edit own
       // service profile, "join as a mechanic / service".
       GoRoute(
         path: '/service/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ServiceDetailScreen(id: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 5, child: ServiceDetailScreen(id: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/service-edit',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ServiceEditScreen(initialKind: state.uri.queryParameters['kind']),
+        builder: (context, state) => DeskFrame(section: 5, child: ServiceEditScreen(initialKind: state.uri.queryParameters['kind'])),
       ),
       GoRoute(
         path: '/service-edit/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ServiceEditScreen(id: state.pathParameters['id']!),
+        builder: (context, state) => DeskFrame(section: 5, child: ServiceEditScreen(id: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/service-join',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ServiceJoinScreen(),
+        builder: (context, state) => const DeskFrame(section: 5, child: ServiceJoinScreen()),
       ),
       GoRoute(
         path: '/my-cargo',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const MyCargoScreen(),
+        builder: (context, state) => const DeskFrame(section: 0, child: MyCargoScreen()),
       ),
       // TIR Bazarı pages (deferred module, full screen like the other forms).
       GoRoute(
         path: '/market/new',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketEditScreen()),
+        builder: (context, state) => DeskFrame(section: 6, child: DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketEditScreen())),
       ),
       GoRoute(
         path: '/market/edit/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeferredPage(
+        builder: (context, state) => DeskFrame(section: 6, child: DeferredPage(
           load: market.loadLibrary,
           builder: (_) => market.MarketEditScreen(listingId: state.pathParameters['id']),
-        ),
+        )),
       ),
       GoRoute(
         path: '/market/l/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeferredPage(
+        builder: (context, state) => DeskFrame(section: 6, child: DeferredPage(
           load: market.loadLibrary,
           builder: (_) => market.MarketDetailScreen(listingId: state.pathParameters['id']!),
-        ),
+        )),
       ),
       GoRoute(
         path: '/market/mine',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MyMarketListingsScreen()),
+        builder: (context, state) => DeskFrame(section: 6, child: DeferredPage(load: market.loadLibrary, builder: (_) => market.MyMarketListingsScreen())),
       ),
       GoRoute(
         path: '/market/favorites',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketFavoritesScreen()),
+        builder: (context, state) => DeskFrame(section: 6, child: DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketFavoritesScreen())),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell, location: state.uri.path),
