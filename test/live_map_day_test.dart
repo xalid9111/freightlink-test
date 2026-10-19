@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/live_map.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/live_map_day_geo.dart';
@@ -21,7 +23,7 @@ import 'package:freightlink/features/cargo/presentation/widgets/live_map_night_g
 void main() {
   test('night shows the owner\'s night clouds map (19.10.2026), day the colourful country map', () {
     // New file name, so a phone never shows an old cached picture with the new hubs.
-    expect(liveMapImage(day: false), 'assets/images/world_map_night_v2.jpg');
+    expect(liveMapImage(day: false), 'assets/images/world_map_night_v3.jpg');
     expect(liveMapImage(day: true), 'assets/images/world_map_day.jpg');
   });
 
@@ -48,23 +50,49 @@ void main() {
       expect(bytes.length, lessThan(40 * 1024), reason: f);
     }
     final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-    expect(home.contains("final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v2';"), isTrue);
+    expect(home.contains("final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v3';"), isTrue);
   });
 
   test('night cloud scene: every hub and city light on the picture, edges fade to the night page colour', () {
-    final map = File('assets/images/world_map_night_v2.jpg').readAsBytesSync();
+    final map = File('assets/images/world_map_night_v3.jpg').readAsBytesSync();
     expect(_jpegSize(map), (kNightImgW.toInt(), kNightImgH.toInt()));
     expect(map.length, lessThan(300 * 1024));
     expect(kNightHubs.length, liveMapSourceHubCount, reason: 'same hubs, same order');
     for (final p in [...kNightHubs, ...kNightSparks]) {
       expect(p.dx >= 0 && p.dx <= kNightImgW && p.dy >= 0 && p.dy <= kNightImgH, isTrue, reason: '$p');
     }
-    for (final f in ['world_map_night_v2_top.jpg', 'world_map_night_v2_bottom.jpg']) {
+    for (final f in ['world_map_night_v3_top.jpg', 'world_map_night_v3_bottom.jpg']) {
       final bytes = File('assets/images/$f').readAsBytesSync();
       expect(_jpegSize(bytes).$1, kNightImgW.toInt(), reason: '$f: same width as the map, so they join');
       expect(bytes.length, lessThan(120 * 1024), reason: f);
     }
     final script = File('scripts/make_night_map.py').readAsStringSync();
     expect(script.contains('BG = np.array([2, 5, 12], float)'), isTrue, reason: 'fades to #02050C (AppColors night background)');
+  });
+
+  testWidgets('night scene: no line at the top or bottom — the outer rows are the night page colour', (tester) async {
+    // Average colour of one row of a picture.
+    Future<List<double>> row(String file, {required bool last}) => tester.runAsync(() async {
+          final codec = await ui.instantiateImageCodec(File('assets/images/$file').readAsBytesSync());
+          final img = (await codec.getNextFrame()).image;
+          final px = (await img.toByteData())!;
+          final y = last ? img.height - 1 : 0;
+          final sum = [0.0, 0.0, 0.0];
+          for (var x = 0; x < img.width; x++) {
+            final o = (y * img.width + x) * 4;
+            for (var c = 0; c < 3; c++) {
+              sum[c] += px.getUint8(o + c);
+            }
+          }
+          return [for (final v in sum) v / img.width];
+        }).then((v) => v!);
+    const page = Color(0xFF02050C);
+    final expected = [page.r * 255, page.g * 255, page.b * 255];
+    for (final (file, last) in [('world_map_night_v3_top.jpg', false), ('world_map_night_v3_bottom.jpg', true)]) {
+      final got = await row(file, last: last);
+      for (var c = 0; c < 3; c++) {
+        expect((got[c] - expected[c]).abs(), lessThan(3), reason: '$file edge must match #02050C, got $got');
+      }
+    }
   });
 }
