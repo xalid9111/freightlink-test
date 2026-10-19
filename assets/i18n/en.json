@@ -1006,5 +1006,8 @@
   "desk_search_loads_hint": "Search loads, cities, countries or routes...",
   "desk_find_loads": "Find loads",
   "desk_dark_mode": "Dark mode",
-  "desk_light_mode": "Light mode"
+  "desk_light_mode": "Light mode",
+  "desk_preview_title": "Desktop view (test)",
+  "desk_preview_hint": "See the computer layout on your phone (1440 px). Pinch to zoom, swipe sideways.",
+  "desk_preview_exit": "Mobile view"
 }

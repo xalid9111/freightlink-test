@@ -12,6 +12,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/flag_font.dart';
 import 'core/theme/theme_mode.dart';
 import 'core/theme/ui_scale.dart';
+import 'core/layout/desktop_preview.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
@@ -56,6 +57,8 @@ Future<void> main() async {
   await loadSavedTheme();
   // Display size chosen in Settings (Kiçik / Normal / Böyük).
   await loadSavedUiScale();
+  // Desktop preview (test only, off unless chosen in Settings).
+  await loadSavedDesktopPreview();
 
   // Firebase.initializeApp() and Mapbox.setAccessToken() are added
   // in Phase 10 / Phase 12 once those features are implemented —
@@ -81,6 +84,7 @@ class FreightLinkApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(currentLocaleProvider);
     final uiScale = ref.watch(uiScaleProvider);
+    final desktopPreview = ref.watch(desktopPreviewProvider);
     AutoFix.instance.attachRouter(router);
     AutoFix.instance.attachContainer(ProviderScope.containerOf(context, listen: false));
     return MaterialApp.router(
@@ -91,7 +95,7 @@ class FreightLinkApp extends ConsumerWidget {
       darkTheme: themeForUiScale(AppTheme.current, uiScale),
       themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark,
       routerConfig: router,
-      builder: (context, child) => applyUiScale(context, uiScale, child),
+      builder: (context, child) => applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

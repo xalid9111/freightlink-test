@@ -2,7 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freightlink/core/layout/desktop_layout.dart';
+import 'package:freightlink/core/layout/desktop_preview.dart';
+import 'package:freightlink/core/localization/app_strings.dart';
+import 'package:freightlink/core/localization/locale_controller.dart';
 import 'package:freightlink/features/cargo/presentation/cargo_marketplace_screen.dart';
 import 'package:freightlink/models/cargo_model.dart';
 
@@ -73,6 +77,44 @@ void main() {
     test('every word must match', () {
       expect(deskLoadMatches(load, 'Bakı Tbilisi', 'az'), isTrue);
       expect(deskLoadMatches(load, 'Bakı Moskva', 'az'), isFalse);
+    });
+  });
+  group('Desktop preview on a phone (test only)', () {
+    Future<Size> pageSizeIn(WidgetTester tester, Size screen, bool on) async {
+      late Size page;
+      tester.view.physicalSize = screen;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(ProviderScope(
+        overrides: [stringsProvider.overrideWithValue(const AppStrings({'desk_preview_exit': 'Mobil görünüş'}))],
+        child: MaterialApp(
+          builder: (context, child) => applyDesktopPreview(context, on, child!),
+          home: Builder(builder: (context) {
+            page = MediaQuery.sizeOf(context);
+            return const SizedBox();
+          }),
+        ),
+      ));
+      return page;
+    }
+
+    testWidgets('off: the phone page is exactly as before', (tester) async {
+      expect(await pageSizeIn(tester, const Size(390, 844), false), const Size(390, 844));
+      expect(find.byKey(const ValueKey('desktop-preview')), findsNothing);
+    });
+    testWidgets('on: the page is laid out 1440 px wide, zoomable, with a way back', (tester) async {
+      expect(await pageSizeIn(tester, const Size(390, 844), true), kDesktopPreviewCanvas);
+      expect(find.byKey(const ValueKey('desktop-preview')), findsOneWidget);
+      expect(find.byKey(const ValueKey('desktop-preview-exit')), findsOneWidget);
+    });
+    testWidgets('on a real computer screen it changes nothing', (tester) async {
+      expect(await pageSizeIn(tester, const Size(1440, 900), true), const Size(1440, 900));
+      expect(find.byKey(const ValueKey('desktop-preview')), findsNothing);
+    });
+    test('off by default, switch is admin-only in Settings', () {
+      expect(DesktopPreviewController().state, isFalse);
+      final settings = File('lib/features/auth/presentation/settings_screen.dart').readAsStringSync();
+      expect(settings.contains('ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin &&\n              (ref.watch(desktopPreviewProvider)'), isTrue);
     });
   });
 }

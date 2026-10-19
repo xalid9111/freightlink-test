@@ -1006,5 +1006,8 @@
   "desk_search_loads_hint": "Yük, şəhər, ölkə və ya marşrut axtar...",
   "desk_find_loads": "Yükləri axtar",
   "desk_dark_mode": "Qara rejim",
-  "desk_light_mode": "Ağ rejim"
+  "desk_light_mode": "Ağ rejim",
+  "desk_preview_title": "Desktop görünüş (test)",
+  "desk_preview_hint": "Telefonda kompüter görünüşünə baxmaq üçün (1440 px). İki barmaqla böyüt / kiçilt, yana sürüşdür.",
+  "desk_preview_exit": "Mobil görünüş"
 }
