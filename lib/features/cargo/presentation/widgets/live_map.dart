@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import 'live_map_day_geo.dart';
+import 'live_map_night_geo.dart';
 import 'wheel_feed.dart';
 
 /// Home "live world map".
@@ -36,10 +37,12 @@ class LiveMap extends StatefulWidget {
   State<LiveMap> createState() => _LiveMapState();
 }
 
-/// Background picture: night lights (night mode) or the colourful
-/// country map (day mode, world_map_day.jpg — the owner's design; its hub
-/// positions are in live_map_day_geo.dart).
-String liveMapImage({required bool day}) => day ? 'assets/images/world_map_day.jpg' : 'assets/images/world_map.jpg';
+/// Background picture: the night-lights map in clouds (night mode,
+/// world_map_night_v2.jpg — the owner's design of 19.10.2026; hub
+/// positions in live_map_night_geo.dart) or the colourful country map (day
+/// mode, world_map_day.jpg; hub positions in live_map_day_geo.dart).
+String liveMapImage({required bool day}) =>
+    day ? 'assets/images/world_map_day.jpg' : 'assets/images/world_map_night_v2.jpg';
 
 /// Size of assets/images/world_map.jpg: the world cropped tight to the
 /// continents (no empty margins), so the map looks big on a phone.
@@ -210,7 +213,15 @@ class _MapGeo {
   const _MapGeo({required this.hubs, required this.sparks, required this.w, required this.h, required this.crop});
 }
 
-const _nightGeo = _MapGeo(hubs: _hubs, sparks: _sparks, w: _imgW, h: _imgH, crop: _crop);
+const _nightGeo = _MapGeo(hubs: kNightHubs, sparks: kNightSparks, w: kNightImgW, h: kNightImgH, crop: Offset.zero);
+
+/// The hubs / city lights above are on the first night picture
+/// (world_map.jpg); make_day_map.py and make_night_map.py place the same
+/// cities on the newer pictures from them.
+@visibleForTesting
+const liveMapSourceGeo = _MapGeo(hubs: _hubs, sparks: _sparks, w: _imgW, h: _imgH, crop: _crop);
+@visibleForTesting
+int get liveMapSourceHubCount => liveMapSourceGeo.hubs.length;
 const _dayGeo = _MapGeo(hubs: kDayHubs, sparks: kDaySparks, w: kDayImgW, h: kDayImgH, crop: Offset.zero);
 _MapGeo get _geo => AppColors.isDay ? _dayGeo : _nightGeo;
 

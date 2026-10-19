@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/live_map.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/live_map_day_geo.dart';
+import 'package:freightlink/features/cargo/presentation/widgets/live_map_night_geo.dart';
 
 /// Width / height from a JPEG's SOF header.
 (int, int) _jpegSize(Uint8List b) {
@@ -18,8 +19,9 @@ import 'package:freightlink/features/cargo/presentation/widgets/live_map_day_geo
 }
 
 void main() {
-  test('night keeps the night-lights map, day shows the colourful country map', () {
-    expect(liveMapImage(day: false), 'assets/images/world_map.jpg');
+  test('night shows the owner\'s night clouds map (19.10.2026), day the colourful country map', () {
+    // New file name, so a phone never shows an old cached picture with the new hubs.
+    expect(liveMapImage(day: false), 'assets/images/world_map_night_v2.jpg');
     expect(liveMapImage(day: true), 'assets/images/world_map_day.jpg');
   });
 
@@ -46,7 +48,23 @@ void main() {
       expect(bytes.length, lessThan(40 * 1024), reason: f);
     }
     final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-    expect(home.contains('if (!show) return child;'), isTrue);
-    expect(home.contains('padding: EdgeInsets.only(top: day ? 0 : topPad, bottom: 16)'), isTrue);
+    expect(home.contains("final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v2';"), isTrue);
+  });
+
+  test('night cloud scene: every hub and city light on the picture, edges fade to the night page colour', () {
+    final map = File('assets/images/world_map_night_v2.jpg').readAsBytesSync();
+    expect(_jpegSize(map), (kNightImgW.toInt(), kNightImgH.toInt()));
+    expect(map.length, lessThan(300 * 1024));
+    expect(kNightHubs.length, liveMapSourceHubCount, reason: 'same hubs, same order');
+    for (final p in [...kNightHubs, ...kNightSparks]) {
+      expect(p.dx >= 0 && p.dx <= kNightImgW && p.dy >= 0 && p.dy <= kNightImgH, isTrue, reason: '$p');
+    }
+    for (final f in ['world_map_night_v2_top.jpg', 'world_map_night_v2_bottom.jpg']) {
+      final bytes = File('assets/images/$f').readAsBytesSync();
+      expect(_jpegSize(bytes).$1, kNightImgW.toInt(), reason: '$f: same width as the map, so they join');
+      expect(bytes.length, lessThan(120 * 1024), reason: f);
+    }
+    final script = File('scripts/make_night_map.py').readAsStringSync();
+    expect(script.contains('BG = np.array([2, 5, 12], float)'), isTrue, reason: 'fades to #02050C (AppColors night background)');
   });
 }

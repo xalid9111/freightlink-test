@@ -216,25 +216,26 @@ class _Hero extends ConsumerWidget {
 
     String stat(int n) => loaded ? '$n' : '—';
 
-    // Day mode: title, map and counters stand in one cloud scene (the
-    // clouds above / below the map are separate pictures that continue it).
+    // Title, map and counters stand in one cloud scene (the clouds above /
+    // below the map are separate pictures that continue it): day = white
+    // clouds, night = the owner's night clouds (19.10.2026).
     final day = AppColors.isDay;
+    final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v2';
     final topPad = MediaQuery.of(context).padding.top + 10;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.hero,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
       ),
-      padding: EdgeInsets.only(top: day ? 0 : topPad, bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DayScene(
-            show: day,
-            asset: 'assets/images/world_map_day_top.jpg',
+          _CloudScene(
+            asset: '${scene}_top.jpg',
             alignment: Alignment.bottomCenter,
             child: Padding(
-            padding: EdgeInsets.only(top: day ? topPad : 0),
+            padding: EdgeInsets.only(top: topPad),
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -281,9 +282,8 @@ class _Hero extends ConsumerWidget {
           ),
           // Full width, edge to edge; edges fade into the page colour.
           LiveMap(liveLabel: strings.t('map_live_badge')),
-          _DayScene(
-            show: day,
-            asset: 'assets/images/world_map_day_bottom.jpg',
+          _CloudScene(
+            asset: '${scene}_bottom.jpg',
             alignment: Alignment.topCenter,
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -395,19 +395,16 @@ class _Hero extends ConsumerWidget {
   }
 }
 
-/// Day mode: [child] drawn on a cloud picture shown at the screen width
-/// ([alignment] = the edge that touches the map, so the clouds continue the
-/// map's own). Night: just [child].
-class _DayScene extends StatelessWidget {
-  final bool show;
+/// [child] drawn on a cloud picture shown at the screen width ([alignment]
+/// = the edge that touches the map, so the clouds continue the map's own).
+class _CloudScene extends StatelessWidget {
   final String asset;
   final Alignment alignment;
   final Widget child;
-  const _DayScene({required this.show, required this.asset, required this.alignment, required this.child});
+  const _CloudScene({required this.asset, required this.alignment, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    if (!show) return child;
     return DecoratedBox(
       decoration: BoxDecoration(
         image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
