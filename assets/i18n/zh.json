@@ -998,5 +998,9 @@
   "mk_publish_note": "信息发布后立即对所有人可见。",
   "settings_appearance": "外观",
   "theme_night": "夜间",
-  "theme_day": "日间"
+  "theme_day": "日间",
+  "ui_size": "大小",
+  "ui_size_small": "小",
+  "ui_size_normal": "标准",
+  "ui_size_large": "大"
 }

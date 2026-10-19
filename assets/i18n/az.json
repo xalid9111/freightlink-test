@@ -998,5 +998,9 @@
   "mk_publish_note": "Elan dərc edilən kimi hamıya görünəcək.",
   "settings_appearance": "Görünüş",
   "theme_night": "Gecə",
-  "theme_day": "Gündüz"
+  "theme_day": "Gündüz",
+  "ui_size": "Ölçü",
+  "ui_size_small": "Kiçik",
+  "ui_size_normal": "Normal",
+  "ui_size_large": "Böyük"
 }

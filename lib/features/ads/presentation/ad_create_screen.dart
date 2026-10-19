@@ -618,7 +618,8 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
               ],
               section(1, 'adv_step_background'),
               SizedBox(
-                height: 104,
+                // 104 at the normal text size; grows with the template name.
+                height: 90 + MediaQuery.textScalerOf(context).scale(14),
                 child: MouseDragScroll(child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: shownList.length + (_forService && !_admin ? 1 : 0),

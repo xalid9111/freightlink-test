@@ -998,5 +998,9 @@
   "mk_publish_note": "Объявление станет видно всем сразу после публикации.",
   "settings_appearance": "Оформление",
   "theme_night": "Ночь",
-  "theme_day": "День"
+  "theme_day": "День",
+  "ui_size": "Размер",
+  "ui_size_small": "Мелкий",
+  "ui_size_normal": "Обычный",
+  "ui_size_large": "Крупный"
 }
