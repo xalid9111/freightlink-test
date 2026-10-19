@@ -19,7 +19,7 @@ DB="${TEST_DB:-freightlink_test}"
 MODE="${1:-after}"
 export PGOPTIONS="${PGOPTIONS:-} -c client_min_messages=warning"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -q)
-NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql 0041_market_autopublish.sql 0042_autofix_cleanup.sql 0043_service_category_spare_parts.sql)
+NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql 0041_market_autopublish.sql 0042_autofix_cleanup.sql 0043_service_category_spare_parts.sql 0044_market_hero_vip.sql)
 
 if [[ "$DB" != *test* ]]; then echo "Refusing: TEST_DB must contain 'test'"; exit 2; fi
 
@@ -55,7 +55,8 @@ compare() {  # $1 $2 = labels
       from (select * from tests.snap where label = '$1') a
       full join (select * from tests.snap where label = '$2') b using (tbl)
       where (a.tbl is not null and (a.h is distinct from b.h or a.n is distinct from b.n))
-         or (a.tbl is null and b.n > 0);
+         -- new settings tables a migration fills with defaults (no user data)
+         or (a.tbl is null and b.n > 0 and b.tbl not in ('market_vip_plans'));
       if d is not null then raise exception 'DATA CHANGED ($1 -> $2) in: %', d; end if;
       raise warning 'data preservation $1 -> $2: all % public tables identical',
         (select count(*) from tests.snap where label = '$1');
@@ -91,6 +92,7 @@ suites() {
   "${PSQL[@]}" -d "$DB" -v mig41="$MIG/0041_market_autopublish.sql" -f "$HERE/79_market_autopublish.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/80_autofix_cleanup.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/81_service_category_spare_parts.sql" >/dev/null
+  "${PSQL[@]}" -d "$DB" -f "$HERE/82_market_hero_vip.sql" >/dev/null
   PGOPTIONS="-c client_min_messages=notice" "${PSQL[@]}" -d "$DB" -f "$HERE/../messaging_audit_test.sql" 2>&1 \
     | grep -E "ALL MESSAGING|FAILED|ERROR" | sed 's/^/messaging_audit_test: /'
 }

@@ -100,4 +100,8 @@ const kRpcMigration = <String, String>{
   'admin_market_set_status': '0040_market.sql',
   'admin_market_set_vip': '0040_market.sql',
   'admin_market_delete': '0040_market.sql',
+  'market_vip_latest': '0044_market_hero_vip.sql',
+  'market_vip_order_create': '0044_market_hero_vip.sql',
+  'admin_market_set_hero': '0044_market_hero_vip.sql',
+  'admin_market_set_vip_plan': '0044_market_hero_vip.sql',
 };

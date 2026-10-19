@@ -20,6 +20,7 @@ import '../../chat/presentation/widgets/location_message.dart';
 import '../data/market_repository.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
+import 'market_vip_sheet.dart';
 import 'market_providers.dart';
 
 /// Elanın ətraflı səhifəsi (Şəkil 4) + bənzər elanlar (Şəkil 5).
@@ -436,15 +437,34 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     _pager.animateToPage(next, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
+  /// "VIP et" (0044) on its own row under the owner's buttons, so they keep
+  /// their width.
+  Widget _vipButton(AppStrings s, MarketListing l) => SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          key: const ValueKey('mk-vip-make'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kVipGold,
+            side: BorderSide(color: kVipGold.withValues(alpha: 0.7)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          onPressed: () => showMarketVipSheet(context, s, l),
+          icon: const Icon(Icons.workspace_premium),
+          label: Text(s.t(l.vipActive() ? 'mk_vip_extend' : 'mk_vip_title')),
+        ),
+      );
+
   Widget _actions(AppStrings s, MarketListing l, String? me) {
     final isOwner = l.ownerId == me;
-    Widget bar(List<Widget> children) => SafeArea(
+    Widget bar(List<Widget> children, {Widget? below}) => SafeArea(
           top: false,
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration:
                 BoxDecoration(color: AppColors.hero, border: Border(top: BorderSide(color: AppColors.line))),
-            child: Row(children: children),
+            child: below == null
+                ? Row(children: children)
+                : Column(mainAxisSize: MainAxisSize.min, children: [Row(children: children), const SizedBox(height: 8), below]),
           ),
         );
     if (isOwner) {
@@ -473,7 +493,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           onPressed: () => _delete(s, l),
           icon: Icon(Icons.delete_outline, color: AppColors.danger),
         ),
-      ]);
+      ], below: l.status == MarketStatus.active ? _vipButton(s, l) : null);
     }
     if (l.status == MarketStatus.sold) {
       return bar([

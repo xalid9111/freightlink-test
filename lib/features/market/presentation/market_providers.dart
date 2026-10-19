@@ -94,3 +94,21 @@ final marketFavoriteIdsProvider = StateNotifierProvider<MarketFavoritesControlle
   ref.watch(currentUserIdProvider);
   return MarketFavoritesController(ref.watch(marketRepositoryProvider));
 });
+
+/// The admin's banner at the top of TIR Bazarı (computer view).
+final marketHeroProvider = FutureProvider.autoDispose<MarketHero?>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).hero();
+});
+
+/// The 6 newest VIP ads for the VIP places beside the ads (computer view).
+final marketVipLatestProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).vipLatest(category: c);
+});
+
+/// VIP prices (7 / 14 / 30 days); [activeOnly] false = the admin list.
+final marketVipPlansProvider = FutureProvider.autoDispose.family<List<MarketVipPlan>, bool>((ref, activeOnly) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).vipPlans(activeOnly: activeOnly);
+});

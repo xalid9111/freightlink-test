@@ -155,7 +155,47 @@ class MarketRepository {
     }).timeout(_timeout);
   }
 
+  // ---- banner + paid VIP (0044) ---------------------------------------------
+
+  /// The admin's banner (null until the admin saves one).
+  Future<MarketHero?> hero() async {
+    final row = await _c.from('market_hero').select().eq('id', 1).maybeSingle().timeout(_timeout);
+    return row == null ? null : MarketHero.fromJson(row);
+  }
+
+  /// The newest VIP ads (for the VIP places beside the ads on a computer).
+  Future<List<MarketListing>> vipLatest({MarketCategory? category, int limit = 6}) async {
+    final res = await _c.rpc('market_vip_latest', params: {'p_category': category?.wire, 'p_limit': limit}).timeout(_timeout);
+    return _list(res);
+  }
+
+  Future<List<MarketVipPlan>> vipPlans({bool activeOnly = true}) async {
+    var q = _c.from('market_vip_plans').select();
+    if (activeOnly) q = q.eq('is_active', true);
+    final rows = await q.order('days').timeout(_timeout);
+    return [for (final r in rows as List) MarketVipPlan.fromJson(Map<String, dynamic>.from(r as Map))];
+  }
+
+  /// "VIP et": an order for my active ad; the price is set by the server.
+  Future<MarketVipOrder> createVipOrder(String listingId, int days) async {
+    final res = await _c.rpc('market_vip_order_create', params: {'p_listing': listingId, 'p_days': days}).timeout(_timeout);
+    return MarketVipOrder.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
   // ---- admin (server checks is_admin) --------------------------------------
+
+  Future<void> adminSetHero({String? imageUrl, String? title, String? titleAccent, String? subtitle}) async {
+    await _c.rpc('admin_market_set_hero', params: {
+      'p_image_url': imageUrl,
+      'p_title': title,
+      'p_title_accent': titleAccent,
+      'p_subtitle': subtitle,
+    }).timeout(_timeout);
+  }
+
+  Future<void> adminSetVipPlan(int days, double price, {bool active = true}) async {
+    await _c.rpc('admin_market_set_vip_plan', params: {'p_days': days, 'p_price': price, 'p_active': active}).timeout(_timeout);
+  }
 
   Future<List<MarketListing>> adminList({MarketStatus? status}) async {
     var q = _c.from('market_listings').select();

@@ -47,12 +47,23 @@ class CardCheckoutButton extends ConsumerWidget {
   }
 }
 
+/// A TIR Bazarı VIP order to pay (0044): its id and the server's price.
+class VipCheckoutTarget {
+  final String vipOrderId;
+  final double amount;
+  final String currency;
+  const VipCheckoutTarget({required this.vipOrderId, required this.amount, required this.currency});
+}
+
 class CheckoutSheet extends ConsumerStatefulWidget {
-  final AdOrder order;
+  /// An ad order — or, instead, a VIP order ([vip]).
+  final AdOrder? order;
+  final VipCheckoutTarget? vip;
   final AppStrings s;
   final CheckoutAvailability availability;
   final List<PayMethod> methods;
-  const CheckoutSheet({super.key, required this.order, required this.s, required this.availability, required this.methods});
+  const CheckoutSheet({super.key, this.order, this.vip, required this.s, required this.availability, required this.methods})
+      : assert((order == null) != (vip == null));
 
   @override
   ConsumerState<CheckoutSheet> createState() => _CheckoutSheetState();
@@ -71,6 +82,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   String? _errorKey;
 
   AppStrings get s => widget.s;
+  double get _amount => widget.vip?.amount ?? widget.order!.price;
+  String get _currency => widget.vip?.currency ?? widget.order!.currency;
+
+  Future<CheckoutPayment> _start(FinanceRepository repo) {
+    final vip = widget.vip;
+    return vip != null
+        ? repo.startVipCheckout(vipOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
+        : repo.startCheckout(orderId: widget.order!.id, method: _method, idempotencyKey: _key);
+  }
 
   Future<void> _run(Future<CheckoutPayment> Function() step) async {
     if (_busy || _locked) return;
@@ -87,7 +107,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           _locked = true;
         });
       }
-      if (p.status == 'succeeded') ref.invalidate(myAdOrdersProvider);
+      if (p.status == 'succeeded' && widget.order != null) ref.invalidate(myAdOrdersProvider);
       // The next step's buttons appear where the user just tapped: keep
       // them disabled a moment so a fast double tap cannot press them too.
       await Future<void>.delayed(stepLock);
@@ -136,7 +156,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             const SizedBox(height: 10),
           ],
           Text(s.t('pay_amount'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-          Text(money(widget.order.price, widget.order.currency), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+          Text(money(_amount, _currency), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
           if (p == null) ...[
             Text(s.t('pay_choose_method'), style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -152,11 +172,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               ),
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: _busy ? null : () => _run(() => repo.startCheckout(orderId: widget.order.id, method: _method, idempotencyKey: _key)),
+              onPressed: _busy ? null : () => _run(() => _start(repo)),
               style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
               child: _busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text('${s.t('pay_now')} · ${money(widget.order.price, widget.order.currency)}'),
+                  : Text('${s.t('pay_now')} · ${money(_amount, _currency)}'),
             ),
           ] else if (!p.isFinal) ...[
             // Built-in test provider = what a real provider's secure page will do.
@@ -178,7 +198,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               ]),
             ),
           ] else
-            _Result(payment: p, s: s),
+            _Result(payment: p, s: s, vip: widget.vip != null),
           if (_errorKey != null) ...[
             const SizedBox(height: 10),
             Text(s.t(_errorKey!), style: TextStyle(color: AppColors.danger)),
@@ -194,11 +214,12 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 class _Result extends StatelessWidget {
   final CheckoutPayment payment;
   final AppStrings s;
-  const _Result({required this.payment, required this.s});
+  final bool vip;
+  const _Result({required this.payment, required this.s, this.vip = false});
   @override
   Widget build(BuildContext context) {
     final ok = payment.status == 'succeeded';
-    final text = ok ? s.t(payment.mode == 'test' ? 'pay_success_test' : 'pay_success') : s.t('pay_failed');
+    final text = ok ? s.t(payment.mode == 'test' ? 'pay_success_test' : (vip ? 'pay_success_vip' : 'pay_success')) : s.t('pay_failed');
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
