@@ -1,28 +1,30 @@
-"""Night map of the home live map (the owner's cloud picture, 19.10.2026).
+"""Cloud-scene maps of the home live map (the owner's pictures).
 
 Usage (from the repo root):
-  python3 scripts/make_night_map.py <picture.png>
-Writes:
-* assets/images/world_map_night_v3.jpg — the map part of the picture (the
+  python3 scripts/make_cloud_map.py night <picture.png>   (owner, 19.10.2026)
+  python3 scripts/make_cloud_map.py day <picture.png>     (owner, 19.10.2026)
+Writes, for the mode:
+* assets/images/world_map_<mode>_vN.jpg — the map part of the picture (the
   animated layer is drawn on it);
-* assets/images/world_map_night_v3_top.jpg / ..._bottom.jpg — the clouds
+* assets/images/world_map_<mode>_vN_top.jpg / ..._bottom.jpg — the clouds
   above and below it: one cloud scene behind the home title, map and
-  counters. Its outer edges fade to exactly #02050C (the night page), so
-  no line shows where the picture ends;
-* lib/features/cargo/presentation/widgets/live_map_night_geo.dart — the
+  counters. Its outer edges fade to exactly the page colour (night
+  #02050C, day #FFFFFF), so no line shows where the picture ends;
+* lib/features/cargo/presentation/widgets/live_map_<mode>_geo.dart — the
   live-map hubs (live_map.dart, same order) and city lights placed on the
   picture, via a smooth warp fitted to the landmarks marked on it below.
-The day map (make_day_map.py) is not touched. Needs numpy + Pillow."""
+Needs numpy + Pillow."""
 import re, sys
 import numpy as np
 from PIL import Image
 
-SRC = sys.argv[1]
-CROP = (180, 210, 1600, 690)  # map part: left, top, right, bottom on the picture
-BG = np.array([2, 5, 12], float)  # AppColors.background / hero (night)
+MODE, SRC = sys.argv[1], sys.argv[2]
+# Per mode: map part of the picture (left, top, right, bottom), page colour,
+# title backing (night darker / day lighter, for readable text), output
+# version, and landmarks on the picture: (x, y) : (lat, lon).
+MODES = {
+ 'night': dict(crop=(180, 210, 1600, 690), bg=(2, 5, 12), title='darken', version='v3', lm={
 
-# Landmarks on the picture: (x, y) : (lat, lon)
-LM = {
  (316,360):(25.1,-80.9),     # Florida tip
  (219,374):(22.9,-109.9),    # Baja California tip
  (190,335):(34.05,-118.24),  # Los Angeles coast
@@ -55,7 +57,49 @@ LM = {
  (1347,620):(-26.1,113.2),   # Steep Point
  (1542,655):(-33.9,151.2),   # Sydney
  (1617,680):(-36.8,174.8),   # Auckland
+ }),
+ 'day': dict(crop=(160, 240, 1600, 720), bg=(255, 255, 255), title='lighten', version='v2', lm={
+ (356,390):(25.1,-80.9),     # Florida tip
+ (215,397):(22.9,-109.9),    # Baja California tip
+ (190,357):(34.05,-118.24),  # Los Angeles coast
+ (177,297):(47.6,-122.3),    # Seattle
+ (315,415):(21.5,-87.0),     # Yucatán
+ (355,467):(9.0,-79.5),      # Panama
+ (420,310):(40.7,-74.0),     # New York
+ (570,540):(-7.1,-34.8),     # Brazil east tip
+ (510,605):(-22.9,-43.2),    # Rio de Janeiro
+ (450,650):(-34.6,-58.4),    # Buenos Aires
+ (370,550):(-12.0,-77.0),    # Lima
+ (350,520):(-2.0,-81.0),     # Ecuador west
+ (732,352):(36.0,-5.6),      # Gibraltar
+ (765,277):(51.5,-0.1),      # London
+ (905,335):(41.0,29.0),      # Istanbul
+ (925,390):(30.0,32.5),      # Suez
+ (1050,417):(26.5,56.3),     # Hormuz
+ (1005,330):(40.4,49.9),     # Baku
+ (802,500):(6.5,3.4),        # Lagos
+ (845,675):(-34.8,20.0),     # Cape Agulhas
+ (1012,465):(11.8,51.3),     # Cape Guardafui
+ (980,637):(-25.6,45.1),     # Madagascar south
+ (1151,494):(8.1,77.5),      # India south tip
+ (1295,490):(1.35,103.8),    # Singapore
+ (1335,415):(22.3,114.2),    # Hong Kong
+ (1372,390):(31.2,121.5),    # Shanghai
+ (1400,372):(34.8,126.5),    # Korea south
+ (1457,365):(35.7,139.7),    # Tokyo
+ (1515,300):(51.0,156.7),    # Kamchatka tip
+ (1487,595):(-10.7,142.5),   # Cape York
+ (1335,645):(-26.1,113.2),   # Steep Point
+ (1530,695):(-33.9,151.2),   # Sydney
+ (1500,735):(-42.0,147.0),   # Tasmania
+ (1625,710):(-36.8,174.8),   # Auckland
+ }),
 }
+M = MODES[MODE]
+CROP = M['crop']
+BG = np.array(M['bg'], float)
+LM = M['lm']
+NAME = f"world_map_{MODE}_{M['version']}"
 
 CITY={'New York':(40.71,-74.0),'Los Angeles':(34.05,-118.24),'Chicago':(41.88,-87.63),'Mexico City':(19.43,-99.13),'Bogotá':(4.71,-74.07),
  'São Paulo':(-23.55,-46.63),'Buenos Aires':(-34.6,-58.38),'London':(51.5,-0.13),'Central Europe':(50.1,8.7),'Madrid':(40.42,-3.7),
@@ -123,10 +167,13 @@ bottom = vjoin(below, above[:150][::-1, ::-1], 60)
 scene = np.concatenate([top, pic[Y0:Y1], bottom], 0)
 T = top.shape[0]
 y = np.arange(scene.shape[0])[:, None, None]
-scene = scene * (1 - 0.45 * ss(T - 40, 0, y))           # darker behind the title (readable white text)
+if M['title'] == 'darken':
+    scene = scene * (1 - 0.45 * ss(T - 40, 0, y))           # darker behind the title (readable white text)
+else:
+    scene = scene + (255 - scene) * (0.62 * ss(T, T - 70, y))  # light mist behind the title (readable dark text)
 # Keep only as much cloud above / below the map as is always on screen (the
 # title / counters area at every text size, Kiçik included), and fade it to
-# the night page colour slowly and completely inside that part: no edge of
+# the page colour slowly and completely inside that part: no edge of
 # the picture is ever visible, so no horizontal line at the top or bottom.
 KEEP_TOP, KEEP_BOTTOM = 270, 200
 scene = scene[T - KEEP_TOP:T + H + KEEP_BOTTOM]
@@ -135,7 +182,7 @@ y = np.arange(n)[:, None, None]
 scene = scene + (BG - scene) * ss(150, 0, y)             # top: gradually into the page colour
 scene = scene + (BG - scene) * ss(T + H + 10, n - 3, y)  # bottom: the same, below the counters
 scene = scene.clip(0, 255).round().astype(np.uint8)
-for name, part in (('world_map_night_v3_top', scene[:T]), ('world_map_night_v3', scene[T:T + H]), ('world_map_night_v3_bottom', scene[T + H:])):
+for name, part in ((f'{NAME}_top', scene[:T]), (NAME, scene[T:T + H]), (f'{NAME}_bottom', scene[T + H:])):
     Image.fromarray(part).save(f'assets/images/{name}.jpg', quality=88, optimize=True, progressive=True)
 new = new - np.array(CROP[:2])
 new_sparks = new_sparks - np.array(CROP[:2])
@@ -147,23 +194,25 @@ def fmt(arr):
     return '\n'.join('  ' + ' '.join(f'Offset({x:.0f}, {y:.0f}),' for x, y in arr[i:i + 5]) for i in range(0, len(arr), 5))
 
 
-open('lib/features/cargo/presentation/widgets/live_map_night_geo.dart', 'w').write(f'''import 'dart:ui' show Offset;
+P = 'Night' if MODE == 'night' else 'Day'
+open(f'lib/features/cargo/presentation/widgets/live_map_{MODE}_geo.dart', 'w').write(f'''import 'dart:ui' show Offset;
 
-// GENERATED by scripts/make_night_map.py — do not edit by hand.
+// GENERATED by scripts/make_cloud_map.py ({MODE}) — do not edit by hand.
 //
-// Night-mode geometry of the home live map: the same hubs (same order as
-// _hubs in live_map.dart) and city lights, placed on the night picture
-// (assets/images/world_map_night_v3.jpg, {W}×{H}, the owner's cloud design).
+// {P}-mode geometry of the home live map: the same hubs (same order as
+// _hubs in live_map.dart) and city lights, placed on the {MODE} picture
+// (assets/images/{NAME}.jpg, {W}×{H}, the owner's cloud design).
 
-const double kNightImgW = {W}, kNightImgH = {H};
+const double k{P}ImgW = {W}, k{P}ImgH = {H};
 
-const List<Offset> kNightHubs = [
+const List<Offset> k{P}Hubs = [
 {fmt(new)}
 ];
 
-const List<Offset> kNightSparks = [
+const List<Offset> k{P}Sparks = [
 {fmt(new_sparks)}
 ];
 ''')
+
 out = ((new[:, 0] < 0) | (new[:, 0] > W) | (new[:, 1] < 0) | (new[:, 1] > H)).sum()
 print('hubs', len(new), 'outside', int(out), 'lights', len(new_sparks), 'of', len(sparks), 'top', T, 'bottom', n - T - H)

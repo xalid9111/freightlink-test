@@ -217,10 +217,10 @@ class _Hero extends ConsumerWidget {
     String stat(int n) => loaded ? '$n' : '—';
 
     // Title, map and counters stand in one cloud scene (the clouds above /
-    // below the map are separate pictures that continue it): day = white
-    // clouds, night = the owner's night clouds (19.10.2026).
+    // below the map are separate pictures that continue it): the owner's
+    // day / night cloud pictures (19.10.2026).
     final day = AppColors.isDay;
-    final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v3';
+    final scene = day ? 'assets/images/world_map_day_v2' : 'assets/images/world_map_night_v3';
     final topPad = MediaQuery.of(context).padding.top + 10;
     return Container(
       decoration: BoxDecoration(
@@ -234,7 +234,6 @@ class _Hero extends ConsumerWidget {
           _CloudScene(
             asset: '${scene}_top.jpg',
             alignment: Alignment.bottomCenter,
-            softEdge: !day,
             child: Padding(
             padding: EdgeInsets.only(top: topPad),
             child: Column(
@@ -286,7 +285,6 @@ class _Hero extends ConsumerWidget {
           _CloudScene(
             asset: '${scene}_bottom.jpg',
             alignment: Alignment.topCenter,
-            softEdge: !day,
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -404,25 +402,23 @@ class _CloudScene extends StatelessWidget {
   final Alignment alignment;
   final Widget child;
 
-  /// Night: the outer edge (top of the title area, bottom of the counters
-  /// area) also fades softly into the page colour behind [child], so the
-  /// clouds never end in a line, whatever the screen width or text size.
-  final bool softEdge;
-  const _CloudScene({required this.asset, required this.alignment, required this.child, this.softEdge = false});
+  const _CloudScene({required this.asset, required this.alignment, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final picture = DecoratedBox(
-      decoration: BoxDecoration(
-        image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
-      ),
-      child: softEdge ? const SizedBox.expand() : child,
-    );
-    if (!softEdge) return picture;
+    // The outer edge (top of the title area, bottom of the counters area)
+    // also fades softly into the page colour behind [child], so the clouds
+    // never end in a line, whatever the screen width or text size.
     final outerTop = alignment == Alignment.bottomCenter;
     return Stack(
       children: [
-        Positioned.fill(child: picture),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
+            ),
+          ),
+        ),
         Positioned(
           left: 0,
           right: 0,
