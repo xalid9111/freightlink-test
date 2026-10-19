@@ -346,3 +346,74 @@ String marketOfferMessage({
   final n = (note ?? '').trim();
   return '$label: $title (#$listingNo) — $amount${n.isEmpty ? '' : '\n$n'}';
 }
+
+// ---- 0044: banner + paid VIP ------------------------------------------------
+
+/// The banner at the top of TIR Bazarı, set by the admin. Empty texts /
+/// no picture → the app's own default texts and background.
+class MarketHero {
+  final String? imageUrl, title, titleAccent, subtitle;
+  const MarketHero({this.imageUrl, this.title, this.titleAccent, this.subtitle});
+
+  static String? _s(Object? v) {
+    final t = (v as String?)?.trim();
+    return (t == null || t.isEmpty) ? null : t;
+  }
+
+  factory MarketHero.fromJson(Map<String, dynamic> j) => MarketHero(
+        imageUrl: _s(j['image_url']),
+        title: _s(j['title']),
+        titleAccent: _s(j['title_accent']),
+        subtitle: _s(j['subtitle']),
+      );
+}
+
+/// A VIP price: [days] for [price] (admin can change it).
+class MarketVipPlan {
+  final int days;
+  final double price;
+  final String currency;
+  final bool isActive;
+  const MarketVipPlan({required this.days, required this.price, this.currency = 'AZN', this.isActive = true});
+
+  factory MarketVipPlan.fromJson(Map<String, dynamic> j) => MarketVipPlan(
+        days: (j['days'] as num).toInt(),
+        price: (j['price'] as num).toDouble(),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        isActive: j['is_active'] != false,
+      );
+}
+
+/// "VIP et" order for one of my ads; the price is the server's.
+class MarketVipOrder {
+  final String id, listingId, currency, status;
+  final int days;
+  final double amount;
+  const MarketVipOrder({
+    required this.id,
+    required this.listingId,
+    required this.days,
+    required this.amount,
+    required this.currency,
+    required this.status,
+  });
+
+  factory MarketVipOrder.fromJson(Map<String, dynamic> j) => MarketVipOrder(
+        id: '${j['id']}',
+        listingId: '${j['listing_id']}',
+        days: (j['days'] as num).toInt(),
+        amount: (j['amount'] as num).toDouble(),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        status: (j['status'] as String?) ?? 'pending_payment',
+      );
+}
+
+/// The two VIP columns beside the ads on a computer: 3 places left, 3
+/// right, filled with the newest VIP ads in order; null = a free place.
+(List<T?>, List<T?>) marketVipColumns<T>(List<T> newest, {int perSide = 3}) {
+  T? at(int i) => i < newest.length ? newest[i] : null;
+  return (
+    [for (var i = 0; i < perSide; i++) at(i * 2)],
+    [for (var i = 0; i < perSide; i++) at(i * 2 + 1)],
+  );
+}

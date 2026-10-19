@@ -224,6 +224,7 @@ IconData serviceCategoryIcon(String icon) => switch (icon) {
       'roadside' => Icons.support,
       'ads' => Icons.campaign,
       'tarp' => Icons.roofing,
+      'parts' => Icons.inventory_2,
       _ => Icons.build,
     };
 

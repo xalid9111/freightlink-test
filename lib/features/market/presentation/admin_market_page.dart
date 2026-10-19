@@ -7,6 +7,7 @@ import '../../admin/presentation/admin_widgets.dart';
 import '../data/market_repository.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
+import 'market_providers.dart';
 
 final _adminMarketProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketStatus?>((ref, st) {
   return ref.watch(marketRepositoryProvider).adminList(status: st);
@@ -81,6 +82,8 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
       children: [
         const Text('Satış elanları (TIR Bazarı)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 10),
+        const _VipPricesCard(),
+        const SizedBox(height: 12),
         Wrap(spacing: 6, runSpacing: 6, children: [
           for (final e in _labels.entries)
             ChoiceChip(label: Text(e.value), selected: _status == e.key, onSelected: (_) => setState(() => _status = e.key)),
@@ -169,6 +172,85 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
                 ]),
         ),
       ],
+    );
+  }
+}
+
+/// VIP prices users pay for "VIP et" (0044: 7 / 14 / 30 days). Changed only
+/// through admin_market_set_vip_plan (checked + logged on the server).
+class _VipPricesCard extends ConsumerStatefulWidget {
+  const _VipPricesCard();
+
+  @override
+  ConsumerState<_VipPricesCard> createState() => _VipPricesCardState();
+}
+
+class _VipPricesCardState extends ConsumerState<_VipPricesCard> {
+  final _price = <int, TextEditingController>{};
+
+  @override
+  void dispose() {
+    for (final c in _price.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save(MarketVipPlan p, {bool? active}) async {
+    final v = double.tryParse((_price[p.days]?.text ?? '').replaceAll(',', '.').trim());
+    if (v == null || v <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiyməti düzgün yazın (0-dan böyük).')));
+      return;
+    }
+    final ok = await runAdmin(
+        context, () => ref.read(marketRepositoryProvider).adminSetVipPlan(p.days, v, active: active ?? p.isActive));
+    if (ok) ref.invalidate(marketVipPlansProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(marketVipPlansProvider(false));
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Row(children: [
+            Icon(Icons.workspace_premium, color: kVipGold),
+            SizedBox(width: 8),
+            Expanded(child: Text('VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+          ]),
+          const SizedBox(height: 4),
+          Text('İstifadəçi "VIP et" basanda bu qiymətlərlə kartla ödəyir; ödənişdən sonra elan avtomatik VIP olur.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          const SizedBox(height: 8),
+          async.when(
+            loading: () => const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Text('Yüklənmədi: $e (0044_market_hero_vip.sql işə salınıbmı?)', style: TextStyle(color: AppColors.danger)),
+            data: (plans) => Column(children: [
+              for (final p in plans)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  // Wrap: fits a narrow phone too.
+                  child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w700))),
+                    SizedBox(
+                      width: 110,
+                      child: TextField(
+                        key: ValueKey('vip-price-${p.days}'),
+                        controller: _price.putIfAbsent(p.days, () => TextEditingController(text: p.price.toStringAsFixed(p.price % 1 == 0 ? 0 : 2))),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(isDense: true, suffixText: p.currency),
+                      ),
+                    ),
+                    FilledButton(onPressed: () => _save(p), child: const Text('Saxla')),
+                    Switch(value: p.isActive, onChanged: (v) => _save(p, active: v)),
+                    Text(p.isActive ? 'Aktiv' : 'Bağlı', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                  ]),
+                ),
+            ]),
+          ),
+        ]),
+      ),
     );
   }
 }

@@ -302,7 +302,9 @@ class _DeskHero extends ConsumerWidget {
               Positioned(
                 left: _kDeskPad,
                 top: 96,
-                width: w * 0.5,
+                // Only the free space left of the map (owner: the title never
+                // runs onto the map).
+                width: math.max(300, w - mapW - _kDeskPad - 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -316,7 +318,8 @@ class _DeskHero extends ConsumerWidget {
                       TextSpan(children: [
                         TextSpan(text: '${strings.t('home_hero_1')} '),
                         TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
-                        TextSpan(text: ' ${strings.t('home_hero_3')}'),
+                        // Second line (owner, 19.10.2026): "Yüklər dünya üzrə / hərəkətdədir".
+                        TextSpan(text: '\n${strings.t('home_hero_3')}'),
                       ]),
                       style: AppFonts.display(size: (w * 0.026).clamp(30.0, 42.0), color: AppColors.text, height: 1.15),
                     ),

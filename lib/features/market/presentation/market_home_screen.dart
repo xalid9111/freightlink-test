@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/layout/desktop_layout.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -11,6 +12,7 @@ import '../../auth/domain/activities.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
+import 'market_home_desktop.dart';
 import 'market_providers.dart';
 
 IconData marketCategoryIcon(MarketCategory c) => switch (c) {
@@ -76,6 +78,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Wide window: the computer page (same data and actions, wide layout).
+    if (isDesktopLayout(context)) return const MarketHomeDesktop();
     final s = ref.watch(stringsProvider);
     final filter = ref.watch(marketFilterProvider);
     final feed = ref.watch(marketFeedProvider);

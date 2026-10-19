@@ -1,10 +1,12 @@
 // Supabase Edge Function: payments-checkout — starts a card / Apple Pay /
-// Google Pay checkout for one of the caller's ad orders.
+// Google Pay checkout for one of the caller's ad orders or TIR Bazarı VIP
+// orders.
 //
-// POST { action: 'create', order_id, method, idempotency_key }
-//   → payment_create runs WITH THE CALLER'S JWT, so the database checks
-//     the owner, the order state, the amount (from the order) and the
-//     "one open payment per order" rule. Same key twice = same payment.
+// POST { action: 'create', order_id | vip_order_id, method, idempotency_key }
+//   → payment_create (ad order) or market_vip_payment_create (VIP order,
+//     0044) runs WITH THE CALLER'S JWT, so the database checks the owner,
+//     the order state, the amount (from the order) and the "one open
+//     payment per order" rule. Same key twice = same payment.
 //   → TEST mode: the built-in test provider (no money moves).
 //   → a real provider is refused until it is connected
 //     ("provider_not_configured" / "provider_not_implemented").
@@ -24,7 +26,7 @@ declare const Deno: {
   serve(handler: (req: Request) => Response | Promise<Response>): unknown;
 };
 
-type Payment = { id: string; order_id: string; amount: number | string; currency: string; method: string; provider: Provider; mode: string; status: string };
+type Payment = { id: string; order_id: string | null; market_vip_order_id?: string | null; amount: number | string; currency: string; method: string; provider: Provider; mode: string; status: string };
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
@@ -48,7 +50,7 @@ async function errorOf(res: Response): Promise<string> {
 
 async function myPayment(url: string, anonKey: string, auth: string, id: string): Promise<Payment | null> {
   // RLS: the caller sees only his own payments.
-  const res = await rest(url, `ad_payments?id=eq.${id}&select=id,order_id,amount,currency,method,provider,mode,status,confirmed_at,failure_reason`,
+  const res = await rest(url, `ad_payments?id=eq.${id}&select=id,order_id,market_vip_order_id,amount,currency,method,provider,mode,status,confirmed_at,failure_reason`,
     anonKey, auth, { method: 'GET' });
   if (!res.ok) return null;
   const rows = await res.json().catch(() => []) as Payment[];
@@ -69,11 +71,14 @@ export async function handle(req: Request): Promise<Response> {
   const action = body?.action;
 
   if (action === 'create') {
-    const orderId = body?.order_id, method = body?.method, key = body?.idempotency_key;
-    if (!isUuid(orderId) || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
+    const orderId = body?.order_id, vipOrderId = body?.vip_order_id, method = body?.method, key = body?.idempotency_key;
+    // Exactly one order: an ad order or a VIP order.
+    if (isUuid(orderId) === isUuid(vipOrderId) || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
       return json({ error: 'invalid_request' }, 400);
     }
-    const res = await rest(url, 'rpc/payment_create', anonKey, auth, { body: { p_order: orderId, p_method: method, p_key: key } });
+    const res = isUuid(vipOrderId)
+      ? await rest(url, 'rpc/market_vip_payment_create', anonKey, auth, { body: { p_vip_order: vipOrderId, p_method: method, p_key: key } })
+      : await rest(url, 'rpc/payment_create', anonKey, auth, { body: { p_order: orderId, p_method: method, p_key: key } });
     if (!res.ok) {
       const err = await errorOf(res);
       return json({ error: err }, err === 'payments_disabled' || err === 'not_authenticated' ? 403 : 400);
