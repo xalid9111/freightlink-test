@@ -23,18 +23,18 @@ import 'package:freightlink/features/cargo/presentation/widgets/live_map_night_g
 void main() {
   // Both modes: the owner's cloud pictures of 19.10.2026 (scripts/make_cloud_map.py).
   final modes = [
-    (name: 'world_map_day_v2', w: kDayImgW, h: kDayImgH, hubs: kDayHubs, sparks: kDaySparks, page: const Color(0xFFFFFFFF)),
-    (name: 'world_map_night_v3', w: kNightImgW, h: kNightImgH, hubs: kNightHubs, sparks: kNightSparks, page: const Color(0xFF02050C)),
+    (name: 'world_map_day_v3', w: kDayImgW, h: kDayImgH, hubs: kDayHubs, sparks: kDaySparks, page: const Color(0xFFFFFFFF)),
+    (name: 'world_map_night_v4', w: kNightImgW, h: kNightImgH, hubs: kNightHubs, sparks: kNightSparks, page: const Color(0xFF02050C)),
   ];
 
   test('day and night show the owner\'s cloud maps (new file names: no old cached picture with new hubs)', () {
-    expect(liveMapImage(day: true), 'assets/images/world_map_day_v2.jpg');
-    expect(liveMapImage(day: false), 'assets/images/world_map_night_v3.jpg');
-    for (final old in ['world_map_day.jpg', 'world_map_day_top.jpg', 'world_map_day_bottom.jpg', 'world_map_night_v2.jpg']) {
+    expect(liveMapImage(day: true), 'assets/images/world_map_day_v3.jpg');
+    expect(liveMapImage(day: false), 'assets/images/world_map_night_v4.jpg');
+    for (final old in ['world_map_day.jpg', 'world_map_day_v2.jpg', 'world_map_night_v2.jpg', 'world_map_night_v3.jpg']) {
       expect(File('assets/images/$old').existsSync(), isFalse, reason: old);
     }
     final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-    expect(home.contains("final scene = day ? 'assets/images/world_map_day_v2' : 'assets/images/world_map_night_v3';"), isTrue);
+    expect(home.contains("final scene = day ? 'assets/images/world_map_day_v3' : 'assets/images/world_map_night_v4';"), isTrue);
     expect(File('scripts/make_cloud_map.py').existsSync(), isTrue);
   });
 
