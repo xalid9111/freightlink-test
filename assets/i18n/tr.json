@@ -1002,5 +1002,9 @@
   "ui_size": "Boyut",
   "ui_size_small": "Küçük",
   "ui_size_normal": "Normal",
-  "ui_size_large": "Büyük"
+  "ui_size_large": "Büyük",
+  "desk_search_loads_hint": "Yük, şehir, ülke veya rota ara...",
+  "desk_find_loads": "Yükleri ara",
+  "desk_dark_mode": "Koyu mod",
+  "desk_light_mode": "Açık mod"
 }

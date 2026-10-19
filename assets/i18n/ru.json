@@ -1002,5 +1002,9 @@
   "ui_size": "Размер",
   "ui_size_small": "Мелкий",
   "ui_size_normal": "Обычный",
-  "ui_size_large": "Крупный"
+  "ui_size_large": "Крупный",
+  "desk_search_loads_hint": "Поиск груза, города, страны или маршрута...",
+  "desk_find_loads": "Найти грузы",
+  "desk_dark_mode": "Тёмная тема",
+  "desk_light_mode": "Светлая тема"
 }

@@ -1002,5 +1002,9 @@
   "ui_size": "ზომა",
   "ui_size_small": "პატარა",
   "ui_size_normal": "ჩვეული",
-  "ui_size_large": "დიდი"
+  "ui_size_large": "დიდი",
+  "desk_search_loads_hint": "მოძებნეთ ტვირთი, ქალაქი, ქვეყანა ან მარშრუტი...",
+  "desk_find_loads": "ტვირთების ძებნა",
+  "desk_dark_mode": "მუქი რეჟიმი",
+  "desk_light_mode": "ნათელი რეჟიმი"
 }

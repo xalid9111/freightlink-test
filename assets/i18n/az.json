@@ -1002,5 +1002,9 @@
   "ui_size": "Ölçü",
   "ui_size_small": "Kiçik",
   "ui_size_normal": "Normal",
-  "ui_size_large": "Böyük"
+  "ui_size_large": "Böyük",
+  "desk_search_loads_hint": "Yük, şəhər, ölkə və ya marşrut axtar...",
+  "desk_find_loads": "Yükləri axtar",
+  "desk_dark_mode": "Qara rejim",
+  "desk_light_mode": "Ağ rejim"
 }

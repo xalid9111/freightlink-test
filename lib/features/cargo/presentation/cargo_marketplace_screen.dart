@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +21,13 @@ import 'providers/route_filter.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/layout/desktop_layout.dart';
+import '../../../core/widgets/user_avatar.dart';
+import '../../../repositories/profile_repository.dart';
+import '../../chat/presentation/providers/chat_providers.dart';
+import '../../chat/presentation/providers/group_providers.dart';
+
+part 'cargo_marketplace_desktop.dart';
 
 /// The "Home" tab body (bottom-nav branch 0) — the real, live cargo
 /// marketplace, connected to Supabase via marketplaceProvider. No
@@ -28,6 +37,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Wide window: the desktop page (same data and actions, wide layout).
+    if (isDesktopLayout(context)) return const _DesktopMarketplace();
     final strings = ref.watch(stringsProvider);
     final marketplaceAsync = ref.watch(marketplaceProvider);
     final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
