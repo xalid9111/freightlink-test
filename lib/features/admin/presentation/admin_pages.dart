@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/admin_repository.dart';
 import 'admin_providers.dart';
 import 'admin_widgets.dart';
@@ -598,6 +599,10 @@ Future<void> showUserDetail(BuildContext context, String id) {
           .toList();
       final blocked = u['is_blocked'] == true;
       final active = u['is_active'] != false;
+      final founder = (ref.watch(adminFounderIdsProvider).valueOrNull ?? const <String>{}).contains(id);
+      // The founder's account is changed only by the founder (checked on the
+      // server too, 0045); other admins see it locked.
+      final locked = founder && ref.watch(currentUserIdProvider) != id;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -605,6 +610,7 @@ Future<void> showUserDetail(BuildContext context, String id) {
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 4, children: [
             AdminChip(roleLabel(u['role']), color: AppColors.blue),
+            if (founder) AdminChip('Founder 🔒', color: AppColors.accent),
             if (u['is_verified'] == true) AdminChip('Təsdiqli ✓', color: AppColors.online),
             if (blocked) AdminChip('Bloklu', color: AppColors.danger),
             if (!active) AdminChip('Deaktiv', color: AppColors.danger),
@@ -620,6 +626,14 @@ Future<void> showUserDetail(BuildContext context, String id) {
             KV('Blok səbəbi', u['block_reason']),
           ],
           KV('ID', u['id']),
+          if (locked)
+            Padding(
+              key: const ValueKey('founder-locked'),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text('🔒 Founder hesabı: rütbə, mavi tık, blok, deaktiv və silmə yalnız hesabın sahibi tərəfindən dəyişdirilə bilər.',
+                  style: TextStyle(color: AppColors.textSoft)),
+            )
+          else
           _actions([
             FilledButton.icon(
               onPressed: () => _editUser(ctx, u),

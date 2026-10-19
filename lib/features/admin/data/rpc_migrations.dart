@@ -104,4 +104,5 @@ const kRpcMigration = <String, String>{
   'market_vip_order_create': '0044_market_hero_vip.sql',
   'admin_market_set_hero': '0044_market_hero_vip.sql',
   'admin_market_set_vip_plan': '0044_market_hero_vip.sql',
+  'founder_ids': '0045_founder_protection.sql',
 };
