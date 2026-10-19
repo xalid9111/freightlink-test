@@ -998,5 +998,9 @@
   "mk_publish_note": "İlan yayınlanır yayınlanmaz herkese görünecek.",
   "settings_appearance": "Görünüm",
   "theme_night": "Gece",
-  "theme_day": "Gündüz"
+  "theme_day": "Gündüz",
+  "ui_size": "Boyut",
+  "ui_size_small": "Küçük",
+  "ui_size_normal": "Normal",
+  "ui_size_large": "Büyük"
 }

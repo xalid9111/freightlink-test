@@ -998,5 +998,9 @@
   "mk_publish_note": "განცხადება გამოქვეყნებისთანავე ყველასთვის ხილული იქნება.",
   "settings_appearance": "იერსახე",
   "theme_night": "ღამე",
-  "theme_day": "დღე"
+  "theme_day": "დღე",
+  "ui_size": "ზომა",
+  "ui_size_small": "პატარა",
+  "ui_size_normal": "ჩვეული",
+  "ui_size_large": "დიდი"
 }

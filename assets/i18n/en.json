@@ -998,5 +998,9 @@
   "mk_publish_note": "The ad is visible to everyone as soon as it is published.",
   "settings_appearance": "Appearance",
   "theme_night": "Night",
-  "theme_day": "Day"
+  "theme_day": "Day",
+  "ui_size": "Size",
+  "ui_size_small": "Small",
+  "ui_size_normal": "Normal",
+  "ui_size_large": "Large"
 }

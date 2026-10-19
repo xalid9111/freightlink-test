@@ -578,7 +578,8 @@ class _Specs extends StatelessWidget {
         crossAxisCount: 3,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.35,
+        // Cells grow taller with the chosen text size (1.35 at normal).
+        childAspectRatio: 1.35 / MediaQuery.textScalerOf(context).scale(1),
         children: [
           for (final (icon, label, value) in items)
             Padding(

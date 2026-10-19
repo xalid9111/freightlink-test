@@ -11,6 +11,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/flag_font.dart';
 import 'core/theme/theme_mode.dart';
+import 'core/theme/ui_scale.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
@@ -53,6 +54,8 @@ Future<void> main() async {
 
   // 5. Day / night mode chosen in Settings (night unless changed).
   await loadSavedTheme();
+  // Display size chosen in Settings (Kiçik / Normal / Böyük).
+  await loadSavedUiScale();
 
   // Firebase.initializeApp() and Mapbox.setAccessToken() are added
   // in Phase 10 / Phase 12 once those features are implemented —
@@ -77,16 +80,18 @@ class FreightLinkApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(currentLocaleProvider);
+    final uiScale = ref.watch(uiScaleProvider);
     AutoFix.instance.attachRouter(router);
     AutoFix.instance.attachContainer(ProviderScope.containerOf(context, listen: false));
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       // Night = the approved dark design; day = chosen in Settings.
-      theme: AppTheme.current,
-      darkTheme: AppTheme.current,
+      theme: themeForUiScale(AppTheme.current, uiScale),
+      darkTheme: themeForUiScale(AppTheme.current, uiScale),
       themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark,
       routerConfig: router,
+      builder: (context, child) => applyUiScale(context, uiScale, child),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

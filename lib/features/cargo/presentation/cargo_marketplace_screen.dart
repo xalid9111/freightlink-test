@@ -316,10 +316,15 @@ class _Hero extends ConsumerWidget {
                   label: strings.t('home_stat_24h'),
                   onTap: () => _scrollToFeed(),
                 ),
-                const Spacer(),
                 // "Yük əlavə et" — the add-load button (was the orange + in
-                // the bottom bar; same form: /cargo/create).
-                _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                // the bottom bar; same form: /cargo/create). Right-aligned in
+                // the space left; with a large text size its label wraps.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                  ),
+                ),
               ],
             ),
           ),
@@ -441,7 +446,10 @@ class _AddLoadButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+            Flexible(
+              child: Text(label,
+                  textAlign: TextAlign.end, style: TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+            ),
             const SizedBox(width: 8),
             Container(
               width: 52,

@@ -48,7 +48,11 @@ class ActivityButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final on = ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{};
-    return Row(
+    // Same height for all four; a larger text size makes them taller
+    // instead of cutting the label.
+    return IntrinsicHeight(
+      child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final a in Activity.values) ...[
           if (a != Activity.values.first) const SizedBox(width: 8),
@@ -63,6 +67,7 @@ class ActivityButtons extends ConsumerWidget {
           ),
         ],
       ],
+      ),
     );
   }
 }
@@ -89,7 +94,7 @@ class _ActivityButton extends StatelessWidget {
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            height: 68,
+            constraints: const BoxConstraints(minHeight: 68),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),

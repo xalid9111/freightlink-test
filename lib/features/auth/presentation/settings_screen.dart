@@ -11,6 +11,7 @@ import '../../../core/notify/notify_settings.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_mode.dart';
+import '../../../core/theme/ui_scale.dart';
 import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -143,6 +144,27 @@ class SettingsScreen extends ConsumerWidget {
                     selected: {AppColors.isDay},
                     showSelectedIcon: false,
                     onSelectionChanged: (v) => chooseTheme(day: v.first),
+                  ),
+                ),
+                // Display size: applied at once on every page, kept on this device.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                  child: Column(
+                    children: [
+                      Text(s.t('ui_size'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      SegmentedButton<AppUiScale>(
+                        key: const ValueKey('ui-scale'),
+                        segments: [
+                          ButtonSegment(value: AppUiScale.small, label: Text(s.t('ui_size_small'), style: const TextStyle(fontSize: 12.5))),
+                          ButtonSegment(value: AppUiScale.normal, label: Text(s.t('ui_size_normal'))),
+                          ButtonSegment(value: AppUiScale.large, label: Text(s.t('ui_size_large'), style: const TextStyle(fontSize: 16.5))),
+                        ],
+                        selected: {ref.watch(uiScaleProvider)},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (v) => ref.read(uiScaleProvider.notifier).choose(v.first),
+                      ),
+                    ],
                   ),
                 ),
               ],
