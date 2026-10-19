@@ -1002,5 +1002,9 @@
   "ui_size": "大小",
   "ui_size_small": "小",
   "ui_size_normal": "标准",
-  "ui_size_large": "大"
+  "ui_size_large": "大",
+  "desk_search_loads_hint": "搜索货物、城市、国家或路线...",
+  "desk_find_loads": "查找货物",
+  "desk_dark_mode": "深色模式",
+  "desk_light_mode": "浅色模式"
 }

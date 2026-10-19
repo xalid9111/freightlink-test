@@ -1002,5 +1002,9 @@
   "ui_size": "Size",
   "ui_size_small": "Small",
   "ui_size_normal": "Normal",
-  "ui_size_large": "Large"
+  "ui_size_large": "Large",
+  "desk_search_loads_hint": "Search loads, cities, countries or routes...",
+  "desk_find_loads": "Find loads",
+  "desk_dark_mode": "Dark mode",
+  "desk_light_mode": "Light mode"
 }

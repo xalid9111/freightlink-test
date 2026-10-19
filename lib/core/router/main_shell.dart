@@ -8,6 +8,9 @@ import '../../features/chat/presentation/providers/group_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../repositories/profile_repository.dart';
 import '../theme/app_theme.dart';
+import '../theme/theme_mode.dart';
+import '../layout/desktop_layout.dart';
+import '../../features/auth/presentation/settings_screen.dart' show showLanguagePicker;
 import '../notify/message_alert.dart';
 import '../notify/notify_settings.dart';
 import '../../models/group_models.dart';
@@ -72,6 +75,40 @@ class MainShell extends ConsumerWidget {
       _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread.toInt()),
       _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
     ];
+    void goTo(int branch) {
+      // One tap = one tab switch (iPhone sometimes delivers a tap twice).
+      if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
+      navigationShell.goBranch(
+        branch,
+        // Tapping the already-selected tab resets that tab's stack to
+        // its root instead of doing nothing — standard bottom-nav UX.
+        initialLocation: branch == navigationShell.currentIndex,
+      );
+    }
+
+    // Desktop (wide window): the same sections in a left sidebar instead of
+    // the bottom bar. Phones / tablets keep the mobile layout below.
+    if (isDesktopLayout(context)) {
+      return ResumeRefresher(
+        child: Scaffold(
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SideNav(items: items, current: navigationShell.currentIndex, onTap: goTo),
+              Expanded(
+                child: Column(
+                  children: [
+                    const _RestrictedBanner(),
+                    Expanded(child: navigationShell),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ResumeRefresher(
       child: Scaffold(
         body: Column(
@@ -83,16 +120,7 @@ class MainShell extends ConsumerWidget {
         bottomNavigationBar: _BottomBar(
           items: items,
           current: navigationShell.currentIndex,
-          onTap: (branch) {
-            // One tap = one tab switch (iPhone sometimes delivers a tap twice).
-            if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
-            navigationShell.goBranch(
-              branch,
-              // Tapping the already-selected tab resets that tab's stack to
-              // its root instead of doing nothing — standard bottom-nav UX.
-              initialLocation: branch == navigationShell.currentIndex,
-            );
-          },
+          onTap: goTo,
         ),
       ),
     );
@@ -185,6 +213,164 @@ class _BottomBar extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Desktop sidebar (owner's desktop design): logo, the five sections,
+/// unread badge on Mesajlar, day / night switch and app language.
+class _SideNav extends ConsumerWidget {
+  final List<_NavItem> items;
+  final int current;
+  final ValueChanged<int> onTap;
+  const _SideNav({required this.items, required this.current, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(stringsProvider);
+    final lang = ref.watch(currentLocaleProvider).languageCode;
+    final day = AppColors.isDay;
+    final ground = day ? AppColors.background : Color.lerp(AppColors.background, AppColors.card, 0.4)!;
+    BoxDecoration box() => BoxDecoration(
+          color: day ? AppColors.card : AppColors.cardAlt.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.line),
+        );
+    return Container(
+      width: 236,
+      decoration: BoxDecoration(color: ground, border: Border(right: BorderSide(color: AppColors.line))),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 30, 16, 34),
+              child: Row(
+                children: [
+                  Icon(Icons.show_chart, color: AppColors.accentFill, size: 30),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text.rich(TextSpan(children: [
+                        TextSpan(text: 'Freight', style: AppFonts.display(size: 26, color: AppColors.text)),
+                        TextSpan(text: 'Link', style: AppFonts.display(size: 26, color: AppColors.accent)),
+                      ])),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            for (final it in items) _item(it, it.branch == current),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Semantics(
+                button: true,
+                label: strings.t(day ? 'desk_light_mode' : 'desk_dark_mode'),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => chooseTheme(day: !day),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 52),
+                    padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
+                    decoration: box(),
+                    child: Row(
+                      children: [
+                        Icon(day ? Icons.wb_sunny_outlined : Icons.dark_mode, color: day ? AppColors.accent : const Color(0xFFFFC94D), size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(strings.t(day ? 'desk_light_mode' : 'desk_dark_mode'),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.text)),
+                        ),
+                        // Shows the mode in use; switching it off picks the other one.
+                        Switch(
+                          key: const ValueKey('desk-theme'),
+                          value: true,
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: AppColors.accentFill,
+                          onChanged: (_) => chooseTheme(day: !day),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 22),
+              child: InkWell(
+                key: const ValueKey('desk-language'),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => showLanguagePicker(context, ref, strings),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 52),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: box(),
+                  child: Row(
+                    children: [
+                      Text(languageFlag(lang), style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(lang.toUpperCase(),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text)),
+                      ),
+                      Icon(Icons.expand_more, color: AppColors.textSoft),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _item(_NavItem it, bool selected) {
+    final color = selected ? AppColors.accent : AppColors.text;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: it.label,
+        child: InkWell(
+          key: ValueKey('desk-nav-${it.branch}'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => onTap(it.branch),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.accent.withValues(alpha: AppColors.isDay ? 0.12 : 0.16) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(selected ? it.selectedIcon : it.icon, color: color, size: 26),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(it.label,
+                      style: TextStyle(fontSize: 16.5, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: color)),
+                ),
+                if (it.badge > 0)
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(11)),
+                    child: Text(it.badge > 99 ? '99+' : '${it.badge}',
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
