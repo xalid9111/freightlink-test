@@ -4,7 +4,7 @@ import 'dart:ui' show Offset;
 //
 // Night-mode geometry of the home live map: the same hubs (same order as
 // _hubs in live_map.dart) and city lights, placed on the night picture
-// (assets/images/world_map_night_v2.jpg, 1420×480, the owner's cloud design).
+// (assets/images/world_map_night_v3.jpg, 1420×480, the owner's cloud design).
 
 const double kNightImgW = 1420, kNightImgH = 480;
 

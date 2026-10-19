@@ -220,7 +220,7 @@ class _Hero extends ConsumerWidget {
     // below the map are separate pictures that continue it): day = white
     // clouds, night = the owner's night clouds (19.10.2026).
     final day = AppColors.isDay;
-    final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v2';
+    final scene = day ? 'assets/images/world_map_day' : 'assets/images/world_map_night_v3';
     final topPad = MediaQuery.of(context).padding.top + 10;
     return Container(
       decoration: BoxDecoration(
@@ -234,6 +234,7 @@ class _Hero extends ConsumerWidget {
           _CloudScene(
             asset: '${scene}_top.jpg',
             alignment: Alignment.bottomCenter,
+            softEdge: !day,
             child: Padding(
             padding: EdgeInsets.only(top: topPad),
             child: Column(
@@ -285,6 +286,7 @@ class _Hero extends ConsumerWidget {
           _CloudScene(
             asset: '${scene}_bottom.jpg',
             alignment: Alignment.topCenter,
+            softEdge: !day,
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -401,15 +403,44 @@ class _CloudScene extends StatelessWidget {
   final String asset;
   final Alignment alignment;
   final Widget child;
-  const _CloudScene({required this.asset, required this.alignment, required this.child});
+
+  /// Night: the outer edge (top of the title area, bottom of the counters
+  /// area) also fades softly into the page colour behind [child], so the
+  /// clouds never end in a line, whatever the screen width or text size.
+  final bool softEdge;
+  const _CloudScene({required this.asset, required this.alignment, required this.child, this.softEdge = false});
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final picture = DecoratedBox(
       decoration: BoxDecoration(
         image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
       ),
-      child: child,
+      child: softEdge ? const SizedBox.expand() : child,
+    );
+    if (!softEdge) return picture;
+    final outerTop = alignment == Alignment.bottomCenter;
+    return Stack(
+      children: [
+        Positioned.fill(child: picture),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: outerTop ? 0 : null,
+          bottom: outerTop ? null : 0,
+          height: 36,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: outerTop ? Alignment.topCenter : Alignment.bottomCenter,
+                end: outerTop ? Alignment.bottomCenter : Alignment.topCenter,
+                colors: [AppColors.hero, AppColors.hero.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ),
+        child,
+      ],
     );
   }
 }

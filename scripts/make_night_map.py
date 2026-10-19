@@ -3,9 +3,9 @@
 Usage (from the repo root):
   python3 scripts/make_night_map.py <picture.png>
 Writes:
-* assets/images/world_map_night_v2.jpg — the map part of the picture (the
+* assets/images/world_map_night_v3.jpg — the map part of the picture (the
   animated layer is drawn on it);
-* assets/images/world_map_night_v2_top.jpg / ..._bottom.jpg — the clouds
+* assets/images/world_map_night_v3_top.jpg / ..._bottom.jpg — the clouds
   above and below it: one cloud scene behind the home title, map and
   counters. Its outer edges fade to exactly #02050C (the night page), so
   no line shows where the picture ends;
@@ -121,14 +121,22 @@ above, below = pic[:Y0], pic[Y1:]
 top = vjoin(below[50:][::-1, ::-1], above, 60)
 bottom = vjoin(below, above[:150][::-1, ::-1], 60)
 scene = np.concatenate([top, pic[Y0:Y1], bottom], 0)
-T, n = top.shape[0], scene.shape[0]
-y = np.arange(n)[:, None, None]
+T = top.shape[0]
+y = np.arange(scene.shape[0])[:, None, None]
 scene = scene * (1 - 0.45 * ss(T - 40, 0, y))           # darker behind the title (readable white text)
-scene = scene + (BG - scene) * ss(70, 0, y)              # night page colour at the very top
-scene = scene + (BG - scene) * ss(n - 110, n - 4, y)     # ... and where the page continues below
-scene = scene.clip(0, 255).astype(np.uint8)
-for name, part in (('world_map_night_v2_top', scene[:T]), ('world_map_night_v2', scene[T:T + H]), ('world_map_night_v2_bottom', scene[T + H:])):
-    Image.fromarray(part).save(f'assets/images/{name}.jpg', quality=84, optimize=True, progressive=True)
+# Keep only as much cloud above / below the map as is always on screen (the
+# title / counters area at every text size, Kiçik included), and fade it to
+# the night page colour slowly and completely inside that part: no edge of
+# the picture is ever visible, so no horizontal line at the top or bottom.
+KEEP_TOP, KEEP_BOTTOM = 270, 200
+scene = scene[T - KEEP_TOP:T + H + KEEP_BOTTOM]
+T, n = KEEP_TOP, scene.shape[0]
+y = np.arange(n)[:, None, None]
+scene = scene + (BG - scene) * ss(150, 0, y)             # top: gradually into the page colour
+scene = scene + (BG - scene) * ss(T + H + 10, n - 3, y)  # bottom: the same, below the counters
+scene = scene.clip(0, 255).round().astype(np.uint8)
+for name, part in (('world_map_night_v3_top', scene[:T]), ('world_map_night_v3', scene[T:T + H]), ('world_map_night_v3_bottom', scene[T + H:])):
+    Image.fromarray(part).save(f'assets/images/{name}.jpg', quality=88, optimize=True, progressive=True)
 new = new - np.array(CROP[:2])
 new_sparks = new_sparks - np.array(CROP[:2])
 keep = (new_sparks[:, 0] > 4) & (new_sparks[:, 0] < W - 4) & (new_sparks[:, 1] > 4) & (new_sparks[:, 1] < H - 4)
@@ -145,7 +153,7 @@ open('lib/features/cargo/presentation/widgets/live_map_night_geo.dart', 'w').wri
 //
 // Night-mode geometry of the home live map: the same hubs (same order as
 // _hubs in live_map.dart) and city lights, placed on the night picture
-// (assets/images/world_map_night_v2.jpg, {W}×{H}, the owner's cloud design).
+// (assets/images/world_map_night_v3.jpg, {W}×{H}, the owner's cloud design).
 
 const double kNightImgW = {W}, kNightImgH = {H};
 
