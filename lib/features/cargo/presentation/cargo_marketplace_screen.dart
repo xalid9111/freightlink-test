@@ -220,7 +220,7 @@ class _Hero extends ConsumerWidget {
     // below the map are separate pictures that continue it): the owner's
     // day / night cloud pictures (19.10.2026).
     final day = AppColors.isDay;
-    final scene = day ? 'assets/images/world_map_day_v2' : 'assets/images/world_map_night_v3';
+    final scene = day ? 'assets/images/world_map_day_v3' : 'assets/images/world_map_night_v4';
     final topPad = MediaQuery.of(context).padding.top + 10;
     return Container(
       decoration: BoxDecoration(
@@ -328,8 +328,7 @@ class _Hero extends ConsumerWidget {
               ],
             ),
           ),
-            ]),
-          ),
+          // Popular routes stand in the same clouds (owner, 19.10.2026).
           if (topRoutes.isNotEmpty) ...[
             const SizedBox(height: 14),
             Padding(
@@ -389,6 +388,8 @@ class _Hero extends ConsumerWidget {
               )),
             ),
           ],
+            ]),
+          ),
         ],
       ),
     );

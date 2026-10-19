@@ -38,11 +38,11 @@ class LiveMap extends StatefulWidget {
 }
 
 /// Background picture: the night-lights map in clouds (night mode,
-/// world_map_night_v3.jpg) or the colourful map in white clouds (day
-/// mode, world_map_day_v2.jpg) — both the owner's designs of 19.10.2026;
+/// world_map_night_v4.jpg) or the colourful map in white clouds (day
+/// mode, world_map_day_v3.jpg) — both the owner's designs of 19.10.2026;
 /// hub positions in live_map_night_geo.dart / live_map_day_geo.dart.
 String liveMapImage({required bool day}) =>
-    day ? 'assets/images/world_map_day_v2.jpg' : 'assets/images/world_map_night_v3.jpg';
+    day ? 'assets/images/world_map_day_v3.jpg' : 'assets/images/world_map_night_v4.jpg';
 
 /// Size of assets/images/world_map.jpg: the world cropped tight to the
 /// continents (no empty margins), so the map looks big on a phone.

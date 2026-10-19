@@ -4,7 +4,7 @@ import 'dart:ui' show Offset;
 //
 // Day-mode geometry of the home live map: the same hubs (same order as
 // _hubs in live_map.dart) and city lights, placed on the day picture
-// (assets/images/world_map_day_v2.jpg, 1440×480, the owner's cloud design).
+// (assets/images/world_map_day_v3.jpg, 1440×480, the owner's cloud design).
 
 const double kDayImgW = 1440, kDayImgH = 480;
 

@@ -23,7 +23,7 @@ MODE, SRC = sys.argv[1], sys.argv[2]
 # title backing (night darker / day lighter, for readable text), output
 # version, and landmarks on the picture: (x, y) : (lat, lon).
 MODES = {
- 'night': dict(crop=(180, 210, 1600, 690), bg=(2, 5, 12), title='darken', version='v3', lm={
+ 'night': dict(crop=(180, 210, 1600, 690), bg=(2, 5, 12), title='darken', version='v4', lm={
 
  (316,360):(25.1,-80.9),     # Florida tip
  (219,374):(22.9,-109.9),    # Baja California tip
@@ -58,7 +58,7 @@ MODES = {
  (1542,655):(-33.9,151.2),   # Sydney
  (1617,680):(-36.8,174.8),   # Auckland
  }),
- 'day': dict(crop=(160, 240, 1600, 720), bg=(255, 255, 255), title='lighten', version='v2', lm={
+ 'day': dict(crop=(160, 240, 1600, 720), bg=(255, 255, 255), title='lighten', version='v3', lm={
  (356,390):(25.1,-80.9),     # Florida tip
  (215,397):(22.9,-109.9),    # Baja California tip
  (190,357):(34.05,-118.24),  # Los Angeles coast
@@ -163,7 +163,15 @@ def vjoin(top, bottom, n):
 above, below = pic[:Y0], pic[Y1:]
 # Only cloud rows go into the mirrored strips (no land edges).
 top = vjoin(below[50:][::-1, ::-1], above, 60)
-bottom = vjoin(below, above[:150][::-1, ::-1], 60)
+# Below the map the clouds go on behind the counters and the popular routes
+# (owner, 19.10.2026: more clouds downwards): cloud strips of the picture,
+# mirrored in turn so they do not repeat visibly.
+bottom = below
+strips = [above[:150][::-1, ::-1], below[60:][::-1], above[:150][:, ::-1], below[60:][::-1, ::-1]]
+k = 0
+while bottom.shape[0] < 600:
+    bottom = vjoin(bottom, strips[k % len(strips)], 60)
+    k += 1
 scene = np.concatenate([top, pic[Y0:Y1], bottom], 0)
 T = top.shape[0]
 y = np.arange(scene.shape[0])[:, None, None]
@@ -175,12 +183,22 @@ else:
 # title / counters area at every text size, Kiçik included), and fade it to
 # the page colour slowly and completely inside that part: no edge of
 # the picture is ever visible, so no horizontal line at the top or bottom.
-KEEP_TOP, KEEP_BOTTOM = 270, 200
+# Livelier clouds below the map (owner, 19.10.2026): night clouds brighter,
+# day clouds with deeper blue-grey shading — ramped in from the map edge so
+# there is no step where the map ends.
+b0 = T + H
+lift = ss(b0, b0 + 80, y)
+if M['title'] == 'darken':
+    scene = scene * (1 + 0.45 * lift)
+else:
+    scene = 255 - (255 - scene) * (1 + 0.6 * lift)
+scene = scene.clip(0, 255)
+KEEP_TOP, KEEP_BOTTOM = 270, 540
 scene = scene[T - KEEP_TOP:T + H + KEEP_BOTTOM]
 T, n = KEEP_TOP, scene.shape[0]
 y = np.arange(n)[:, None, None]
 scene = scene + (BG - scene) * ss(150, 0, y)             # top: gradually into the page colour
-scene = scene + (BG - scene) * ss(T + H + 10, n - 3, y)  # bottom: the same, below the counters
+scene = scene + (BG - scene) * ss(T + H + 260, n - 3, y)  # bottom: full clouds behind the counters, then gradually away
 scene = scene.clip(0, 255).round().astype(np.uint8)
 for name, part in ((f'{NAME}_top', scene[:T]), (NAME, scene[T:T + H]), (f'{NAME}_bottom', scene[T + H:])):
     Image.fromarray(part).save(f'assets/images/{name}.jpg', quality=88, optimize=True, progressive=True)
