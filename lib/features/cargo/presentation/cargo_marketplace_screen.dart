@@ -487,35 +487,35 @@ class _AddLoadButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: onTap,
-        // 30 % smaller than before (owner, 21.10.2026) so it fits the
+        // 30 % smaller than before, then 10 % up again (owner, 21.10.2026), so it fits the
         // counters' row; the plate runs under the "+" circle.
         child: Stack(
           alignment: Alignment.centerRight,
           children: [
             Padding(
-              padding: const EdgeInsets.only(right: 18),
+              padding: const EdgeInsets.only(right: 20),
               child: Container(
-                padding: const EdgeInsets.fromLTRB(13, 7, 24, 7),
+                padding: const EdgeInsets.fromLTRB(14, 8, 26, 8),
                 decoration: BoxDecoration(
                   color: AppColors.card.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(21),
+                  borderRadius: BorderRadius.circular(23),
                   border: Border.all(color: AppColors.line),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 11, offset: const Offset(0, 4))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
                 child: Text(label,
                     textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 12, color: AppColors.text, fontWeight: FontWeight.w800)),
+                    style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w800)),
               ),
             ),
             Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.accentFill,
                 shape: BoxShape.circle,
                 boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 10, offset: Offset(0, 3))],
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 22),
+              child: const Icon(Icons.add, color: Colors.white, size: 24),
             ),
           ],
         ),
