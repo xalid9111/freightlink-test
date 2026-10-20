@@ -273,7 +273,8 @@ class _Hero extends ConsumerWidget {
                 Row(children: [
                   Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
                   const SizedBox(width: 7),
-                  Text(strings.t('home_live_map'), style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2)),
+                  Text(strings.t('home_live_map'),
+                      style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2).copyWith(shadows: _readableOnMap())),
                 ]),
                 const SizedBox(height: 2),
                 Text.rich(
@@ -282,7 +283,7 @@ class _Hero extends ConsumerWidget {
                     TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
                     TextSpan(text: ' ${strings.t('home_hero_3')}'),
                   ]),
-                  style: AppFonts.display(size: 20, color: AppColors.text, height: 1.1),
+                  style: AppFonts.display(size: 20, color: AppColors.text, height: 1.1).copyWith(shadows: _readableOnMap()),
                 ),
               ],
             ),
@@ -299,7 +300,19 @@ class _Hero extends ConsumerWidget {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-          const SizedBox(height: 14),
+          // "Yük hovuzu" (+) — the add-load button (same form: /cargo/create),
+          // right under the map, lifted onto its faded bottom edge (owner,
+          // 20.10.2026).
+          Transform.translate(
+            offset: const Offset(0, -26),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+              ),
+            ),
+          ),
           // Three live counters (all real numbers from the database).
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -326,15 +339,6 @@ class _Hero extends ConsumerWidget {
                   value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
                   label: strings.t('home_stat_24h'),
                   onTap: () => _scrollToFeed(),
-                ),
-                // "Yük əlavə et" — the add-load button (was the orange + in
-                // the bottom bar; same form: /cargo/create). Right-aligned in
-                // the space left; with a large text size its label wraps.
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
-                  ),
                 ),
               ],
             ),
@@ -463,9 +467,15 @@ void _scrollToFeed() {
   }
 }
 
-/// Tiny counter pill (~4 mm tall, ~1 cm wide): coloured icon + number.
-/// The label is kept as a tooltip / screen-reader text.
-/// "Yük əlavə et" + big orange round "+" (under the live map).
+/// Shadow in the page colour behind the texts over the map, so they read
+/// on any part of it (night and day).
+List<Shadow> _readableOnMap() => [
+      Shadow(color: AppColors.background.withValues(alpha: 0.95), blurRadius: 10),
+      Shadow(color: AppColors.background.withValues(alpha: 0.8), blurRadius: 3),
+    ];
+
+/// "Yük hovuzu" on a dark rounded plate with a shadow + big orange round
+/// "+" over its right end (under the live map).
 class _AddLoadButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -483,11 +493,21 @@ class _AddLoadButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: Text(label,
-                  textAlign: TextAlign.end, style: TextStyle(fontSize: 14, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+              child: Container(
+                // The plate runs under the "+" circle (negative gap below).
+                padding: const EdgeInsets.fromLTRB(18, 10, 34, 10),
+                decoration: BoxDecoration(
+                  color: AppColors.card.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColors.line),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6))],
+                ),
+                child: Text(label,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(fontSize: 17, color: AppColors.text, fontWeight: FontWeight.w800)),
+              ),
             ),
-            const SizedBox(width: 8),
-            Container(
+            Transform.translate(offset: const Offset(-24, 0), child: Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
@@ -496,7 +516,7 @@ class _AddLoadButton extends StatelessWidget {
                 boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
               ),
               child: const Icon(Icons.add, color: Colors.white, size: 32),
-            ),
+            )),
           ],
         ),
       ),
@@ -504,6 +524,8 @@ class _AddLoadButton extends StatelessWidget {
   }
 }
 
+/// Tiny counter pill (~4 mm tall, ~1 cm wide): coloured icon + number.
+/// The label is kept as a tooltip / screen-reader text.
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;

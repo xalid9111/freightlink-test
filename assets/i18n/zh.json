@@ -467,7 +467,7 @@
   "my_cargo_empty": "您还没有发布任何货源。",
   "my_cargo_subtitle": "查看、编辑或关闭您的货源",
   "my_cargo_title": "我的货源",
-  "nav_add_cargo": "发布货源",
+  "nav_add_cargo": "货源池",
   "nav_home": "货源",
   "nav_messages": "消息",
   "nav_profile": "我的",
@@ -1049,5 +1049,11 @@
   "cargo_pay_invalid": "请输入正数金额",
   "cargo_wait_title": "压车 – 免费等待时间",
   "cargo_wait_short": "免费等待",
-  "cargo_wait_hours": "{n} 小时"
+  "cargo_wait_hours": "{n} 小时",
+  "cargo_price_hint": "输入金额",
+  "cargo_pay_sub": "填写此货物的付款条件（可选）",
+  "cargo_wait_sub": "选择装卸时的免费等待时间",
+  "cargo_pallet_hint": "例如：12",
+  "cargo_pallet_unit": "托盘",
+  "cargo_pallet_invalid": "托盘数必须是正整数"
 }

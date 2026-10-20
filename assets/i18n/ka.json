@@ -467,7 +467,7 @@
   "my_cargo_empty": "ჯერ არცერთი ტვირთი არ განგითავსებიათ.",
   "my_cargo_subtitle": "ნახეთ, შეცვალეთ ან დახურეთ თქვენი განცხადებები",
   "my_cargo_title": "ჩემი ტვირთები",
-  "nav_add_cargo": "დამატება",
+  "nav_add_cargo": "ტვირთების აუზი",
   "nav_home": "ტვირთები",
   "nav_messages": "ჩატები",
   "nav_profile": "პროფილი",
@@ -1049,5 +1049,11 @@
   "cargo_pay_invalid": "შეიყვანეთ მხოლოდ დადებითი თანხა",
   "cargo_wait_title": "მოცდენა – უფასო ლოდინის დრო",
   "cargo_wait_short": "უფასო ლოდინი",
-  "cargo_wait_hours": "{n} საათი"
+  "cargo_wait_hours": "{n} საათი",
+  "cargo_price_hint": "შეიყვანეთ თანხა",
+  "cargo_pay_sub": "მიუთითეთ ტვირთის გადახდის პირობები (არასავალდებულო)",
+  "cargo_wait_sub": "აირჩიეთ უფასო ლოდინის დრო დატვირთვისა და გადმოტვირთვისას",
+  "cargo_pallet_hint": "მაგალითად: 12",
+  "cargo_pallet_unit": "პალეტი",
+  "cargo_pallet_invalid": "პალეტების რაოდენობა დადებითი მთელი რიცხვი უნდა იყოს"
 }
