@@ -99,7 +99,7 @@ void main() {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
       expect(f.contains('enabled: ticked,'), isTrue);
       expect(f.contains("payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,"), isTrue);
-      expect(f.contains("})[k]!.clear();"), isTrue);
+      expect(f.contains('})[k]!.clear();'), isTrue);
     });
     test('pallets instead of volume; an old load keeps its volume', () {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
