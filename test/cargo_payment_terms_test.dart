@@ -3,7 +3,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/features/cargo/data/cargo_repository_impl.dart';
+import 'package:freightlink/features/cargo/domain/truck_types.dart';
 import 'package:freightlink/models/cargo_model.dart';
 
 CargoModel _load({double? adv, double? cash, double? bank, int? wait}) => CargoModel(
@@ -44,8 +46,25 @@ void main() {
 
   group('shown on the load', () {
     test('empty methods are not shown, order advance → cash → bank', () {
-      expect(_load(adv: 500, bank: 1000).paymentTerms, [('cargo_pay_advance', 500.0), ('cargo_pay_bank', 1000.0)]);
+      // An amount saved for bank before 0047 counts as ticked (no amount shown).
+      expect(_load(adv: 500, bank: 1000).paymentTerms, [('cargo_pay_advance', 500.0), ('cargo_pay_bank', null)]);
       expect(_load().paymentTerms, isEmpty);
+    });
+    test('order: advance (amount) → cash → after delivery → bank (just ticked)', () {
+      final c = CargoModel.fromJson({
+        ..._load(adv: 300).toInsertJson(),
+        'id': 'c1',
+        'pay_cash_on': true,
+        'pay_on_delivery': true,
+        'pay_bank_on': true,
+      });
+      expect(c.paymentTerms, [
+        ('cargo_pay_advance', 300.0),
+        ('cargo_pay_cash', null),
+        ('cargo_pay_on_delivery', null),
+        ('cargo_pay_bank', null),
+      ]);
+      expect(CargoModel.fromJson({..._load().toInsertJson(), 'id': 'c1', 'pay_on_delivery': true}).hasTerms, isTrue);
     });
     test('an old load without terms shows no section', () {
       expect(_load().hasTerms, isFalse);
@@ -75,7 +94,24 @@ void main() {
       expect(isMissingTermsColumn('PGRST204', "Could not find the 'pay_advance' column of 'cargo' in the schema cache"), isTrue);
       expect(isMissingTermsColumn('42703', 'column "free_wait_hours" of relation "cargo" does not exist'), isTrue);
       expect(isMissingTermsColumn('PGRST204', "Could not find the 'weight_kg' column"), isFalse);
+      expect(isMissingChoiceColumn('PGRST204', "Could not find the 'pay_on_delivery' column of 'cargo' in the schema cache"), isTrue);
+      expect(isMissingChoiceColumn('PGRST204', "Could not find the 'pay_advance' column"), isFalse);
+      final j = _load(adv: 1).toInsertJson(withChoices: false);
+      expect(j.keys.any(CargoModel.choiceColumns.contains), isFalse);
+      expect(j.containsKey('pay_advance'), isTrue);
       expect(isMissingTermsColumn('23514', 'cargo_pay_cash_positive'), isFalse);
+    });
+  });
+
+  group('truck type', () {
+    const s = AppStrings({'truck_tent': 'Tent', 'truck_dump': 'Samosval'});
+    test('Tent, Ref, Samosval, Konteyner first', () {
+      expect(kTruckTypes.take(4), ['tent', 'ref', 'dump', 'container']);
+    });
+    test('known code → its name; a typed type is shown as typed', () {
+      expect(truckTypeLabel(s, 'tent'), 'Tent');
+      expect(truckTypeLabel(s, 'dump'), 'Samosval');
+      expect(truckTypeLabel(s, 'Lafet 3 ox'), 'Lafet 3 ox');
     });
   });
 
@@ -99,7 +135,22 @@ void main() {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
       expect(f.contains('enabled: ticked,'), isTrue);
       expect(f.contains("payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,"), isTrue);
-      expect(f.contains('})[k]!.clear();'), isTrue);
+      expect(f.contains("if (k == 'advance') _advanceCtrl.clear();"), isTrue);
+    });
+    test('cash, after delivery and bank are only ticked: no amount box', () {
+      final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
+      expect(f.contains('_cashCtrl'), isFalse);
+      expect(f.contains('_bankCtrl'), isFalse);
+      final order = ["row('advance'", "choice('cash'", "choice('delivery'", "choice('bank'"];
+      var at = -1;
+      for (final o in order) {
+        expect(f.indexOf(o) > at, isTrue, reason: o);
+        at = f.indexOf(o);
+      }
+      expect(f.contains("payOnDelivery: _payOn.contains('delivery'),"), isTrue);
+      final sql = read('supabase/migrations/0047_cargo_payment_choices.sql');
+      expect(RegExp(r'add column if not exists').allMatches(sql).length, 3);
+      expect(RegExp(r'\b(drop table|truncate|delete from|update public)\b', caseSensitive: false).hasMatch(sql), isFalse);
     });
     test('pallets instead of volume; an old load keeps its volume', () {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
@@ -117,6 +168,13 @@ void main() {
       }
       expect(read('assets/i18n/az.json').contains('"nav_add_cargo": "Yük hovuzu"'), isTrue);
       expect(read('assets/i18n/az.json').contains('"nav_home": "Yüklər"'), isTrue);
+    });
+    test('"Əlavə məlumat" is always open, with "Digər" to type a truck type', () {
+      final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
+      expect(f.contains('ExpansionTile'), isFalse);
+      expect(f.contains("title: strings.t('quick_more'),"), isTrue);
+      expect(f.contains("key: const ValueKey('cargo-truck-other-text'),"), isTrue);
+      expect(f.contains('for (final t in kTruckTypes)'), isTrue);
     });
     test('load page shows the section only when something is filled', () {
       expect(read('lib/features/cargo/presentation/cargo_detail_screen.dart').contains('if (cargo.hasTerms) ...['), isTrue);

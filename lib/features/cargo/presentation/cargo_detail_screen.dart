@@ -27,6 +27,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../../carrier/presentation/providers/carrier_providers.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import 'providers/cargo_providers.dart';
+import '../domain/truck_types.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -146,7 +147,7 @@ class _DetailBody extends ConsumerWidget {
                 _InfoRow(strings.t('detail_weight_label'), '${cargo.weightKg.toStringAsFixed(0)} kg'),
                 if (cargo.volumeM3 != null) _InfoRow(strings.t('detail_volume_label'), '${cargo.volumeM3} m³'),
                 if (cargo.palletCount != null) _InfoRow(strings.t('detail_pallets_label'), '${cargo.palletCount}'),
-                if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), cargo.truckType!),
+                if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), truckTypeLabel(strings, cargo.truckType!)),
                 _InfoRow(strings.t('detail_pickup_date_label'), dateFmt.format(cargo.pickupDate)),
                 if (cargo.deliveryDeadline != null)
                   _InfoRow(strings.t('detail_delivery_deadline_label'), dateFmt.format(cargo.deliveryDeadline!)),
@@ -170,7 +171,8 @@ class _DetailBody extends ConsumerWidget {
                   Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
                   for (final (key, amount) in cargo.paymentTerms)
-                    _InfoRow(strings.t(key), '${_amount(amount)} ${cargo.currency}'),
+                    // Only the advance has an amount; the others are just ticked.
+                    _InfoRow(strings.t(key), amount == null ? '✓' : '${_amount(amount)} ${cargo.currency}'),
                   if (cargo.freeWaitHours != null)
                     _InfoRow(strings.t('cargo_wait_short'), strings.t('cargo_wait_hours', {'n': '${cargo.freeWaitHours}'})),
                 ],

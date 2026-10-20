@@ -1055,5 +1055,8 @@
   "cargo_wait_sub": "选择装卸时的免费等待时间",
   "cargo_pallet_hint": "例如：12",
   "cargo_pallet_unit": "托盘",
-  "cargo_pallet_invalid": "托盘数必须是正整数"
+  "cargo_pallet_invalid": "托盘数必须是正整数",
+  "cargo_pay_on_delivery": "交货后付款",
+  "truck_dump": "自卸车",
+  "quick_truck_other_hint": "例如：低平板、Mega、Jumbo"
 }

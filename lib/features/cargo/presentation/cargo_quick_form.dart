@@ -12,6 +12,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/city_picker.dart';
 import '../../../models/cargo_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../domain/truck_types.dart';
 import 'providers/cargo_providers.dart';
 
 /// Quick "post a load" form, built for speed on a phone: countries and
@@ -28,7 +29,6 @@ class CargoQuickForm extends ConsumerStatefulWidget {
 
 class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   static const _tonOptions = [1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 22.0, 25.0, 30.0];
-  static const _truckOptions = ['tent', 'ref', 'open', 'container', 'tanker'];
 
   final _formKey = GlobalKey<FormState>();
   final _priceCtrl = TextEditingController();
@@ -36,12 +36,12 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _customTonsCtrl = TextEditingController();
   final _cargoTypeCtrl = TextEditingController();
   final _palletCtrl = TextEditingController();
-  // Payment terms (0046): empty = that way of paying is not offered.
+  // "Digər": a truck type typed by the owner.
+  final _truckOtherCtrl = TextEditingController();
+  // Advance amount (0046); the other payment ways are only ticked (0047).
   final _advanceCtrl = TextEditingController();
-  final _cashCtrl = TextEditingController();
-  final _bankCtrl = TextEditingController();
   int _freeWait = kDefaultFreeWaitHours;
-  // Ticked payment ways (the box opens only when ticked).
+  // Ticked payment ways: advance (its box opens), cash, delivery, bank.
   final Set<String> _payOn = {};
 
   // Route ends: city + its country, chosen together in one sheet.
@@ -54,6 +54,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   double? _tons;
   bool _customTons = false;
   String? _truck;
+  bool _truckOther = false;
   DateTime? _pickupDate;
   String _currency = kDefaultCargoCurrency;
 
@@ -72,9 +73,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _customTonsCtrl,
       _cargoTypeCtrl,
       _palletCtrl,
+      _truckOtherCtrl,
       _advanceCtrl,
-      _cashCtrl,
-      _bankCtrl
     ]) {
       c.dispose();
     }
@@ -97,15 +97,24 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _customTons = true;
       _customTonsCtrl.text = t == t.roundToDouble() ? t.toStringAsFixed(0) : t.toStringAsFixed(1);
     }
-    _truck = _truckOptions.contains(c.truckType) ? c.truckType : null;
+    final tt = (c.truckType ?? '').trim();
+    if (kTruckTypes.contains(tt)) {
+      _truck = tt;
+    } else if (tt.isNotEmpty) {
+      _truckOther = true;
+      _truckOtherCtrl.text = tt;
+    }
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
-    _cashCtrl.text = amount(c.payCash);
-    _bankCtrl.text = amount(c.payBank);
     _payOn
       ..clear()
-      ..addAll([if (c.payAdvance != null) 'advance', if (c.payCash != null) 'cash', if (c.payBank != null) 'bank']);
+      ..addAll([
+        if (c.payAdvance != null) 'advance',
+        if (c.cashTicked) 'cash',
+        if (c.payOnDelivery) 'delivery',
+        if (c.bankTicked) 'bank',
+      ]);
     _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours! : kDefaultFreeWaitHours;
     _loaded = true;
   }
@@ -214,7 +223,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         // an old load keeps its saved volume.
         volumeM3: o?.volumeM3,
         palletCount: int.tryParse(_palletCtrl.text.trim()),
-        truckType: _truck ?? o?.truckType,
+        truckType: _truckOther
+            ? (_truckOtherCtrl.text.trim().isEmpty ? null : _truckOtherCtrl.text.trim())
+            : (_truck ?? o?.truckType),
         pickupDate: _pickupDate!,
         deliveryDeadline: o?.deliveryDeadline,
         offeredPrice: double.parse(_priceCtrl.text.trim().replaceAll(',', '.')),
@@ -224,8 +235,13 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         status: o?.status ?? 'new',
         // Checked by the form validator above (positive or empty).
         payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,
-        payCash: _payOn.contains('cash') ? parsePaymentAmount(_cashCtrl.text) : null,
-        payBank: _payOn.contains('bank') ? parsePaymentAmount(_bankCtrl.text) : null,
+        // Cash / bank have no amount any more (owner, 21.10.2026); an
+        // amount saved earlier stays while the way stays ticked.
+        payCash: _payOn.contains('cash') ? o?.payCash : null,
+        payBank: _payOn.contains('bank') ? o?.payBank : null,
+        payCashOn: _payOn.contains('cash'),
+        payOnDelivery: _payOn.contains('delivery'),
+        payBankOn: _payOn.contains('bank'),
         freeWaitHours: _freeWait,
       );
 
@@ -409,16 +425,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 strings: strings,
                 currency: _currency,
                 advance: _advanceCtrl,
-                cash: _cashCtrl,
-                bank: _bankCtrl,
                 on: _payOn,
                 onToggle: (k, v) => setState(() {
                   if (v) {
                     _payOn.add(k);
                   } else {
-                    // Unticked: the amount is cleared and not shown on the load.
+                    // Unticked: not shown on the load (the advance amount is cleared).
                     _payOn.remove(k);
-                    ({'advance': _advanceCtrl, 'cash': _cashCtrl, 'bank': _bankCtrl})[k]!.clear();
+                    if (k == 'advance') _advanceCtrl.clear();
                   }
                 }),
                 freeWait: _freeWait,
@@ -434,13 +448,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 decoration: InputDecoration(hintText: strings.t('quick_note_hint')),
               ),
 
-              // Optional extras, folded away so the form stays short.
-              Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(strings.t('quick_more'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  children: [
+              // Optional extras — always open (owner, 21.10.2026).
+              _FormCard(
+                icon: Icons.local_shipping_outlined,
+                title: strings.t('quick_more'),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Align(
                       alignment: Alignment.centerLeft,
                       child: _Label(strings.t('create_truck_type')),
@@ -449,14 +461,40 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final t in _truckOptions)
+                        for (final t in kTruckTypes)
                           ChoiceChip(
                             label: Text(strings.t('truck_$t')),
-                            selected: _truck == t,
-                            onSelected: (sel) => setState(() => _truck = sel ? t : null),
+                            selected: !_truckOther && _truck == t,
+                            onSelected: (sel) => setState(() {
+                              _truck = sel ? t : null;
+                              _truckOther = false;
+                            }),
                           ),
+                        ChoiceChip(
+                          key: const ValueKey('cargo-truck-other'),
+                          label: Text(strings.t('quick_other')),
+                          selected: _truckOther,
+                          onSelected: (sel) => setState(() {
+                            _truckOther = sel;
+                            if (sel) _truck = null;
+                          }),
+                        ),
                       ],
                     ),
+                    if (_truckOther)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: TextFormField(
+                          key: const ValueKey('cargo-truck-other-text'),
+                          controller: _truckOtherCtrl,
+                          maxLength: 30,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            labelText: strings.t('create_truck_type'),
+                            hintText: strings.t('quick_truck_other_hint'),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _cargoTypeCtrl,
@@ -484,10 +522,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                         return t.isEmpty || (int.tryParse(t) ?? 0) > 0 ? null : strings.t('cargo_pallet_invalid');
                       },
                     ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
+                ]),
               ),
+              const SizedBox(height: 4),
 
               if (_error != null)
                 Padding(
@@ -573,8 +610,6 @@ class _PaymentTerms extends StatelessWidget {
   final AppStrings strings;
   final String currency;
   final TextEditingController advance;
-  final TextEditingController cash;
-  final TextEditingController bank;
   final Set<String> on;
   final void Function(String key, bool on) onToggle;
   final int freeWait;
@@ -583,8 +618,6 @@ class _PaymentTerms extends StatelessWidget {
     required this.strings,
     required this.currency,
     required this.advance,
-    required this.cash,
-    required this.bank,
     required this.on,
     required this.onToggle,
     required this.freeWait,
@@ -658,6 +691,39 @@ class _PaymentTerms extends StatelessWidget {
       );
     }
 
+    // Cash, payment after delivery, bank transfer: just a tick, no amount
+    // (the price is already given above).
+    Widget choice(String id, String key) {
+      final ticked = on.contains(id);
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: InkWell(
+            key: ValueKey('cargo-pay-choice-$id'),
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => onToggle(id, !ticked),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [
+                Checkbox(
+                  key: ValueKey('cargo-pay-on-$id'),
+                  value: ticked,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (v) => onToggle(id, v ?? false),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(strings.t(key),
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _FormCard(
         icon: Icons.payments_outlined,
@@ -665,8 +731,9 @@ class _PaymentTerms extends StatelessWidget {
         subtitle: strings.t('cargo_pay_sub'),
         child: Column(children: [
           row('advance', 'cargo_pay_advance', advance),
-          row('cash', 'cargo_pay_cash', cash),
-          row('bank', 'cargo_pay_bank', bank),
+          choice('cash', 'cargo_pay_cash'),
+          choice('delivery', 'cargo_pay_on_delivery'),
+          choice('bank', 'cargo_pay_bank'),
         ]),
       ),
       const SizedBox(height: 14),

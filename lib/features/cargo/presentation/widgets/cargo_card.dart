@@ -11,6 +11,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../../models/cargo_model.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
+import '../../domain/truck_types.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
 /// block (teal start dot, dashed line, end dot, flags + country + city),
@@ -116,7 +117,7 @@ class CargoCard extends ConsumerWidget {
 
     final specs = <(String, String)>[
       (strings.t('card_weight'), '${_num(cargo.weightKg)} kg'),
-      if (cargo.truckType != null && cargo.truckType!.trim().isNotEmpty) (strings.t('card_truck'), cargo.truckType!),
+      if (cargo.truckType != null && cargo.truckType!.trim().isNotEmpty) (strings.t('card_truck'), truckTypeLabel(strings, cargo.truckType!)),
       if (cargo.volumeM3 != null) (strings.t('card_volume'), '${_num(cargo.volumeM3!)} m³'),
       if (cargo.cargoType != null && cargo.cargoType!.trim().isNotEmpty) (strings.t('card_cargo_type'), cargo.cargoType!),
     ];

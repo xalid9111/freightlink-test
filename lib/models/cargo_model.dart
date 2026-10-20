@@ -53,6 +53,12 @@ class CargoModel {
   final double? payCash;
   final double? payBank;
 
+  /// Ticked payment ways without an amount (migration 0047, owner
+  /// 21.10.2026): cash, payment after delivery, bank transfer.
+  final bool payCashOn;
+  final bool payOnDelivery;
+  final bool payBankOn;
+
   /// "Prostoy": free waiting time in hours (24 / 36 / 48); null on loads
   /// posted before 0046.
   final int? freeWaitHours;
@@ -88,6 +94,9 @@ class CargoModel {
     this.payAdvance,
     this.payCash,
     this.payBank,
+    this.payCashOn = false,
+    this.payOnDelivery = false,
+    this.payBankOn = false,
     this.freeWaitHours,
   });
 
@@ -124,6 +133,9 @@ class CargoModel {
         payAdvance: (j['pay_advance'] as num?)?.toDouble(),
         payCash: (j['pay_cash'] as num?)?.toDouble(),
         payBank: (j['pay_bank'] as num?)?.toDouble(),
+        payCashOn: j['pay_cash_on'] == true,
+        payOnDelivery: j['pay_on_delivery'] == true,
+        payBankOn: j['pay_bank_on'] == true,
         freeWaitHours: (j['free_wait_hours'] as num?)?.toInt(),
       );
 
@@ -131,16 +143,26 @@ class CargoModel {
   /// have them yet, see CargoRepositoryImpl).
   static const termsColumns = ['pay_advance', 'pay_cash', 'pay_bank', 'free_wait_hours'];
 
-  /// Filled payment methods in display order: (i18n key, amount).
-  List<(String, double)> get paymentTerms => [
+  /// Columns added by migration 0047 (left out if not run yet).
+  static const choiceColumns = ['pay_cash_on', 'pay_on_delivery', 'pay_bank_on'];
+
+  /// Cash / bank ticked; a load saved with an amount there (0046) counts
+  /// as ticked.
+  bool get cashTicked => payCashOn || (payCash != null && payCash! > 0);
+  bool get bankTicked => payBankOn || (payBank != null && payBank! > 0);
+
+  /// Payment ways in display order: (i18n key, amount). Only the advance
+  /// has an amount; the others are just ticked (amount null).
+  List<(String, double?)> get paymentTerms => [
         if (payAdvance != null && payAdvance! > 0) ('cargo_pay_advance', payAdvance!),
-        if (payCash != null && payCash! > 0) ('cargo_pay_cash', payCash!),
-        if (payBank != null && payBank! > 0) ('cargo_pay_bank', payBank!),
+        if (cashTicked) ('cargo_pay_cash', null),
+        if (payOnDelivery) ('cargo_pay_on_delivery', null),
+        if (bankTicked) ('cargo_pay_bank', null),
       ];
 
   bool get hasTerms => paymentTerms.isNotEmpty || freeWaitHours != null;
 
-  Map<String, dynamic> toInsertJson({bool withTerms = true}) => {
+  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true}) => {
         'owner_id': ownerId,
         'company_id': companyId,
         'pickup_country': pickupCountry,
@@ -170,6 +192,11 @@ class CargoModel {
           'pay_cash': payCash,
           'pay_bank': payBank,
           'free_wait_hours': freeWaitHours,
+          if (withChoices) ...{
+            'pay_cash_on': payCashOn,
+            'pay_on_delivery': payOnDelivery,
+            'pay_bank_on': payBankOn,
+          },
         },
       };
 }

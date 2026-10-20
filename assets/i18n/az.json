@@ -1055,5 +1055,8 @@
   "cargo_wait_sub": "Yükləmə və boşaltma zamanı pulsuz gözləmə müddətini seçin",
   "cargo_pallet_hint": "Məsələn: 12",
   "cargo_pallet_unit": "palet",
-  "cargo_pallet_invalid": "Palet sayı müsbət tam ədəd olmalıdır"
+  "cargo_pallet_invalid": "Palet sayı müsbət tam ədəd olmalıdır",
+  "cargo_pay_on_delivery": "Təhvil sonrası ödəniş",
+  "truck_dump": "Samosval",
+  "quick_truck_other_hint": "Məs. Lafet, Mega, Jumbo"
 }
