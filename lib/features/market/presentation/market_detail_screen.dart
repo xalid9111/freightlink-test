@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/desktop_layout.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/presence/online_users.dart';
@@ -245,7 +246,8 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           : l == null
               ? Center(child: Text(s.t('mk_not_found'), style: TextStyle(color: AppColors.textSoft)))
               : _body(context, s, lang, l, me),
-      bottomNavigationBar: l == null ? null : _actions(s, l, me),
+      // Computer: the buttons are in the right column instead.
+      bottomNavigationBar: l == null || isDesktopLayout(context) ? null : _actions(s, l, me),
     );
   }
 
@@ -256,16 +258,80 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         ? '—'
         : [place.cityLabel(lang), if ((l.country ?? '').isNotEmpty) place.countryLabel(lang)].join(', ');
     final (agoKey, agoN) = marketAgo(l.publishedAt ?? l.createdAt);
+    final head = _head(context, s, l, isOwner, placeText, agoKey, agoN);
+    final rest = _rest(context, s, l, isOwner, placeText);
+    if (isDesktopLayout(context)) return _desktopBody(s, l, me, head, rest);
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
         // ---- gallery ----
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-          child: ClipRRect(
+          child: _gallery(l),
+        ),
+        if (l.photos.length > 1) _thumbs(l),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            ...head,
+            const SizedBox(height: 14),
+            _Specs(s: s, l: l),
+            const SizedBox(height: 12),
+            _SellerCard(ownerId: l.ownerId, s: s),
+            ...rest,
+          ]),
+        ),
+        _Similar(l: l, s: s),
+      ],
+    );
+  }
+
+  /// Computer (wide window): photo, specs and text on the left, title,
+  /// price, buttons and seller on the right — no screen-wide photo.
+  Widget _desktopBody(AppStrings s, MarketListing l, String? me, List<Widget> head, List<Widget> rest) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              _gallery(l, ratio: 16 / 9),
+              if (l.photos.length > 1) _thumbs(l, padding: const EdgeInsets.only(top: 8)),
+              const SizedBox(height: 16),
+              _Specs(s: s, l: l, columns: 6),
+              ...rest,
+            ]),
+          ),
+          const SizedBox(width: 24),
+          SizedBox(
+            width: 360,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.line)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  ...head,
+                  const SizedBox(height: 16),
+                  _actions(s, l, me, desk: true),
+                ]),
+              ),
+              const SizedBox(height: 12),
+              _SellerCard(ownerId: l.ownerId, s: s),
+            ]),
+          ),
+        ]),
+        _Similar(l: l, s: s),
+      ],
+    );
+  }
+
+  Widget _gallery(MarketListing l, {double ratio = 1.7}) => ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: AspectRatio(
-              aspectRatio: 1.7,
+              aspectRatio: ratio,
               child: Stack(fit: StackFit.expand, children: [
                 l.photos.isEmpty
                     ? const MarketPhoto(url: null)
@@ -305,14 +371,13 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                   Positioned(right: 12, bottom: 12, child: _Round(icon: Icons.fullscreen, onTap: () => _fullscreen(l))),
               ]),
             ),
-          ),
-        ),
-        if (l.photos.length > 1)
-          SizedBox(
+          );
+
+  Widget _thumbs(MarketListing l, {EdgeInsets padding = const EdgeInsets.fromLTRB(12, 8, 12, 0)}) => SizedBox(
             height: 74,
             child: MouseDragScroll(child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: padding,
               itemCount: l.photos.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) => GestureDetector(
@@ -328,10 +393,12 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 ),
               ),
             )),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          );
+
+  /// Status, title, price, listing number and meta.
+  List<Widget> _head(BuildContext context, AppStrings s, MarketListing l, bool isOwner, String placeText,
+          String agoKey, int agoN) =>
+      [
             if (isOwner && l.status != MarketStatus.active) _StatusBanner(s: s, l: l),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(child: Text(l.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
@@ -362,10 +429,10 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
               _Meta(icon: Icons.calendar_today_outlined, text: s.t(agoKey, {'n': '$agoN'})),
               _Meta(icon: Icons.location_on_outlined, text: placeText),
             ]),
-            const SizedBox(height: 14),
-            _Specs(s: s, l: l),
-            const SizedBox(height: 12),
-            _SellerCard(ownerId: l.ownerId, s: s),
+      ];
+
+  /// Description, location and report.
+  List<Widget> _rest(BuildContext context, AppStrings s, MarketListing l, bool isOwner, String placeText) => [
             if ((l.description ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(children: [
@@ -425,11 +492,29 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 ),
               ),
             ],
-          ]),
-        ),
-        _Similar(l: l, s: s),
-      ],
-    );
+      ];
+
+  /// Computer: the same buttons one under another (the delete icon gets
+  /// its label).
+  Widget _deskButtons(List<Widget> children, Widget? below) {
+    final items = <Widget>[
+      for (final c in children)
+        if (c is Expanded)
+          c.child
+        else if (c is IconButton)
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
+            onPressed: c.onPressed,
+            icon: c.icon,
+            label: Text(c.tooltip ?? ''),
+          )
+        else if (c is! SizedBox)
+          c,
+      if (below != null) below,
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      for (var i = 0; i < items.length; i++) ...[if (i > 0) const SizedBox(height: 10), items[i]],
+    ]);
   }
 
   void _go(int d, MarketListing l) {
@@ -454,9 +539,11 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         ),
       );
 
-  Widget _actions(AppStrings s, MarketListing l, String? me) {
+  Widget _actions(AppStrings s, MarketListing l, String? me, {bool desk = false}) {
     final isOwner = l.ownerId == me;
-    Widget bar(List<Widget> children, {Widget? below}) => SafeArea(
+    Widget bar(List<Widget> children, {Widget? below}) => desk
+        ? _deskButtons(children, below)
+        : SafeArea(
           top: false,
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -467,6 +554,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 : Column(mainAxisSize: MainAxisSize.min, children: [Row(children: children), const SizedBox(height: 8), below]),
           ),
         );
+
     if (isOwner) {
       // Seller on his own ad: manage instead of contact.
       return bar([
@@ -578,7 +666,8 @@ class _StatusBanner extends StatelessWidget {
 class _Specs extends StatelessWidget {
   final AppStrings s;
   final MarketListing l;
-  const _Specs({required this.s, required this.l});
+  final int columns;
+  const _Specs({required this.s, required this.l, this.columns = 3});
 
   @override
   Widget build(BuildContext context) {
@@ -595,7 +684,7 @@ class _Specs extends StatelessWidget {
       decoration: BoxDecoration(
           color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
       child: GridView.count(
-        crossAxisCount: 3,
+        crossAxisCount: columns,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         // Cells grow taller with the chosen text size (1.35 at normal).
