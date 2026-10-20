@@ -311,7 +311,8 @@ class _DeskHero extends ConsumerWidget {
                     Row(children: [
                       Container(width: 9, height: 9, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
                       const SizedBox(width: 8),
-                      Text(strings.t('home_live_map'), style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: 15)),
+                      Text(strings.t('home_live_map'),
+                          style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: 15).copyWith(shadows: _readableOnMap())),
                     ]),
                     const SizedBox(height: 6),
                     Text.rich(
@@ -321,7 +322,8 @@ class _DeskHero extends ConsumerWidget {
                         // Second line (owner, 19.10.2026): "Yüklər dünya üzrə / hərəkətdədir".
                         TextSpan(text: '\n${strings.t('home_hero_3')}'),
                       ]),
-                      style: AppFonts.display(size: (w * 0.026).clamp(30.0, 42.0), color: AppColors.text, height: 1.15),
+                      style: AppFonts.display(size: (w * 0.026).clamp(30.0, 42.0), color: AppColors.text, height: 1.15)
+                          .copyWith(shadows: _readableOnMap()),
                     ),
                   ],
                 ),

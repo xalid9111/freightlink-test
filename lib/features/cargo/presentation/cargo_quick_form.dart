@@ -35,12 +35,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _noteCtrl = TextEditingController();
   final _customTonsCtrl = TextEditingController();
   final _cargoTypeCtrl = TextEditingController();
-  final _volumeCtrl = TextEditingController();
+  final _palletCtrl = TextEditingController();
   // Payment terms (0046): empty = that way of paying is not offered.
   final _advanceCtrl = TextEditingController();
   final _cashCtrl = TextEditingController();
   final _bankCtrl = TextEditingController();
   int _freeWait = kDefaultFreeWaitHours;
+  // Ticked payment ways (the box opens only when ticked).
+  final Set<String> _payOn = {};
 
   // Route ends: city + its country, chosen together in one sheet.
   PickedPlace? _from;
@@ -69,7 +71,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _noteCtrl,
       _customTonsCtrl,
       _cargoTypeCtrl,
-      _volumeCtrl,
+      _palletCtrl,
       _advanceCtrl,
       _cashCtrl,
       _bankCtrl
@@ -87,7 +89,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     _currency = cargoCurrencyOrDefault(c.currency);
     _noteCtrl.text = c.description ?? '';
     _cargoTypeCtrl.text = c.cargoType ?? '';
-    _volumeCtrl.text = c.volumeM3 == null ? '' : c.volumeM3!.toStringAsFixed(0);
+    _palletCtrl.text = c.palletCount?.toString() ?? '';
     final t = c.weightKg / 1000;
     if (_tonOptions.contains(t)) {
       _tons = t;
@@ -101,6 +103,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     _advanceCtrl.text = amount(c.payAdvance);
     _cashCtrl.text = amount(c.payCash);
     _bankCtrl.text = amount(c.payBank);
+    _payOn
+      ..clear()
+      ..addAll([if (c.payAdvance != null) 'advance', if (c.payCash != null) 'cash', if (c.payBank != null) 'bank']);
     _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours! : kDefaultFreeWaitHours;
     _loaded = true;
   }
@@ -205,8 +210,10 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         destinationLongitude: destChanged ? null : o?.destinationLongitude,
         cargoType: _cargoTypeCtrl.text.trim().isEmpty ? null : _cargoTypeCtrl.text.trim(),
         weightKg: tons! * 1000,
-        volumeM3: double.tryParse(_volumeCtrl.text.trim().replaceAll(',', '.')),
-        palletCount: o?.palletCount,
+        // Volume is no longer asked (owner, 20.10.2026: pallets instead);
+        // an old load keeps its saved volume.
+        volumeM3: o?.volumeM3,
+        palletCount: int.tryParse(_palletCtrl.text.trim()),
         truckType: _truck ?? o?.truckType,
         pickupDate: _pickupDate!,
         deliveryDeadline: o?.deliveryDeadline,
@@ -216,9 +223,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         distanceKm: (pickupChanged || destChanged) ? null : o?.distanceKm,
         status: o?.status ?? 'new',
         // Checked by the form validator above (positive or empty).
-        payAdvance: parsePaymentAmount(_advanceCtrl.text),
-        payCash: parsePaymentAmount(_cashCtrl.text),
-        payBank: parsePaymentAmount(_bankCtrl.text),
+        payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,
+        payCash: _payOn.contains('cash') ? parsePaymentAmount(_cashCtrl.text) : null,
+        payBank: _payOn.contains('bank') ? parsePaymentAmount(_bankCtrl.text) : null,
         freeWaitHours: _freeWait,
       );
 
@@ -359,14 +366,17 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
 
               const SizedBox(height: 18),
               // Without "(USD)": the currency is picked next to the price.
-              _Label(strings.t('create_price_cur')),
-              Row(
+              _FormCard(
+                icon: Icons.sell_outlined,
+                title: strings.t('create_price_cur'),
+                child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _priceCtrl,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(hintText: strings.t('cargo_price_hint')),
                       validator: (v) {
                         final p = double.tryParse((v ?? '').trim().replaceAll(',', '.'));
                         return (p == null || p < 0) ? strings.t('field_required') : null;
@@ -392,6 +402,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                   ),
                 ],
               ),
+              ),
 
               const SizedBox(height: 18),
               _PaymentTerms(
@@ -400,6 +411,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 advance: _advanceCtrl,
                 cash: _cashCtrl,
                 bank: _bankCtrl,
+                on: _payOn,
+                onToggle: (k, v) => setState(() {
+                  if (v) {
+                    _payOn.add(k);
+                  } else {
+                    // Unticked: the amount is cleared and not shown on the load.
+                    _payOn.remove(k);
+                    ({'advance': _advanceCtrl, 'cash': _cashCtrl, 'bank': _bankCtrl})[k]!.clear();
+                  }
+                }),
                 freeWait: _freeWait,
                 onFreeWait: (h) => setState(() => _freeWait = h),
               ),
@@ -443,9 +464,25 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: _volumeCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: strings.t('create_volume_m3')),
+                      key: const ValueKey('cargo-pallets'),
+                      controller: _palletCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+                      decoration: InputDecoration(
+                        labelText: strings.t('detail_pallets_label'),
+                        hintText: strings.t('cargo_pallet_hint'),
+                        // Always visible, like the payment boxes.
+                        suffixIcon: Padding(
+                          padding: const EdgeInsets.only(right: 14, left: 4),
+                          child: Text(strings.t('cargo_pallet_unit'),
+                              style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                        ),
+                        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                      ),
+                      validator: (v) {
+                        final t = (v ?? '').trim();
+                        return t.isEmpty || (int.tryParse(t) ?? 0) > 0 ? null : strings.t('cargo_pallet_invalid');
+                      },
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -458,9 +495,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                   child: Text(_error!, style: TextStyle(color: AppColors.danger)),
                 ),
               const SizedBox(height: 12),
-              FilledButton(
+              FilledButton.icon(
+                key: const ValueKey('cargo-submit'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                ),
                 onPressed: _submitting ? null : _submit,
-                child: _submitting
+                icon: _submitting ? const SizedBox.shrink() : Icon(_isEdit ? Icons.check_circle_outline : Icons.add_circle, size: 24),
+                label: _submitting
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : Text(strings.t(_isEdit ? 'quick_save' : 'create_submit')),
               ),
@@ -483,15 +527,56 @@ class _Label extends StatelessWidget {
       );
 }
 
-/// "Ödəniş və gözləmə şərtləri" (owner, 20.10.2026): advance / cash /
-/// bank amounts (label on the left, amount box opposite) and the free
-/// waiting time (24 / 36 / 48 h, one choice).
+/// Card of the load form (owner's design, 20.10.2026): orange icon,
+/// title, optional grey line under it, then the fields.
+class _FormCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  const _FormCard({required this.icon, required this.title, this.subtitle, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, color: AppColors.accent, size: 24),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text)),
+              if (subtitle != null) ...[
+                const SizedBox(height: 3),
+                Text(subtitle!, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+              ],
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        child,
+      ]),
+    );
+  }
+}
+
+/// "Ödəniş şərtləri" and "Prostoy" (0046) as two cards: each way of paying
+/// has a tick box on the left, its name, and the amount box opposite
+/// (open only when ticked); then 24 / 36 / 48 h as three equal buttons.
 class _PaymentTerms extends StatelessWidget {
   final AppStrings strings;
   final String currency;
   final TextEditingController advance;
   final TextEditingController cash;
   final TextEditingController bank;
+  final Set<String> on;
+  final void Function(String key, bool on) onToggle;
   final int freeWait;
   final ValueChanged<int> onFreeWait;
   const _PaymentTerms({
@@ -500,90 +585,123 @@ class _PaymentTerms extends StatelessWidget {
     required this.advance,
     required this.cash,
     required this.bank,
+    required this.on,
+    required this.onToggle,
     required this.freeWait,
     required this.onFreeWait,
   });
 
   @override
   Widget build(BuildContext context) {
-    Widget row(String key, TextEditingController ctrl) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          // Wide screens: label and box stay close together on the left.
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: LayoutBuilder(
-                builder: (context, c) => Row(children: [
-                  Expanded(
+    Widget row(String id, String key, TextEditingController ctrl) {
+      final ticked = on.contains(id);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        // Wide screens: name and box stay close together on the left.
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: LayoutBuilder(
+              builder: (context, c) => Row(children: [
+                Checkbox(
+                  key: ValueKey('cargo-pay-on-$id'),
+                  value: ticked,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (v) => onToggle(id, v ?? false),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => onToggle(id, !ticked),
                     child: Text(strings.t(key),
                         style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    // Narrow phones: the box shrinks, the text wraps — never overlaps.
-                    width: (c.maxWidth * 0.48).clamp(110.0, 200.0),
-                    child: TextFormField(
-                      key: ValueKey('cargo-$key'),
-                      controller: ctrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      // Digits and one separator only: no minus sign.
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                      textAlign: TextAlign.end,
-                      decoration: InputDecoration(
-                        hintText: strings.t('cargo_pay_amount'),
-                        // Always visible (suffixText hides while the box is empty).
-                        suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 12, left: 4),
-                          child:
-                              Text(currency, style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
-                        ),
-                        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                        isDense: true,
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  // Narrow phones: the box shrinks, the text wraps — never overlaps.
+                  width: (c.maxWidth * 0.44).clamp(104.0, 200.0),
+                  child: TextFormField(
+                    key: ValueKey('cargo-$key'),
+                    controller: ctrl,
+                    enabled: ticked,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    // Digits and one separator only: no minus sign.
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                    textAlign: TextAlign.end,
+                    decoration: InputDecoration(
+                      hintText: strings.t('cargo_pay_amount'),
+                      // Always visible (suffixText hides while the box is empty).
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 12, left: 4),
+                        child: Text(currency, style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
                       ),
-                      validator: (v) {
-                        try {
-                          parsePaymentAmount(v);
-                          return null;
-                        } on FormatException {
-                          return strings.t('cargo_pay_invalid');
-                        }
-                      },
+                      suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                      isDense: true,
                     ),
+                    validator: (v) {
+                      if (!ticked) return null;
+                      try {
+                        // Ticked: an amount is needed.
+                        return parsePaymentAmount(v) == null ? strings.t('cargo_pay_invalid') : null;
+                      } on FormatException {
+                        return strings.t('cargo_pay_invalid');
+                      }
+                    },
                   ),
-                ]),
-              ),
+                ),
+              ]),
             ),
           ),
-        );
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(strings.t('cargo_terms_title'),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text)),
-        const SizedBox(height: 12),
-        _Label(strings.t('cargo_pay_title')),
-        row('cargo_pay_advance', advance),
-        row('cargo_pay_cash', cash),
-        row('cargo_pay_bank', bank),
-        const SizedBox(height: 4),
-        _Label(strings.t('cargo_wait_title')),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final h in kFreeWaitChoices)
-            ChoiceChip(
-              key: ValueKey('cargo-wait-$h'),
-              label: Text(strings.t('cargo_wait_hours', {'n': '$h'})),
-              selected: freeWait == h,
-              onSelected: (_) => onFreeWait(h),
-            ),
+        ),
+      );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _FormCard(
+        icon: Icons.payments_outlined,
+        title: strings.t('cargo_pay_title'),
+        subtitle: strings.t('cargo_pay_sub'),
+        child: Column(children: [
+          row('advance', 'cargo_pay_advance', advance),
+          row('cash', 'cargo_pay_cash', cash),
+          row('bank', 'cargo_pay_bank', bank),
         ]),
-      ]),
-    );
+      ),
+      const SizedBox(height: 14),
+      _FormCard(
+        icon: Icons.schedule,
+        title: strings.t('cargo_wait_title'),
+        subtitle: strings.t('cargo_wait_sub'),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Row(children: [
+          for (final h in kFreeWaitChoices) ...[
+            if (h != kFreeWaitChoices.first) const SizedBox(width: 8),
+            Expanded(
+              child: ChoiceChip(
+                key: ValueKey('cargo-wait-$h'),
+                label: SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(strings.t('cargo_wait_hours', {'n': '$h'})),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                selected: freeWait == h,
+                onSelected: (_) => onFreeWait(h),
+              ),
+            ),
+          ],
+        ]),
+        ),
+        ),
+      ),
+    ]);
   }
 }
 

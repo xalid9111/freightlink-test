@@ -467,7 +467,7 @@
   "my_cargo_empty": "Вы ещё не разместили грузы.",
   "my_cargo_subtitle": "Просмотр, редактирование и закрытие объявлений",
   "my_cargo_title": "Мои грузы",
-  "nav_add_cargo": "Добавить",
+  "nav_add_cargo": "Пул грузов",
   "nav_home": "Грузы",
   "nav_messages": "Сообщения",
   "nav_profile": "Профиль",
@@ -1049,5 +1049,11 @@
   "cargo_pay_invalid": "Введите только положительную сумму",
   "cargo_wait_title": "Простой – бесплатное время ожидания",
   "cargo_wait_short": "Бесплатное ожидание",
-  "cargo_wait_hours": "{n} ч"
+  "cargo_wait_hours": "{n} ч",
+  "cargo_price_hint": "Введите сумму",
+  "cargo_pay_sub": "Укажите условия оплаты груза (необязательно)",
+  "cargo_wait_sub": "Выберите бесплатное время ожидания при погрузке и разгрузке",
+  "cargo_pallet_hint": "Например: 12",
+  "cargo_pallet_unit": "палет",
+  "cargo_pallet_invalid": "Число палет — целое положительное число"
 }

@@ -467,7 +467,7 @@
   "my_cargo_empty": "You have not posted any loads yet.",
   "my_cargo_subtitle": "View, edit or close your listings",
   "my_cargo_title": "My loads",
-  "nav_add_cargo": "Add load",
+  "nav_add_cargo": "Load pool",
   "nav_home": "Loads",
   "nav_messages": "Messages",
   "nav_profile": "Profile",
@@ -1049,5 +1049,11 @@
   "cargo_pay_invalid": "Enter a positive amount only",
   "cargo_wait_title": "Demurrage – free waiting time",
   "cargo_wait_short": "Free waiting",
-  "cargo_wait_hours": "{n} hours"
+  "cargo_wait_hours": "{n} hours",
+  "cargo_price_hint": "Enter amount",
+  "cargo_pay_sub": "Set the payment terms for the load (optional)",
+  "cargo_wait_sub": "Choose the free waiting time for loading and unloading",
+  "cargo_pallet_hint": "e.g. 12",
+  "cargo_pallet_unit": "pallets",
+  "cargo_pallet_invalid": "Pallets must be a positive whole number"
 }

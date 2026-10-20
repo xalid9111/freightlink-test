@@ -467,7 +467,7 @@
   "my_cargo_empty": "Hələ yük yerləşdirməmisiniz.",
   "my_cargo_subtitle": "Elanlarınızı görün, redaktə edin və ya bağlayın",
   "my_cargo_title": "Mənim yüklərim",
-  "nav_add_cargo": "Yük əlavə et",
+  "nav_add_cargo": "Yük hovuzu",
   "nav_home": "Yüklər",
   "nav_messages": "Mesajlar",
   "nav_profile": "Profil",
@@ -1049,5 +1049,11 @@
   "cargo_pay_invalid": "Yalnız müsbət məbləğ yazın",
   "cargo_wait_title": "Prostoy – pulsuz gözləmə müddəti",
   "cargo_wait_short": "Pulsuz gözləmə",
-  "cargo_wait_hours": "{n} saat"
+  "cargo_wait_hours": "{n} saat",
+  "cargo_price_hint": "Məbləğ daxil edin",
+  "cargo_pay_sub": "Yük üçün ödəniş şərtlərini qeyd edin (istəyə bağlı)",
+  "cargo_wait_sub": "Yükləmə və boşaltma zamanı pulsuz gözləmə müddətini seçin",
+  "cargo_pallet_hint": "Məsələn: 12",
+  "cargo_pallet_unit": "palet",
+  "cargo_pallet_invalid": "Palet sayı müsbət tam ədəd olmalıdır"
 }

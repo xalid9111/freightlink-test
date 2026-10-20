@@ -89,11 +89,34 @@ void main() {
     });
     test('form: section under the price, uses the load currency, no minus sign', () {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
-      expect(f.indexOf('_PaymentTerms(') > f.indexOf("_Label(strings.t('create_price_cur'))"), isTrue);
+      expect(f.indexOf('_PaymentTerms(') > f.indexOf("title: strings.t('create_price_cur')"), isTrue);
       expect(f.indexOf('_PaymentTerms(') < f.indexOf("_Label(strings.t('quick_note'))"), isTrue);
       expect(f.contains('currency: _currency,'), isTrue);
       expect(f.contains("FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))"), isTrue);
       expect(f.contains('freeWaitHours: _freeWait,'), isTrue);
+    });
+    test('payment ways: tick box opens the amount box, unticking clears it', () {
+      final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
+      expect(f.contains('enabled: ticked,'), isTrue);
+      expect(f.contains("payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,"), isTrue);
+      expect(f.contains('})[k]!.clear();'), isTrue);
+    });
+    test('pallets instead of volume; an old load keeps its volume', () {
+      final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
+      expect(f.contains('_volumeCtrl'), isFalse);
+      expect(f.contains('volumeM3: o?.volumeM3,'), isTrue);
+      expect(f.contains('palletCount: int.tryParse(_palletCtrl.text.trim()),'), isTrue);
+      expect(f.contains('FilteringTextInputFormatter.digitsOnly'), isTrue);
+    });
+    test('map: "Yük hovuzu" button opens the form; texts over the map have a shadow', () {
+      final m = read('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
+      expect(m.contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue);
+      expect(RegExp(r'shadows: _readableOnMap\(\)').allMatches(m + read('lib/features/cargo/presentation/cargo_marketplace_desktop.dart')).length, 4);
+      for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
+        expect(read('assets/i18n/$l.json').contains('"nav_home"'), isTrue);
+      }
+      expect(read('assets/i18n/az.json').contains('"nav_add_cargo": "Yük hovuzu"'), isTrue);
+      expect(read('assets/i18n/az.json').contains('"nav_home": "Yüklər"'), isTrue);
     });
     test('load page shows the section only when something is filled', () {
       expect(read('lib/features/cargo/presentation/cargo_detail_screen.dart').contains('if (cargo.hasTerms) ...['), isTrue);
