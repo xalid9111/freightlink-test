@@ -313,14 +313,14 @@ class _Hero extends ConsumerWidget {
                   label: strings.t('home_stat_active'),
                   onTap: () => _scrollToFeed(),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 _StatCard(
                   icon: Icons.groups_2,
                   color: AppColors.blue,
                   value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
                   label: strings.t('home_stat_carriers'),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 _StatCard(
                   icon: Icons.bar_chart_rounded,
                   color: AppColors.online,
@@ -330,7 +330,7 @@ class _Hero extends ConsumerWidget {
                 ),
                 // "Yük hovuzu" (+) — the add-load button (same form:
                 // /cargo/create), in line with the counters, right-aligned
-                // (owner, 21.10.2026); with a large text size its label wraps.
+                // (owner, 21.10.2026); one line, shrinks on a narrow screen.
                 const SizedBox(width: 8),
                 Expanded(
                   child: Align(
@@ -502,9 +502,14 @@ class _AddLoadButton extends StatelessWidget {
                   border: Border.all(color: AppColors.line),
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
-                child: Text(label,
-                    textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w800)),
+                // One line ("Yük hovuzu" side by side); shrinks instead of wrapping.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w800)),
+                ),
               ),
             ),
             Container(
@@ -544,9 +549,10 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Container(
-            height: 24,
-            constraints: const BoxConstraints(minWidth: 60),
-            padding: const EdgeInsets.symmetric(horizontal: 7),
+            // Half the earlier size (owner, 21.10.2026); the number stays readable.
+            height: 18,
+            constraints: const BoxConstraints(minWidth: 30),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
@@ -556,10 +562,10 @@ class _StatCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 12, color: color),
-                const SizedBox(width: 4),
+                Icon(icon, size: 10, color: color),
+                const SizedBox(width: 3),
                 Text(value,
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
               ],
             ),
           ),
