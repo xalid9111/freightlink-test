@@ -300,19 +300,7 @@ class _Hero extends ConsumerWidget {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-          // "Yük hovuzu" (+) — the add-load button (same form: /cargo/create),
-          // right under the map, lifted onto its faded bottom edge (owner,
-          // 20.10.2026).
-          Transform.translate(
-            offset: const Offset(0, -26),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
-              ),
-            ),
-          ),
+          const SizedBox(height: 14),
           // Three live counters (all real numbers from the database).
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -325,20 +313,30 @@ class _Hero extends ConsumerWidget {
                   label: strings.t('home_stat_active'),
                   onTap: () => _scrollToFeed(),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 _StatCard(
                   icon: Icons.groups_2,
                   color: AppColors.blue,
                   value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
                   label: strings.t('home_stat_carriers'),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 _StatCard(
                   icon: Icons.bar_chart_rounded,
                   color: AppColors.online,
                   value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
                   label: strings.t('home_stat_24h'),
                   onTap: () => _scrollToFeed(),
+                ),
+                // "Yük hovuzu" (+) — the add-load button (same form:
+                // /cargo/create), in line with the counters, right-aligned
+                // (owner, 21.10.2026); one line, shrinks on a narrow screen.
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                  ),
                 ),
               ],
             ),
@@ -489,34 +487,41 @@ class _AddLoadButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: onTap,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        // 30 % smaller than before, then 10 % up again (owner, 21.10.2026), so it fits the
+        // counters' row; the plate runs under the "+" circle.
+        child: Stack(
+          alignment: Alignment.centerRight,
           children: [
-            Flexible(
+            Padding(
+              padding: const EdgeInsets.only(right: 20),
               child: Container(
-                // The plate runs under the "+" circle (negative gap below).
-                padding: const EdgeInsets.fromLTRB(18, 10, 34, 10),
+                padding: const EdgeInsets.fromLTRB(14, 8, 26, 8),
                 decoration: BoxDecoration(
                   color: AppColors.card.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(23),
                   border: Border.all(color: AppColors.line),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
-                child: Text(label,
-                    textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 17, color: AppColors.text, fontWeight: FontWeight.w800)),
+                // One line ("Yük hovuzu" side by side); shrinks instead of wrapping.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w800)),
+                ),
               ),
             ),
-            Transform.translate(offset: const Offset(-24, 0), child: Container(
-              width: 52,
-              height: 52,
+            Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.accentFill,
                 shape: BoxShape.circle,
-                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 10, offset: Offset(0, 3))],
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
-            )),
+              child: const Icon(Icons.add, color: Colors.white, size: 24),
+            ),
           ],
         ),
       ),
@@ -544,9 +549,10 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Container(
-            height: 24,
-            constraints: const BoxConstraints(minWidth: 60),
-            padding: const EdgeInsets.symmetric(horizontal: 7),
+            // Half the earlier size (owner, 21.10.2026); the number stays readable.
+            height: 18,
+            constraints: const BoxConstraints(minWidth: 30),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
@@ -556,10 +562,10 @@ class _StatCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 12, color: color),
-                const SizedBox(width: 4),
+                Icon(icon, size: 10, color: color),
+                const SizedBox(width: 3),
                 Text(value,
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
               ],
             ),
           ),
