@@ -1056,5 +1056,7 @@
   "cargo_pallet_hint": "e.g. 12",
   "cargo_pallet_unit": "pallets",
   "cargo_pallet_invalid": "Pallets must be a positive whole number",
-  "cargo_pay_on_delivery": "Payment after delivery"
+  "cargo_pay_on_delivery": "Payment after delivery",
+  "truck_dump": "Dump truck",
+  "quick_truck_other_hint": "e.g. Lowbed, Mega, Jumbo"
 }

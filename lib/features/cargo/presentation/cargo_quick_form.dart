@@ -12,6 +12,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/city_picker.dart';
 import '../../../models/cargo_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../domain/truck_types.dart';
 import 'providers/cargo_providers.dart';
 
 /// Quick "post a load" form, built for speed on a phone: countries and
@@ -28,7 +29,6 @@ class CargoQuickForm extends ConsumerStatefulWidget {
 
 class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   static const _tonOptions = [1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 22.0, 25.0, 30.0];
-  static const _truckOptions = ['tent', 'ref', 'open', 'container', 'tanker'];
 
   final _formKey = GlobalKey<FormState>();
   final _priceCtrl = TextEditingController();
@@ -36,6 +36,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _customTonsCtrl = TextEditingController();
   final _cargoTypeCtrl = TextEditingController();
   final _palletCtrl = TextEditingController();
+  // "Digər": a truck type typed by the owner.
+  final _truckOtherCtrl = TextEditingController();
   // Advance amount (0046); the other payment ways are only ticked (0047).
   final _advanceCtrl = TextEditingController();
   int _freeWait = kDefaultFreeWaitHours;
@@ -52,6 +54,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   double? _tons;
   bool _customTons = false;
   String? _truck;
+  bool _truckOther = false;
   DateTime? _pickupDate;
   String _currency = kDefaultCargoCurrency;
 
@@ -70,6 +73,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _customTonsCtrl,
       _cargoTypeCtrl,
       _palletCtrl,
+      _truckOtherCtrl,
       _advanceCtrl,
     ]) {
       c.dispose();
@@ -93,7 +97,13 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _customTons = true;
       _customTonsCtrl.text = t == t.roundToDouble() ? t.toStringAsFixed(0) : t.toStringAsFixed(1);
     }
-    _truck = _truckOptions.contains(c.truckType) ? c.truckType : null;
+    final tt = (c.truckType ?? '').trim();
+    if (kTruckTypes.contains(tt)) {
+      _truck = tt;
+    } else if (tt.isNotEmpty) {
+      _truckOther = true;
+      _truckOtherCtrl.text = tt;
+    }
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
@@ -213,7 +223,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         // an old load keeps its saved volume.
         volumeM3: o?.volumeM3,
         palletCount: int.tryParse(_palletCtrl.text.trim()),
-        truckType: _truck ?? o?.truckType,
+        truckType: _truckOther
+            ? (_truckOtherCtrl.text.trim().isEmpty ? null : _truckOtherCtrl.text.trim())
+            : (_truck ?? o?.truckType),
         pickupDate: _pickupDate!,
         deliveryDeadline: o?.deliveryDeadline,
         offeredPrice: double.parse(_priceCtrl.text.trim().replaceAll(',', '.')),
@@ -436,13 +448,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 decoration: InputDecoration(hintText: strings.t('quick_note_hint')),
               ),
 
-              // Optional extras, folded away so the form stays short.
-              Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(strings.t('quick_more'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  children: [
+              // Optional extras — always open (owner, 21.10.2026).
+              _FormCard(
+                icon: Icons.local_shipping_outlined,
+                title: strings.t('quick_more'),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Align(
                       alignment: Alignment.centerLeft,
                       child: _Label(strings.t('create_truck_type')),
@@ -451,14 +461,40 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final t in _truckOptions)
+                        for (final t in kTruckTypes)
                           ChoiceChip(
                             label: Text(strings.t('truck_$t')),
-                            selected: _truck == t,
-                            onSelected: (sel) => setState(() => _truck = sel ? t : null),
+                            selected: !_truckOther && _truck == t,
+                            onSelected: (sel) => setState(() {
+                              _truck = sel ? t : null;
+                              _truckOther = false;
+                            }),
                           ),
+                        ChoiceChip(
+                          key: const ValueKey('cargo-truck-other'),
+                          label: Text(strings.t('quick_other')),
+                          selected: _truckOther,
+                          onSelected: (sel) => setState(() {
+                            _truckOther = sel;
+                            if (sel) _truck = null;
+                          }),
+                        ),
                       ],
                     ),
+                    if (_truckOther)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: TextFormField(
+                          key: const ValueKey('cargo-truck-other-text'),
+                          controller: _truckOtherCtrl,
+                          maxLength: 30,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            labelText: strings.t('create_truck_type'),
+                            hintText: strings.t('quick_truck_other_hint'),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _cargoTypeCtrl,
@@ -486,10 +522,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                         return t.isEmpty || (int.tryParse(t) ?? 0) > 0 ? null : strings.t('cargo_pallet_invalid');
                       },
                     ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
+                ]),
               ),
+              const SizedBox(height: 4),
 
               if (_error != null)
                 Padding(

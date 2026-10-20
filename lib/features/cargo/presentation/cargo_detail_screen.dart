@@ -27,6 +27,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../../carrier/presentation/providers/carrier_providers.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import 'providers/cargo_providers.dart';
+import '../domain/truck_types.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -146,7 +147,7 @@ class _DetailBody extends ConsumerWidget {
                 _InfoRow(strings.t('detail_weight_label'), '${cargo.weightKg.toStringAsFixed(0)} kg'),
                 if (cargo.volumeM3 != null) _InfoRow(strings.t('detail_volume_label'), '${cargo.volumeM3} m³'),
                 if (cargo.palletCount != null) _InfoRow(strings.t('detail_pallets_label'), '${cargo.palletCount}'),
-                if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), cargo.truckType!),
+                if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), truckTypeLabel(strings, cargo.truckType!)),
                 _InfoRow(strings.t('detail_pickup_date_label'), dateFmt.format(cargo.pickupDate)),
                 if (cargo.deliveryDeadline != null)
                   _InfoRow(strings.t('detail_delivery_deadline_label'), dateFmt.format(cargo.deliveryDeadline!)),

@@ -1056,5 +1056,7 @@
   "cargo_pallet_hint": "Örneğin: 12",
   "cargo_pallet_unit": "palet",
   "cargo_pallet_invalid": "Palet sayısı pozitif tam sayı olmalı",
-  "cargo_pay_on_delivery": "Teslimat sonrası ödeme"
+  "cargo_pay_on_delivery": "Teslimat sonrası ödeme",
+  "truck_dump": "Damperli",
+  "quick_truck_other_hint": "Örn. Lowbed, Mega, Jumbo"
 }

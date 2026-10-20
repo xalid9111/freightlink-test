@@ -3,7 +3,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/features/cargo/data/cargo_repository_impl.dart';
+import 'package:freightlink/features/cargo/domain/truck_types.dart';
 import 'package:freightlink/models/cargo_model.dart';
 
 CargoModel _load({double? adv, double? cash, double? bank, int? wait}) => CargoModel(
@@ -101,6 +103,18 @@ void main() {
     });
   });
 
+  group('truck type', () {
+    const s = AppStrings({'truck_tent': 'Tent', 'truck_dump': 'Samosval'});
+    test('Tent, Ref, Samosval, Konteyner first', () {
+      expect(kTruckTypes.take(4), ['tent', 'ref', 'dump', 'container']);
+    });
+    test('known code → its name; a typed type is shown as typed', () {
+      expect(truckTypeLabel(s, 'tent'), 'Tent');
+      expect(truckTypeLabel(s, 'dump'), 'Samosval');
+      expect(truckTypeLabel(s, 'Lafet 3 ox'), 'Lafet 3 ox');
+    });
+  });
+
   group('guards', () {
     String read(String p) => File(p).readAsStringSync();
     test('migration is additive and re-runnable', () {
@@ -154,6 +168,13 @@ void main() {
       }
       expect(read('assets/i18n/az.json').contains('"nav_add_cargo": "Yük hovuzu"'), isTrue);
       expect(read('assets/i18n/az.json').contains('"nav_home": "Yüklər"'), isTrue);
+    });
+    test('"Əlavə məlumat" is always open, with "Digər" to type a truck type', () {
+      final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
+      expect(f.contains('ExpansionTile'), isFalse);
+      expect(f.contains("title: strings.t('quick_more'),"), isTrue);
+      expect(f.contains("key: const ValueKey('cargo-truck-other-text'),"), isTrue);
+      expect(f.contains('for (final t in kTruckTypes)'), isTrue);
     });
     test('load page shows the section only when something is filled', () {
       expect(read('lib/features/cargo/presentation/cargo_detail_screen.dart').contains('if (cargo.hasTerms) ...['), isTrue);

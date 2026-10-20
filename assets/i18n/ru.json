@@ -1056,5 +1056,7 @@
   "cargo_pallet_hint": "Например: 12",
   "cargo_pallet_unit": "палет",
   "cargo_pallet_invalid": "Число палет — целое положительное число",
-  "cargo_pay_on_delivery": "Оплата после доставки"
+  "cargo_pay_on_delivery": "Оплата после доставки",
+  "truck_dump": "Самосвал",
+  "quick_truck_other_hint": "Напр. Трал, Мега, Джамбо"
 }

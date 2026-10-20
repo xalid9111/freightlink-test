@@ -1056,5 +1056,7 @@
   "cargo_pallet_hint": "მაგალითად: 12",
   "cargo_pallet_unit": "პალეტი",
   "cargo_pallet_invalid": "პალეტების რაოდენობა დადებითი მთელი რიცხვი უნდა იყოს",
-  "cargo_pay_on_delivery": "გადახდა მიწოდების შემდეგ"
+  "cargo_pay_on_delivery": "გადახდა მიწოდების შემდეგ",
+  "truck_dump": "თვითმცლელი",
+  "quick_truck_other_hint": "მაგ. ტრალი, მეგა, ჯამბო"
 }
