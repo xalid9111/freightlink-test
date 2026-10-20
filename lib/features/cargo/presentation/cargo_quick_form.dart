@@ -36,12 +36,10 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _customTonsCtrl = TextEditingController();
   final _cargoTypeCtrl = TextEditingController();
   final _palletCtrl = TextEditingController();
-  // Payment terms (0046): empty = that way of paying is not offered.
+  // Advance amount (0046); the other payment ways are only ticked (0047).
   final _advanceCtrl = TextEditingController();
-  final _cashCtrl = TextEditingController();
-  final _bankCtrl = TextEditingController();
   int _freeWait = kDefaultFreeWaitHours;
-  // Ticked payment ways (the box opens only when ticked).
+  // Ticked payment ways: advance (its box opens), cash, delivery, bank.
   final Set<String> _payOn = {};
 
   // Route ends: city + its country, chosen together in one sheet.
@@ -73,8 +71,6 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _cargoTypeCtrl,
       _palletCtrl,
       _advanceCtrl,
-      _cashCtrl,
-      _bankCtrl
     ]) {
       c.dispose();
     }
@@ -101,11 +97,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
-    _cashCtrl.text = amount(c.payCash);
-    _bankCtrl.text = amount(c.payBank);
     _payOn
       ..clear()
-      ..addAll([if (c.payAdvance != null) 'advance', if (c.payCash != null) 'cash', if (c.payBank != null) 'bank']);
+      ..addAll([
+        if (c.payAdvance != null) 'advance',
+        if (c.cashTicked) 'cash',
+        if (c.payOnDelivery) 'delivery',
+        if (c.bankTicked) 'bank',
+      ]);
     _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours! : kDefaultFreeWaitHours;
     _loaded = true;
   }
@@ -224,8 +223,13 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         status: o?.status ?? 'new',
         // Checked by the form validator above (positive or empty).
         payAdvance: _payOn.contains('advance') ? parsePaymentAmount(_advanceCtrl.text) : null,
-        payCash: _payOn.contains('cash') ? parsePaymentAmount(_cashCtrl.text) : null,
-        payBank: _payOn.contains('bank') ? parsePaymentAmount(_bankCtrl.text) : null,
+        // Cash / bank have no amount any more (owner, 21.10.2026); an
+        // amount saved earlier stays while the way stays ticked.
+        payCash: _payOn.contains('cash') ? o?.payCash : null,
+        payBank: _payOn.contains('bank') ? o?.payBank : null,
+        payCashOn: _payOn.contains('cash'),
+        payOnDelivery: _payOn.contains('delivery'),
+        payBankOn: _payOn.contains('bank'),
         freeWaitHours: _freeWait,
       );
 
@@ -409,16 +413,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 strings: strings,
                 currency: _currency,
                 advance: _advanceCtrl,
-                cash: _cashCtrl,
-                bank: _bankCtrl,
                 on: _payOn,
                 onToggle: (k, v) => setState(() {
                   if (v) {
                     _payOn.add(k);
                   } else {
-                    // Unticked: the amount is cleared and not shown on the load.
+                    // Unticked: not shown on the load (the advance amount is cleared).
                     _payOn.remove(k);
-                    ({'advance': _advanceCtrl, 'cash': _cashCtrl, 'bank': _bankCtrl})[k]!.clear();
+                    if (k == 'advance') _advanceCtrl.clear();
                   }
                 }),
                 freeWait: _freeWait,
@@ -573,8 +575,6 @@ class _PaymentTerms extends StatelessWidget {
   final AppStrings strings;
   final String currency;
   final TextEditingController advance;
-  final TextEditingController cash;
-  final TextEditingController bank;
   final Set<String> on;
   final void Function(String key, bool on) onToggle;
   final int freeWait;
@@ -583,8 +583,6 @@ class _PaymentTerms extends StatelessWidget {
     required this.strings,
     required this.currency,
     required this.advance,
-    required this.cash,
-    required this.bank,
     required this.on,
     required this.onToggle,
     required this.freeWait,
@@ -658,6 +656,39 @@ class _PaymentTerms extends StatelessWidget {
       );
     }
 
+    // Cash, payment after delivery, bank transfer: just a tick, no amount
+    // (the price is already given above).
+    Widget choice(String id, String key) {
+      final ticked = on.contains(id);
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: InkWell(
+            key: ValueKey('cargo-pay-choice-$id'),
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => onToggle(id, !ticked),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [
+                Checkbox(
+                  key: ValueKey('cargo-pay-on-$id'),
+                  value: ticked,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (v) => onToggle(id, v ?? false),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(strings.t(key),
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _FormCard(
         icon: Icons.payments_outlined,
@@ -665,8 +696,9 @@ class _PaymentTerms extends StatelessWidget {
         subtitle: strings.t('cargo_pay_sub'),
         child: Column(children: [
           row('advance', 'cargo_pay_advance', advance),
-          row('cash', 'cargo_pay_cash', cash),
-          row('bank', 'cargo_pay_bank', bank),
+          choice('cash', 'cargo_pay_cash'),
+          choice('delivery', 'cargo_pay_on_delivery'),
+          choice('bank', 'cargo_pay_bank'),
         ]),
       ),
       const SizedBox(height: 14),

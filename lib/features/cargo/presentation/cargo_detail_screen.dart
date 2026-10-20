@@ -170,7 +170,8 @@ class _DetailBody extends ConsumerWidget {
                   Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
                   for (final (key, amount) in cargo.paymentTerms)
-                    _InfoRow(strings.t(key), '${_amount(amount)} ${cargo.currency}'),
+                    // Only the advance has an amount; the others are just ticked.
+                    _InfoRow(strings.t(key), amount == null ? '✓' : '${_amount(amount)} ${cargo.currency}'),
                   if (cargo.freeWaitHours != null)
                     _InfoRow(strings.t('cargo_wait_short'), strings.t('cargo_wait_hours', {'n': '${cargo.freeWaitHours}'})),
                 ],

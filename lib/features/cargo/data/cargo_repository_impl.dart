@@ -47,23 +47,34 @@ class CargoRepositoryImpl implements CargoRepository {
     // RLS requires owner_id = auth.uid() (migration 0002); an attempt to
     // post cargo under someone else's id is rejected at the database,
     // not just hidden by the UI.
-    final row = await _withTerms((terms) => _client.from('cargo').insert(cargo.toInsertJson(withTerms: terms)).select().single());
+    final row = await _withTerms(
+        (terms, choices) => _client.from('cargo').insert(cargo.toInsertJson(withTerms: terms, withChoices: choices)).select().single());
     return CargoModel.fromJson(row);
   }
 
   @override
   Future<void> update(CargoModel cargo) async {
-    await _withTerms((terms) => _client.from('cargo').update(cargo.toInsertJson(withTerms: terms)).eq('id', cargo.id));
+    await _withTerms(
+        (terms, choices) => _client.from('cargo').update(cargo.toInsertJson(withTerms: terms, withChoices: choices)).eq('id', cargo.id));
   }
 
-  /// Payment terms need migration 0046. Until it is run, a save must not
-  /// fail: the load is saved once more without those columns.
-  Future<T> _withTerms<T>(Future<T> Function(bool terms) run) async {
+  /// Payment terms need migrations 0046 / 0047. Until they are run, a
+  /// save must not fail: the load is saved again without the columns the
+  /// database does not have yet.
+  Future<T> _withTerms<T>(Future<T> Function(bool terms, bool choices) run) async {
     try {
-      return await run(true);
+      return await run(true, true);
     } on PostgrestException catch (e) {
+      if (isMissingChoiceColumn(e.code, e.message)) {
+        try {
+          return await run(true, false);
+        } on PostgrestException catch (e2) {
+          if (!isMissingTermsColumn(e2.code, e2.message)) rethrow;
+          return run(false, false);
+        }
+      }
       if (!isMissingTermsColumn(e.code, e.message)) rethrow;
-      return run(false);
+      return run(false, false);
     }
   }
 
@@ -90,3 +101,7 @@ class CargoRepositoryImpl implements CargoRepository {
 /// 0046 columns, or Postgres "undefined column" (42703).
 bool isMissingTermsColumn(String? code, String message) =>
     (code == 'PGRST204' || code == '42703') && CargoModel.termsColumns.any(message.contains);
+
+/// Same for the 0047 columns.
+bool isMissingChoiceColumn(String? code, String message) =>
+    (code == 'PGRST204' || code == '42703') && CargoModel.choiceColumns.any(message.contains);
