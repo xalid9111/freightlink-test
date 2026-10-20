@@ -237,6 +237,8 @@
   "chat_call_phone": "ტელეფონით დარეკვა",
   "chat_call_whatsapp": "WhatsApp-ით",
   "chat_call_whatsapp_hint": "გაიხსნება WhatsApp ჩატი, დააჭირეთ ზარის ღილაკს",
+  "call_number_title": "ტელეფონის ნომერი",
+  "call_tap_number": "დასარეკად დააჭირეთ ნომერს",
   "chat_chat_deleted": "ჩატი წაიშალა",
   "chat_copied": "დაკოპირდა",
   "chat_copy": "კოპირება",

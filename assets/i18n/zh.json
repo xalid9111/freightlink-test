@@ -237,6 +237,8 @@
   "chat_call_phone": "电话通话",
   "chat_call_whatsapp": "通过 WhatsApp",
   "chat_call_whatsapp_hint": "打开 WhatsApp 聊天后点击通话按钮",
+  "call_number_title": "电话号码",
+  "call_tap_number": "点击号码拨打",
   "chat_chat_deleted": "聊天已删除",
   "chat_copied": "已复制",
   "chat_copy": "复制",

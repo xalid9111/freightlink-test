@@ -237,6 +237,8 @@
   "chat_call_phone": "Позвонить по телефону",
   "chat_call_whatsapp": "Через WhatsApp",
   "chat_call_whatsapp_hint": "Откроется чат WhatsApp, нажмите кнопку звонка",
+  "call_number_title": "Номер телефона",
+  "call_tap_number": "Нажмите на номер, чтобы позвонить",
   "chat_chat_deleted": "Чат удалён",
   "chat_copied": "Скопировано",
   "chat_copy": "Копировать",

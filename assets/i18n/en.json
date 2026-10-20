@@ -237,6 +237,8 @@
   "chat_call_phone": "Phone call",
   "chat_call_whatsapp": "Via WhatsApp",
   "chat_call_whatsapp_hint": "Opens the WhatsApp chat, tap the call button",
+  "call_number_title": "Phone number",
+  "call_tap_number": "Tap the number to call",
   "chat_chat_deleted": "Chat deleted",
   "chat_copied": "Copied",
   "chat_copy": "Copy",
