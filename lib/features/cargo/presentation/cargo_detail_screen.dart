@@ -157,6 +157,27 @@ class _DetailBody extends ConsumerWidget {
             ),
           ),
         ),
+        // Payment terms and free waiting time (0046); only what the owner filled.
+        if (cargo.hasTerms) ...[
+          const SizedBox(height: 16),
+          Card(
+            key: const ValueKey('cargo-terms'),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  for (final (key, amount) in cargo.paymentTerms)
+                    _InfoRow(strings.t(key), '${_amount(amount)} ${cargo.currency}'),
+                  if (cargo.freeWaitHours != null)
+                    _InfoRow(strings.t('cargo_wait_short'), strings.t('cargo_wait_hours', {'n': '${cargo.freeWaitHours}'})),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         // Route map (A loading → B unloading) with road distance; the
         // owner can fine-tune the points. (The delivery-stage stepper
@@ -183,6 +204,8 @@ class _DetailBody extends ConsumerWidget {
       ],
     );
   }
+
+  static String _amount(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
   String _statusLabel(AppStrings strings, String status) {
     // cargo.status uses the same vocabulary as shipments

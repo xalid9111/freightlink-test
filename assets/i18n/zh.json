@@ -237,6 +237,8 @@
   "chat_call_phone": "电话通话",
   "chat_call_whatsapp": "通过 WhatsApp",
   "chat_call_whatsapp_hint": "打开 WhatsApp 聊天后点击通话按钮",
+  "call_number_title": "电话号码",
+  "call_tap_number": "点击号码拨打",
   "chat_chat_deleted": "聊天已删除",
   "chat_copied": "已复制",
   "chat_copy": "复制",
@@ -1037,5 +1039,15 @@
   "mk_vip_pay_soon": "银行卡支付即将开放。届时可在此付款，广告立即成为 VIP。",
   "mk_vip_failed": "订单未创建。广告必须处于有效状态，请重试。",
   "pay_success_vip": "付款已确认。您的广告已成为 VIP。",
-  "mk_vip_extend": "延长 VIP"
+  "mk_vip_extend": "延长 VIP",
+  "cargo_terms_title": "付款和等待条件",
+  "cargo_pay_title": "付款条件",
+  "cargo_pay_advance": "预付款",
+  "cargo_pay_cash": "现金支付",
+  "cargo_pay_bank": "银行转账",
+  "cargo_pay_amount": "金额",
+  "cargo_pay_invalid": "请输入正数金额",
+  "cargo_wait_title": "压车 – 免费等待时间",
+  "cargo_wait_short": "免费等待",
+  "cargo_wait_hours": "{n} 小时"
 }

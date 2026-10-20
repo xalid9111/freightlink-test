@@ -237,6 +237,8 @@
   "chat_call_phone": "Позвонить по телефону",
   "chat_call_whatsapp": "Через WhatsApp",
   "chat_call_whatsapp_hint": "Откроется чат WhatsApp, нажмите кнопку звонка",
+  "call_number_title": "Номер телефона",
+  "call_tap_number": "Нажмите на номер, чтобы позвонить",
   "chat_chat_deleted": "Чат удалён",
   "chat_copied": "Скопировано",
   "chat_copy": "Копировать",
@@ -1037,5 +1039,15 @@
   "mk_vip_pay_soon": "Оплата картой скоро откроется. Тогда вы сможете оплатить здесь и объявление сразу станет VIP.",
   "mk_vip_failed": "Заказ не создан. Объявление должно быть активным; попробуйте ещё раз.",
   "pay_success_vip": "Оплата подтверждена. Ваше объявление стало VIP.",
-  "mk_vip_extend": "Продлить VIP"
+  "mk_vip_extend": "Продлить VIP",
+  "cargo_terms_title": "Условия оплаты и ожидания",
+  "cargo_pay_title": "Условия оплаты",
+  "cargo_pay_advance": "Аванс",
+  "cargo_pay_cash": "Наличные",
+  "cargo_pay_bank": "Банковский перевод",
+  "cargo_pay_amount": "Сумма",
+  "cargo_pay_invalid": "Введите только положительную сумму",
+  "cargo_wait_title": "Простой – бесплатное время ожидания",
+  "cargo_wait_short": "Бесплатное ожидание",
+  "cargo_wait_hours": "{n} ч"
 }

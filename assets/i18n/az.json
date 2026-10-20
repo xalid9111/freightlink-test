@@ -237,6 +237,8 @@
   "chat_call_phone": "Telefonla zəng",
   "chat_call_whatsapp": "WhatsApp ilə",
   "chat_call_whatsapp_hint": "WhatsApp söhbəti açılır, zəng düyməsinə basın",
+  "call_number_title": "Telefon nömrəsi",
+  "call_tap_number": "Zəng etmək üçün nömrəyə basın",
   "chat_chat_deleted": "Söhbət silindi",
   "chat_copied": "Kopyalandı",
   "chat_copy": "Kopyala",
@@ -1037,5 +1039,15 @@
   "mk_vip_pay_soon": "Kartla ödəniş tezliklə açılacaq. Açılan kimi buradan ödəyib elanınızı dərhal VIP edə biləcəksiniz.",
   "mk_vip_failed": "Sifariş yaradılmadı. Elan aktiv olmalıdır; yenidən cəhd edin.",
   "pay_success_vip": "Ödəniş təsdiqləndi. Elanınız VIP oldu.",
-  "mk_vip_extend": "VIP müddətini uzat"
+  "mk_vip_extend": "VIP müddətini uzat",
+  "cargo_terms_title": "Ödəniş və gözləmə şərtləri",
+  "cargo_pay_title": "Ödəniş şərtləri",
+  "cargo_pay_advance": "Avans ödənişi",
+  "cargo_pay_cash": "Nağd ödəniş",
+  "cargo_pay_bank": "Bank köçürməsi",
+  "cargo_pay_amount": "Məbləğ",
+  "cargo_pay_invalid": "Yalnız müsbət məbləğ yazın",
+  "cargo_wait_title": "Prostoy – pulsuz gözləmə müddəti",
+  "cargo_wait_short": "Pulsuz gözləmə",
+  "cargo_wait_hours": "{n} saat"
 }
