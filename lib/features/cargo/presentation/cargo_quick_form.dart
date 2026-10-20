@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -35,6 +36,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _customTonsCtrl = TextEditingController();
   final _cargoTypeCtrl = TextEditingController();
   final _volumeCtrl = TextEditingController();
+  // Payment terms (0046): empty = that way of paying is not offered.
+  final _advanceCtrl = TextEditingController();
+  final _cashCtrl = TextEditingController();
+  final _bankCtrl = TextEditingController();
+  int _freeWait = kDefaultFreeWaitHours;
 
   // Route ends: city + its country, chosen together in one sheet.
   PickedPlace? _from;
@@ -58,7 +64,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
 
   @override
   void dispose() {
-    for (final c in [_priceCtrl, _noteCtrl, _customTonsCtrl, _cargoTypeCtrl, _volumeCtrl]) {
+    for (final c in [
+      _priceCtrl,
+      _noteCtrl,
+      _customTonsCtrl,
+      _cargoTypeCtrl,
+      _volumeCtrl,
+      _advanceCtrl,
+      _cashCtrl,
+      _bankCtrl
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -82,6 +97,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     }
     _truck = _truckOptions.contains(c.truckType) ? c.truckType : null;
     _pickupDate = c.pickupDate;
+    String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
+    _advanceCtrl.text = amount(c.payAdvance);
+    _cashCtrl.text = amount(c.payCash);
+    _bankCtrl.text = amount(c.payBank);
+    _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours! : kDefaultFreeWaitHours;
     _loaded = true;
   }
 
@@ -195,6 +215,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         description: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
         distanceKm: (pickupChanged || destChanged) ? null : o?.distanceKm,
         status: o?.status ?? 'new',
+        // Checked by the form validator above (positive or empty).
+        payAdvance: parsePaymentAmount(_advanceCtrl.text),
+        payCash: parsePaymentAmount(_cashCtrl.text),
+        payBank: parsePaymentAmount(_bankCtrl.text),
+        freeWaitHours: _freeWait,
       );
 
       final repo = ref.read(cargoRepositoryProvider);
@@ -369,6 +394,17 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
               ),
 
               const SizedBox(height: 18),
+              _PaymentTerms(
+                strings: strings,
+                currency: _currency,
+                advance: _advanceCtrl,
+                cash: _cashCtrl,
+                bank: _bankCtrl,
+                freeWait: _freeWait,
+                onFreeWait: (h) => setState(() => _freeWait = h),
+              ),
+
+              const SizedBox(height: 18),
               _Label(strings.t('quick_note')),
               TextFormField(
                 controller: _noteCtrl,
@@ -445,6 +481,110 @@ class _Label extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(text, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
       );
+}
+
+/// "Ödəniş və gözləmə şərtləri" (owner, 20.10.2026): advance / cash /
+/// bank amounts (label on the left, amount box opposite) and the free
+/// waiting time (24 / 36 / 48 h, one choice).
+class _PaymentTerms extends StatelessWidget {
+  final AppStrings strings;
+  final String currency;
+  final TextEditingController advance;
+  final TextEditingController cash;
+  final TextEditingController bank;
+  final int freeWait;
+  final ValueChanged<int> onFreeWait;
+  const _PaymentTerms({
+    required this.strings,
+    required this.currency,
+    required this.advance,
+    required this.cash,
+    required this.bank,
+    required this.freeWait,
+    required this.onFreeWait,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget row(String key, TextEditingController ctrl) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          // Wide screens: label and box stay close together on the left.
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: LayoutBuilder(
+                builder: (context, c) => Row(children: [
+                  Expanded(
+                    child: Text(strings.t(key),
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    // Narrow phones: the box shrinks, the text wraps — never overlaps.
+                    width: (c.maxWidth * 0.48).clamp(110.0, 200.0),
+                    child: TextFormField(
+                      key: ValueKey('cargo-$key'),
+                      controller: ctrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      // Digits and one separator only: no minus sign.
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                      textAlign: TextAlign.end,
+                      decoration: InputDecoration(
+                        hintText: strings.t('cargo_pay_amount'),
+                        // Always visible (suffixText hides while the box is empty).
+                        suffixIcon: Padding(
+                          padding: const EdgeInsets.only(right: 12, left: 4),
+                          child:
+                              Text(currency, style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                        ),
+                        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                        isDense: true,
+                      ),
+                      validator: (v) {
+                        try {
+                          parsePaymentAmount(v);
+                          return null;
+                        } on FormatException {
+                          return strings.t('cargo_pay_invalid');
+                        }
+                      },
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(strings.t('cargo_terms_title'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text)),
+        const SizedBox(height: 12),
+        _Label(strings.t('cargo_pay_title')),
+        row('cargo_pay_advance', advance),
+        row('cargo_pay_cash', cash),
+        row('cargo_pay_bank', bank),
+        const SizedBox(height: 4),
+        _Label(strings.t('cargo_wait_title')),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final h in kFreeWaitChoices)
+            ChoiceChip(
+              key: ValueKey('cargo-wait-$h'),
+              label: Text(strings.t('cargo_wait_hours', {'n': '$h'})),
+              selected: freeWait == h,
+              onSelected: (_) => onFreeWait(h),
+            ),
+        ]),
+      ]),
+    );
+  }
 }
 
 /// Compact route card:  Haradan            ⇄            Haraya

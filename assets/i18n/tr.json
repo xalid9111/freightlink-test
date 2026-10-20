@@ -1039,5 +1039,15 @@
   "mk_vip_pay_soon": "Kartla ödeme yakında açılacak. Açılınca buradan ödeyip ilanınızı hemen VIP yapabileceksiniz.",
   "mk_vip_failed": "Sipariş oluşturulamadı. İlan aktif olmalı; tekrar deneyin.",
   "pay_success_vip": "Ödeme onaylandı. İlanınız VIP oldu.",
-  "mk_vip_extend": "VIP süresini uzat"
+  "mk_vip_extend": "VIP süresini uzat",
+  "cargo_terms_title": "Ödeme ve bekleme koşulları",
+  "cargo_pay_title": "Ödeme koşulları",
+  "cargo_pay_advance": "Avans ödemesi",
+  "cargo_pay_cash": "Nakit ödeme",
+  "cargo_pay_bank": "Banka havalesi",
+  "cargo_pay_amount": "Tutar",
+  "cargo_pay_invalid": "Yalnızca pozitif tutar girin",
+  "cargo_wait_title": "Bekleme – ücretsiz bekleme süresi",
+  "cargo_wait_short": "Ücretsiz bekleme",
+  "cargo_wait_hours": "{n} saat"
 }

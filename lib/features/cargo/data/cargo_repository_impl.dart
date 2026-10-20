@@ -47,13 +47,24 @@ class CargoRepositoryImpl implements CargoRepository {
     // RLS requires owner_id = auth.uid() (migration 0002); an attempt to
     // post cargo under someone else's id is rejected at the database,
     // not just hidden by the UI.
-    final row = await _client.from('cargo').insert(cargo.toInsertJson()).select().single();
+    final row = await _withTerms((terms) => _client.from('cargo').insert(cargo.toInsertJson(withTerms: terms)).select().single());
     return CargoModel.fromJson(row);
   }
 
   @override
   Future<void> update(CargoModel cargo) async {
-    await _client.from('cargo').update(cargo.toInsertJson()).eq('id', cargo.id);
+    await _withTerms((terms) => _client.from('cargo').update(cargo.toInsertJson(withTerms: terms)).eq('id', cargo.id));
+  }
+
+  /// Payment terms need migration 0046. Until it is run, a save must not
+  /// fail: the load is saved once more without those columns.
+  Future<T> _withTerms<T>(Future<T> Function(bool terms) run) async {
+    try {
+      return await run(true);
+    } on PostgrestException catch (e) {
+      if (!isMissingTermsColumn(e.code, e.message)) rethrow;
+      return run(false);
+    }
   }
 
   @override
@@ -74,3 +85,8 @@ class CargoRepositoryImpl implements CargoRepository {
     return (rows as List).map((r) => CargoModel.fromJson(r)).toList();
   }
 }
+
+/// PostgREST "column not in the schema cache" (PGRST204) for one of the
+/// 0046 columns, or Postgres "undefined column" (42703).
+bool isMissingTermsColumn(String? code, String message) =>
+    (code == 'PGRST204' || code == '42703') && CargoModel.termsColumns.any(message.contains);

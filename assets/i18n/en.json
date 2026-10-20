@@ -1039,5 +1039,15 @@
   "mk_vip_pay_soon": "Card payment opens soon. Then you can pay here and your ad becomes VIP at once.",
   "mk_vip_failed": "The order was not created. The ad must be active; try again.",
   "pay_success_vip": "Payment confirmed. Your ad is now VIP.",
-  "mk_vip_extend": "Extend VIP"
+  "mk_vip_extend": "Extend VIP",
+  "cargo_terms_title": "Payment and waiting terms",
+  "cargo_pay_title": "Payment terms",
+  "cargo_pay_advance": "Advance payment",
+  "cargo_pay_cash": "Cash payment",
+  "cargo_pay_bank": "Bank transfer",
+  "cargo_pay_amount": "Amount",
+  "cargo_pay_invalid": "Enter a positive amount only",
+  "cargo_wait_title": "Demurrage – free waiting time",
+  "cargo_wait_short": "Free waiting",
+  "cargo_wait_hours": "{n} hours"
 }

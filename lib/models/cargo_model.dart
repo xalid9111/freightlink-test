@@ -47,6 +47,16 @@ class CargoModel {
   /// the marketplace; the owner still sees them in "My loads".
   final bool isHidden;
 
+  /// "Ödəniş və gözləmə şərtləri" (migration 0046): amounts in [currency]
+  /// for advance / cash / bank transfer; null = not offered (not shown).
+  final double? payAdvance;
+  final double? payCash;
+  final double? payBank;
+
+  /// "Prostoy": free waiting time in hours (24 / 36 / 48); null on loads
+  /// posted before 0046.
+  final int? freeWaitHours;
+
   const CargoModel({
     required this.id,
     required this.ownerId,
@@ -75,6 +85,10 @@ class CargoModel {
     this.status = 'new',
     this.isDemo = false,
     this.isHidden = false,
+    this.payAdvance,
+    this.payCash,
+    this.payBank,
+    this.freeWaitHours,
   });
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
@@ -107,9 +121,26 @@ class CargoModel {
         status: j['status'] as String? ?? 'new',
         isDemo: j['is_demo'] as bool? ?? false,
         isHidden: j['is_hidden'] == true,
+        payAdvance: (j['pay_advance'] as num?)?.toDouble(),
+        payCash: (j['pay_cash'] as num?)?.toDouble(),
+        payBank: (j['pay_bank'] as num?)?.toDouble(),
+        freeWaitHours: (j['free_wait_hours'] as num?)?.toInt(),
       );
 
-  Map<String, dynamic> toInsertJson() => {
+  /// Columns added by migration 0046 (left out if the database does not
+  /// have them yet, see CargoRepositoryImpl).
+  static const termsColumns = ['pay_advance', 'pay_cash', 'pay_bank', 'free_wait_hours'];
+
+  /// Filled payment methods in display order: (i18n key, amount).
+  List<(String, double)> get paymentTerms => [
+        if (payAdvance != null && payAdvance! > 0) ('cargo_pay_advance', payAdvance!),
+        if (payCash != null && payCash! > 0) ('cargo_pay_cash', payCash!),
+        if (payBank != null && payBank! > 0) ('cargo_pay_bank', payBank!),
+      ];
+
+  bool get hasTerms => paymentTerms.isNotEmpty || freeWaitHours != null;
+
+  Map<String, dynamic> toInsertJson({bool withTerms = true}) => {
         'owner_id': ownerId,
         'company_id': companyId,
         'pickup_country': pickupCountry,
@@ -134,5 +165,25 @@ class CargoModel {
         'description': description,
         'distance_km': distanceKm,
         'status': status,
+        if (withTerms) ...{
+          'pay_advance': payAdvance,
+          'pay_cash': payCash,
+          'pay_bank': payBank,
+          'free_wait_hours': freeWaitHours,
+        },
       };
+}
+
+/// Free waiting time choices (hours); 48 is preselected on a new load.
+const kFreeWaitChoices = [24, 36, 48];
+const kDefaultFreeWaitHours = 48;
+
+/// Payment amount typed by the load owner: empty → null (not offered);
+/// otherwise a positive number (comma or dot), else [FormatException].
+double? parsePaymentAmount(String? text) {
+  final t = (text ?? '').trim().replaceAll(' ', '').replaceAll(',', '.');
+  if (t.isEmpty) return null;
+  final v = double.tryParse(t);
+  if (v == null || !v.isFinite || v <= 0 || v >= 1e10) throw const FormatException('amount');
+  return v;
 }
