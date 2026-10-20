@@ -300,19 +300,7 @@ class _Hero extends ConsumerWidget {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-          // "Yük hovuzu" (+) — the add-load button (same form: /cargo/create),
-          // right under the map, lifted onto its faded bottom edge (owner,
-          // 20.10.2026).
-          Transform.translate(
-            offset: const Offset(0, -26),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
-              ),
-            ),
-          ),
+          const SizedBox(height: 14),
           // Three live counters (all real numbers from the database).
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -339,6 +327,16 @@ class _Hero extends ConsumerWidget {
                   value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
                   label: strings.t('home_stat_24h'),
                   onTap: () => _scrollToFeed(),
+                ),
+                // "Yük hovuzu" (+) — the add-load button (same form:
+                // /cargo/create), in line with the counters, right-aligned
+                // (owner, 21.10.2026); with a large text size its label wraps.
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                  ),
                 ),
               ],
             ),
@@ -489,34 +487,36 @@ class _AddLoadButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: onTap,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        // 30 % smaller than before (owner, 21.10.2026) so it fits the
+        // counters' row; the plate runs under the "+" circle.
+        child: Stack(
+          alignment: Alignment.centerRight,
           children: [
-            Flexible(
+            Padding(
+              padding: const EdgeInsets.only(right: 18),
               child: Container(
-                // The plate runs under the "+" circle (negative gap below).
-                padding: const EdgeInsets.fromLTRB(18, 10, 34, 10),
+                padding: const EdgeInsets.fromLTRB(13, 7, 24, 7),
                 decoration: BoxDecoration(
                   color: AppColors.card.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(21),
                   border: Border.all(color: AppColors.line),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 11, offset: const Offset(0, 4))],
                 ),
                 child: Text(label,
                     textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 17, color: AppColors.text, fontWeight: FontWeight.w800)),
+                    style: TextStyle(fontSize: 12, color: AppColors.text, fontWeight: FontWeight.w800)),
               ),
             ),
-            Transform.translate(offset: const Offset(-24, 0), child: Container(
-              width: 52,
-              height: 52,
+            Container(
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.accentFill,
                 shape: BoxShape.circle,
-                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 14, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 10, offset: Offset(0, 3))],
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
-            )),
+              child: const Icon(Icons.add, color: Colors.white, size: 22),
+            ),
           ],
         ),
       ),
