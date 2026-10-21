@@ -18,9 +18,11 @@ import '../../ads/presentation/ads_providers.dart';
 import '../../ads/presentation/sponsored_banner.dart';
 import '../../../models/ad_models.dart';
 import 'providers/route_filter.dart';
+import 'providers/category_providers.dart';
+import 'widgets/cargo_category_bar.dart';
+import '../domain/cargo_categories.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
-import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/layout/desktop_layout.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_repository.dart';
@@ -50,7 +52,23 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     final layout = ref.watch(adsFeedLayoutProvider).valueOrNull ?? AdFeedLayout.defaults;
     final minute = layout.rotateMinutes > 0 ? (ref.watch(adMinuteTickProvider).valueOrNull ?? 0) : 0;
     final rotation = layout.rotateMinutes > 0 ? minute ~/ layout.rotateMinutes : 0;
-    final shown = filter.isActive ? cargoList.where(filter.matches).toList() : cargoList;
+    // Load-type tile / big-small card (0055): the server's answer, or the
+    // same rule on the loaded list until it arrives — instant either way.
+    final cat = ref.watch(cargoCategoryFilterProvider);
+    final catFeed = ref.watch(categoryFeedProvider);
+    List<CargoModel> byCategory(List<CargoModel> all) =>
+        !cat.isActive ? all : (catFeed.valueOrNull ?? all.where(cat.matches).toList());
+    List<CargoModel> visible(List<CargoModel> all) {
+      final l = byCategory(all);
+      return filter.isActive ? l.where(filter.matches).toList() : l;
+    }
+
+    final shown = visible(cargoList);
+    final anyFilter = filter.isActive || cat.isActive;
+    void resetFilters() {
+      ref.read(routeFilterProvider.notifier).state = const RouteFilter();
+      ref.read(cargoCategoryFilterProvider.notifier).state = const CargoCategoryFilter();
+    }
 
     return Scaffold(
       // "Add load" moved to the bottom navigation bar.
@@ -62,6 +80,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           ref.invalidate(adsFeedLayoutProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
+          ref.invalidate(categoryFeedProvider);
+          ref.invalidate(cargoSizeCardsProvider);
         },
         // Open Loads feed = 3D wheel (scale / veil / tilt by distance from
         // the screen centre, detent haptic, gentle snap).
@@ -71,7 +91,21 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             SliverToBoxAdapter(child: _Hero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
+            // Load types + big / small loads (owner, 21.10.2026).
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  CargoTypeTiles(strings: strings, tileHeight: 74, onChanged: _scrollToFeed),
+                  const SizedBox(height: 12),
+                  CargoSizeCards(strings: strings, height: 118, onChanged: _scrollToFeed),
+                ]),
+              ),
+            ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
+            // Small loads: the carrier's own road → loads on the way.
+            if (cat.size == kLoadSizeSmall)
+              SliverToBoxAdapter(child: _EnRouteButton(strings: strings)),
             SliverToBoxAdapter(
               child: Padding(
                 key: _feedHeaderKey,
@@ -82,6 +116,12 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   children: [
                     Text(strings.t('home_open_loads'), style: AppFonts.display(size: 22, color: AppColors.text)),
                     const Spacer(),
+                    if (anyFilter)
+                      TextButton(
+                        key: const ValueKey('cat-reset'),
+                        onPressed: resetFilters,
+                        child: Text(strings.t('cat_reset')),
+                      ),
                     if (marketplaceAsync.hasValue)
                       Text(strings.t('home_results', {'count': '${shown.length}'}),
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
@@ -105,7 +145,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 ),
               ],
               data: (all) {
-                final list = filter.isActive ? all.where(filter.matches).toList() : all;
+                final list = visible(all);
                 // Admin order (0026): smaller priority first.
                 final ads = allAds.where((ad) => _adMatchesLoads(ad, list)).toList()
                   ..sort((a, b) => a.priority != b.priority ? a.priority.compareTo(b.priority) : a.startsAt.compareTo(b.startsAt));
@@ -113,7 +153,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 final showAds = adsOn && ads.isNotEmpty;
                 // No repeat (default): at most one place per ad.
                 final plan = _feedPlan(list.length, showAds, layout, maxAds: layout.repeat ? null : ads.length);
-                if (list.isEmpty && filter.isActive) {
+                if (list.isEmpty && anyFilter) {
                   return [
                     SliverToBoxAdapter(
                       child: Padding(
@@ -125,8 +165,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                             Text(strings.t('route_no_results'), textAlign: TextAlign.center),
                             const SizedBox(height: 10),
                             OutlinedButton(
-                              onPressed: () => ref.read(routeFilterProvider.notifier).state = const RouteFilter(),
-                              child: Text(strings.t('route_clear')),
+                              onPressed: resetFilters,
+                              child: Text(strings.t('cat_reset')),
                             ),
                           ],
                         ),
@@ -199,9 +239,8 @@ bool _adMatchesLoads(Ad ad, List<CargoModel> loads) {
   });
 }
 
-/// Dark hero: brand row, live-map title, the animated map, REAL stats
-/// computed from the open marketplace (no invented numbers), and the
-/// most common routes among the open loads.
+/// Dark hero: brand row, live-map title, the animated map and REAL stats
+/// computed from the open marketplace (no invented numbers).
 class _Hero extends ConsumerWidget {
   final AppStrings strings;
   final List<CargoModel> cargoList;
@@ -210,21 +249,6 @@ class _Hero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final localeCode = ref.watch(currentLocaleProvider).languageCode;
-
-    // Real figures from the loaded list.
-    String key(String v) => Countries.find(v)?.code ?? Countries.normalize(v);
-    final routeCounts = <String, int>{};
-    final routeSample = <String, CargoModel>{};
-    for (final c in cargoList) {
-      final a = key(c.pickupCountry);
-      final b = key(c.destinationCountry);
-      final r = '$a>$b';
-      routeCounts[r] = (routeCounts[r] ?? 0) + 1;
-      routeSample.putIfAbsent(r, () => c);
-    }
-    final topRoutes = routeCounts.keys.toList()..sort((x, y) => routeCounts[y]!.compareTo(routeCounts[x]!));
-
     String stat(int n) => loaded ? '$n' : '—';
 
     // Title, map and counters stand in one cloud scene (the clouds above /
@@ -341,69 +365,51 @@ class _Hero extends ConsumerWidget {
               ],
             ),
           ),
-          // Popular routes stand in the same clouds (owner, 19.10.2026).
-          if (topRoutes.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(strings.t('home_popular_routes'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSoft)),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 52,
-              child: MouseDragScroll(child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: topRoutes.length > 5 ? 5 : topRoutes.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, i) {
-                  final r = topRoutes[i];
-                  final sample = routeSample[r]!;
-                  final from = Countries.find(sample.pickupCountry);
-                  final to = Countries.find(sample.destinationCountry);
-                  final label = (from != null && to != null)
-                      ? '${from.code} → ${to.code}'
-                      : '${Countries.label(sample.pickupCountry, localeCode)} → ${Countries.label(sample.destinationCountry, localeCode)}';
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    // Tap a popular route to filter the list to it.
-                    onTap: (from != null && to != null)
-                        ? () => ref.read(routeFilterProvider.notifier).state = RouteFilter(from: from.code, to: to.code)
-                        : null,
-                    child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.line),
-                    ),
-                    child: Row(
-                      children: [
-                        if (from != null) Text(from.flag, style: const TextStyle(fontSize: 18)),
-                        if (from != null && to != null)
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text('→', style: TextStyle(color: AppColors.accent))),
-                        if (to != null) Text(to.flag, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 8),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                            Text(strings.t('home_route_count', {'count': '${routeCounts[r]}'}),
-                                style: TextStyle(fontSize: 10.5, color: AppColors.textSoft)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  );
-                },
-              )),
-            ),
-          ],
+          // "Populyar marşrutlar" removed (owner, 21.10.2026): the load-type
+          // tiles and the big / small cards come under the hero instead.
             ]),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Yolüstü yük" entry, shown while "Kiçik yüklər" is chosen.
+class _EnRouteButton extends StatelessWidget {
+  final AppStrings strings;
+  const _EnRouteButton({required this.strings});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          key: const ValueKey('enroute-open'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => context.pushOnce('/cargo/en-route'),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.6)),
+            ),
+            child: Row(children: [
+              Icon(Icons.alt_route, color: AppColors.accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(strings.t('enroute_title'), style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.text)),
+                  Text(strings.t('enroute_sub'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                ]),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.textSoft),
+            ]),
+          ),
+        ),
       ),
     );
   }

@@ -2,8 +2,8 @@ part of 'cargo_marketplace_screen.dart';
 
 // Desktop "Yüklər" page (owner's desktop design, 19.10.2026): a wide hero
 // with the live map in clouds, top search / bell / account, the counters
-// and "Yük əlavə et"; then popular routes, the route search and the open
-// loads as a grid. Same data, providers and actions as the mobile page —
+// and "Yük əlavə et"; then the load types + big / small loads, the route
+// search and the open loads as a grid. Same data, providers and actions as the mobile page —
 // only the layout is different. Shown from kDesktopMinWidth on.
 
 /// Text typed in the desktop top search: filters the open loads below.
@@ -63,10 +63,21 @@ class _DesktopMarketplace extends ConsumerWidget {
     final layout = ref.watch(adsFeedLayoutProvider).valueOrNull ?? AdFeedLayout.defaults;
     final minute = layout.rotateMinutes > 0 ? (ref.watch(adMinuteTickProvider).valueOrNull ?? 0) : 0;
     final rotation = layout.rotateMinutes > 0 ? minute ~/ layout.rotateMinutes : 0;
-    List<CargoModel> visible(List<CargoModel> all) =>
-        all.where((c) => (!filter.isActive || filter.matches(c)) && deskLoadMatches(c, query, lang)).toList();
+    // Load-type tile / big-small card (0055), as on the phone.
+    final cat = ref.watch(cargoCategoryFilterProvider);
+    final catFeed = ref.watch(categoryFeedProvider);
+    List<CargoModel> visible(List<CargoModel> all) {
+      final base = !cat.isActive ? all : (catFeed.valueOrNull ?? all.where(cat.matches).toList());
+      return base.where((c) => (!filter.isActive || filter.matches(c)) && deskLoadMatches(c, query, lang)).toList();
+    }
+
     final shown = visible(cargoList);
-    final searching = filter.isActive || query.trim().isNotEmpty;
+    final searching = filter.isActive || query.trim().isNotEmpty || cat.isActive;
+    void resetFilters() {
+      ref.read(routeFilterProvider.notifier).state = const RouteFilter();
+      ref.read(_deskQueryProvider.notifier).state = '';
+      ref.read(cargoCategoryFilterProvider.notifier).state = const CargoCategoryFilter();
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -78,11 +89,27 @@ class _DesktopMarketplace extends ConsumerWidget {
           ref.invalidate(adsFeedLayoutProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
+          ref.invalidate(categoryFeedProvider);
+          ref.invalidate(cargoSizeCardsProvider);
         },
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _DeskHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
-            SliverToBoxAdapter(child: _DeskBody(child: _DeskPopularRoutes(strings: strings, cargoList: cargoList))),
+            // "Populyar marşrutlar" → load types + big / small loads (owner, 21.10.2026).
+            SliverToBoxAdapter(
+              child: _DeskBody(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Expanded(flex: 5, child: CargoTypeTiles(strings: strings, tileHeight: 96, onChanged: _scrollToFeed)),
+                    const SizedBox(width: 16),
+                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 128, onChanged: _scrollToFeed)),
+                  ]),
+                ),
+              ),
+            ),
+            if (cat.size == kLoadSizeSmall)
+              SliverToBoxAdapter(child: _DeskBody(child: _EnRouteButton(strings: strings))),
             SliverToBoxAdapter(child: _DeskBody(child: _DeskRouteSearch(strings: strings))),
             SliverToBoxAdapter(
               child: _DeskBody(
@@ -94,6 +121,12 @@ class _DesktopMarketplace extends ConsumerWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Expanded(child: Text(strings.t('home_open_loads'), style: AppFonts.display(size: 24, color: AppColors.text))),
+                      if (searching)
+                        TextButton(
+                          key: const ValueKey('cat-reset'),
+                          onPressed: resetFilters,
+                          child: Text(strings.t('cat_reset')),
+                        ),
                       if (marketplaceAsync.hasValue)
                         Text(strings.t('home_results', {'count': '${shown.length}'}),
                             style: TextStyle(fontSize: 16, color: AppColors.textSoft)),
@@ -131,11 +164,8 @@ class _DesktopMarketplace extends ConsumerWidget {
                             Text(strings.t('route_no_results'), textAlign: TextAlign.center),
                             const SizedBox(height: 10),
                             OutlinedButton(
-                              onPressed: () {
-                                ref.read(routeFilterProvider.notifier).state = const RouteFilter();
-                                ref.read(_deskQueryProvider.notifier).state = '';
-                              },
-                              child: Text(strings.t('route_clear')),
+                              onPressed: resetFilters,
+                              child: Text(strings.t('cat_reset')),
                             ),
                           ],
                         ),
@@ -568,157 +598,6 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
   }
 }
 
-/// "Populyar marşrutlar": the most common routes of the open loads, five
-/// cards at a time; the arrow shows the next ones. Tap = filter the loads.
-class _DeskPopularRoutes extends ConsumerStatefulWidget {
-  final AppStrings strings;
-  final List<CargoModel> cargoList;
-  const _DeskPopularRoutes({required this.strings, required this.cargoList});
-
-  @override
-  ConsumerState<_DeskPopularRoutes> createState() => _DeskPopularRoutesState();
-}
-
-class _DeskPopularRoutesState extends ConsumerState<_DeskPopularRoutes> {
-  final _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.strings;
-    String key(String v) => Countries.find(v)?.code ?? Countries.normalize(v);
-    final counts = <String, int>{};
-    final sample = <String, CargoModel>{};
-    for (final c in widget.cargoList) {
-      final r = '${key(c.pickupCountry)}>${key(c.destinationCountry)}';
-      counts[r] = (counts[r] ?? 0) + 1;
-      sample.putIfAbsent(r, () => c);
-    }
-    final routes = counts.keys.toList()..sort((x, y) => counts[y]!.compareTo(counts[x]!));
-    if (routes.isEmpty) return const SizedBox(height: 8);
-    final lang = ref.watch(currentLocaleProvider).languageCode;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(2, 4, 2, 14),
-          child: Text(s.t('home_popular_routes'), style: AppFonts.display(size: 21, color: AppColors.text)),
-        ),
-        LayoutBuilder(
-          builder: (context, c) {
-            const gap = 16.0;
-            // 5 cards on a wide window, 4 on a narrower one, so the codes always fit.
-            final perView = c.maxWidth >= 1200 ? 5 : 4;
-            final more = routes.length > perView;
-            final cardW = (c.maxWidth - (perView - 1) * gap - (more ? 40 : 0)) / perView;
-            return SizedBox(
-              height: 80,
-              child: Stack(
-                children: [
-                  MouseDragScroll(child: ListView.separated(
-                    controller: _scroll,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: routes.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: gap),
-                    itemBuilder: (context, i) {
-                      final r = routes[i];
-                      final from = Countries.find(sample[r]!.pickupCountry);
-                      final to = Countries.find(sample[r]!.destinationCountry);
-                      final label = (from != null && to != null)
-                          ? '${from.code} → ${to.code}'
-                          : '${Countries.label(sample[r]!.pickupCountry, lang)} → ${Countries.label(sample[r]!.destinationCountry, lang)}';
-                      return SizedBox(
-                        width: cardW,
-                        child: Material(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(14),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: (from != null && to != null)
-                                ? () {
-                                    ref.read(routeFilterProvider.notifier).state = RouteFilter(from: from.code, to: to.code);
-                                    _scrollToFeed();
-                                  }
-                                : null,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: AppColors.line),
-                              ),
-                              child: Row(
-                                children: [
-                                  if (from != null) Text(from.flag, style: const TextStyle(fontSize: 26)),
-                                  if (from != null && to != null)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                                      child: Text('→', style: TextStyle(color: AppColors.accent, fontSize: 18)),
-                                    ),
-                                  if (to != null) Text(to.flag, style: const TextStyle(fontSize: 26)),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(label,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
-                                        const SizedBox(height: 2),
-                                        Text(s.t('home_route_count', {'count': '${counts[r]}'}),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 14, color: AppColors.textSoft)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  )),
-                  if (more)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: Material(
-                          color: AppColors.card,
-                          shape: CircleBorder(side: BorderSide(color: AppColors.line)),
-                          elevation: 2,
-                          child: IconButton(
-                            key: const ValueKey('desk-routes-next'),
-                            icon: Icon(Icons.chevron_right, color: AppColors.text),
-                            onPressed: () {
-                              final p = _scroll.position;
-                              final next = p.pixels >= p.maxScrollExtent - 1
-                                  ? 0.0
-                                  : math.min(p.pixels + (cardW + gap) * (perView - 1), p.maxScrollExtent);
-                              _scroll.animateTo(next, duration: const Duration(milliseconds: 380), curve: Curves.easeOutCubic);
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
 
 /// Wide "Marşrut üzrə yük axtar": FROM ⇄ TO and "Yükləri axtar" in one row;
 /// the same filter, save-route star and "my routes" as on mobile.
