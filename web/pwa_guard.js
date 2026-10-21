@@ -60,4 +60,20 @@
   }
   document.addEventListener('visibilitychange', check);
   window.addEventListener('pageshow', check);
+
+  // 4) Right after a new version is published the browser can still hold
+  //    the old main.dart.js (cached up to 10 minutes) while a separately
+  //    loaded part (e.g. TIR Bazarı) is already new: the part then fails to
+  //    load. Fetch the app files fresh into the cache and reload once
+  //    (max once in 2 minutes). The session and user data are kept.
+  window.flFreshReload = function () {
+    if (!onceIn('fl_fresh_reload', 2 * 60 * 1000)) return false;
+    var files = ['index.html', 'flutter_bootstrap.js', 'main.dart.js'];
+    for (var i = 1; i <= 8; i++) files.push('main.dart.js_' + i + '.part.js');
+    var base = document.baseURI || './';
+    Promise.all(files.map(function (f) {
+      try { return fetch(new URL(f, base).toString(), { cache: 'reload' }).catch(function () {}); } catch (e) { return null; }
+    })).then(function () { window.location.reload(); }, function () { window.location.reload(); });
+    return true;
+  };
 })();

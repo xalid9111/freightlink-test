@@ -34,6 +34,10 @@ class MarketListing {
   final String currency;
   final String? country, city, phone, description;
   final double? lat, lng;
+
+  /// true: [lat]/[lng] is the place the seller marked; false: city centre
+  /// (0053).
+  final bool locationExact;
   final List<String> photos;
   final int views;
   final bool isVip;
@@ -64,6 +68,7 @@ class MarketListing {
     this.description,
     this.lat,
     this.lng,
+    this.locationExact = false,
     this.photos = const [],
     this.views = 0,
     this.isVip = false,
@@ -111,6 +116,7 @@ class MarketListing {
         description: j['description'] as String?,
         lat: _d(j['lat']),
         lng: _d(j['lng']),
+        locationExact: j['location_exact'] == true,
         photos: (j['photos'] is List ? j['photos'] as List : const []).map((e) => '$e').toList(),
         views: _i(j['views']) ?? 0,
         isVip: j['is_vip'] == true,
@@ -128,6 +134,8 @@ class MarketDraft {
   String? brand, model, gearbox, fuel, country, city, phone, description;
   int? year, mileageKm, powerHp;
   double? engineL, price, lat, lng;
+  /// The seller marked the place on the map (0053).
+  bool locationExact;
   String currency;
   List<String> photos;
 
@@ -148,6 +156,7 @@ class MarketDraft {
     this.price,
     this.lat,
     this.lng,
+    this.locationExact = false,
     this.currency = 'USD',
     List<String>? photos,
   }) : photos = photos ?? [];
@@ -169,6 +178,7 @@ class MarketDraft {
         price: l.price,
         lat: l.lat,
         lng: l.lng,
+        locationExact: l.locationExact,
         currency: l.currency,
         photos: [...l.photos],
       );
@@ -191,6 +201,7 @@ class MarketDraft {
         'city': _n(city),
         'lat': lat,
         'lng': lng,
+        'location_exact': locationExact && lat != null && lng != null,
         'phone': _n(phone),
         'description': _n(description),
         'photos': photos,

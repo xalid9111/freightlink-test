@@ -35,7 +35,13 @@ class PageHero {
     this.focusY = 0,
     this.focusDayX = 0,
     this.focusDayY = 0,
+    this.zoom = 1,
+    this.zoomDay = 1,
   });
+
+  /// Zoom into each picture, 1 (whole width) .. 3, 0052.
+  final double zoom, zoomDay;
+  static double _z(Object? v) => ((v as num?)?.toDouble() ?? 1).clamp(1.0, 3.0);
 
   static double _f(Object? v) => ((v as num?)?.toDouble() ?? 0).clamp(-1.0, 1.0);
 
@@ -55,16 +61,45 @@ class PageHero {
         focusY: _f(j['focus_y']),
         focusDayX: _f(j['focus_day_x']),
         focusDayY: _f(j['focus_day_y']),
+        zoom: _z(j['zoom']),
+        zoomDay: _z(j['zoom_day']),
       );
 
   /// The picture for the current theme; the other one if that is missing.
   String? imageFor({required bool day}) => day ? (imageUrlDay ?? imageUrl) : (imageUrl ?? imageUrlDay);
 
   /// Which part of that picture stays in view (follows the picture shown).
-  Alignment alignmentFor({required bool day}) {
-    final useDay = day ? imageUrlDay != null : imageUrl == null;
-    return useDay ? Alignment(focusDayX, focusDayY) : Alignment(focusX, focusY);
-  }
+  Alignment alignmentFor({required bool day}) =>
+      _useDay(day) ? Alignment(focusDayX, focusDayY) : Alignment(focusX, focusY);
+
+  /// The zoom of the picture shown.
+  double zoomFor({required bool day}) => _useDay(day) ? zoomDay : zoom;
+
+  bool _useDay(bool day) => day ? imageUrlDay != null : imageUrl == null;
+}
+
+/// A banner picture: fills the frame, zoomed in [zoom] times around the
+/// chosen point [align] (that part stays in view).
+class PageHeroImage extends StatelessWidget {
+  final String url;
+  final Alignment align;
+  final double zoom;
+  final Widget Function(BuildContext) fallback;
+  const PageHeroImage({super.key, required this.url, required this.align, required this.zoom, required this.fallback});
+
+  @override
+  Widget build(BuildContext context) => ClipRect(
+        child: Transform.scale(
+          scale: zoom,
+          alignment: align,
+          child: Image.network(url,
+              key: ValueKey(url),
+              fit: BoxFit.cover,
+              alignment: align,
+              gaplessPlayback: true,
+              errorBuilder: (c, __, ___) => fallback(c)),
+        ),
+      );
 }
 
 const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero'};
@@ -106,6 +141,13 @@ class PageHeroRepository {
       }).timeout(const Duration(seconds: 15));
     } on PostgrestException catch (e) {
       // 0051 not run yet: the pictures are saved, they stay centred.
+      if (e.code != 'PGRST202') rethrow;
+    }
+    try {
+      await _c.rpc('admin_set_page_hero_zoom',
+          params: {'p_page': page, 'p_zoom': h.zoom, 'p_zoom_day': h.zoomDay}).timeout(const Duration(seconds: 15));
+    } on PostgrestException catch (e) {
+      // 0052 not run yet: the pictures are saved without zoom.
       if (e.code != 'PGRST202') rethrow;
     }
   }
@@ -204,12 +246,11 @@ class PageHeroBanner extends ConsumerWidget {
         height: height,
         child: Stack(fit: StackFit.expand, children: [
           if (img != null)
-            Image.network(img,
-                key: ValueKey(img),
-                fit: BoxFit.cover,
-                alignment: hero!.alignmentFor(day: AppColors.isDay),
-                gaplessPlayback: true,
-                errorBuilder: (_, __, ___) => PageHeroGround(icon: icon, iconSize: height * 0.6))
+            PageHeroImage(
+                url: img,
+                align: hero!.alignmentFor(day: AppColors.isDay),
+                zoom: hero.zoomFor(day: AppColors.isDay),
+                fallback: (_) => PageHeroGround(icon: icon, iconSize: height * 0.6))
           else
             PageHeroGround(icon: icon, iconSize: height * 0.6),
           if (onPhoto && texts)
@@ -311,6 +352,9 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
   late bool _showText = widget.hero?.showText ?? true;
   late Offset _focus = Offset(widget.hero?.focusX ?? 0, widget.hero?.focusY ?? 0);
   late Offset _focusDay = Offset(widget.hero?.focusDayX ?? 0, widget.hero?.focusDayY ?? 0);
+  late double _zoom = widget.hero?.zoom ?? 1;
+  late double _zoomDay = widget.hero?.zoomDay ?? 1;
+  double _zoomStart = 1;
   bool _busy = false;
   String? _error;
 
@@ -338,7 +382,9 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
       final url = await ref.read(pageHeroRepositoryProvider).upload(bytes, ext);
       // A new picture starts centred.
       if (mounted) {
-        setState(() => day ? (_day = url, _focusDay = Offset.zero) : (_night = url, _focus = Offset.zero));
+        setState(() => day
+            ? (_day = url, _focusDay = Offset.zero, _zoomDay = 1)
+            : (_night = url, _focus = Offset.zero, _zoom = 1));
       }
     } catch (_) {
       if (mounted) setState(() => _error = 'mk_hero_upload_failed');
@@ -365,7 +411,9 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
                 focusX: _focus.dx,
                 focusY: _focus.dy,
                 focusDayX: _focusDay.dx,
-                focusDayY: _focusDay.dy),
+                focusDayY: _focusDay.dy,
+                zoom: _zoom,
+                zoomDay: _zoomDay),
           );
       ref.invalidate(pageHeroProvider(widget.page));
       if (mounted) Navigator.pop(context);
@@ -378,6 +426,8 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
       }
     }
   }
+
+  void _setZoom(bool day, double v) => setState(() => day ? _zoomDay = v.clamp(1.0, 3.0) : _zoom = v.clamp(1.0, 3.0));
 
   Widget _picture({required bool day}) {
     final url = day ? _day : _night;
@@ -394,25 +444,33 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
               ? PageHeroGround(icon: widget.icon, iconSize: 60)
               : LayoutBuilder(builder: (context, c) {
                   final f = day ? _focusDay : _focus;
+                  final z = day ? _zoomDay : _zoom;
                   void set(Offset o) => setState(() {
                         final v = Offset(o.dx.clamp(-1.0, 1.0), o.dy.clamp(-1.0, 1.0));
                         day ? _focusDay = v : _focus = v;
                       });
                   return GestureDetector(
                     key: ValueKey('page-hero-focus-${day ? 'day' : 'night'}'),
-                    // Dragging moves the picture with the finger.
-                    onPanUpdate: _busy
+                    // One finger moves the picture, two fingers zoom it.
+                    onScaleStart: _busy ? null : (_) => _zoomStart = z,
+                    onScaleUpdate: _busy
                         ? null
-                        : (d) => set(f - Offset(d.delta.dx * 4 / c.maxWidth, d.delta.dy * 4 / c.maxHeight)),
+                        : (d) {
+                            set(f -
+                                Offset(d.focalPointDelta.dx * 4 / (c.maxWidth * z),
+                                    d.focalPointDelta.dy * 4 / (c.maxHeight * z)));
+                            if (d.pointerCount > 1) _setZoom(day, _zoomStart * d.scale);
+                          },
                     onTapUp: _busy
                         ? null
                         : (d) => set(
                             Offset(d.localPosition.dx / c.maxWidth * 2 - 1, d.localPosition.dy / c.maxHeight * 2 - 1)),
                     child: Stack(fit: StackFit.expand, children: [
-                      Image.network(url,
-                          fit: BoxFit.cover,
-                          alignment: Alignment(f.dx, f.dy),
-                          errorBuilder: (_, __, ___) => PageHeroGround(icon: widget.icon, iconSize: 60)),
+                      PageHeroImage(
+                          url: url,
+                          align: Alignment(f.dx, f.dy),
+                          zoom: z,
+                          fallback: (_) => PageHeroGround(icon: widget.icon, iconSize: 60)),
                       const Positioned(
                         right: 6,
                         bottom: 6,
@@ -429,6 +487,21 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
                 }),
         ),
       ),
+      if (url != null)
+        // Zoom: enlarge the picture, then drag it to the part to show.
+        Row(children: [
+          const Icon(Icons.zoom_out, size: 18),
+          Expanded(
+            child: Slider(
+              key: ValueKey('page-hero-zoom-${day ? 'day' : 'night'}'),
+              min: 1,
+              max: 3,
+              value: day ? _zoomDay : _zoom,
+              onChanged: _busy ? null : (v) => _setZoom(day, v),
+            ),
+          ),
+          const Icon(Icons.zoom_in, size: 18),
+        ]),
       const SizedBox(height: 6),
       Wrap(spacing: 4, children: [
         OutlinedButton.icon(
@@ -463,6 +536,7 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
             Text(s.t('hero_pic_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             const SizedBox(height: 2),
             Text(s.t('hero_focus_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            Text(s.t('hero_zoom_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             const SizedBox(height: 6),
             // Off: the picture has its own writing — nothing is written on it.
             SwitchListTile(

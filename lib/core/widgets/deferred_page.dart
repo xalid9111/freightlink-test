@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../autofix/autofix_platform_stub.dart' if (dart.library.js_interop) '../autofix/autofix_platform_web.dart' as platform;
+
 /// Shows a page from a `deferred as` library: its code is downloaded only
 /// the first time the page is opened (smaller first load of the app).
 class DeferredPage extends StatefulWidget {
@@ -12,7 +14,20 @@ class DeferredPage extends StatefulWidget {
 }
 
 class _DeferredPageState extends State<DeferredPage> {
-  late Future<void> _future = widget.load();
+  late Future<void> _future = _load();
+
+  /// Right after a new version is published the old app code can still be
+  /// cached while this part is new, so loading it fails: then fetch fresh
+  /// files and reload the app once (session kept). If that was just done,
+  /// the retry button shows instead.
+  Future<void> _load() async {
+    try {
+      await widget.load();
+    } catch (_) {
+      if (platform.freshReload()) await Future<void>.delayed(const Duration(seconds: 30));
+      rethrow;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -73,10 +73,16 @@ class MarketRepository {
     } else if (current == MarketStatus.pending || current == MarketStatus.rejected) {
       data['status'] = 'draft';
     }
-    final row = id == null
-        ? await _c.from('market_listings').insert({...data, 'owner_id': _me}).select().single().timeout(_timeout)
-        : await _c.from('market_listings').update(data).eq('id', id).select().single().timeout(_timeout);
-    return MarketListing.fromJson(row);
+    Future<Map<String, dynamic>> write(Map<String, dynamic> d) async => id == null
+        ? await _c.from('market_listings').insert({...d, 'owner_id': _me}).select().single().timeout(_timeout)
+        : await _c.from('market_listings').update(d).eq('id', id).select().single().timeout(_timeout);
+    try {
+      return MarketListing.fromJson(await write(data));
+    } on PostgrestException catch (e) {
+      // 0053 not run yet: save without the "exact place" mark.
+      if (!((e.code == 'PGRST204' || e.code == '42703') && e.message.contains('location_exact'))) rethrow;
+      return MarketListing.fromJson(await write({...data}..remove('location_exact')));
+    }
   }
 
   Future<void> markSold(String id) async {
