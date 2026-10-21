@@ -93,9 +93,13 @@ class CargoTypeTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: selected ? AppColors.accent : AppColors.tileLine, width: selected ? 1.6 : 1),
+            // Night: the chosen tile glows orange (owner's night picture).
+            boxShadow: selected && !AppColors.isDay
+                ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.45), blurRadius: 12)]
+                : null,
           ),
           child: Column(children: [
-            Expanded(child: Image.asset(categoryIconAsset(code), fit: BoxFit.contain)),
+            Expanded(child: Image.asset(categoryIconAsset(code, night: !AppColors.isDay), fit: BoxFit.contain)),
             const SizedBox(height: 5),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -215,13 +219,13 @@ class _SizeCard extends StatelessWidget {
     // Plain card when there is no picture: the dark tile colour, never a
     // made-up photo.
     final plain = Container(
-      color: AppColors.tileFg,
+      color: AppColors.sizeCardBg,
       alignment: Alignment.topRight,
       padding: const EdgeInsets.all(12),
       child: Icon(icon == Icons.search ? Icons.local_shipping : Icons.inventory_2, size: 46, color: Colors.white24),
     );
     return Material(
-      color: AppColors.tileFg,
+      color: AppColors.sizeCardBg,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -275,7 +279,7 @@ class _SizeCard extends StatelessWidget {
                   width: 26,
                   height: 26,
                   decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.chevron_right, size: 20, color: AppColors.tileFg),
+                  child: const Icon(Icons.chevron_right, size: 20, color: AppColors.sizeCardBg),
                 ),
               ]),
             ),
@@ -368,7 +372,7 @@ class _SizeCardEditorState extends ConsumerState<_SizeCardEditor> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: _url == null
-                  ? Container(color: AppColors.tileFg, child: const Icon(Icons.image_outlined, color: Colors.white38, size: 48))
+                  ? Container(color: AppColors.sizeCardBg, child: const Icon(Icons.image_outlined, color: Colors.white38, size: 48))
                   : Image.network(_url!, fit: BoxFit.cover),
             ),
           ),

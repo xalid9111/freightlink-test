@@ -16,8 +16,10 @@ const kOtherTruckTypes = ['open', 'tanker'];
 const kLoadSizeBig = 'big';
 const kLoadSizeSmall = 'small';
 
-/// Picture of a category tile ([code] = a truck type or 'groupage').
-String categoryIconAsset(String code) => 'assets/images/cargo/type_$code.png';
+/// Picture of a category tile ([code] = a truck type or 'groupage'):
+/// dark on the white day tile, white on the dark night tile.
+String categoryIconAsset(String code, {bool night = false}) =>
+    'assets/images/cargo/type_$code${night ? '_night' : ''}.png';
 
 /// What the user picked on the Loads page: one truck type OR groupage,
 /// and / or big / small. Route (from / to country) is kept separately

@@ -62,6 +62,7 @@ void main() {
       expect({...kCategoryTruckTypes, ...kOtherTruckTypes}, {'tent', 'ref', 'container', 'dump', 'open', 'tanker'});
       for (final c in [...kCategoryTruckTypes, 'groupage']) {
         expect(File(categoryIconAsset(c)).existsSync(), isTrue, reason: c);
+        expect(File(categoryIconAsset(c, night: true)).existsSync(), isTrue, reason: '$c night');
       }
     });
 

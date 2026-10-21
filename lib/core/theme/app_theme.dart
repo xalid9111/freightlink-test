@@ -100,12 +100,16 @@ class AppColors {
   static void use(AppPalette p) => _p = p;
 
   /// Load-type tiles on the Loads page and the load form (owner,
-  /// 21.10.2026): a white tile, dark navy picture and text, a thin light
-  /// grey border — the same in night and day; selected = light orange.
-  static const Color tileBg = Color(0xFFFFFFFF);
-  static const Color tileFg = Color(0xFF16243A);
-  static const Color tileLine = Color(0xFFE2E7EE);
-  static const Color tileSelectedBg = Color(0xFFFFEADF);
+  /// 21.10.2026). Day: a white tile, dark navy picture and text, a thin
+  /// light grey border. Night: a dark navy tile, white picture and text, a
+  /// thin blue-grey border. Selected: orange.
+  static Color get tileBg => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF0E1A2E);
+  static Color get tileFg => isDay ? const Color(0xFF16243A) : const Color(0xFFFFFFFF);
+  static Color get tileLine => isDay ? const Color(0xFFE2E7EE) : const Color(0xFF2A3B57);
+  static Color get tileSelectedBg => isDay ? const Color(0xFFFFEADF) : const Color(0xFF1A1410);
+
+  /// Ground of a big / small card without a picture (both modes).
+  static const Color sizeCardBg = Color(0xFF16243A);
 
   static Color get background => _p.background;
   static Color get hero => _p.hero;
