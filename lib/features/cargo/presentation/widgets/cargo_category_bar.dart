@@ -153,7 +153,7 @@ class CargoSizeCards extends ConsumerWidget {
   final AppStrings strings;
   final double height;
   final VoidCallback? onChanged;
-  const CargoSizeCards({super.key, required this.strings, this.height = 128, this.onChanged});
+  const CargoSizeCards({super.key, required this.strings, this.height = 64, this.onChanged});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -168,7 +168,7 @@ class CargoSizeCards extends ConsumerWidget {
             key: ValueKey('size-${c.size}'),
             title: strings.t(c.titleKey),
             subtitle: strings.t(c.subtitleKey),
-            icon: c.size == kLoadSizeBig ? Icons.search : Icons.inventory_2_outlined,
+            asset: 'assets/images/cargo/size_${c.size}.png',
             imageUrl: pictures[c.size],
             selected: f.size == c.size,
             height: height,
@@ -194,8 +194,7 @@ class CargoSizeCards extends ConsumerWidget {
 }
 
 class _SizeCard extends StatelessWidget {
-  final String title, subtitle, editTooltip;
-  final IconData icon;
+  final String title, subtitle, editTooltip, asset;
   final String? imageUrl;
   final bool selected;
   final double height;
@@ -205,7 +204,7 @@ class _SizeCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.asset,
     required this.imageUrl,
     required this.selected,
     required this.height,
@@ -216,88 +215,86 @@ class _SizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Plain card when there is no picture: the dark tile colour, never a
-    // made-up photo.
-    final plain = Container(
-      color: AppColors.sizeCardBg,
-      alignment: Alignment.topRight,
-      padding: const EdgeInsets.all(12),
-      child: Icon(icon == Icons.search ? Icons.local_shipping : Icons.inventory_2, size: 46, color: Colors.white24),
-    );
+    // Owner's picture (21.10.2026): a light card (dark at night), the
+    // cut-out picture on the left, the texts on the right, a round arrow;
+    // the chosen card is orange-framed with a soft orange glow.
+    final day = AppColors.isDay;
+    final bg = selected ? AppColors.tileSelectedBg : (day ? AppColors.cardAlt : AppColors.tileBg);
+    final picture = imageUrl == null
+        ? Image.asset(asset, fit: BoxFit.contain)
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(imageUrl!,
+                fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset(asset, fit: BoxFit.contain)),
+          );
+    final arrowSize = (height * 0.34).clamp(18.0, 28.0);
     return Material(
-      color: AppColors.sizeCardBg,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
+      color: bg,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
           height: height,
-          foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: selected ? AppColors.accent : AppColors.line, width: selected ? 2.5 : 1),
+          padding: const EdgeInsets.fromLTRB(6, 5, 6, 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? AppColors.accent : AppColors.tileLine, width: selected ? 1.6 : 1),
+            boxShadow: selected ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.30), blurRadius: 10)] : null,
           ),
-          child: Stack(fit: StackFit.expand, children: [
-            if (imageUrl == null)
-              plain
-            else
-              Image.network(imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => plain),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x00000000), Color(0xD9000000)],
-                  stops: [0.35, 1],
-                ),
+          child: Row(children: [
+            SizedBox(width: height * 1.05, child: picture),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(title,
+                        maxLines: 1, style: TextStyle(color: AppColors.tileFg, fontSize: 14, fontWeight: FontWeight.w800)),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(subtitle, maxLines: 1, style: TextStyle(color: AppColors.textSoft, fontSize: 10.5)),
+                  ),
+                ],
               ),
             ),
-            Positioned(
-              left: 10,
-              right: 8,
-              bottom: 10,
-              child: Row(children: [
-                Icon(icon, color: Colors.white, size: 24),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(title,
-                          maxLines: 1,
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(width: 4),
+            // Pencil (admins) on top, the round arrow at the bottom — never over the texts.
+            SizedBox(
+              width: arrowSize,
+              child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                if (onEdit != null)
+                  Material(
+                    color: Colors.black54,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onEdit,
+                      child: Tooltip(
+                        message: editTooltip,
+                        child: const Padding(padding: EdgeInsets.all(3), child: Icon(Icons.edit, size: 11, color: Colors.white)),
+                      ),
                     ),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(subtitle, maxLines: 1, style: const TextStyle(color: Colors.white, fontSize: 11.5)),
-                    ),
-                  ]),
-                ),
-                const SizedBox(width: 4),
+                  )
+                else
+                  const SizedBox.shrink(),
                 Container(
-                  width: 26,
-                  height: 26,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.chevron_right, size: 20, color: AppColors.sizeCardBg),
+                  width: arrowSize,
+                  height: arrowSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? AppColors.accent : (day ? AppColors.line : Colors.white12),
+                  ),
+                  child: Icon(Icons.chevron_right, size: arrowSize * 0.75, color: selected ? Colors.white : AppColors.tileFg),
                 ),
               ]),
             ),
-            if (onEdit != null)
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Material(
-                  color: Colors.black54,
-                  shape: const CircleBorder(),
-                  child: IconButton(
-                    tooltip: editTooltip,
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-                  ),
-                ),
-              ),
           ]),
         ),
       ),
