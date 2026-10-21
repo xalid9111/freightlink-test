@@ -303,7 +303,16 @@ class _SearchField extends ConsumerStatefulWidget {
 }
 
 class _SearchFieldState extends ConsumerState<_SearchField> {
-  late final TextEditingController _ctrl = TextEditingController(text: ref.read(adminSearchProvider));
+  // Made in initState, not lazily: a lazy controller first touched in
+  // dispose() would read ref after the widget was disposed (AutoFix,
+  // "Cannot use ref after the widget was disposed", /admin).
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: ref.read(adminSearchProvider));
+  }
 
   @override
   void dispose() {

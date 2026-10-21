@@ -207,4 +207,13 @@ void main() {
       expect(s.copyWith(msgSound: false).cargoSound, isTrue);
     });
   });
+
+  group('AutoFix: no "ref after dispose" from lazy text controllers', () {
+    test('controllers that read ref are made in initState', () {
+      final lazy = RegExp(r'late final (TextEditingController )?_\w+ = TextEditingController\(text: ref\.');
+      for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
+        expect(lazy.hasMatch(f.readAsStringSync()), isFalse, reason: f.path);
+      }
+    });
+  });
 }
