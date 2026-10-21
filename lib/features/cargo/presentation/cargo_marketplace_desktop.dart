@@ -103,7 +103,7 @@ class _DesktopMarketplace extends ConsumerWidget {
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Expanded(flex: 5, child: CargoTypeTiles(strings: strings, tileHeight: 96, onChanged: _scrollToFeed)),
                     const SizedBox(width: 16),
-                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 128, onChanged: _scrollToFeed)),
+                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 64, onChanged: _scrollToFeed)),
                   ]),
                 ),
               ),

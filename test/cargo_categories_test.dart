@@ -133,6 +133,16 @@ void main() {
       }
     });
 
+    test('big / small cards: owner pictures, the pallet 35 % smaller', () {
+      final bar = File('lib/features/cargo/presentation/widgets/cargo_category_bar.dart').readAsStringSync();
+      expect(bar.contains('assetScale: c.size == kLoadSizeSmall ? 0.65 : 1,'), isTrue);
+      for (final sz in [kLoadSizeBig, kLoadSizeSmall]) {
+        expect(File('assets/images/cargo/size_$sz.png').existsSync(), isTrue, reason: sz);
+      }
+      expect(mobile.contains('CargoSizeCards(strings: strings, height: 60,'), isTrue);
+      expect(desk.contains('CargoSizeCards(strings: strings, height: 64,'), isTrue);
+    });
+
     test('tile pictures are packaged', () {
       expect(File('pubspec.yaml').readAsStringSync().contains('    - assets/images/cargo/'), isTrue);
     });
