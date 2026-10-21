@@ -1058,5 +1058,11 @@
   "cargo_pallet_invalid": "Pallets must be a positive whole number",
   "cargo_pay_on_delivery": "Payment after delivery",
   "truck_dump": "Dump truck",
-  "quick_truck_other_hint": "e.g. Lowbed, Mega, Jumbo"
+  "quick_truck_other_hint": "e.g. Lowbed, Mega, Jumbo",
+  "svc_hero_title": "Trusted mechanics and services",
+  "svc_hero_accent": "with you on the road",
+  "svc_hero_subtitle": "Repairs, spare parts and services in one place",
+  "hero_pic_night": "🌙 Night picture",
+  "hero_pic_day": "☀️ Day picture",
+  "hero_pic_note": "Night mode shows the night picture, day mode the day picture. If one is missing, the other is shown."
 }

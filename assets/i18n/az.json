@@ -1058,5 +1058,11 @@
   "cargo_pallet_invalid": "Palet sayı müsbət tam ədəd olmalıdır",
   "cargo_pay_on_delivery": "Təhvil sonrası ödəniş",
   "truck_dump": "Samosval",
-  "quick_truck_other_hint": "Məs. Lafet, Mega, Jumbo"
+  "quick_truck_other_hint": "Məs. Lafet, Mega, Jumbo",
+  "svc_hero_title": "Etibarlı ustalar və servislər",
+  "svc_hero_accent": "yolda yanınızda",
+  "svc_hero_subtitle": "Təmir, ehtiyat hissələri və xidmətlər bir yerdə",
+  "hero_pic_night": "🌙 Gecə şəkli",
+  "hero_pic_day": "☀️ Gündüz şəkli",
+  "hero_pic_note": "Gecə rejimində gecə, gündüz rejimində gündüz şəkli görünür. Biri yoxdursa, o biri göstərilir."
 }

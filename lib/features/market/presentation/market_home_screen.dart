@@ -7,6 +7,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../../auth/data/activities_repository.dart';
 import '../../auth/domain/activities.dart';
 import '../domain/market_catalog.dart';
@@ -119,6 +120,19 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                           icon: const Icon(Icons.favorite_border, size: 28),
                         ),
                       ],
+                    ),
+                    // Banner (owner, 21.10.2026): the same as on the computer,
+                    // night / day picture, the admin changes it here too.
+                    const SizedBox(height: 8),
+                    PageHeroBanner(
+                      page: 'market',
+                      strings: s,
+                      kicker: s.t('nav_market'),
+                      defaultTitle: s.t('mk_hero_title'),
+                      defaultAccent: s.t('mk_hero_accent'),
+                      defaultSubtitle: s.t('mk_hero_subtitle'),
+                      icon: Icons.local_shipping,
+                      height: 150,
                     ),
                     if (vip.isNotEmpty) ...[
                       const SizedBox(height: 10),

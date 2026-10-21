@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/layout/desktop_layout.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
@@ -18,6 +19,7 @@ import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/widgets/page_hero.dart';
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
@@ -332,7 +334,34 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
     }
 
     return Scaffold(
-      body: Stack(
+      body: Column(children: [
+        // Banner (owner, 21.10.2026): night / day picture, the admin
+        // changes it here (pencil).
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: LayoutBuilder(
+              builder: (context, c) => PageHeroBanner(
+                page: 'services',
+                strings: s,
+                kicker: s.t('nav_services'),
+                defaultTitle: s.t('svc_hero_title'),
+                defaultAccent: s.t('svc_hero_accent'),
+                defaultSubtitle: s.t('svc_hero_subtitle'),
+                icon: Icons.handyman,
+                compact: !isDesktopLayout(context),
+                height: isDesktopLayout(context) ? (c.maxWidth * 0.16).clamp(180.0, 260.0) : 150,
+              ),
+            ),
+          ),
+        ),
+        // The map and its controls under the banner (no second top inset).
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: Stack(
         children: [
           Positioned.fill(
             child: FlutterMap(
@@ -541,6 +570,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           ),
         ],
       ),
+          ),
+        ),
+      ]),
     );
   }
 }
