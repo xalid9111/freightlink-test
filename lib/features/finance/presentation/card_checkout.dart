@@ -151,7 +151,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
-              child: Text(s.t('pay_test_banner'), style: TextStyle(color: AppColors.blue, fontSize: 12.5)),
+              child: Text(s.t(widget.vip != null ? 'pay_test_banner_vip' : 'pay_test_banner'), style: TextStyle(color: AppColors.blue, fontSize: 12.5)),
             ),
             const SizedBox(height: 10),
           ],
@@ -211,6 +211,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   }
 }
 
+/// The result text: since 0054 a successful TEST payment also makes a VIP
+/// order's ad VIP; for ad (banner) orders TEST still changes nothing.
+String checkoutResultKey({required bool ok, required bool test, required bool vip}) {
+  if (!ok) return 'pay_failed';
+  if (vip) return test ? 'pay_success_vip_test' : 'pay_success_vip';
+  return test ? 'pay_success_test' : 'pay_success';
+}
+
 class _Result extends StatelessWidget {
   final CheckoutPayment payment;
   final AppStrings s;
@@ -219,7 +227,7 @@ class _Result extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ok = payment.status == 'succeeded';
-    final text = ok ? s.t(payment.mode == 'test' ? 'pay_success_test' : (vip ? 'pay_success_vip' : 'pay_success')) : s.t('pay_failed');
+    final text = s.t(checkoutResultKey(ok: ok, test: payment.mode == 'test', vip: vip));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

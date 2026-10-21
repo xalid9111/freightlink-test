@@ -167,4 +167,30 @@ void main() {
       expect(d.contains('if (isAdmin)'), isTrue);
     });
   });
+
+  group('0054 — a successful TEST payment makes the ad VIP', () {
+    test('result text', () {
+      expect(checkoutResultKey(ok: true, test: true, vip: true), 'pay_success_vip_test');
+      expect(checkoutResultKey(ok: true, test: false, vip: true), 'pay_success_vip');
+      // Ad (banner) orders: unchanged.
+      expect(checkoutResultKey(ok: true, test: true, vip: false), 'pay_success_test');
+      expect(checkoutResultKey(ok: true, test: false, vip: false), 'pay_success');
+      expect(checkoutResultKey(ok: false, test: true, vip: true), 'pay_failed');
+    });
+
+    test('new texts in all 6 languages', () {
+      for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
+        final j = File('assets/i18n/$lang.json').readAsStringSync();
+        expect(j.contains('"pay_success_vip_test"'), isTrue, reason: lang);
+        expect(j.contains('"pay_test_banner_vip"'), isTrue, reason: lang);
+      }
+    });
+
+    test('server: VIP applied on any success, ad orders only LIVE', () {
+      final m = File('supabase/migrations/0054_market_vip_test_activates.sql').readAsStringSync();
+      expect(m.contains("if v_new = 'succeeded' and v_pay.market_vip_order_id is not null then"), isTrue);
+      expect(m.contains("if v_new = 'succeeded' and v_pay.mode = 'live' then\n    update ad_orders"), isTrue);
+      expect(m.contains('drop '), isFalse);
+    });
+  });
 }

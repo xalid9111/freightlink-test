@@ -1039,6 +1039,8 @@
   "mk_vip_pay_soon": "银行卡支付即将开放。届时可在此付款，广告立即成为 VIP。",
   "mk_vip_failed": "订单未创建。广告必须处于有效状态，请重试。",
   "pay_success_vip": "付款已确认。您的广告已成为 VIP。",
+  "pay_success_vip_test": "测试付款成功（已由服务器确认）。您的广告已成为 VIP。测试模式下不会扣取真实资金。",
+  "pay_test_banner_vip": "测试模式——不会扣取真实资金。",
   "mk_vip_extend": "延长 VIP",
   "cargo_terms_title": "付款和等待条件",
   "cargo_pay_title": "付款条件",
