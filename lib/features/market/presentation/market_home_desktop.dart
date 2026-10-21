@@ -181,6 +181,8 @@ class _Hero extends ConsumerWidget {
     final subtitle = hero?.subtitle ?? s.t('mk_hero_subtitle');
     // On a photo the text is light; without one it follows the theme.
     final onPhoto = img != null;
+    // Picture with its own writing (0050): no texts and no shade on it.
+    final texts = !onPhoto || (hero?.showText ?? true);
     final ink = onPhoto ? Colors.white : AppColors.text;
     final soft = onPhoto ? Colors.white.withValues(alpha: 0.85) : AppColors.textSoft;
     final shadow = onPhoto ? const [Shadow(color: Color(0x99000000), blurRadius: 14)] : null;
@@ -201,7 +203,7 @@ class _Hero extends ConsumerWidget {
                       errorBuilder: (_, __, ___) => const PageHeroGround(icon: Icons.local_shipping))
                 else
                   const PageHeroGround(icon: Icons.local_shipping),
-                if (onPhoto)
+                if (onPhoto && texts)
                   // Darker on the left so the texts stay readable on any photo.
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -211,6 +213,7 @@ class _Hero extends ConsumerWidget {
                       ),
                     ),
                   ),
+                if (texts)
                 Positioned(
                   left: 36,
                   top: 92,

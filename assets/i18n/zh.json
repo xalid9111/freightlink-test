@@ -1064,5 +1064,8 @@
   "svc_hero_subtitle": "维修、配件和服务一站式",
   "hero_pic_night": "🌙 夜间图片",
   "hero_pic_day": "☀️ 日间图片",
-  "hero_pic_note": "夜间模式显示夜间图片，日间模式显示日间图片。缺少其一时显示另一张。"
+  "hero_pic_note": "夜间模式显示夜间图片，日间模式显示日间图片。缺少其一时显示另一张。",
+  "hero_show_text": "在图片上显示文字",
+  "hero_show_text_on": "下面的文字显示在图片上",
+  "hero_show_text_off": "只显示图片——如果图片自带文字，请保持此设置"
 }

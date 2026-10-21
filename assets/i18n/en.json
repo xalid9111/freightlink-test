@@ -1064,5 +1064,8 @@
   "svc_hero_subtitle": "Repairs, spare parts and services in one place",
   "hero_pic_night": "🌙 Night picture",
   "hero_pic_day": "☀️ Day picture",
-  "hero_pic_note": "Night mode shows the night picture, day mode the day picture. If one is missing, the other is shown."
+  "hero_pic_note": "Night mode shows the night picture, day mode the day picture. If one is missing, the other is shown.",
+  "hero_show_text": "Show text on the picture",
+  "hero_show_text_on": "The texts below are shown on the picture",
+  "hero_show_text_off": "Only the picture is shown — keep it so if the picture has its own text"
 }
