@@ -199,7 +199,11 @@ class _Hero extends ConsumerWidget {
               fit: StackFit.expand,
               children: [
                 if (img != null)
-                  Image.network(img, key: ValueKey(img), fit: BoxFit.cover, gaplessPlayback: true,
+                  Image.network(img,
+                      key: ValueKey(img),
+                      fit: BoxFit.cover,
+                      alignment: hero!.alignmentFor(day: AppColors.isDay),
+                      gaplessPlayback: true,
                       errorBuilder: (_, __, ___) => const PageHeroGround(icon: Icons.local_shipping))
                 else
                   const PageHeroGround(icon: Icons.local_shipping),

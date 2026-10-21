@@ -1067,5 +1067,6 @@
   "hero_pic_note": "Gece modunda gece, gündüz modunda gündüz görseli gösterilir. Biri yoksa diğeri gösterilir.",
   "hero_show_text": "Görselin üzerinde yazı göster",
   "hero_show_text_on": "Aşağıdaki yazılar görselin üzerinde görünür",
-  "hero_show_text_off": "Yalnızca görsel gösterilir — görselde kendi yazınız varsa böyle bırakın"
+  "hero_show_text_off": "Yalnızca görsel gösterilir — görselde kendi yazınız varsa böyle bırakın",
+  "hero_focus_note": "↔ Görseli çerçevede parmakla kaydırın veya bir yere dokunun — çerçevede görünen kısım bannerda öne çıkar."
 }
