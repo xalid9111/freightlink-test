@@ -169,6 +169,8 @@ class CargoSizeCards extends ConsumerWidget {
             title: strings.t(c.titleKey),
             subtitle: strings.t(c.subtitleKey),
             asset: 'assets/images/cargo/size_${c.size}.png',
+            // The pallet is drawn 35 % smaller, so it reads as a small load (owner, 21.10.2026).
+            assetScale: c.size == kLoadSizeSmall ? 0.65 : 1,
             imageUrl: pictures[c.size],
             selected: f.size == c.size,
             height: height,
@@ -195,6 +197,7 @@ class CargoSizeCards extends ConsumerWidget {
 
 class _SizeCard extends StatelessWidget {
   final String title, subtitle, editTooltip, asset;
+  final double assetScale;
   final String? imageUrl;
   final bool selected;
   final double height;
@@ -205,6 +208,7 @@ class _SizeCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.asset,
+    this.assetScale = 1,
     required this.imageUrl,
     required this.selected,
     required this.height,
@@ -221,7 +225,13 @@ class _SizeCard extends StatelessWidget {
     final day = AppColors.isDay;
     final bg = selected ? AppColors.tileSelectedBg : (day ? AppColors.cardAlt : AppColors.tileBg);
     final picture = imageUrl == null
-        ? Image.asset(asset, fit: BoxFit.contain)
+        ? Center(
+            child: FractionallySizedBox(
+              widthFactor: assetScale,
+              heightFactor: assetScale,
+              child: Image.asset(asset, fit: BoxFit.contain),
+            ),
+          )
         : ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(imageUrl!,
