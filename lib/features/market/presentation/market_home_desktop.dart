@@ -199,12 +199,11 @@ class _Hero extends ConsumerWidget {
               fit: StackFit.expand,
               children: [
                 if (img != null)
-                  Image.network(img,
-                      key: ValueKey(img),
-                      fit: BoxFit.cover,
-                      alignment: hero!.alignmentFor(day: AppColors.isDay),
-                      gaplessPlayback: true,
-                      errorBuilder: (_, __, ___) => const PageHeroGround(icon: Icons.local_shipping))
+                  PageHeroImage(
+                      url: img,
+                      align: hero!.alignmentFor(day: AppColors.isDay),
+                      zoom: hero.zoomFor(day: AppColors.isDay),
+                      fallback: (_) => const PageHeroGround(icon: Icons.local_shipping))
                 else
                   const PageHeroGround(icon: Icons.local_shipping),
                 if (onPhoto && texts)

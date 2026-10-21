@@ -9,6 +9,9 @@ external void _reload();
 @JS('flAutoFix.hidden')
 external JSBoolean _hidden();
 
+@JS('flFreshReload')
+external JSBoolean _freshReload();
+
 String userAgent() {
   try {
     return _ua().toDart;
@@ -26,6 +29,16 @@ void reloadPage() {
 bool pageHidden() {
   try {
     return _hidden().toDart;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Fresh app files + one reload (web/pwa_guard.js); false when it was
+/// already done in the last minutes (then the page shows the retry button).
+bool freshReload() {
+  try {
+    return _freshReload().toDart;
   } catch (_) {
     return false;
   }

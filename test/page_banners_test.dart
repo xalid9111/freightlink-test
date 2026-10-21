@@ -56,11 +56,33 @@ void main() {
     });
     test('banner, computer TIR Bazarı and editor use the point', () {
       final f = File('lib/core/widgets/page_hero.dart').readAsStringSync();
-      expect(f.contains('alignment: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
-      expect(f.contains('onPanUpdate:'), isTrue);
+      expect(f.contains('align: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
+      expect(f.contains('onScaleUpdate:'), isTrue);
       expect(File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync()
-          .contains('alignment: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
+          .contains('align: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
     });
+  });
+
+  group('zoom (0052)', () {
+    test('1 by default and on old rows, limited to 1..3, follows the picture shown', () {
+      expect(const PageHero(imageUrl: 'n').zoomFor(day: true), 1);
+      final h = PageHero.fromJson({'image_url': 'n', 'image_url_day': 'd', 'zoom': 2, 'zoom_day': 9});
+      expect([h.zoomFor(day: false), h.zoomFor(day: true)], [2, 3]);
+      expect(PageHero.fromJson({'image_url': 'n', 'zoom': 1.5, 'zoom_day': 3}).zoomFor(day: true), 1.5);
+    });
+    test('editor: slider and two-finger zoom', () {
+      final f = File('lib/core/widgets/page_hero.dart').readAsStringSync();
+      expect(f.contains("key: ValueKey('page-hero-zoom-\${day ? 'day' : 'night'}'),"), isTrue);
+      expect(f.contains('if (d.pointerCount > 1) _setZoom(day, _zoomStart * d.scale);'), isTrue);
+    });
+  });
+
+  test('TIR Bazarı part: a stale cached app reloads itself fresh once (no data touched)', () {
+    expect(File('lib/core/widgets/deferred_page.dart').readAsStringSync().contains('if (platform.freshReload())'), isTrue);
+    final js = File('web/pwa_guard.js').readAsStringSync();
+    expect(js.contains("window.flFreshReload = function () {"), isTrue);
+    expect(js.contains("{ cache: 'reload' }"), isTrue);
+    expect(js.contains('localStorage.'), isFalse);
   });
 
   group('guards', () {

@@ -1068,5 +1068,6 @@
   "hero_show_text": "Şəklin üzərində yazı göstər",
   "hero_show_text_on": "Aşağıdakı yazılar şəklin üstündə görünür",
   "hero_show_text_off": "Yalnız şəkil görünür — şəkildə öz yazınız varsa, belə saxlayın",
-  "hero_focus_note": "↔ Şəkli çərçivədə barmaqla sürüşdürün və ya bir yerə toxunun — çərçivədə görünən hissə bannerdə önə çıxacaq."
+  "hero_focus_note": "↔ Şəkli çərçivədə barmaqla sürüşdürün və ya bir yerə toxunun — çərçivədə görünən hissə bannerdə önə çıxacaq.",
+  "hero_zoom_note": "🔍 Sürüşdürücü və ya iki barmaqla şəkli böyüdün, sonra lazım olan hissəni çərçivəyə gətirin."
 }
