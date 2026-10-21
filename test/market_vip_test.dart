@@ -51,6 +51,26 @@ void main() {
     });
   });
 
+  group('phone: 2 VIP under the banner, then 2 VIP after every 4 ads', () {
+    final plain = List.generate(10, (i) => 'a$i');
+    test('newest VIP on top, the next ones further down, then again from the newest', () {
+      final (top, feed) = marketPhoneVipLayout(['v1', 'v2', 'v3', 'v4', 'v5'], plain);
+      expect(top, ['v1', 'v2']);
+      expect([for (final e in feed) e.$1], ['a0', 'a1', 'a2', 'a3', 'v3', 'v4', 'a4', 'a5', 'a6', 'a7', 'v5', 'v1', 'a8', 'a9']);
+      expect([for (final e in feed) if (e.$2) e.$1], ['v3', 'v4', 'v5', 'v1']);
+    });
+    test('a new VIP comes first and pushes the others down', () {
+      final (top, feed) = marketPhoneVipLayout(['new', 'v1', 'v2'], plain.take(4).toList());
+      expect(top, ['new', 'v1']);
+      expect([for (final e in feed) if (e.$2) e.$1], ['v2', 'new']);
+    });
+    test('no VIP → plain list; one VIP → not twice in one place', () {
+      expect(marketPhoneVipLayout(<String>[], plain).$2.every((e) => !e.$2), isTrue);
+      final (_, feed) = marketPhoneVipLayout(['v1'], plain.take(4).toList());
+      expect([for (final e in feed) e.$1], ['a0', 'a1', 'a2', 'a3', 'v1']);
+    });
+  });
+
   group('models', () {
     test('banner: empty texts fall back to the app defaults', () {
       final h = MarketHero.fromJson({'image_url': ' ', 'title': ' Etibarlı TIR-lar ', 'title_accent': null, 'subtitle': ''});
@@ -119,7 +139,7 @@ void main() {
     test('computer page only on a wide window; the phone page stays', () {
       final home = read('lib/features/market/presentation/market_home_screen.dart');
       expect(home.contains('if (isDesktopLayout(context)) return const MarketHomeDesktop();'), isTrue);
-      expect(home.contains('_VipGrid(items: vip.take(4).toList())'), isTrue);
+      expect(home.contains('_VipGrid(items: vipTop)'), isTrue);
     });
     test('banner edit button only for an admin', () {
       final d = read('lib/features/market/presentation/market_home_desktop.dart');

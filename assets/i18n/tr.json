@@ -1058,5 +1058,11 @@
   "cargo_pallet_invalid": "Palet sayısı pozitif tam sayı olmalı",
   "cargo_pay_on_delivery": "Teslimat sonrası ödeme",
   "truck_dump": "Damperli",
-  "quick_truck_other_hint": "Örn. Lowbed, Mega, Jumbo"
+  "quick_truck_other_hint": "Örn. Lowbed, Mega, Jumbo",
+  "svc_hero_title": "Güvenilir ustalar ve servisler",
+  "svc_hero_accent": "yolda yanınızda",
+  "svc_hero_subtitle": "Tamir, yedek parça ve hizmetler bir arada",
+  "hero_pic_night": "🌙 Gece görseli",
+  "hero_pic_day": "☀️ Gündüz görseli",
+  "hero_pic_note": "Gece modunda gece, gündüz modunda gündüz görseli gösterilir. Biri yoksa diğeri gösterilir."
 }

@@ -1058,5 +1058,11 @@
   "cargo_pallet_invalid": "托盘数必须是正整数",
   "cargo_pay_on_delivery": "交货后付款",
   "truck_dump": "自卸车",
-  "quick_truck_other_hint": "例如：低平板、Mega、Jumbo"
+  "quick_truck_other_hint": "例如：低平板、Mega、Jumbo",
+  "svc_hero_title": "可靠的技师与服务",
+  "svc_hero_accent": "一路相伴",
+  "svc_hero_subtitle": "维修、配件和服务一站式",
+  "hero_pic_night": "🌙 夜间图片",
+  "hero_pic_day": "☀️ 日间图片",
+  "hero_pic_note": "夜间模式显示夜间图片，日间模式显示日间图片。缺少其一时显示另一张。"
 }

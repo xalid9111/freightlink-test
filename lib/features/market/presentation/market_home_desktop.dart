@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/layout/desk_header_actions.dart';
@@ -11,8 +10,8 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../data/market_repository.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
@@ -173,9 +172,10 @@ class _Hero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hero = ref.watch(marketHeroProvider).valueOrNull;
+    final hero = ref.watch(pageHeroProvider('market')).valueOrNull;
     final isAdmin = ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin;
-    final img = hero?.imageUrl;
+    // Night / day picture for the current theme (0049).
+    final img = hero?.imageFor(day: AppColors.isDay);
     final title = hero?.title ?? s.t('mk_hero_title');
     final accent = hero?.titleAccent ?? s.t('mk_hero_accent');
     final subtitle = hero?.subtitle ?? s.t('mk_hero_subtitle');
@@ -198,9 +198,9 @@ class _Hero extends ConsumerWidget {
               children: [
                 if (img != null)
                   Image.network(img, key: ValueKey(img), fit: BoxFit.cover, gaplessPlayback: true,
-                      errorBuilder: (_, __, ___) => _HeroGround(day: AppColors.isDay))
+                      errorBuilder: (_, __, ___) => const PageHeroGround(icon: Icons.local_shipping))
                 else
-                  _HeroGround(day: AppColors.isDay),
+                  const PageHeroGround(icon: Icons.local_shipping),
                 if (onPhoto)
                   // Darker on the left so the texts stay readable on any photo.
                   const DecoratedBox(
@@ -259,7 +259,7 @@ class _Hero extends ConsumerWidget {
                         foregroundColor: Colors.white,
                         shape: const StadiumBorder(),
                       ),
-                      onPressed: () => showDialog<void>(context: context, builder: (_) => _HeroEditDialog(s: s, hero: hero)),
+                      onPressed: () => showPageHeroEditor(context, strings: s, page: 'market', hero: hero, icon: Icons.local_shipping),
                       icon: const Icon(Icons.edit_outlined, size: 18),
                       label: Text(s.t('mk_hero_edit')),
                     ),
@@ -270,29 +270,6 @@ class _Hero extends ConsumerWidget {
         ),
       );
     });
-  }
-}
-
-/// Banner background until the admin adds a picture.
-class _HeroGround extends StatelessWidget {
-  final bool day;
-  const _HeroGround({required this.day});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.card, Color.lerp(AppColors.card, AppColors.accentFill, 0.18)!],
-        ),
-      ),
-      child: Align(
-        alignment: const Alignment(0.75, 0.3),
-        child: Icon(Icons.local_shipping, size: 220, color: AppColors.accent.withValues(alpha: 0.12)),
-      ),
-    );
   }
 }
 
@@ -349,133 +326,6 @@ class _HeroSearchState extends State<_HeroSearch> {
           focusedBorder: InputBorder.none,
         ),
       ),
-    );
-  }
-}
-
-/// Admin, right on the banner: picture (upload) and the three texts.
-/// Saved through admin_market_set_hero (checked + logged on the server).
-class _HeroEditDialog extends ConsumerStatefulWidget {
-  final AppStrings s;
-  final MarketHero? hero;
-  const _HeroEditDialog({required this.s, required this.hero});
-
-  @override
-  ConsumerState<_HeroEditDialog> createState() => _HeroEditDialogState();
-}
-
-class _HeroEditDialogState extends ConsumerState<_HeroEditDialog> {
-  late final _title = TextEditingController(text: widget.hero?.title ?? '');
-  late final _accent = TextEditingController(text: widget.hero?.titleAccent ?? '');
-  late final _subtitle = TextEditingController(text: widget.hero?.subtitle ?? '');
-  late String? _image = widget.hero?.imageUrl;
-  bool _busy = false;
-  String? _error;
-
-  AppStrings get s => widget.s;
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _accent.dispose();
-    _subtitle.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pick() async {
-    final f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2400, maxHeight: 1200, imageQuality: 85);
-    if (f == null || !mounted) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final bytes = await f.readAsBytes();
-      final ext = f.name.contains('.') ? f.name.split('.').last : 'jpg';
-      final url = await ref.read(marketRepositoryProvider).uploadPhoto(bytes, ext);
-      if (mounted) setState(() => _image = url);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'mk_hero_upload_failed');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _save() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref.read(marketRepositoryProvider).adminSetHero(
-            imageUrl: _image,
-            title: _title.text,
-            titleAccent: _accent.text,
-            subtitle: _subtitle.text,
-          );
-      ref.invalidate(marketHeroProvider);
-      if (mounted) Navigator.pop(context);
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _error = 'mk_hero_save_failed';
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    InputDecoration deco(String label, String hint) => InputDecoration(labelText: s.t(label), hintText: s.t(hint));
-    return AlertDialog(
-      title: Text(s.t('mk_hero_edit')),
-      content: SizedBox(
-        width: 520,
-        child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 3.4,
-                child: _image == null
-                    ? _HeroGround(day: AppColors.isDay)
-                    : Image.network(_image!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _HeroGround(day: AppColors.isDay)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(spacing: 8, children: [
-              OutlinedButton.icon(
-                key: const ValueKey('mk-hero-pick'),
-                onPressed: _busy ? null : _pick,
-                icon: const Icon(Icons.image_outlined),
-                label: Text(s.t('mk_hero_pick')),
-              ),
-              if (_image != null)
-                TextButton(onPressed: _busy ? null : () => setState(() => _image = null), child: Text(s.t('mk_hero_remove_pic'))),
-            ]),
-            const SizedBox(height: 10),
-            TextField(controller: _title, maxLength: 80, decoration: deco('mk_hero_f_title', 'mk_hero_title')),
-            TextField(controller: _accent, maxLength: 80, decoration: deco('mk_hero_f_accent', 'mk_hero_accent')),
-            TextField(controller: _subtitle, maxLength: 160, decoration: deco('mk_hero_f_subtitle', 'mk_hero_subtitle')),
-            Text(s.t('mk_hero_empty_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(s.t(_error!), style: TextStyle(color: AppColors.danger)),
-            ],
-          ]),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(s.t('common_cancel'))),
-        FilledButton(
-          key: const ValueKey('mk-hero-save'),
-          onPressed: _busy ? null : _save,
-          child: _busy
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Text(s.t('mk_hero_save')),
-        ),
-      ],
     );
   }
 }

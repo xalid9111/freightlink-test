@@ -187,7 +187,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
     final merged = <MessageModel>[
       for (final a in perTopic)
         for (final m in (a.valueOrNull ?? const <MessageModel>[]))
-          if (visibleToMe(id: m.id, chatId: m.conversationId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel)) m,
+          if (!m.deletedSilent && visibleToMe(id: m.id, chatId: m.conversationId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel)) m,
     ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
     // Mark what I received as read, in every topic.

@@ -46,6 +46,8 @@ class MessageModel {
   final DateTime createdAt;
   /// Set when the sender deleted the message for everyone (0031).
   final DateTime? deletedAt;
+  /// Deleted by the founder without a trace (0048): not shown at all.
+  final bool deletedSilent;
 
   bool get hasAttachment => attachmentPath != null && attachmentPath!.isNotEmpty;
   bool get isDeleted => deletedAt != null;
@@ -65,6 +67,7 @@ class MessageModel {
     this.readAt,
     required this.createdAt,
     this.deletedAt,
+    this.deletedSilent = false,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> j) => MessageModel(
@@ -82,5 +85,6 @@ class MessageModel {
         readAt: j['read_at'] != null ? DateTime.parse(j['read_at']) : null,
         createdAt: DateTime.parse(j['created_at'] as String),
         deletedAt: j['deleted_at'] is String ? DateTime.tryParse(j['deleted_at'] as String) : null,
+        deletedSilent: j['deleted_silent'] == true,
       );
 }

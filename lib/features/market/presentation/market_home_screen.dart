@@ -7,6 +7,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../../auth/data/activities_repository.dart';
 import '../../auth/domain/activities.dart';
 import '../domain/market_catalog.dart';
@@ -73,7 +74,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
 
   Future<void> _refresh() async {
     ref.invalidate(marketFeedProvider);
-    ref.invalidate(marketVipProvider);
+    ref.invalidate(marketVipQueueProvider);
   }
 
   @override
@@ -83,7 +84,9 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
     final s = ref.watch(stringsProvider);
     final filter = ref.watch(marketFilterProvider);
     final feed = ref.watch(marketFeedProvider);
-    final vip = ref.watch(marketVipProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    final vip = ref.watch(marketVipQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    // 2 newest VIP under the banner, then 2 VIP after every 4 ads.
+    final (vipTop, entries) = marketPhoneVipLayout(vip, [for (final l in feed.items) if (!l.vipActive()) l]);
     // Filter changed elsewhere ("Hamısına bax", reset): show its text.
     ref.listen<MarketFilter>(marketFilterProvider, (_, next) {
       if (!_searchFocused && _search.text != (next.q ?? '')) _search.text = next.q ?? '';
@@ -120,9 +123,22 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         ),
                       ],
                     ),
-                    if (vip.isNotEmpty) ...[
+                    // Banner (owner, 21.10.2026): the same as on the computer,
+                    // night / day picture, the admin changes it here too.
+                    const SizedBox(height: 8),
+                    PageHeroBanner(
+                      page: 'market',
+                      strings: s,
+                      kicker: s.t('nav_market'),
+                      defaultTitle: s.t('mk_hero_title'),
+                      defaultAccent: s.t('mk_hero_accent'),
+                      defaultSubtitle: s.t('mk_hero_subtitle'),
+                      icon: Icons.local_shipping,
+                      height: 150,
+                    ),
+                    if (vipTop.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      _VipGrid(items: vip.take(4).toList()),
+                      _VipGrid(items: vipTop),
                     ],
                     const SizedBox(height: 14),
                     _SellBanner(s: s, onTap: () => openNewMarketAd(context, ref, s)),
@@ -218,8 +234,11 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         mainAxisExtent: 236,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, i) => MarketCard(key: ValueKey(feed.items[i].id), l: feed.items[i]),
-                        childCount: feed.items.length,
+                        (context, i) => MarketCard(
+                            // A VIP ad can come again further down: keys by place.
+                            key: ValueKey('${entries[i].$2 ? 'vip' : 'ad'}-$i-${entries[i].$1.id}'),
+                            l: entries[i].$1),
+                        childCount: entries.length,
                       ),
                     ),
                   ),

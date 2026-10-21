@@ -56,6 +56,8 @@ class GroupMessage {
   final DateTime createdAt;
   /// Set when the sender deleted the message for everyone (0031).
   final DateTime? deletedAt;
+  /// Deleted by the founder without a trace (0048): not shown at all.
+  final bool deletedSilent;
 
   const GroupMessage({
     required this.id,
@@ -69,6 +71,7 @@ class GroupMessage {
     this.audioDurationMs,
     required this.createdAt,
     this.deletedAt,
+    this.deletedSilent = false,
   });
 
   bool get hasAttachment => attachmentPath != null && attachmentPath!.isNotEmpty;
@@ -86,6 +89,7 @@ class GroupMessage {
         audioDurationMs: (j['audio_duration_ms'] as num?)?.toInt(),
         createdAt: DateTime.tryParse('${j['created_at']}') ?? DateTime.now(),
         deletedAt: j['deleted_at'] is String ? DateTime.tryParse(j['deleted_at'] as String) : null,
+        deletedSilent: j['deleted_silent'] == true,
       );
 
   /// Same shape as a 1-to-1 message, so the existing attachment / voice
@@ -103,6 +107,7 @@ class GroupMessage {
         audioDurationMs: audioDurationMs,
         createdAt: createdAt,
         deletedAt: deletedAt,
+        deletedSilent: deletedSilent,
       );
 }
 
