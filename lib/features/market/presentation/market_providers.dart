@@ -43,11 +43,6 @@ final marketFeedProvider = StateNotifierProvider.autoDispose<MarketFeedControlle
   return MarketFeedController(ref.watch(marketRepositoryProvider), ref.watch(marketFilterProvider));
 });
 
-final marketVipProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
-  ref.watch(currentUserIdProvider);
-  return ref.watch(marketRepositoryProvider).vip(category: c);
-});
-
 final marketListingProvider = FutureProvider.autoDispose.family<MarketListing?, String>((ref, id) {
   ref.watch(currentUserIdProvider);
   return ref.watch(marketRepositoryProvider).byId(id);
@@ -105,6 +100,13 @@ final marketHeroProvider = FutureProvider.autoDispose<MarketHero?>((ref) {
 final marketVipLatestProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
   ref.watch(currentUserIdProvider);
   return ref.watch(marketRepositoryProvider).vipLatest(category: c);
+});
+
+/// All VIP ads, newest VIP first (phone: 2 under the banner, then 2 after
+/// every 4 ads — marketPhoneVipLayout).
+final marketVipQueueProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).vipLatest(category: c, limit: 24);
 });
 
 /// VIP prices (7 / 14 / 30 days); [activeOnly] false = the admin list.

@@ -417,3 +417,25 @@ class MarketVipOrder {
     [for (var i = 0; i < perSide; i++) at(i * 2 + 1)],
   );
 }
+
+/// Phone TIR Bazarı (owner, 21.10.2026): the [top] newest VIP ads stand
+/// under the banner; in "Bütün elanlar" [per] more VIP ads follow every
+/// [every] ads, the next ones in VIP order (newest first), starting again
+/// from the newest once all were shown. VIP ads are not repeated inside
+/// the plain list. Returns (top, list of (item, isVip)).
+(List<T>, List<(T, bool)>) marketPhoneVipLayout<T>(List<T> vip, List<T> plain,
+    {int top = 2, int every = 4, int per = 2}) {
+  final head = vip.take(top).toList();
+  final out = <(T, bool)>[];
+  var next = top;
+  final perSlot = per < vip.length ? per : vip.length;
+  for (var i = 0; i < plain.length; i++) {
+    out.add((plain[i], false));
+    if (vip.isEmpty || (i + 1) % every != 0) continue;
+    for (var k = 0; k < perSlot; k++) {
+      out.add((vip[next % vip.length], true));
+      next++;
+    }
+  }
+  return (head, out);
+}
