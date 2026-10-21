@@ -469,7 +469,14 @@ class _DeskTopBar extends ConsumerStatefulWidget {
 }
 
 class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
-  late final TextEditingController _text = TextEditingController(text: ref.read(_deskQueryProvider));
+  // Made in initState (not lazily) so dispose() never reads ref.
+  late final TextEditingController _text;
+
+  @override
+  void initState() {
+    super.initState();
+    _text = TextEditingController(text: ref.read(_deskQueryProvider));
+  }
 
   @override
   void dispose() {

@@ -62,7 +62,16 @@ class MarketHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
-  late final _search = TextEditingController(text: ref.read(marketFilterProvider).q ?? '');
+  // Made in initState, not lazily: on a computer build() returns the desktop
+  // page without touching it, and a lazy controller first touched in
+  // dispose() would read ref after the widget was disposed.
+  late final TextEditingController _search;
+
+  @override
+  void initState() {
+    super.initState();
+    _search = TextEditingController(text: ref.read(marketFilterProvider).q ?? '');
+  }
 
   @override
   void dispose() {
