@@ -138,24 +138,15 @@ void main() {
   group('Loads page wiring', () {
     final mobile = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
     final desk = File('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').readAsStringSync();
-    test('"Populyar marşrutlar" is gone; tiles + big / small cards on phone and computer', () {
+    test('"Populyar marşrutlar" and the big / small cards are gone; the choices stay', () {
       expect(mobile.contains('home_popular_routes'), isFalse);
       expect(desk.contains('_DeskPopularRoutes'), isFalse);
       for (final f in [mobile, desk]) {
         expect(f.contains('CargoTypeTiles('), isTrue);
-        expect(f.contains('CargoSizeCards('), isTrue);
+        expect(f.contains('CargoSizeCards('), isFalse);
+        expect(f.contains('if (cat.groupage)'), isTrue);
         expect(f.contains("key: const ValueKey('cat-reset')"), isTrue);
       }
-    });
-
-    test('big / small cards: owner pictures, the pallet 35 % smaller', () {
-      final bar = File('lib/features/cargo/presentation/widgets/cargo_category_bar.dart').readAsStringSync();
-      expect(bar.contains('assetScale: c.size == kLoadSizeSmall ? 0.65 : 1,'), isTrue);
-      for (final sz in [kLoadSizeBig, kLoadSizeSmall]) {
-        expect(File('assets/images/cargo/size_$sz.png').existsSync(), isTrue, reason: sz);
-      }
-      expect(mobile.contains('CargoSizeCards(strings: strings, height: 40,'), isTrue);
-      expect(desk.contains('CargoSizeCards(strings: strings, height: 44,'), isTrue);
     });
 
     test('tile pictures are packaged', () {

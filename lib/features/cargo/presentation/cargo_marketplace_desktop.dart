@@ -90,25 +90,20 @@ class _DesktopMarketplace extends ConsumerWidget {
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
-          ref.invalidate(cargoSizeCardsProvider);
         },
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _DeskHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
-            // "Populyar marşrutlar" → load types + big / small loads (owner, 21.10.2026).
+            // "Populyar marşrutlar" → the load-type choices (owner, 21.10.2026).
             SliverToBoxAdapter(
               child: _DeskBody(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 24),
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(flex: 5, child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed)),
-                    const SizedBox(width: 16),
-                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 44, onChanged: _scrollToFeed)),
-                  ]),
+                  child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
                 ),
               ),
             ),
-            if (cat.size == kLoadSizeSmall)
+            if (cat.groupage)
               SliverToBoxAdapter(child: _DeskBody(child: _EnRouteButton(strings: strings))),
             SliverToBoxAdapter(child: _DeskBody(child: _DeskRouteSearch(strings: strings))),
             SliverToBoxAdapter(
