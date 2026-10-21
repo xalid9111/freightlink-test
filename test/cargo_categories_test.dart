@@ -66,6 +66,15 @@ void main() {
       }
     });
 
+    test('night Tent picture is as big as Ref (no empty band on top)', () {
+      // Same canvas trim for Tent and the two pictures drawn from it.
+      for (final c in ['tent', 'open', 'tanker']) {
+        final bytes = File(categoryIconAsset(c, night: true)).readAsBytesSync();
+        final h = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23]; // PNG height
+        expect(h, 136, reason: c);
+      }
+    });
+
     test('Loads page: seven choices, icon + name only, Açıq and Sistern too', () {
       expect(kCategoryChoices, ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker']);
       for (final c in kCategoryChoices) {
