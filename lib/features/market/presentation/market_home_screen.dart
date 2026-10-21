@@ -231,10 +231,10 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         maxCrossAxisExtent: 260,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        mainAxisExtent: 236,
+                        mainAxisExtent: MarketFeedCard.extent,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, i) => MarketCard(
+                        (context, i) => MarketFeedCard(
                             // A VIP ad can come again further down: keys by place.
                             key: ValueKey('${entries[i].$2 ? 'vip' : 'ad'}-$i-${entries[i].$1.id}'),
                             l: entries[i].$1),
@@ -267,73 +267,24 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
   }
 }
 
+/// The 2 newest VIP under the banner: the same cards as the feed.
 class _VipGrid extends StatelessWidget {
   final List<MarketListing> items;
   const _VipGrid({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.25,
-      children: [for (final l in items) _VipTile(l: l)],
-    );
-  }
-}
-
-/// Big VIP tile: photo with title + price over it (Şəkil 2, top row).
-class _VipTile extends StatelessWidget {
-  final MarketListing l;
-  const _VipTile({required this.l});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      color: AppColors.card,
-      child: InkWell(
-        onTap: () => context.pushOnce('/market/l/${l.id}'),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            MarketPhoto(url: l.cover),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x00000000), Color(0xCC000000)],
-                  stops: [0.45, 1],
-                ),
-              ),
-            ),
-            const Positioned(left: 8, top: 8, child: VipBadge()),
-            Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
-            Positioned(
-              left: 10,
-              right: 10,
-              bottom: 8,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text([l.brand, l.model].whereType<String>().join(' '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
-                  if (l.year != null) Text('${l.year}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text(marketPrice(l.price, l.currency),
-                      style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
-                ],
-              ),
-            ),
-          ],
-        ),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 260,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: MarketFeedCard.extent,
       ),
+      children: [for (final l in items) MarketFeedCard(key: ValueKey('vip-top-${l.id}'), l: l)],
     );
   }
 }
