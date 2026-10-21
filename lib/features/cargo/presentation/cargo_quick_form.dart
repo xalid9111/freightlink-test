@@ -12,7 +12,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/city_picker.dart';
 import '../../../models/cargo_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../domain/cargo_categories.dart';
 import '../domain/truck_types.dart';
+import 'widgets/cargo_category_bar.dart';
 import 'providers/cargo_providers.dart';
 
 /// Quick "post a load" form, built for speed on a phone: countries and
@@ -55,6 +57,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   bool _customTons = false;
   String? _truck;
   bool _truckOther = false;
+  // Big / small load and QRUPAJ (0055); a groupage load is always small.
+  String? _size;
+  bool _groupage = false;
   DateTime? _pickupDate;
   String _currency = kDefaultCargoCurrency;
 
@@ -104,6 +109,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _truckOther = true;
       _truckOtherCtrl.text = tt;
     }
+    _size = c.loadSize;
+    _groupage = c.groupage;
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
@@ -243,6 +250,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         payOnDelivery: _payOn.contains('delivery'),
         payBankOn: _payOn.contains('bank'),
         freeWaitHours: _freeWait,
+        loadSize: effectiveLoadSize(groupage: _groupage, picked: _size),
+        groupage: _groupage,
       );
 
       final repo = ref.read(cargoRepositoryProvider);
@@ -272,6 +281,102 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Widget _loadTypePicker(AppStrings strings) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        for (final t in kCategoryTruckTypes) ...[
+          Expanded(
+            child: CargoTypeTile(
+              key: ValueKey('form-cat-$t'),
+              code: t,
+              label: strings.t('cat_$t'),
+              height: 70,
+              selected: !_truckOther && _truck == t,
+              onTap: () => setState(() {
+                _truck = _truck == t && !_truckOther ? null : t;
+                _truckOther = false;
+              }),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+        // QRUPAJ: a load category on its own (not a truck type).
+        Expanded(
+          child: CargoTypeTile(
+            key: const ValueKey('form-cat-groupage'),
+            code: 'groupage',
+            label: strings.t('cat_groupage'),
+            height: 70,
+            selected: _groupage,
+            onTap: () => setState(() => _groupage = !_groupage),
+          ),
+        ),
+      ]),
+      const SizedBox(height: 10),
+      Text(strings.t('cat_other_types'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+      const SizedBox(height: 6),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final t in kTruckTypes.where((t) => !kCategoryTruckTypes.contains(t)))
+          ChoiceChip(
+            label: Text(strings.t('truck_$t')),
+            selected: !_truckOther && _truck == t,
+            onSelected: (sel) => setState(() {
+              _truck = sel ? t : null;
+              _truckOther = false;
+            }),
+          ),
+        ChoiceChip(
+          key: const ValueKey('cargo-truck-other'),
+          label: Text(strings.t('quick_other')),
+          selected: _truckOther,
+          onSelected: (sel) => setState(() {
+            _truckOther = sel;
+            if (sel) _truck = null;
+          }),
+        ),
+      ]),
+      if (_truckOther)
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: TextFormField(
+            key: const ValueKey('cargo-truck-other-text'),
+            controller: _truckOtherCtrl,
+            maxLength: 30,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+              labelText: strings.t('create_truck_type'),
+              hintText: strings.t('quick_truck_other_hint'),
+            ),
+          ),
+        ),
+      const SizedBox(height: 14),
+      _Label(strings.t('cargo_size_label')),
+      Row(children: [
+        for (final sz in [kLoadSizeBig, kLoadSizeSmall]) ...[
+          Expanded(
+            child: ChoiceChip(
+              key: ValueKey('form-size-$sz'),
+              label: SizedBox(
+                width: double.infinity,
+                child: Text(strings.t(sz == kLoadSizeBig ? 'cargo_size_big_short' : 'cargo_size_small_short'),
+                    textAlign: TextAlign.center),
+              ),
+              selected: effectiveLoadSize(groupage: _groupage, picked: _size) == sz,
+              // QRUPAJ is always a small load.
+              onSelected: _groupage ? null : (sel) => setState(() => _size = sel ? sz : null),
+            ),
+          ),
+          if (sz == kLoadSizeBig) const SizedBox(width: 8),
+        ],
+      ]),
+      if (_groupage)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(strings.t('cargo_groupage_small'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+        ),
+    ]);
   }
 
   @override
@@ -381,6 +486,15 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
               ),
 
               const SizedBox(height: 18),
+              // Load type with the same tiles as the Loads page, QRUPAJ (a
+              // load category, not a truck) and big / small (owner, 21.10.2026).
+              _FormCard(
+                icon: Icons.local_shipping_outlined,
+                title: strings.t('cargo_category_label'),
+                child: _loadTypePicker(strings),
+              ),
+
+              const SizedBox(height: 18),
               // Without "(USD)": the currency is picked next to the price.
               _FormCard(
                 icon: Icons.sell_outlined,
@@ -453,49 +567,6 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 icon: Icons.local_shipping_outlined,
                 title: strings.t('quick_more'),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _Label(strings.t('create_truck_type')),
-                    ),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final t in kTruckTypes)
-                          ChoiceChip(
-                            label: Text(strings.t('truck_$t')),
-                            selected: !_truckOther && _truck == t,
-                            onSelected: (sel) => setState(() {
-                              _truck = sel ? t : null;
-                              _truckOther = false;
-                            }),
-                          ),
-                        ChoiceChip(
-                          key: const ValueKey('cargo-truck-other'),
-                          label: Text(strings.t('quick_other')),
-                          selected: _truckOther,
-                          onSelected: (sel) => setState(() {
-                            _truckOther = sel;
-                            if (sel) _truck = null;
-                          }),
-                        ),
-                      ],
-                    ),
-                    if (_truckOther)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: TextFormField(
-                          key: const ValueKey('cargo-truck-other-text'),
-                          controller: _truckOtherCtrl,
-                          maxLength: 30,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            labelText: strings.t('create_truck_type'),
-                            hintText: strings.t('quick_truck_other_hint'),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
                     TextFormField(
                       controller: _cargoTypeCtrl,
                       decoration: InputDecoration(labelText: strings.t('create_cargo_type')),

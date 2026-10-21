@@ -11,6 +11,7 @@ import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/cargo/presentation/cargo_marketplace_screen.dart';
 import '../../features/cargo/presentation/cargo_quick_form.dart';
+import '../../features/cargo/presentation/en_route_screen.dart';
 import '../../features/cargo/presentation/my_cargo_screen.dart';
 import '../../features/cargo/presentation/cargo_detail_screen.dart';
 import '../../features/cargo/presentation/search_screen.dart';
@@ -137,6 +138,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/cargo/create',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: CargoQuickForm()),
+      ),
+      // "Yolüstü yük" (owner, 21.10.2026): small loads on the carrier's road.
+      GoRoute(
+        path: '/cargo/en-route',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: EnRouteScreen()),
       ),
       GoRoute(
         path: '/cargo-edit/:id',

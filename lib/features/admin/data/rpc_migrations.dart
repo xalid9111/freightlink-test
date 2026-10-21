@@ -108,4 +108,5 @@ const kRpcMigration = <String, String>{
   'admin_set_page_hero': '0049_page_banners.sql',
   'admin_set_page_hero_focus': '0051_page_banner_focus.sql',
   'admin_set_page_hero_zoom': '0052_page_banner_zoom.sql',
+  'admin_set_cargo_size_card': '0055_cargo_categories.sql',
 };

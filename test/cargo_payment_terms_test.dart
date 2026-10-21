@@ -169,12 +169,15 @@ void main() {
       expect(read('assets/i18n/az.json').contains('"nav_add_cargo": "Yük hovuzu"'), isTrue);
       expect(read('assets/i18n/az.json').contains('"nav_home": "Yüklər"'), isTrue);
     });
-    test('"Əlavə məlumat" is always open, with "Digər" to type a truck type', () {
+    test('"Əlavə məlumat" is always open; truck types (with "Digər") in "Yük növü" (0055)', () {
       final f = read('lib/features/cargo/presentation/cargo_quick_form.dart');
       expect(f.contains('ExpansionTile'), isFalse);
       expect(f.contains("title: strings.t('quick_more'),"), isTrue);
+      expect(f.contains("title: strings.t('cargo_category_label'),"), isTrue);
       expect(f.contains("key: const ValueKey('cargo-truck-other-text'),"), isTrue);
-      expect(f.contains('for (final t in kTruckTypes)'), isTrue);
+      // Every truck type is still offered: 4 tiles + "Digər növlər" (Açıq, Sistern).
+      expect(f.contains('for (final t in kCategoryTruckTypes)'), isTrue);
+      expect(f.contains('for (final t in kTruckTypes.where((t) => !kCategoryTruckTypes.contains(t)))'), isTrue);
     });
     test('load page shows the section only when something is filled', () {
       expect(read('lib/features/cargo/presentation/cargo_detail_screen.dart').contains('if (cargo.hasTerms) ...['), isTrue);

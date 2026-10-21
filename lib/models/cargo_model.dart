@@ -63,6 +63,14 @@ class CargoModel {
   /// posted before 0046.
   final int? freeWaitHours;
 
+  /// Big / small load (migration 0055): 'big' | 'small'; null = not known
+  /// (loads posted before 0055 — never guessed).
+  final String? loadSize;
+
+  /// QRUPAJ (groupage) load category (0055) — not a truck type; always
+  /// a small load.
+  final bool groupage;
+
   const CargoModel({
     required this.id,
     required this.ownerId,
@@ -98,6 +106,8 @@ class CargoModel {
     this.payOnDelivery = false,
     this.payBankOn = false,
     this.freeWaitHours,
+    this.loadSize,
+    this.groupage = false,
   });
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
@@ -137,6 +147,8 @@ class CargoModel {
         payOnDelivery: j['pay_on_delivery'] == true,
         payBankOn: j['pay_bank_on'] == true,
         freeWaitHours: (j['free_wait_hours'] as num?)?.toInt(),
+        loadSize: j['load_size'] as String?,
+        groupage: j['groupage'] == true,
       );
 
   /// Columns added by migration 0046 (left out if the database does not
@@ -145,6 +157,9 @@ class CargoModel {
 
   /// Columns added by migration 0047 (left out if not run yet).
   static const choiceColumns = ['pay_cash_on', 'pay_on_delivery', 'pay_bank_on'];
+
+  /// Columns added by migration 0055 (left out if not run yet).
+  static const sizeColumns = ['load_size', 'groupage'];
 
   /// Cash / bank ticked; a load saved with an amount there (0046) counts
   /// as ticked.
@@ -162,7 +177,7 @@ class CargoModel {
 
   bool get hasTerms => paymentTerms.isNotEmpty || freeWaitHours != null;
 
-  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true}) => {
+  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true, bool withSize = true}) => {
         'owner_id': ownerId,
         'company_id': companyId,
         'pickup_country': pickupCountry,
@@ -197,6 +212,10 @@ class CargoModel {
             'pay_on_delivery': payOnDelivery,
             'pay_bank_on': payBankOn,
           },
+        },
+        if (withSize) ...{
+          'load_size': loadSize,
+          'groupage': groupage,
         },
       };
 }

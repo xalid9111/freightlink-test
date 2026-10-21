@@ -11,6 +11,10 @@ abstract class CargoRepository {
     double? maxWeightKg,
   });
 
+  /// Open loads of one category (Loads page tiles / big-small cards),
+  /// filtered on the server (indexed, 0055).
+  Future<List<CargoModel>> fetchByCategory({String? truckType, bool groupage = false, String? loadSize});
+
   Future<CargoModel> fetchById(String id);
   Future<CargoModel> create(CargoModel cargo);
   Future<void> update(CargoModel cargo);

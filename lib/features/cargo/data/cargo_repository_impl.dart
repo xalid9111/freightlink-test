@@ -37,6 +37,20 @@ class CargoRepositoryImpl implements CargoRepository {
   }
 
   @override
+  Future<List<CargoModel>> fetchByCategory({String? truckType, bool groupage = false, String? loadSize}) async {
+    try {
+      var query = _client.from('cargo').select().eq('status', 'new');
+      if (truckType != null) query = query.eq('truck_type', truckType);
+      if (groupage) query = query.eq('groupage', true);
+      if (loadSize != null) query = query.eq('load_size', loadSize);
+      final rows = await query.order('created_at', ascending: false);
+      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => !c.isHidden).toList();
+    } on PostgrestException catch (e) {
+      throw AppException(e.message, code: e.code);
+    }
+  }
+
+  @override
   Future<CargoModel> fetchById(String id) async {
     final row = await _client.from('cargo').select().eq('id', id).single();
     return CargoModel.fromJson(row);
@@ -47,15 +61,29 @@ class CargoRepositoryImpl implements CargoRepository {
     // RLS requires owner_id = auth.uid() (migration 0002); an attempt to
     // post cargo under someone else's id is rejected at the database,
     // not just hidden by the UI.
-    final row = await _withTerms(
-        (terms, choices) => _client.from('cargo').insert(cargo.toInsertJson(withTerms: terms, withChoices: choices)).select().single());
+    final row = await _withSize((size) => _withTerms((terms, choices) => _client
+        .from('cargo')
+        .insert(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size))
+        .select()
+        .single()));
     return CargoModel.fromJson(row);
   }
 
   @override
   Future<void> update(CargoModel cargo) async {
-    await _withTerms(
-        (terms, choices) => _client.from('cargo').update(cargo.toInsertJson(withTerms: terms, withChoices: choices)).eq('id', cargo.id));
+    await _withSize((size) => _withTerms((terms, choices) =>
+        _client.from('cargo').update(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size)).eq('id', cargo.id)));
+  }
+
+  /// Big / small and groupage need migration 0055; until it is run the
+  /// load is saved without them.
+  Future<T> _withSize<T>(Future<T> Function(bool size) run) async {
+    try {
+      return await run(true);
+    } on PostgrestException catch (e) {
+      if (!isMissingSizeColumn(e.code, e.message)) rethrow;
+      return run(false);
+    }
   }
 
   /// Payment terms need migrations 0046 / 0047. Until they are run, a
@@ -101,6 +129,10 @@ class CargoRepositoryImpl implements CargoRepository {
 /// 0046 columns, or Postgres "undefined column" (42703).
 bool isMissingTermsColumn(String? code, String message) =>
     (code == 'PGRST204' || code == '42703') && CargoModel.termsColumns.any(message.contains);
+
+/// Same for the 0055 columns.
+bool isMissingSizeColumn(String? code, String message) =>
+    (code == 'PGRST204' || code == '42703') && CargoModel.sizeColumns.any(message.contains);
 
 /// Same for the 0047 columns.
 bool isMissingChoiceColumn(String? code, String message) =>

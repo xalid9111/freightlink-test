@@ -99,6 +99,14 @@ class AppColors {
   static bool get isDay => _p.isDay;
   static void use(AppPalette p) => _p = p;
 
+  /// Load-type tiles on the Loads page and the load form (owner,
+  /// 21.10.2026): a white tile, dark navy picture and text, a thin light
+  /// grey border — the same in night and day; selected = light orange.
+  static const Color tileBg = Color(0xFFFFFFFF);
+  static const Color tileFg = Color(0xFF16243A);
+  static const Color tileLine = Color(0xFFE2E7EE);
+  static const Color tileSelectedBg = Color(0xFFFFEADF);
+
   static Color get background => _p.background;
   static Color get hero => _p.hero;
   static Color get card => _p.card;
