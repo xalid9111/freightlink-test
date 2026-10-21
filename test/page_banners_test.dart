@@ -80,7 +80,7 @@ void main() {
   test('TIR Bazarı part: a stale cached app reloads itself fresh once (no data touched)', () {
     expect(File('lib/core/widgets/deferred_page.dart').readAsStringSync().contains('if (platform.freshReload())'), isTrue);
     final js = File('web/pwa_guard.js').readAsStringSync();
-    expect(js.contains("window.flFreshReload = function () {"), isTrue);
+    expect(js.contains('window.flFreshReload = function () {'), isTrue);
     expect(js.contains("{ cache: 'reload' }"), isTrue);
     expect(js.contains('localStorage.'), isFalse);
   });

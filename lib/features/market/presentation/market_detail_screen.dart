@@ -464,8 +464,9 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(placeText, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    // Honest: the pin is the city, not an exact address.
-                    Text(s.t('mk_location_city_only'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                    // Honest: say whether the pin is the seller's mark or only the city.
+                    Text(s.t(l.locationExact ? 'mk_location_exact' : 'mk_location_city_only'),
+                        style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                   ]),
                 ),
                 if (l.lat != null && l.lng != null)

@@ -1069,5 +1069,10 @@
   "hero_show_text_on": "下面的文字显示在图片上",
   "hero_show_text_off": "只显示图片——如果图片自带文字，请保持此设置",
   "hero_focus_note": "↔ 在框内拖动图片或点击某处——框内可见部分即横幅显示的部分。",
-  "hero_zoom_note": "🔍 用滑块或双指放大图片，再把需要的部分拖进框内。"
+  "hero_zoom_note": "🔍 用滑块或双指放大图片，再把需要的部分拖进框内。",
+  "mk_place_hint_empty": "点击地图标出车辆所在位置（可选）",
+  "mk_place_hint": "已标记——再次点击可调整",
+  "mk_place_here": "我在这里",
+  "mk_place_clear": "清除标记",
+  "mk_location_exact": "卖家在地图上标出的位置。"
 }

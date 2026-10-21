@@ -1069,5 +1069,10 @@
   "hero_show_text_on": "Aşağıdakı yazılar şəklin üstündə görünür",
   "hero_show_text_off": "Yalnız şəkil görünür — şəkildə öz yazınız varsa, belə saxlayın",
   "hero_focus_note": "↔ Şəkli çərçivədə barmaqla sürüşdürün və ya bir yerə toxunun — çərçivədə görünən hissə bannerdə önə çıxacaq.",
-  "hero_zoom_note": "🔍 Sürüşdürücü və ya iki barmaqla şəkli böyüdün, sonra lazım olan hissəni çərçivəyə gətirin."
+  "hero_zoom_note": "🔍 Sürüşdürücü və ya iki barmaqla şəkli böyüdün, sonra lazım olan hissəni çərçivəyə gətirin.",
+  "mk_place_hint_empty": "Maşının durduğu yeri xəritədə toxunaraq qeyd edin (istəyə bağlı)",
+  "mk_place_hint": "Yer qeyd olundu — dəqiqləşdirmək üçün yenidən toxunun",
+  "mk_place_here": "Buradayam",
+  "mk_place_clear": "Qeydi sil",
+  "mk_location_exact": "Satıcının xəritədə göstərdiyi yer."
 }

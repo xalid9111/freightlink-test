@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../core/constants/currencies.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/city_picker.dart';
+import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/reorder_tile_grid.dart';
 import '../../../services/geo_service.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../services/presentation/gps_logic.dart';
+import '../../services/presentation/services_providers.dart' show userLocationProvider;
 import '../data/market_repository.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
@@ -51,6 +56,11 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
   final _price = TextEditingController();
   final _phone = TextEditingController();
   final _desc = TextEditingController();
+
+  // "Where the truck stands" map (0053).
+  final _mapCtrl = MapController();
+  LatLng? _cityCentre;
+  bool _locating = false;
 
   /// Photos uploaded in this session (deleted again if removed / cancelled).
   final Set<String> _fresh = {};
@@ -174,8 +184,102 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
         ..city = p.city
         ..country = p.country
         ..lat = null
-        ..lng = null;
+        ..lng = null
+        ..locationExact = false;
     });
+    // Show that city on the map; the seller can then mark the exact place.
+    final c = await ref.read(geoServiceProvider).geocode([p.city, p.country].join(', '));
+    if (c == null || !mounted) return;
+    setState(() => _cityCentre = c);
+    try {
+      _mapCtrl.move(c, 11);
+    } catch (_) {}
+  }
+
+  void _markPlace(LatLng p) => setState(() => _d
+    ..lat = p.latitude
+    ..lng = p.longitude
+    ..locationExact = true);
+
+  Future<void> _useGps(AppStrings s) async {
+    setState(() => _locating = true);
+    final p = await ref.read(userLocationProvider.notifier).locate(allowApprox: false);
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (p == null) {
+      final why = gpsMessageKey(ref.read(userLocationProvider).state) ?? 'svc_gps_failed';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(why))));
+      return;
+    }
+    _markPlace(p);
+    try {
+      _mapCtrl.move(p, 15);
+    } catch (_) {}
+  }
+
+  /// Map under the city: tap = where the truck stands (buyers get
+  /// directions to it). Without a mark the city centre is used.
+  Widget _placeMap(AppStrings s) {
+    final marked = _d.locationExact && _d.lat != null && _d.lng != null ? LatLng(_d.lat!, _d.lng!) : null;
+    final centre = marked ?? (_d.lat != null && _d.lng != null ? LatLng(_d.lat!, _d.lng!) : _cityCentre);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(
+          child: Text(s.t(marked == null ? 'mk_place_hint_empty' : 'mk_place_hint'),
+              style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+        ),
+        TextButton.icon(
+          key: const ValueKey('mk-place-gps'),
+          onPressed: _locating ? null : () => _useGps(s),
+          icon: _locating
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.my_location, size: 18),
+          label: Text(s.t('mk_place_here')),
+        ),
+      ]),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 220,
+          child: FlutterMap(
+            key: const ValueKey('mk-place-map'),
+            mapController: _mapCtrl,
+            options: MapOptions(
+              initialCenter: centre ?? const LatLng(40.4093, 49.8671),
+              initialZoom: marked != null ? 15 : (centre != null ? 11 : 6),
+              backgroundColor: AppColors.hero,
+              interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+              onTap: (_, p) => _markPlace(p),
+            ),
+            children: [
+              const AppTileLayer(),
+              if (marked != null)
+                MarkerLayer(markers: [
+                  Marker(
+                    point: marked,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.topCenter,
+                    child: Icon(Icons.location_on, color: AppColors.danger, size: 44),
+                  ),
+                ]),
+            ],
+          ),
+        ),
+      ),
+      if (marked != null)
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => setState(() => _d
+              ..lat = null
+              ..lng = null
+              ..locationExact = false),
+            child: Text(s.t('mk_place_clear')),
+          ),
+        ),
+    ]);
   }
 
   Future<void> _save(AppStrings s, {required bool publish}) async {
@@ -394,6 +498,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                         ),
                       ),
                     ),
+                    _placeMap(s),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _phone,

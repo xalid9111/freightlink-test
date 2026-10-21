@@ -33,6 +33,8 @@ class _FakeRepo extends FinanceRepository {
   Future<void> cancelPayment(String paymentId) async {}
 }
 
+String read(String p) => File(p).readAsStringSync();
+
 void main() {
   group('VIP places beside the ads (3 left, 3 right)', () {
     test('newest first, alternating left / right, free places stay empty', () {
@@ -112,6 +114,24 @@ void main() {
     expect(repo.adCheckouts, 0);
     expect(find.text('Approve (test)'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  group('exact place of the truck (0053)', () {
+    test('marked place is saved; a city-only point is not called exact; old ads read as city centre', () {
+      final d = MarketDraft(lat: 40.4, lng: 49.8, locationExact: true);
+      expect(d.toJson()['location_exact'], isTrue);
+      expect(MarketDraft(lat: null, lng: null, locationExact: true).toJson()['location_exact'], isFalse);
+      final l = MarketListing.fromJson({'id': 'x', 'listing_no': 1, 'owner_id': 'o', 'status': 'active', 'category': 'truck', 'created_at': '2026-10-21T10:00:00Z'});
+      expect(l.locationExact, isFalse);
+      expect(MarketDraft.from(MarketListing.fromJson({'id': 'x', 'listing_no': 1, 'owner_id': 'o', 'status': 'active', 'category': 'truck', 'created_at': '2026-10-21T10:00:00Z', 'lat': 1, 'lng': 2, 'location_exact': true})).locationExact, isTrue);
+    });
+    test('form has the map and GPS; ad page says which kind of point it is', () {
+      final f = read('lib/features/market/presentation/market_edit_screen.dart');
+      expect(f.contains("key: const ValueKey('mk-place-map'),"), isTrue);
+      expect(f.contains('onTap: (_, p) => _markPlace(p),'), isTrue);
+      expect(read('lib/features/market/presentation/market_detail_screen.dart')
+          .contains("l.locationExact ? 'mk_location_exact' : 'mk_location_city_only'"), isTrue);
+    });
   });
 
   group('guards', () {
