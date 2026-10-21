@@ -1107,5 +1107,7 @@
   "enroute_none": "Bu yol üzerinde küçük yük bulunamadı.",
   "enroute_found": "{n} yük yolunuzun üstünde",
   "enroute_off": "Yükleme yoldan {a} km, boşaltma {b} km uzakta",
-  "enroute_skipped": "{n} yükün yeri haritada bulunamadı ve hesaplanmadı."
+  "enroute_skipped": "{n} yükün yeri haritada bulunamadı ve hesaplanmadı.",
+  "cat_open": "AÇIK",
+  "cat_tanker": "TANKER"
 }

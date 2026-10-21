@@ -66,6 +66,30 @@ void main() {
       }
     });
 
+    test('night Tent picture is as big as Ref (no empty band on top)', () {
+      // Same canvas trim for Tent and the two pictures drawn from it.
+      for (final c in ['tent', 'open', 'tanker']) {
+        final bytes = File(categoryIconAsset(c, night: true)).readAsBytesSync();
+        final h = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23]; // PNG height
+        expect(h, 136, reason: c);
+      }
+    });
+
+    test('Loads page: seven choices, icon + name only, Açıq and Sistern too', () {
+      expect(kCategoryChoices, ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker']);
+      for (final c in kCategoryChoices) {
+        for (final night in [false, true]) {
+          expect(File(categoryIconAsset(c, night: night)).existsSync(), isTrue, reason: '$c $night');
+        }
+        for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
+          expect(File('assets/i18n/$lang.json').readAsStringSync().contains('"cat_$c"'), isTrue, reason: '$lang $c');
+        }
+      }
+      final bar = File('lib/features/cargo/presentation/widgets/cargo_category_bar.dart').readAsStringSync();
+      expect(bar.contains('scrollDirection: Axis.horizontal'), isTrue);
+      expect(bar.contains('_SmallChip'), isFalse);
+    });
+
     test('size columns are left out of a save until 0055 is run', () {
       final j = load(size: 'small', groupage: true).toInsertJson(withSize: false);
       expect(j.containsKey('load_size') || j.containsKey('groupage'), isFalse);
@@ -123,24 +147,15 @@ void main() {
   group('Loads page wiring', () {
     final mobile = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
     final desk = File('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').readAsStringSync();
-    test('"Populyar marşrutlar" is gone; tiles + big / small cards on phone and computer', () {
+    test('"Populyar marşrutlar" and the big / small cards are gone; the choices stay', () {
       expect(mobile.contains('home_popular_routes'), isFalse);
       expect(desk.contains('_DeskPopularRoutes'), isFalse);
       for (final f in [mobile, desk]) {
         expect(f.contains('CargoTypeTiles('), isTrue);
-        expect(f.contains('CargoSizeCards('), isTrue);
+        expect(f.contains('CargoSizeCards('), isFalse);
+        expect(f.contains('if (cat.groupage)'), isTrue);
         expect(f.contains("key: const ValueKey('cat-reset')"), isTrue);
       }
-    });
-
-    test('big / small cards: owner pictures, the pallet 35 % smaller', () {
-      final bar = File('lib/features/cargo/presentation/widgets/cargo_category_bar.dart').readAsStringSync();
-      expect(bar.contains('assetScale: c.size == kLoadSizeSmall ? 0.65 : 1,'), isTrue);
-      for (final sz in [kLoadSizeBig, kLoadSizeSmall]) {
-        expect(File('assets/images/cargo/size_$sz.png').existsSync(), isTrue, reason: sz);
-      }
-      expect(mobile.contains('CargoSizeCards(strings: strings, height: 60,'), isTrue);
-      expect(desk.contains('CargoSizeCards(strings: strings, height: 64,'), isTrue);
     });
 
     test('tile pictures are packaged', () {

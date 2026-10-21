@@ -81,7 +81,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
-          ref.invalidate(cargoSizeCardsProvider);
         },
         // Open Loads feed = 3D wheel (scale / veil / tilt by distance from
         // the screen centre, detent haptic, gentle snap).
@@ -95,16 +94,13 @@ class CargoMarketplaceScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  CargoTypeTiles(strings: strings, tileHeight: 74, onChanged: _scrollToFeed),
-                  const SizedBox(height: 12),
-                  CargoSizeCards(strings: strings, height: 60, onChanged: _scrollToFeed),
-                ]),
+                // "Böyük / Kiçik yüklər" removed (owner, 21.10.2026): the choices do it.
+                child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
               ),
             ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
-            // Small loads: the carrier's own road → loads on the way.
-            if (cat.size == kLoadSizeSmall)
+            // QRUPAJ (small loads): the carrier's own road → loads on the way.
+            if (cat.groupage)
               SliverToBoxAdapter(child: _EnRouteButton(strings: strings)),
             SliverToBoxAdapter(
               child: Padding(

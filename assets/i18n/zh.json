@@ -1107,5 +1107,7 @@
   "enroute_none": "这条路线上没有小件货物。",
   "enroute_found": "您的路线上有 {n} 件货物",
   "enroute_off": "装货地距道路 {a} 公里，卸货地 {b} 公里",
-  "enroute_skipped": "{n} 件货物无法在地图上定位，未计入。"
+  "enroute_skipped": "{n} 件货物无法在地图上定位，未计入。",
+  "cat_open": "平板",
+  "cat_tanker": "罐车"
 }
