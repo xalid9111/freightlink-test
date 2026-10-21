@@ -1067,5 +1067,6 @@
   "hero_pic_note": "Gecə rejimində gecə, gündüz rejimində gündüz şəkli görünür. Biri yoxdursa, o biri göstərilir.",
   "hero_show_text": "Şəklin üzərində yazı göstər",
   "hero_show_text_on": "Aşağıdakı yazılar şəklin üstündə görünür",
-  "hero_show_text_off": "Yalnız şəkil görünür — şəkildə öz yazınız varsa, belə saxlayın"
+  "hero_show_text_off": "Yalnız şəkil görünür — şəkildə öz yazınız varsa, belə saxlayın",
+  "hero_focus_note": "↔ Şəkli çərçivədə barmaqla sürüşdürün və ya bir yerə toxunun — çərçivədə görünən hissə bannerdə önə çıxacaq."
 }

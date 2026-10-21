@@ -2,6 +2,7 @@
 // admins change them. Server rules: supabase/tests/local/87_page_banners.sql.
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/widgets/page_hero.dart';
 
@@ -37,6 +38,28 @@ void main() {
       expect(d.contains('final texts = !onPhoto || (hero?.showText ?? true);'), isTrue);
       final sql = File('supabase/migrations/0050_page_banner_text_toggle.sql').readAsStringSync();
       expect(RegExp(r'admin_set_page_hero[\s\S]*?perform public\._require_admin\(\);').hasMatch(sql), isTrue);
+    });
+  });
+
+  group('part of the picture in front (0051)', () {
+    test('middle by default; each picture its own point; follows the picture shown', () {
+      expect(const PageHero(imageUrl: 'n').alignmentFor(day: false), Alignment.center);
+      final h = PageHero.fromJson({'image_url': 'n', 'image_url_day': 'd', 'focus_x': 0.5, 'focus_y': -1, 'focus_day_x': -0.3, 'focus_day_y': 0.2});
+      expect(h.alignmentFor(day: false), const Alignment(0.5, -1));
+      expect(h.alignmentFor(day: true), const Alignment(-0.3, 0.2));
+      // No day picture: the night picture is shown with its own point.
+      final n = PageHero.fromJson({'image_url': 'n', 'focus_x': 1, 'focus_day_x': -1});
+      expect(n.alignmentFor(day: true), const Alignment(1, 0));
+    });
+    test('out of range is clamped', () {
+      expect(PageHero.fromJson({'image_url': 'n', 'focus_x': 4}).focusX, 1);
+    });
+    test('banner, computer TIR Bazarı and editor use the point', () {
+      final f = File('lib/core/widgets/page_hero.dart').readAsStringSync();
+      expect(f.contains('alignment: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
+      expect(f.contains('onPanUpdate:'), isTrue);
+      expect(File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync()
+          .contains('alignment: hero!.alignmentFor(day: AppColors.isDay),'), isTrue);
     });
   });
 

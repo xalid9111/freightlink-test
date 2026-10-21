@@ -1067,5 +1067,6 @@
   "hero_pic_note": "Night mode shows the night picture, day mode the day picture. If one is missing, the other is shown.",
   "hero_show_text": "Show text on the picture",
   "hero_show_text_on": "The texts below are shown on the picture",
-  "hero_show_text_off": "Only the picture is shown — keep it so if the picture has its own text"
+  "hero_show_text_off": "Only the picture is shown — keep it so if the picture has its own text",
+  "hero_focus_note": "↔ Drag the picture in the frame or tap a spot — the part you see in the frame is what the banner shows."
 }

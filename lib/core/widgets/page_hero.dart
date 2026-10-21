@@ -21,7 +21,23 @@ class PageHero {
 
   /// false = only the picture (it carries its own writing), 0050.
   final bool showText;
-  const PageHero({this.imageUrl, this.imageUrlDay, this.title, this.titleAccent, this.subtitle, this.showText = true});
+
+  /// The part of each picture kept in view, -1..1 (0,0 = middle), 0051.
+  final double focusX, focusY, focusDayX, focusDayY;
+  const PageHero({
+    this.imageUrl,
+    this.imageUrlDay,
+    this.title,
+    this.titleAccent,
+    this.subtitle,
+    this.showText = true,
+    this.focusX = 0,
+    this.focusY = 0,
+    this.focusDayX = 0,
+    this.focusDayY = 0,
+  });
+
+  static double _f(Object? v) => ((v as num?)?.toDouble() ?? 0).clamp(-1.0, 1.0);
 
   static String? _s(Object? v) {
     final t = (v as String?)?.trim();
@@ -35,10 +51,20 @@ class PageHero {
         titleAccent: _s(j['title_accent']),
         subtitle: _s(j['subtitle']),
         showText: j['show_text'] != false,
+        focusX: _f(j['focus_x']),
+        focusY: _f(j['focus_y']),
+        focusDayX: _f(j['focus_day_x']),
+        focusDayY: _f(j['focus_day_y']),
       );
 
   /// The picture for the current theme; the other one if that is missing.
   String? imageFor({required bool day}) => day ? (imageUrlDay ?? imageUrl) : (imageUrl ?? imageUrlDay);
+
+  /// Which part of that picture stays in view (follows the picture shown).
+  Alignment alignmentFor({required bool day}) {
+    final useDay = day ? imageUrlDay != null : imageUrl == null;
+    return useDay ? Alignment(focusDayX, focusDayY) : Alignment(focusX, focusY);
+  }
 }
 
 const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero'};
@@ -69,6 +95,18 @@ class PageHeroRepository {
     } on PostgrestException catch (e) {
       if (e.code != 'PGRST202') rethrow;
       await _c.rpc('admin_set_page_hero', params: params).timeout(const Duration(seconds: 15));
+    }
+    try {
+      await _c.rpc('admin_set_page_hero_focus', params: {
+        'p_page': page,
+        'p_x': h.focusX,
+        'p_y': h.focusY,
+        'p_day_x': h.focusDayX,
+        'p_day_y': h.focusDayY,
+      }).timeout(const Duration(seconds: 15));
+    } on PostgrestException catch (e) {
+      // 0051 not run yet: the pictures are saved, they stay centred.
+      if (e.code != 'PGRST202') rethrow;
     }
   }
 
@@ -169,6 +207,7 @@ class PageHeroBanner extends ConsumerWidget {
             Image.network(img,
                 key: ValueKey(img),
                 fit: BoxFit.cover,
+                alignment: hero!.alignmentFor(day: AppColors.isDay),
                 gaplessPlayback: true,
                 errorBuilder: (_, __, ___) => PageHeroGround(icon: icon, iconSize: height * 0.6))
           else
@@ -270,6 +309,8 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
   late String? _night = widget.hero?.imageUrl;
   late String? _day = widget.hero?.imageUrlDay;
   late bool _showText = widget.hero?.showText ?? true;
+  late Offset _focus = Offset(widget.hero?.focusX ?? 0, widget.hero?.focusY ?? 0);
+  late Offset _focusDay = Offset(widget.hero?.focusDayX ?? 0, widget.hero?.focusDayY ?? 0);
   bool _busy = false;
   String? _error;
 
@@ -295,7 +336,10 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
       final bytes = await f.readAsBytes();
       final ext = f.name.contains('.') ? f.name.split('.').last : 'jpg';
       final url = await ref.read(pageHeroRepositoryProvider).upload(bytes, ext);
-      if (mounted) setState(() => day ? _day = url : _night = url);
+      // A new picture starts centred.
+      if (mounted) {
+        setState(() => day ? (_day = url, _focusDay = Offset.zero) : (_night = url, _focus = Offset.zero));
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'mk_hero_upload_failed');
     } finally {
@@ -317,7 +361,11 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
                 title: _title.text,
                 titleAccent: _accent.text,
                 subtitle: _subtitle.text,
-                showText: _showText),
+                showText: _showText,
+                focusX: _focus.dx,
+                focusY: _focus.dy,
+                focusDayX: _focusDay.dx,
+                focusDayY: _focusDay.dy),
           );
       ref.invalidate(pageHeroProvider(widget.page));
       if (mounted) Navigator.pop(context);
@@ -333,36 +381,69 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
 
   Widget _picture({required bool day}) {
     final url = day ? _day : _night;
-    return Expanded(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(s.t(day ? 'hero_pic_day' : 'hero_pic_night'), style: const TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: AspectRatio(
-            aspectRatio: 2.4,
-            child: url == null
-                ? PageHeroGround(icon: widget.icon, iconSize: 60)
-                : Image.network(url,
-                    fit: BoxFit.cover, errorBuilder: (_, __, ___) => PageHeroGround(icon: widget.icon, iconSize: 60)),
-          ),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(s.t(day ? 'hero_pic_day' : 'hero_pic_night'), style: const TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 6),
+      // Banner-shaped frame: drag the picture (or tap a spot) to choose
+      // the part that stays in view.
+      ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: AspectRatio(
+          aspectRatio: 2.4,
+          child: url == null
+              ? PageHeroGround(icon: widget.icon, iconSize: 60)
+              : LayoutBuilder(builder: (context, c) {
+                  final f = day ? _focusDay : _focus;
+                  void set(Offset o) => setState(() {
+                        final v = Offset(o.dx.clamp(-1.0, 1.0), o.dy.clamp(-1.0, 1.0));
+                        day ? _focusDay = v : _focus = v;
+                      });
+                  return GestureDetector(
+                    key: ValueKey('page-hero-focus-${day ? 'day' : 'night'}'),
+                    // Dragging moves the picture with the finger.
+                    onPanUpdate: _busy
+                        ? null
+                        : (d) => set(f - Offset(d.delta.dx * 4 / c.maxWidth, d.delta.dy * 4 / c.maxHeight)),
+                    onTapUp: _busy
+                        ? null
+                        : (d) => set(
+                            Offset(d.localPosition.dx / c.maxWidth * 2 - 1, d.localPosition.dy / c.maxHeight * 2 - 1)),
+                    child: Stack(fit: StackFit.expand, children: [
+                      Image.network(url,
+                          fit: BoxFit.cover,
+                          alignment: Alignment(f.dx, f.dy),
+                          errorBuilder: (_, __, ___) => PageHeroGround(icon: widget.icon, iconSize: 60)),
+                      const Positioned(
+                        right: 6,
+                        bottom: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: Color(0x99000000), shape: BoxShape.circle),
+                          child: Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(Icons.open_with, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ]),
+                  );
+                }),
         ),
-        const SizedBox(height: 6),
-        Wrap(spacing: 4, children: [
-          OutlinedButton.icon(
-            key: ValueKey('page-hero-pick-${day ? 'day' : 'night'}'),
-            onPressed: _busy ? null : () => _pick(day: day),
-            icon: const Icon(Icons.image_outlined, size: 18),
-            label: Text(s.t('mk_hero_pick')),
+      ),
+      const SizedBox(height: 6),
+      Wrap(spacing: 4, children: [
+        OutlinedButton.icon(
+          key: ValueKey('page-hero-pick-${day ? 'day' : 'night'}'),
+          onPressed: _busy ? null : () => _pick(day: day),
+          icon: const Icon(Icons.image_outlined, size: 18),
+          label: Text(s.t('mk_hero_pick')),
+        ),
+        if (url != null)
+          TextButton(
+            onPressed: _busy ? null : () => setState(() => day ? _day = null : _night = null),
+            child: Text(s.t('mk_hero_remove_pic')),
           ),
-          if (url != null)
-            TextButton(
-              onPressed: _busy ? null : () => setState(() => day ? _day = null : _night = null),
-              child: Text(s.t('mk_hero_remove_pic')),
-            ),
-        ]),
       ]),
-    );
+    ]);
   }
 
   @override
@@ -374,13 +455,14 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
         width: 560,
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _picture(day: false),
-              const SizedBox(width: 12),
-              _picture(day: true),
-            ]),
+            // One under the other, full width: easy to drag on a phone.
+            _picture(day: false),
+            const SizedBox(height: 12),
+            _picture(day: true),
             const SizedBox(height: 4),
             Text(s.t('hero_pic_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            const SizedBox(height: 2),
+            Text(s.t('hero_focus_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             const SizedBox(height: 6),
             // Off: the picture has its own writing — nothing is written on it.
             SwitchListTile(
