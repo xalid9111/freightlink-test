@@ -19,7 +19,7 @@ DB="${TEST_DB:-freightlink_test}"
 MODE="${1:-after}"
 export PGOPTIONS="${PGOPTIONS:-} -c client_min_messages=warning"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -q)
-NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql 0041_market_autopublish.sql 0042_autofix_cleanup.sql 0043_service_category_spare_parts.sql 0044_market_hero_vip.sql 0045_founder_protection.sql 0046_cargo_payment_terms.sql 0047_cargo_payment_choices.sql 0048_founder_silent_delete.sql 0049_page_banners.sql)
+NEW=(0018_package1_security.sql 0019_package1b_security.sql 0020_advertiser_campaign_details.sql 0021_ad_templates_receipts.sql 0022_ad_template_logo.sql 0023_ads_standard_layout.sql 0024_ads_admin_edit.sql 0025_ads_feed_layout.sql 0026_ads_order_no_repeat.sql 0027_service_category_advertising.sql 0028_services_autopublish_pro.sql 0029_service_ads.sql 0030_whatsapp_verify_poc.sql 0031_profile_catalog_message_delete.sql 0032_own_ad_background.sql 0033_ads_arial_font.sql 0034_autofix.sql 0035_catalog_sort_order.sql 0036_service_category_tarp.sql 0037_finance_payments.sql 0038_ad_template_audience_fn.sql 0039_user_activities.sql 0040_market.sql 0041_market_autopublish.sql 0042_autofix_cleanup.sql 0043_service_category_spare_parts.sql 0044_market_hero_vip.sql 0045_founder_protection.sql 0046_cargo_payment_terms.sql 0047_cargo_payment_choices.sql 0048_founder_silent_delete.sql 0049_page_banners.sql 0050_page_banner_text_toggle.sql)
 
 if [[ "$DB" != *test* ]]; then echo "Refusing: TEST_DB must contain 'test'"; exit 2; fi
 
@@ -98,6 +98,7 @@ suites() {
   "${PSQL[@]}" -d "$DB" -f "$HERE/85_cargo_payment_choices.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/86_founder_silent_delete.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/87_page_banners.sql" >/dev/null
+  "${PSQL[@]}" -d "$DB" -f "$HERE/88_page_banner_text_toggle.sql" >/dev/null
   PGOPTIONS="-c client_min_messages=notice" "${PSQL[@]}" -d "$DB" -f "$HERE/../messaging_audit_test.sql" 2>&1 \
     | grep -E "ALL MESSAGING|FAILED|ERROR" | sed 's/^/messaging_audit_test: /'
 }

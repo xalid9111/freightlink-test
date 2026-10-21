@@ -23,6 +23,23 @@ void main() {
     });
   });
 
+  group('picture with its own writing (0050)', () {
+    test('texts on by default and on old rows', () {
+      expect(PageHero.fromJson({'image_url': 'n.jpg'}).showText, isTrue);
+      expect(PageHero.fromJson({'image_url': 'n.jpg', 'show_text': false}).showText, isFalse);
+    });
+    test('off → no texts and no shade on the picture; switch in the editor', () {
+      final f = File('lib/core/widgets/page_hero.dart').readAsStringSync();
+      expect(f.contains('final texts = !onPhoto || (hero?.showText ?? true);'), isTrue);
+      expect(f.contains('if (onPhoto && texts)'), isTrue);
+      expect(f.contains("key: const ValueKey('page-hero-show-text'),"), isTrue);
+      final d = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
+      expect(d.contains('final texts = !onPhoto || (hero?.showText ?? true);'), isTrue);
+      final sql = File('supabase/migrations/0050_page_banner_text_toggle.sql').readAsStringSync();
+      expect(RegExp(r'admin_set_page_hero[\s\S]*?perform public\._require_admin\(\);').hasMatch(sql), isTrue);
+    });
+  });
+
   group('guards', () {
     String read(String p) => File(p).readAsStringSync();
     test('banners on the phone TIR Bazarı page and on Services (phone + computer)', () {

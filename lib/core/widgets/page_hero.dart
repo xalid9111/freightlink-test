@@ -18,7 +18,10 @@ class PageHero {
   final String? imageUrl; // night (and the only one before 0049)
   final String? imageUrlDay;
   final String? title, titleAccent, subtitle;
-  const PageHero({this.imageUrl, this.imageUrlDay, this.title, this.titleAccent, this.subtitle});
+
+  /// false = only the picture (it carries its own writing), 0050.
+  final bool showText;
+  const PageHero({this.imageUrl, this.imageUrlDay, this.title, this.titleAccent, this.subtitle, this.showText = true});
 
   static String? _s(Object? v) {
     final t = (v as String?)?.trim();
@@ -31,6 +34,7 @@ class PageHero {
         title: _s(j['title']),
         titleAccent: _s(j['title_accent']),
         subtitle: _s(j['subtitle']),
+        showText: j['show_text'] != false,
       );
 
   /// The picture for the current theme; the other one if that is missing.
@@ -43,20 +47,29 @@ class PageHeroRepository {
   SupabaseClient get _c => SupabaseConfig.client;
 
   Future<PageHero?> fetch(String page) async {
-    final row = await _c.from(kPageHeroTables[page]!).select().eq('id', 1).maybeSingle().timeout(const Duration(seconds: 15));
+    final row =
+        await _c.from(kPageHeroTables[page]!).select().eq('id', 1).maybeSingle().timeout(const Duration(seconds: 15));
     return row == null ? null : PageHero.fromJson(row);
   }
 
-  /// Admins only — checked on the server (admin_set_page_hero, 0049).
+  /// Admins only — checked on the server (admin_set_page_hero, 0049 /
+  /// 0050). Until 0050 is run the save works without the text switch.
   Future<void> save(String page, PageHero h) async {
-    await _c.rpc('admin_set_page_hero', params: {
+    final params = {
       'p_page': page,
       'p_image_url': h.imageUrl,
       'p_image_url_day': h.imageUrlDay,
       'p_title': h.title,
       'p_title_accent': h.titleAccent,
       'p_subtitle': h.subtitle,
-    }).timeout(const Duration(seconds: 15));
+    };
+    try {
+      await _c.rpc('admin_set_page_hero',
+          params: {...params, 'p_show_text': h.showText}).timeout(const Duration(seconds: 15));
+    } on PostgrestException catch (e) {
+      if (e.code != 'PGRST202') rethrow;
+      await _c.rpc('admin_set_page_hero', params: params).timeout(const Duration(seconds: 15));
+    }
   }
 
   /// Picture into the public market-photos bucket, folder = my user id.
@@ -66,7 +79,8 @@ class PageHeroRepository {
     await _c.storage
         .from('market-photos')
         .uploadBinary(path, bytes,
-            fileOptions: FileOptions(contentType: e == 'png' ? 'image/png' : (e == 'webp' ? 'image/webp' : 'image/jpeg')))
+            fileOptions:
+                FileOptions(contentType: e == 'png' ? 'image/png' : (e == 'webp' ? 'image/webp' : 'image/jpeg')))
         .timeout(const Duration(minutes: 2));
     return _c.storage.from('market-photos').getPublicUrl(path);
   }
@@ -139,6 +153,8 @@ class PageHeroBanner extends ConsumerWidget {
     final admin = isAdminUser(ref);
     final img = hero?.imageFor(day: AppColors.isDay);
     final onPhoto = img != null;
+    // Picture with its own writing: no app texts and no dark shade on it.
+    final texts = !onPhoto || (hero?.showText ?? true);
     final ink = onPhoto ? Colors.white : AppColors.text;
     final soft = onPhoto ? Colors.white.withValues(alpha: 0.85) : AppColors.textSoft;
     final shadow = onPhoto ? const [Shadow(color: Color(0x99000000), blurRadius: 12)] : null;
@@ -157,7 +173,7 @@ class PageHeroBanner extends ConsumerWidget {
                 errorBuilder: (_, __, ___) => PageHeroGround(icon: icon, iconSize: height * 0.6))
           else
             PageHeroGround(icon: icon, iconSize: height * 0.6),
-          if (onPhoto)
+          if (onPhoto && texts)
             // Darker on the left so the texts stay readable on any photo.
             const DecoratedBox(
               decoration: BoxDecoration(
@@ -167,35 +183,41 @@ class PageHeroBanner extends ConsumerWidget {
                 ),
               ),
             ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(pad, 0, admin ? pad + 36 : pad, 0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
-                  const SizedBox(width: 7),
-                  Text(kicker.toUpperCase(), style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: compact ? 11 : 14)),
-                ]),
-                SizedBox(height: compact ? 4 : 8),
-                Text.rich(
-                  TextSpan(children: [
-                    TextSpan(text: '${hero?.title ?? defaultTitle}\n'),
-                    TextSpan(text: hero?.titleAccent ?? defaultAccent, style: TextStyle(color: AppColors.accent)),
+          if (texts)
+            Padding(
+              padding: EdgeInsets.fromLTRB(pad, 0, admin ? pad + 36 : pad, 0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
+                    const SizedBox(width: 7),
+                    Text(kicker.toUpperCase(),
+                        style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: compact ? 11 : 14)),
                   ]),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppFonts.display(size: compact ? 20 : 34, color: ink, height: 1.15).copyWith(shadows: shadow),
-                ),
-                SizedBox(height: compact ? 4 : 8),
-                Text(hero?.subtitle ?? defaultSubtitle,
-                    maxLines: compact ? 1 : 2,
+                  SizedBox(height: compact ? 4 : 8),
+                  Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: '${hero?.title ?? defaultTitle}\n'),
+                      TextSpan(text: hero?.titleAccent ?? defaultAccent, style: TextStyle(color: AppColors.accent)),
+                    ]),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: compact ? 12.5 : 16, color: soft, height: 1.3, shadows: shadow)),
-              ],
+                    style:
+                        AppFonts.display(size: compact ? 20 : 34, color: ink, height: 1.15).copyWith(shadows: shadow),
+                  ),
+                  SizedBox(height: compact ? 4 : 8),
+                  Text(hero?.subtitle ?? defaultSubtitle,
+                      maxLines: compact ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: compact ? 12.5 : 16, color: soft, height: 1.3, shadows: shadow)),
+                ],
+              ),
             ),
-          ),
           if (admin)
             Positioned(
               right: 10,
@@ -247,6 +269,7 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
   late final _subtitle = TextEditingController(text: widget.hero?.subtitle ?? '');
   late String? _night = widget.hero?.imageUrl;
   late String? _day = widget.hero?.imageUrlDay;
+  late bool _showText = widget.hero?.showText ?? true;
   bool _busy = false;
   String? _error;
 
@@ -261,7 +284,8 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
   }
 
   Future<void> _pick({required bool day}) async {
-    final f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2400, maxHeight: 1200, imageQuality: 85);
+    final f =
+        await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2400, maxHeight: 1200, imageQuality: 85);
     if (f == null || !mounted) return;
     setState(() {
       _busy = true;
@@ -287,7 +311,13 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
     try {
       await ref.read(pageHeroRepositoryProvider).save(
             widget.page,
-            PageHero(imageUrl: _night, imageUrlDay: _day, title: _title.text, titleAccent: _accent.text, subtitle: _subtitle.text),
+            PageHero(
+                imageUrl: _night,
+                imageUrlDay: _day,
+                title: _title.text,
+                titleAccent: _accent.text,
+                subtitle: _subtitle.text,
+                showText: _showText),
           );
       ref.invalidate(pageHeroProvider(widget.page));
       if (mounted) Navigator.pop(context);
@@ -313,7 +343,8 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
             aspectRatio: 2.4,
             child: url == null
                 ? PageHeroGround(icon: widget.icon, iconSize: 60)
-                : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => PageHeroGround(icon: widget.icon, iconSize: 60)),
+                : Image.network(url,
+                    fit: BoxFit.cover, errorBuilder: (_, __, ___) => PageHeroGround(icon: widget.icon, iconSize: 60)),
           ),
         ),
         const SizedBox(height: 6),
@@ -350,11 +381,23 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
             ]),
             const SizedBox(height: 4),
             Text(s.t('hero_pic_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
-            const SizedBox(height: 10),
-            TextField(controller: _title, maxLength: 80, decoration: deco('mk_hero_f_title')),
-            TextField(controller: _accent, maxLength: 80, decoration: deco('mk_hero_f_accent')),
-            TextField(controller: _subtitle, maxLength: 160, decoration: deco('mk_hero_f_subtitle')),
-            Text(s.t('mk_hero_empty_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            const SizedBox(height: 6),
+            // Off: the picture has its own writing — nothing is written on it.
+            SwitchListTile(
+              key: const ValueKey('page-hero-show-text'),
+              contentPadding: EdgeInsets.zero,
+              value: _showText,
+              onChanged: _busy ? null : (v) => setState(() => _showText = v),
+              title: Text(s.t('hero_show_text'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(s.t(_showText ? 'hero_show_text_on' : 'hero_show_text_off'),
+                  style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            ),
+            if (_showText) ...[
+              TextField(controller: _title, maxLength: 80, decoration: deco('mk_hero_f_title')),
+              TextField(controller: _accent, maxLength: 80, decoration: deco('mk_hero_f_accent')),
+              TextField(controller: _subtitle, maxLength: 160, decoration: deco('mk_hero_f_subtitle')),
+              Text(s.t('mk_hero_empty_note'), style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(s.t(_error!), style: TextStyle(color: AppColors.danger)),
@@ -368,7 +411,8 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
           key: const ValueKey('page-hero-save'),
           onPressed: _busy ? null : _save,
           child: _busy
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(s.t('mk_hero_save')),
         ),
       ],
