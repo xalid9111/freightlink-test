@@ -117,7 +117,7 @@ select tests.check((select (array_agg(x.id order by x.ordinality))[1] = :l2 from
 select tests.check((select count(*) = 0 from public.ad_orders where payment_status = 'paid' and paid_at > now() - interval '1 minute'),
   'P10 no ad order was touched');
 
--- TEST mode payment never makes an ad VIP.
+-- TEST mode payment: since 0054 it makes the ad VIP too (more in 92_*).
 update public.payment_settings set mode = 'test', provider = 'test', methods = '{card}' where id = 1;
 update public.market_listings set is_vip = false, vip_until = null where id = :l1;
 set role authenticated;
@@ -133,7 +133,7 @@ select tests.check(public.finance_apply_provider_event('test', 'evt_vip_t1',
   (select id from public.ad_payments where idempotency_key = 'vip-test-0001'), 'payment.succeeded', 6, 'AZN', null) = 'applied',
   'T2 test payment succeeded');
 reset role;
-select tests.check((select not is_vip from public.market_listings where id = :l1), 'T3 …but a TEST payment never makes the ad VIP');
+select tests.check((select is_vip from public.market_listings where id = :l1), 'T3 (0054) a TEST payment makes the ad VIP too');
 select tests.check(tests.err($$ insert into public.ad_payments (user_id, amount, currency, method, provider, mode, idempotency_key)
   values ('a0000000-0000-4000-8000-000000000012', 1, 'AZN', 'card', 'test', 'test', 'no-target-001') $$) like '%ad_payments_one_target%',
   'T4 a payment always belongs to exactly one order');

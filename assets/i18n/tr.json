@@ -1039,6 +1039,8 @@
   "mk_vip_pay_soon": "Kartla ödeme yakında açılacak. Açılınca buradan ödeyip ilanınızı hemen VIP yapabileceksiniz.",
   "mk_vip_failed": "Sipariş oluşturulamadı. İlan aktif olmalı; tekrar deneyin.",
   "pay_success_vip": "Ödeme onaylandı. İlanınız VIP oldu.",
+  "pay_success_vip_test": "Test ödemesi başarılı (sunucu onayladı). İlanınız VIP oldu. Test modunda gerçek para çekilmez.",
+  "pay_test_banner_vip": "TEST MODU — gerçek para çekilmez.",
   "mk_vip_extend": "VIP süresini uzat",
   "cargo_terms_title": "Ödeme ve bekleme koşulları",
   "cargo_pay_title": "Ödeme koşulları",

@@ -1039,6 +1039,8 @@
   "mk_vip_pay_soon": "Card payment opens soon. Then you can pay here and your ad becomes VIP at once.",
   "mk_vip_failed": "The order was not created. The ad must be active; try again.",
   "pay_success_vip": "Payment confirmed. Your ad is now VIP.",
+  "pay_success_vip_test": "Test payment succeeded (confirmed by the server). Your ad is now VIP. No real money is charged in test mode.",
+  "pay_test_banner_vip": "TEST MODE — no real money is charged.",
   "mk_vip_extend": "Extend VIP",
   "cargo_terms_title": "Payment and waiting terms",
   "cargo_pay_title": "Payment terms",
