@@ -1107,5 +1107,7 @@
   "enroute_none": "No small loads on this road.",
   "enroute_found": "{n} loads on your way",
   "enroute_off": "Pickup {a} km off the road, delivery {b} km",
-  "enroute_skipped": "{n} loads could not be placed on the map and were left out."
+  "enroute_skipped": "{n} loads could not be placed on the map and were left out.",
+  "cat_open": "FLATBED",
+  "cat_tanker": "TANKER"
 }

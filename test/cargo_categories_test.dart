@@ -66,6 +66,21 @@ void main() {
       }
     });
 
+    test('Loads page: seven choices, icon + name only, Açıq and Sistern too', () {
+      expect(kCategoryChoices, ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker']);
+      for (final c in kCategoryChoices) {
+        for (final night in [false, true]) {
+          expect(File(categoryIconAsset(c, night: night)).existsSync(), isTrue, reason: '$c $night');
+        }
+        for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
+          expect(File('assets/i18n/$lang.json').readAsStringSync().contains('"cat_$c"'), isTrue, reason: '$lang $c');
+        }
+      }
+      final bar = File('lib/features/cargo/presentation/widgets/cargo_category_bar.dart').readAsStringSync();
+      expect(bar.contains('scrollDirection: Axis.horizontal'), isTrue);
+      expect(bar.contains('_SmallChip'), isFalse);
+    });
+
     test('size columns are left out of a save until 0055 is run', () {
       final j = load(size: 'small', groupage: true).toInsertJson(withSize: false);
       expect(j.containsKey('load_size') || j.containsKey('groupage'), isFalse);
@@ -139,8 +154,8 @@ void main() {
       for (final sz in [kLoadSizeBig, kLoadSizeSmall]) {
         expect(File('assets/images/cargo/size_$sz.png').existsSync(), isTrue, reason: sz);
       }
-      expect(mobile.contains('CargoSizeCards(strings: strings, height: 60,'), isTrue);
-      expect(desk.contains('CargoSizeCards(strings: strings, height: 64,'), isTrue);
+      expect(mobile.contains('CargoSizeCards(strings: strings, height: 40,'), isTrue);
+      expect(desk.contains('CargoSizeCards(strings: strings, height: 44,'), isTrue);
     });
 
     test('tile pictures are packaged', () {

@@ -101,9 +101,9 @@ class _DesktopMarketplace extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 24),
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(flex: 5, child: CargoTypeTiles(strings: strings, tileHeight: 96, onChanged: _scrollToFeed)),
+                    Expanded(flex: 5, child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed)),
                     const SizedBox(width: 16),
-                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 64, onChanged: _scrollToFeed)),
+                    Expanded(flex: 4, child: CargoSizeCards(strings: strings, height: 44, onChanged: _scrollToFeed)),
                   ]),
                 ),
               ),

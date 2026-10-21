@@ -96,9 +96,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  CargoTypeTiles(strings: strings, tileHeight: 74, onChanged: _scrollToFeed),
+                  CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
                   const SizedBox(height: 12),
-                  CargoSizeCards(strings: strings, height: 60, onChanged: _scrollToFeed),
+                  CargoSizeCards(strings: strings, height: 40, onChanged: _scrollToFeed),
                 ]),
               ),
             ),

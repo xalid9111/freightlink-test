@@ -4,18 +4,20 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../../core/widgets/page_hero.dart';
 import '../../domain/cargo_categories.dart';
 import '../providers/category_providers.dart';
 
-/// The five load-type tiles (TENT · REF · KONTEYNER · SAMOSVAL · QRUPAJ)
-/// as a quick filter, plus "Digər növlər" (Açıq, Sistern) under them.
-/// White tiles with dark pictures in night and day (owner, 21.10.2026).
+/// The load-type choices (owner, 21.10.2026): TENT · REF · KONTEYNER ·
+/// SAMOSVAL · QRUPAJ · AÇIQ · SİSTERN — only the picture and the name, no
+/// tile behind them; the chosen one is orange. One row that scrolls
+/// sideways with a finger when it does not fit the screen.
 class CargoTypeTiles extends ConsumerWidget {
   final AppStrings strings;
   final double tileHeight;
   final VoidCallback? onChanged;
-  const CargoTypeTiles({super.key, required this.strings, this.tileHeight = 78, this.onChanged});
+  const CargoTypeTiles({super.key, required this.strings, this.tileHeight = 64, this.onChanged});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,47 +27,67 @@ class CargoTypeTiles extends ConsumerWidget {
       onChanged?.call();
     }
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        for (final t in kCategoryTruckTypes) ...[
-          Expanded(
-            child: CargoTypeTile(
-              key: ValueKey('cat-$t'),
-              code: t,
-              label: strings.t('cat_$t'),
-              selected: f.truckType == t,
-              height: tileHeight,
-              onTap: () => set(f.tapTruck(t)),
-            ),
+    return SizedBox(
+      height: tileHeight,
+      child: MouseDragScroll(child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: kCategoryChoices.length,
+          // 4½ choices fit a phone: the cut one shows there is more to the side.
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (_, i) {
+            final c = kCategoryChoices[i];
+            final groupage = c == 'groupage';
+            return CargoTypeChoice(
+              key: ValueKey('cat-$c'),
+              code: c,
+              label: strings.t('cat_$c'),
+              selected: groupage ? f.groupage : f.truckType == c,
+              onTap: () => set(groupage ? f.tapGroupage() : f.tapTruck(c)),
+            );
+          },
+        )),
+    );
+  }
+}
+
+/// One choice: the truck picture and its name — white at night, dark in
+/// day mode — orange with a short orange line when chosen.
+class CargoTypeChoice extends StatelessWidget {
+  final String code;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const CargoTypeChoice({super.key, required this.code, required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.accent : AppColors.text;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: SizedBox(
+        width: 64,
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          SizedBox(
+            height: 27,
+            child: Image.asset(categoryIconAsset(code, night: !AppColors.isDay),
+                fit: BoxFit.contain, color: color, colorBlendMode: BlendMode.srcIn),
           ),
-          const SizedBox(width: 8),
-        ],
-        Expanded(
-          child: CargoTypeTile(
-            key: const ValueKey('cat-groupage'),
-            code: 'groupage',
-            label: strings.t('cat_groupage'),
-            selected: f.groupage,
-            height: tileHeight,
-            onTap: () => set(f.tapGroupage()),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(label, maxLines: 1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
           ),
-        ),
-      ]),
-      const SizedBox(height: 8),
-      Row(children: [
-        Text(strings.t('cat_other_types'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-        const SizedBox(width: 8),
-        for (final t in kOtherTruckTypes) ...[
-          _SmallChip(
-            key: ValueKey('cat-$t'),
-            label: strings.t('truck_$t'),
-            selected: f.truckType == t,
-            onTap: () => set(f.tapTruck(t)),
+          const SizedBox(height: 3),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 2.5,
+            width: selected ? 24 : 0,
+            decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2)),
           ),
-          const SizedBox(width: 6),
-        ],
-      ]),
-    ]);
+        ]),
+      ),
+    );
   }
 }
 
@@ -117,35 +139,6 @@ class CargoTypeTile extends StatelessWidget {
   }
 }
 
-class _SmallChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SmallChip({super.key, required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.tileSelectedBg : AppColors.tileBg,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? AppColors.accent : AppColors.tileLine),
-          ),
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: selected ? AppColors.accent : AppColors.tileFg)),
-        ),
-      ),
-    );
-  }
-}
-
 /// "Böyük yüklər" / "Kiçik yüklər": two picture cards; a tap shows the
 /// loads of that size from the same load pool. Admins change the pictures
 /// with the pencil (no deploy needed).
@@ -153,7 +146,7 @@ class CargoSizeCards extends ConsumerWidget {
   final AppStrings strings;
   final double height;
   final VoidCallback? onChanged;
-  const CargoSizeCards({super.key, required this.strings, this.height = 64, this.onChanged});
+  const CargoSizeCards({super.key, required this.strings, this.height = 40, this.onChanged});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -162,7 +155,7 @@ class CargoSizeCards extends ConsumerWidget {
     final admin = isAdminUser(ref);
     return Row(children: [
       for (final c in kSizeCards) ...[
-        if (c.size != kSizeCards.first.size) const SizedBox(width: 10),
+        if (c.size != kSizeCards.first.size) const SizedBox(width: 12),
         Expanded(
           child: _SizeCard(
             key: ValueKey('size-${c.size}'),
@@ -219,11 +212,8 @@ class _SizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Owner's picture (21.10.2026): a light card (dark at night), the
-    // cut-out picture on the left, the texts on the right, a round arrow;
-    // the chosen card is orange-framed with a soft orange glow.
-    final day = AppColors.isDay;
-    final bg = selected ? AppColors.tileSelectedBg : (day ? AppColors.cardAlt : AppColors.tileBg);
+    // Icon look (owner, 21.10.2026): no card behind it — a small picture,
+    // the name and one line under it; orange when chosen.
     final picture = imageUrl == null
         ? Center(
             child: FractionallySizedBox(
@@ -233,80 +223,55 @@ class _SizeCard extends StatelessWidget {
             ),
           )
         : ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: Image.network(imageUrl!,
                 fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset(asset, fit: BoxFit.contain)),
           );
-    final arrowSize = (height * 0.34).clamp(18.0, 28.0);
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.fromLTRB(6, 5, 6, 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? AppColors.accent : AppColors.tileLine, width: selected ? 1.6 : 1),
-            boxShadow: selected ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.30), blurRadius: 10)] : null,
-          ),
-          child: Row(children: [
-            SizedBox(width: height * 1.05, child: picture),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(title,
-                        maxLines: 1, style: TextStyle(color: AppColors.tileFg, fontSize: 14, fontWeight: FontWeight.w800)),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(subtitle, maxLines: 1, style: TextStyle(color: AppColors.textSoft, fontSize: 10.5)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            // Pencil (admins) on top, the round arrow at the bottom — never over the texts.
-            SizedBox(
-              width: arrowSize,
-              child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                if (onEdit != null)
-                  Material(
-                    color: Colors.black54,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: onEdit,
-                      child: Tooltip(
-                        message: editTooltip,
-                        child: const Padding(padding: EdgeInsets.all(3), child: Icon(Icons.edit, size: 11, color: Colors.white)),
-                      ),
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-                Container(
-                  width: arrowSize,
-                  height: arrowSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? AppColors.accent : (day ? AppColors.line : Colors.white12),
-                  ),
-                  child: Icon(Icons.chevron_right, size: arrowSize * 0.75, color: selected ? Colors.white : AppColors.tileFg),
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: SizedBox(
+        height: height,
+        child: Row(children: [
+          SizedBox(width: height * 1.3, child: picture),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(title,
+                      maxLines: 1,
+                      style: TextStyle(
+                          color: selected ? AppColors.accent : AppColors.text, fontSize: 13, fontWeight: FontWeight.w800)),
                 ),
-              ]),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(subtitle, maxLines: 1, style: TextStyle(color: AppColors.textSoft, fontSize: 10)),
+                ),
+                const SizedBox(height: 3),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  height: 2.5,
+                  width: selected ? 24 : 0,
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(2)),
+                ),
+              ],
             ),
-          ]),
-        ),
+          ),
+          if (onEdit != null)
+            IconButton(
+              tooltip: editTooltip,
+              visualDensity: VisualDensity.compact,
+              iconSize: 16,
+              onPressed: onEdit,
+              icon: Icon(Icons.edit, color: AppColors.textSoft),
+            ),
+        ]),
       ),
     );
   }

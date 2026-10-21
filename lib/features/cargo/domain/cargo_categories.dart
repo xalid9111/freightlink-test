@@ -13,6 +13,11 @@ const kCategoryTruckTypes = ['tent', 'ref', 'container', 'dump'];
 /// Truck types without a picture, shown under "Digər növlər".
 const kOtherTruckTypes = ['open', 'tanker'];
 
+/// The choices on the Loads page, in order (owner, 21.10.2026): 'groupage'
+/// is QRUPAJ, the others are truck types (Açıq and Sistern have their own
+/// picture now too).
+const kCategoryChoices = ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker'];
+
 const kLoadSizeBig = 'big';
 const kLoadSizeSmall = 'small';
 
