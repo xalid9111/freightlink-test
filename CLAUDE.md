@@ -18,11 +18,12 @@ to copy-paste.
 | Delivery | `xalid9111/freightlink-test` on GitHub | the repo holds the sources directly (no ZIP). Changes arrive as a branch + pull request into `main` |
 | Deploy | repo `.github/workflows/deploy.yml` ("Deploy FreightLink Web") | `flutter build web` from the repo root, publishes `build/web` to GitHub Pages (`--base-href /freightlink-test/`). Must trigger on **push to `main` only** (`on: push: branches: [main]`) — verify this whenever the deploy file changes |
 | Quality gate | repo `.github/workflows/autofix-ci.yml` (reference copy: `docs/autofix/autofix-ci.yml`) | every branch / PR: static checks, SQL/RLS tests on a throw-away Postgres, `flutter analyze`, `flutter test`, `flutter build web`; result also in Admin → AutoFix |
+| Edge Functions | repo `.github/workflows/supabase-functions.yml` ("Supabase functions") | deploys one function from `supabase/functions/` to Supabase, **only by hand** (Actions → Run workflow, works from a phone); needs the secret `SUPABASE_ACCESS_TOKEN` |
 | Database | Supabase project `jqdqtfmxnqezlsetelpi` | changed **only** by forward-only migrations in `supabase/migrations/` that the owner runs in the SQL editor |
 | Runtime errors | AutoFix (`lib/core/autofix`, migration 0034) | Admin → AutoFix (xətalar) |
 
-Only `deploy.yml` and `autofix-ci.yml` are active workflows. Never add a
-second Pages deploy workflow (the old `ci.yml` / `deploy-web.yml` from the
+Only `deploy.yml`, `autofix-ci.yml` and the manual `supabase-functions.yml`
+are active workflows. Never add a second Pages deploy workflow (the old `ci.yml` / `deploy-web.yml` from the
 ZIP era were intentionally not carried over).
 
 `flutter analyze / test / build` run in GitHub Actions (AutoFix CI on the
