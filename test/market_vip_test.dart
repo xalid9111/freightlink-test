@@ -11,6 +11,7 @@ import 'package:freightlink/features/finance/data/finance_repository.dart';
 import 'package:freightlink/features/finance/domain/finance_models.dart';
 import 'package:freightlink/features/finance/presentation/card_checkout.dart';
 import 'package:freightlink/features/market/domain/market_models.dart';
+import 'package:freightlink/features/market/presentation/market_card.dart';
 
 class _FakeRepo extends FinanceRepository {
   final List<String> vipOrders = [];
@@ -191,6 +192,26 @@ void main() {
       expect(m.contains("if v_new = 'succeeded' and v_pay.market_vip_order_id is not null then"), isTrue);
       expect(m.contains("if v_new = 'succeeded' and v_pay.mode = 'live' then\n    update ad_orders"), isTrue);
       expect(m.contains('drop '), isFalse);
+    });
+  });
+
+  group('Phone feed card (owner, 21.10.2026)', () {
+    test('details line: year, engine, km', () {
+      final l = MarketListing.fromJson({
+        'id': 'x', 'owner_id': 'o', 'category': 'truck', 'brand': 'DAF', 'model': 'XF',
+        'year': 2017, 'engine_l': 2.2, 'mileage_km': 140000, 'price': 1, 'currency': 'AZN',
+        'status': 'active', 'photos': <String>[], 'created_at': '2026-10-21T10:00:00Z',
+      });
+      expect(marketCardDetails(l), '2017, 2.2 L, 140 000 km');
+    });
+
+    test('phone feed and top VIP use the new card; the computer keeps MarketCard', () {
+      final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
+      expect(home.contains('(context, i) => MarketFeedCard('), isTrue);
+      expect(home.contains('MarketFeedCard(key: ValueKey(\'vip-top-'), isTrue);
+      expect(home.contains('_VipTile'), isFalse);
+      final desk = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
+      expect(desk.contains('MarketCard(key: ValueKey(chunk[j].id), l: chunk[j])'), isTrue);
     });
   });
 }

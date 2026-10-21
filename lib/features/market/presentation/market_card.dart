@@ -168,3 +168,81 @@ class MarketCard extends ConsumerWidget {
     );
   }
 }
+
+/// Details line under the title: "2017, 2.2 L, 140 000 km".
+String marketCardDetails(MarketListing l) => [
+      if (l.year != null) '${l.year}',
+      if (l.engineL != null) '${l.engineL!.toStringAsFixed(1)} L',
+      if (l.mileageKm != null) marketKm(l.mileageKm),
+    ].join(', ');
+
+/// Phone feed card (owner, 21.10.2026, like the picture he sent): the photo
+/// on top with only the heart on it, the texts under it — price, name,
+/// details, place + time, a small crown for VIP. The computer page and the
+/// other lists keep [MarketCard].
+class MarketFeedCard extends ConsumerWidget {
+  final MarketListing l;
+  const MarketFeedCard({super.key, required this.l});
+
+  /// Grid row height for this card.
+  static const double extent = 236;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final vip = l.vipActive();
+    final lang = ref.watch(currentLocaleProvider).languageCode;
+    final city = (l.city ?? '').trim().isNotEmpty
+        ? Cities.label(l.city!, lang)
+        : ((l.country ?? '').trim().isNotEmpty ? Countries.find(l.country)?.name(lang) ?? l.country! : '');
+    final (agoKey, agoN) = marketAgo(l.publishedAt ?? l.createdAt);
+    final when = s.t(agoKey, {'n': '$agoN'});
+    final details = marketCardDetails(l);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => context.pushOnce('/market/l/${l.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 140,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MarketPhoto(url: l.cover),
+                  Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
+                  if (l.status == MarketStatus.sold)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      alignment: Alignment.center,
+                      child: Text(s.t('mk_sold'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(marketPrice(l.price, l.currency),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 17)),
+          const SizedBox(height: 2),
+          Text([l.brand, l.model].whereType<String>().join(' '),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14.5)),
+          if (details.isNotEmpty)
+            Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.text, fontSize: 13)),
+          const SizedBox(height: 2),
+          Row(children: [
+            Expanded(
+              child: Text([if (city.isNotEmpty) city, when].join(', '),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+            ),
+            if (vip) const Icon(Icons.workspace_premium, key: ValueKey('feed-vip'), size: 18, color: kVipGold),
+          ]),
+        ],
+      ),
+    );
+  }
+}
