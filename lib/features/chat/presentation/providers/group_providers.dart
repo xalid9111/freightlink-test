@@ -37,7 +37,7 @@ final groupUnreadProvider = Provider<Map<String, int>>((ref) {
   final out = <String, int>{};
   for (final m in msgs) {
     final lr = lastRead[m.groupId];
-    if (lr == null || m.senderId == uid) continue;
+    if (lr == null || m.senderId == uid || m.deletedSilent) continue;
     if (m.createdAt.isAfter(lr)) out[m.groupId] = (out[m.groupId] ?? 0) + 1;
   }
   return out;
@@ -52,6 +52,7 @@ final groupLastActivityProvider = Provider<Map<String, DateTime>>((ref) {
   final msgs = ref.watch(myGroupMessagesProvider).valueOrNull ?? const <GroupMessage>[];
   final out = <String, DateTime>{};
   for (final m in msgs) {
+    if (m.deletedSilent) continue;
     final cur = out[m.groupId];
     if (cur == null || m.createdAt.isAfter(cur)) out[m.groupId] = m.createdAt;
   }

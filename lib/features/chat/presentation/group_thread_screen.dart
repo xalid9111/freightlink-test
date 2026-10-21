@@ -124,7 +124,7 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
                   final localDel = ref.watch(locallyDeletedProvider);
                   final messages = [
                     for (final m in all)
-                      if (visibleToMe(id: m.id, chatId: m.groupId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel)) m,
+                      if (!m.deletedSilent && visibleToMe(id: m.id, chatId: m.groupId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel)) m,
                   ];
                   if (messages.isEmpty) return Center(child: Text(strings.t('messages_empty_title')));
                   final sorted = [...messages]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
