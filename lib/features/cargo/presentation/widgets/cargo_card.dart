@@ -12,6 +12,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
 import '../../domain/truck_types.dart';
+import 'cargo_picture.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
 /// block (teal start dot, dashed line, end dot, flags + country + city),
@@ -87,7 +88,9 @@ class CargoCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              // Heart: "Seçilmiş yüklər" (0058).
+              CargoFavoriteHeart(cargoId: cargo.id, size: 20),
+              const SizedBox(width: 4),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [

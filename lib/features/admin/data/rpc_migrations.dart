@@ -109,4 +109,8 @@ const kRpcMigration = <String, String>{
   'admin_set_page_hero_focus': '0051_page_banner_focus.sql',
   'admin_set_page_hero_zoom': '0052_page_banner_zoom.sql',
   'admin_set_cargo_size_card': '0055_cargo_categories.sql',
+  'admin_add_cargo_image_template': '0058_cargo_pictures_favorites.sql',
+  'admin_delete_cargo_image_template': '0058_cargo_pictures_favorites.sql',
+  'admin_reorder_cargo_image_templates': '0058_cargo_pictures_favorites.sql',
+  'admin_clear_cargo_image': '0058_cargo_pictures_favorites.sql',
 };

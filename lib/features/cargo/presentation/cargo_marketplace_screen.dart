@@ -9,6 +9,8 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'providers/cargo_providers.dart';
 import 'widgets/cargo_card.dart';
+import 'widgets/cargo_picture.dart';
+import 'providers/cargo_media_providers.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/cargo_model.dart';
@@ -281,6 +283,9 @@ class _Hero extends ConsumerWidget {
                   TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
                 ])),
                 const Spacer(),
+                // Heart (Seçilmiş yüklər) + profile picture (Profil), two
+                // round buttons like on the computer (owner, 22.10.2026).
+                HeaderCircles(strings: strings),
               ],
             ),
           ),

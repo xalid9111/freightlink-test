@@ -1109,5 +1109,16 @@
   "enroute_off": "Yükləmə yoldan {a} km, boşaltma {b} km aralıdır",
   "enroute_skipped": "{n} yükün yeri xəritədə tapılmadı və hesablanmadı.",
   "cat_open": "AÇIQ",
-  "cat_tanker": "SİSTERN"
+  "cat_tanker": "SİSTERN",
+  "fav_cargo_title": "Seçilmiş yüklər",
+  "fav_cargo_empty": "Hələ seçilmiş yük yoxdur. Yükün yanındakı ürəyə toxunun — burada görünəcək.",
+  "fav_cargo_failed": "Alınmadı. Bir az sonra yenidən yoxlayın.",
+  "cargo_pic_label": "Kart şəkli (məcburi deyil)",
+  "cargo_pic_hint": "Hazır şəkillərdən birini seçin və ya öz şəklinizi yükləyin.",
+  "cargo_pic_pick_type": "Hazır şəkillər üçün yuxarıda yük növünü seçin. Öz şəklinizi də yükləyə bilərsiniz.",
+  "cargo_pic_upload": "Öz şəklini yüklə",
+  "cargo_pic_upload_failed": "Şəkil yüklənmədi. Yenidən yoxlayın.",
+  "cargo_pic_remove": "Şəkli götür",
+  "cargo_pic_admin_remove": "Şəkli yükdən götür",
+  "cargo_pic_admin_remove_q": "Bu yükün şəkli götürülsün? Yükün özü dəyişmir."
 }

@@ -13,8 +13,12 @@ import '../../../core/widgets/city_picker.dart';
 import '../../../models/cargo_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../domain/cargo_categories.dart';
+import '../data/cargo_media_repository.dart';
+import '../domain/cargo_pictures.dart';
 import '../domain/truck_types.dart';
 import 'widgets/cargo_category_bar.dart';
+import 'widgets/cargo_picture_field.dart';
+import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 
 /// Quick "post a load" form, built for speed on a phone: countries and
@@ -60,6 +64,11 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   // Big / small load and QRUPAJ (0055); a groupage load is always small.
   String? _size;
   bool _groupage = false;
+  // Card picture (0058): a template or an own photo; not required.
+  String? _image;
+  // Own photos uploaded in this session (deleted again if not kept).
+  final List<String> _uploaded = [];
+  bool _saved = false;
   DateTime? _pickupDate;
   String _currency = kDefaultCargoCurrency;
 
@@ -70,8 +79,23 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
 
   bool get _isEdit => widget.editCargoId != null;
 
+  late final CargoMediaRepository _media;
+
+  @override
+  void initState() {
+    super.initState();
+    _media = ref.read(cargoMediaRepositoryProvider);
+  }
+
   @override
   void dispose() {
+    // Leaving without saving (or a photo replaced before saving): its
+    // uploaded files are deleted again; the load is not touched.
+    // (_media is taken in initState: ref must not be read in dispose.)
+    final keep = _saved ? _image : _original?.imageUrl;
+    for (final url in _uploaded) {
+      if (url != keep) _media.removeOwn(url);
+    }
     for (final c in [
       _priceCtrl,
       _noteCtrl,
@@ -111,6 +135,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     }
     _size = c.loadSize;
     _groupage = c.groupage;
+    _image = c.imageUrl;
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
@@ -252,6 +277,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         freeWaitHours: _freeWait,
         loadSize: effectiveLoadSize(groupage: _groupage, picked: _size),
         groupage: _groupage,
+        imageUrl: _image,
       );
 
       final repo = ref.read(cargoRepositoryProvider);
@@ -262,7 +288,13 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         await repo.update(cargo);
         id = o.id;
         ref.invalidate(cargoDetailProvider(id));
+        // The owner's previous own photo is not used any more.
+        final old = o.imageUrl;
+        if (old != null && old != _image && !_uploaded.contains(old)) {
+          _media.removeOwn(old);
+        }
       }
+      _saved = true;
       ref.invalidate(marketplaceProvider);
       ref.invalidate(myCargoProvider);
       if (!mounted) return;
@@ -492,6 +524,22 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 icon: Icons.local_shipping_outlined,
                 title: strings.t('cargo_category_label'),
                 child: _loadTypePicker(strings),
+              ),
+
+              const SizedBox(height: 18),
+              // Card picture (owner, 22.10.2026): the admin's pictures for
+              // this load type or an own photo; not required.
+              _FormCard(
+                icon: Icons.image_outlined,
+                title: strings.t('cargo_pic_label'),
+                child: CargoPictureField(
+                  key: const ValueKey('cargo-picture'),
+                  strings: strings,
+                  category: cargoPictureCategory(truckType: _truckOther ? null : _truck, groupage: _groupage),
+                  value: _image,
+                  onChanged: (url) => setState(() => _image = url),
+                  onUploaded: _uploaded.add,
+                ),
               ),
 
               const SizedBox(height: 18),

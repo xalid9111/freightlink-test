@@ -1109,5 +1109,16 @@
   "enroute_off": "Yükleme yoldan {a} km, boşaltma {b} km uzakta",
   "enroute_skipped": "{n} yükün yeri haritada bulunamadı ve hesaplanmadı.",
   "cat_open": "AÇIK",
-  "cat_tanker": "TANKER"
+  "cat_tanker": "TANKER",
+  "fav_cargo_title": "Favori yükler",
+  "fav_cargo_empty": "Henüz favori yük yok. Yükün yanındaki kalbe dokunun — burada görünür.",
+  "fav_cargo_failed": "Olmadı. Biraz sonra tekrar deneyin.",
+  "cargo_pic_label": "Kart resmi (zorunlu değil)",
+  "cargo_pic_hint": "Hazır resimlerden birini seçin veya kendi resminizi yükleyin.",
+  "cargo_pic_pick_type": "Hazır resimler için yukarıda yük türünü seçin. Kendi resminizi de yükleyebilirsiniz.",
+  "cargo_pic_upload": "Kendi resmini yükle",
+  "cargo_pic_upload_failed": "Resim yüklenemedi. Tekrar deneyin.",
+  "cargo_pic_remove": "Resmi kaldır",
+  "cargo_pic_admin_remove": "Resmi yükten kaldır",
+  "cargo_pic_admin_remove_q": "Bu yükün resmi kaldırılsın mı? Yükün kendisi değişmez."
 }
