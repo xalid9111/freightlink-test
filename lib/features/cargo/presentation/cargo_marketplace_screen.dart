@@ -82,8 +82,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
         },
-        // Open Loads feed = 3D wheel (scale / veil / tilt by distance from
-        // the screen centre, detent haptic, gentle snap).
+        // Open Loads feed: plain scroll, no card animation (owner,
+        // 22.10.2026); only the detent haptic stays.
         child: WheelScope(
           child: CustomScrollView(
           // iOS-style momentum everywhere: long, soft glide and no hard stop.
