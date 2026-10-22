@@ -1120,5 +1120,6 @@
   "cargo_pic_upload_failed": "Не удалось загрузить фото. Попробуйте ещё раз.",
   "cargo_pic_remove": "Убрать фото",
   "cargo_pic_admin_remove": "Убрать фото с груза",
-  "cargo_pic_admin_remove_q": "Убрать фото этого груза? Сам груз не меняется."
+  "cargo_pic_admin_remove_q": "Убрать фото этого груза? Сам груз не меняется.",
+  "cargo_groupage_label": "Сборный груз"
 }

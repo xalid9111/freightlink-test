@@ -1120,5 +1120,6 @@
   "cargo_pic_upload_failed": "Resim yüklenemedi. Tekrar deneyin.",
   "cargo_pic_remove": "Resmi kaldır",
   "cargo_pic_admin_remove": "Resmi yükten kaldır",
-  "cargo_pic_admin_remove_q": "Bu yükün resmi kaldırılsın mı? Yükün kendisi değişmez."
+  "cargo_pic_admin_remove_q": "Bu yükün resmi kaldırılsın mı? Yükün kendisi değişmez.",
+  "cargo_groupage_label": "Parsiyel"
 }

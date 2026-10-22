@@ -179,15 +179,16 @@ class _DesktopMarketplace extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 48),
                         child: LayoutBuilder(
+                          // Same picture tiles as the phone (owner, 22.10.2026),
+                          // as many as fit at about 200 px each.
                           builder: (context, c) => _DeskLoadGrid(
-                            columns: c.maxWidth >= 1440 ? 4 : 3,
+                            columns: ((c.maxWidth + 16) / 216).floor().clamp(3, 8),
                             plan: plan,
                             buildLoad: (i) {
                               final cargo = list[i];
-                              return CargoCard(
+                              return CargoTile(
                                 cargo: cargo,
                                 strings: strings,
-                                compact: true,
                                 onTap: () => context.pushOnce('/cargo/${cargo.id}'),
                               );
                             },
