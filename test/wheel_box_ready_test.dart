@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/wheel_feed.dart';
@@ -28,5 +30,13 @@ void main() {
     expect(wheelBoxReady(box), isFalse);
     box.layout(BoxConstraints.loose(const Size(100, 100)));
     expect(wheelBoxReady(box), isTrue);
+  });
+
+  test('Loads feed scrolls plainly: no 3D tilt, shrinking or veil on the cards (owner, 22.10.2026)', () {
+    final src = File('lib/features/cargo/presentation/widgets/wheel_feed.dart').readAsStringSync();
+    for (final banned in ['rotateX', 'Matrix4', 'AnimatedBuilder', 'Transform(', 'withValues(alpha']) {
+      expect(src.contains(banned), isFalse, reason: banned);
+    }
+    expect(src.contains('Widget build(BuildContext context) => RepaintBoundary(child: widget.child);'), isTrue);
   });
 }
