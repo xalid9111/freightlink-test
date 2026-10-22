@@ -1,4 +1,4 @@
--- AUTOFIX CLEANUP — 0042: solved problems found automatically, deleted
+-- AUTOFIX CLEANUP — 0042 + 0057 (old hidden ones too): solved problems found automatically, deleted
 -- only on the admin's request, only status 'fixed'. Rolled back.
 \set admin   '''a0000000-0000-4000-8000-000000000001'''
 \set other   '''a0000000-0000-4000-8000-000000000021'''
@@ -25,12 +25,13 @@ select tests.check(tests.err($$ select public.admin_autofix_delete_fixed() $$) l
   'D2 normal users cannot delete');
 
 select tests.login(:admin);
-select tests.check(public.admin_autofix_auto_resolve(3) = 1, 'D3 one open problem not seen for 3 days is found');
+select tests.check(public.admin_autofix_auto_resolve(3) = 2, 'D3 the old open and the old hidden problem are found (0057)');
 select tests.check((select status = 'fixed' and resolved_by is null and resolved_at is not null
                       from public.app_errors where fingerprint = 'rt:old:open'), 'D4 …and marked fixed by the system');
 select tests.check((select status = 'open' from public.app_errors where fingerprint = 'rt:new:open'), 'D5 a recent open problem stays open');
-select tests.check((select status = 'ignored' from public.app_errors where fingerprint = 'rt:old:ignored'), 'D6 a hidden problem stays hidden');
-select tests.check((select count(*) = 1 from public.autofix_actions where note = 'auto_not_seen'), 'D7 the automatic change is logged');
+select tests.check((select status = 'fixed' and resolved_by is null from public.app_errors where fingerprint = 'rt:old:ignored'),
+  'D6 an old hidden problem is moved to solved too (0057)');
+select tests.check((select count(*) = 2 from public.autofix_actions where note = 'auto_not_seen'), 'D7 the automatic change is logged');
 select tests.check(public.admin_autofix_auto_resolve(3) = 0, 'D8 running it again changes nothing');
 
 select tests.login(:other);
@@ -40,10 +41,10 @@ select tests.check((select status = 'open' from public.app_errors where fingerpr
   'D9 an auto-fixed problem that happens again is open again');
 select public.admin_autofix_set_status((select id from public.app_errors where fingerprint = 'rt:old:open'), 'fixed');
 
-select tests.check(public.admin_autofix_delete_fixed() = 2, 'D10 delete removes exactly the two fixed problems');
+select tests.check(public.admin_autofix_delete_fixed() = 3, 'D10 delete removes exactly the three fixed problems');
 select tests.check((select count(*) = 0 from public.app_errors where status = 'fixed'), 'D11 no fixed problem is left');
-select tests.check((select count(*) = 2 from public.app_errors where fingerprint in ('rt:new:open', 'rt:old:ignored')),
-  'D12 open and hidden problems are kept');
+select tests.check((select count(*) = 1 from public.app_errors where fingerprint = 'rt:new:open'),
+  'D12 the recent open problem is kept');
 select tests.check((select count(*) >= 1 from public.autofix_actions where note = 'auto_not_seen'), 'D13 the action log is kept');
 select tests.check(public.admin_autofix_delete_fixed() = 0, 'D14 deleting again deletes nothing');
 

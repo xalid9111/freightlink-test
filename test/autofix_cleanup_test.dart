@@ -23,4 +23,12 @@ void main() {
     expect(deletes.single.group(2), contains("where status = 'fixed'"));
     expect(sql, contains('_require_admin()'));
   });
+
+  test('0057: old hidden problems are moved to solved too, nothing deleted', () {
+    final sql = File('supabase/migrations/0057_autofix_resolve_hidden.sql').readAsStringSync().toLowerCase();
+    expect(sql, contains("where status in ('open', 'ignored')"));
+    expect(sql, contains("set status = 'fixed'"));
+    expect(sql, contains('_require_admin()'));
+    expect(RegExp(r'delete\s+from').hasMatch(sql), isFalse);
+  });
 }
