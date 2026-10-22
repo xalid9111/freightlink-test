@@ -16,8 +16,9 @@ import 'admin_widgets.dart';
 
 final _autofixShowAllProvider = StateProvider.autoDispose<bool>((ref) => false);
 
-/// Open problems nobody has hit for this many days are marked solved by
-/// the system (0042). If one happens again it is open again on its own.
+/// Open and hidden problems nobody has hit for this many days are marked
+/// solved by the system (0042, 0057). If one happens again it is open
+/// again on its own.
 const kAutofixAutoResolveDays = 3;
 
 final _autofixErrorsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
