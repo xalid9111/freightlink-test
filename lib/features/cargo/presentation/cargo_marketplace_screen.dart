@@ -9,6 +9,8 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'providers/cargo_providers.dart';
 import 'widgets/cargo_card.dart';
+import 'widgets/cargo_picture.dart';
+import 'providers/cargo_media_providers.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/cargo_model.dart';
@@ -171,39 +173,45 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
+                // Two tiles in a row (owner, 22.10.2026); an ad takes a row
+                // of its own. Scrolling down brings the next rows.
+                final rows = feedGridRows(plan, 2);
                 return [
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                     // first ad after N loads, then one after every M loads (admin
                     // setting); live ads take turns per slot and, if set, per X minutes.
                     sliver: SliverList.builder(
-                      itemCount: plan.length,
+                      itemCount: rows.length,
                       itemBuilder: (context, i) {
-                        final slot = plan[i];
-                        if (slot.isAd) {
+                        final row = rows[i];
+                        if (row.adSlot != null) {
                           // Every X minutes the order moves one place: the last ad
                           // comes to the front (Dart % is never negative here).
-                          final ad = ads[(slot.index - rotation) % ads.length];
+                          final ad = ads[(row.adSlot! - rotation) % ads.length];
                           return WheelItem(
                             index: i,
                             isAd: true,
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(0, 10, 0, 18),
-                              child: SponsoredBanner(key: ValueKey('ad-${slot.index}-${ad.id}'), ad: ad, strings: strings),
+                              child: SponsoredBanner(key: ValueKey('ad-${row.adSlot}-${ad.id}'), ad: ad, strings: strings),
                             ),
                           );
                         }
-                        final cargo = list[slot.index];
                         return WheelItem(
                           index: i,
                           isAd: false,
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: CargoCard(
-                              cargo: cargo,
-                              strings: strings,
-                              compact: true,
-                              onTap: () => context.pushOnce('/cargo/${cargo.id}'),
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _TileRow(
+                              children: [
+                                for (final k in row.loads)
+                                  CargoTile(
+                                    cargo: list[k],
+                                    strings: strings,
+                                    onTap: () => context.pushOnce('/cargo/${list[k].id}'),
+                                  ),
+                              ],
                             ),
                           ),
                         );
@@ -281,6 +289,9 @@ class _Hero extends ConsumerWidget {
                   TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
                 ])),
                 const Spacer(),
+                // Heart (Seçilmiş yüklər) + profile picture (Profil), two
+                // round buttons like on the computer (owner, 22.10.2026).
+                HeaderCircles(strings: strings),
               ],
             ),
           ),
@@ -805,4 +816,58 @@ List<({bool isAd, int index})> _feedPlan(int loads, bool adsOn, AdFeedLayout l, 
   }
   if (adsOn && loads > 0 && loads <= l.firstAfter) out.add((isAd: true, index: 0));
   return out;
+}
+
+/// One row of the Loads feed: [feedGridRows] makes the rows of the
+/// feed plan — up to [columns] loads side by side, or one ad slot.
+List<({int? adSlot, List<int> loads})> feedGridRows(List<({bool isAd, int index})> plan, int columns) {
+  final out = <({int? adSlot, List<int> loads})>[];
+  var pending = <int>[];
+  void flush() {
+    if (pending.isEmpty) return;
+    out.add((adSlot: null, loads: pending));
+    pending = <int>[];
+  }
+
+  for (final slot in plan) {
+    if (slot.isAd) {
+      flush();
+      out.add((adSlot: slot.index, loads: const <int>[]));
+    } else {
+      pending.add(slot.index);
+      if (pending.length == columns) flush();
+    }
+  }
+  flush();
+  return out;
+}
+
+/// Two tiles side by side with space on both sides (owner's drawing,
+/// 22.10.2026): each about 2 × 2 cm picture wide on a phone; a last
+/// single tile keeps its place on the left. Same height per row.
+class _TileRow extends StatelessWidget {
+  final List<Widget> children;
+  const _TileRow({required this.children});
+
+  static const _gap = 14.0;
+  static const _maxTile = 150.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final w = ((c.maxWidth - _gap) / 2).clamp(0.0, _maxTile);
+      return Center(
+        child: SizedBox(
+          width: w * 2 + _gap,
+          child: IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              SizedBox(width: w, child: children.isNotEmpty ? children[0] : null),
+              const SizedBox(width: _gap),
+              SizedBox(width: w, child: children.length > 1 ? children[1] : null),
+            ]),
+          ),
+        ),
+      );
+    });
+  }
 }

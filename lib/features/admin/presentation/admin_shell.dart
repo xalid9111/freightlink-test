@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
+import '../../cargo/presentation/admin_cargo_pictures_page.dart';
 import 'admin_ads_page.dart';
 import 'admin_autofix_page.dart';
 import 'admin_services_page.dart';
@@ -26,6 +27,7 @@ class AdminSection {
 const adminSections = <AdminSection>[
   AdminSection('dashboard', 'Dashboard', Icons.space_dashboard_outlined),
   AdminSection('cargo', 'Yüklər', Icons.inventory_2_outlined),
+  AdminSection('cargo_pictures', 'Yük şəkilləri', Icons.add_photo_alternate_outlined),
   AdminSection('users', 'İstifadəçilər', Icons.people_alt_outlined),
   AdminSection('carriers', 'Daşıyıcılar', Icons.local_shipping_outlined),
   AdminSection('drivers', 'Sürücülər', Icons.badge_outlined),
@@ -109,6 +111,8 @@ class _AdminLayout extends ConsumerWidget {
     switch (section) {
       case 'cargo':
         return const AdminCargoPage();
+      case 'cargo_pictures':
+        return const AdminCargoPicturesPage();
       case 'users':
         return const AdminUsersPage(key: ValueKey('users'));
       case 'carriers':

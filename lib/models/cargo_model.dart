@@ -71,6 +71,10 @@ class CargoModel {
   /// a small load.
   final bool groupage;
 
+  /// Picture on the load's card (0058): an admin template or the owner's
+  /// own photo; null = none (the load type icon is shown).
+  final String? imageUrl;
+
   const CargoModel({
     required this.id,
     required this.ownerId,
@@ -108,6 +112,7 @@ class CargoModel {
     this.freeWaitHours,
     this.loadSize,
     this.groupage = false,
+    this.imageUrl,
   });
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
@@ -149,6 +154,7 @@ class CargoModel {
         freeWaitHours: (j['free_wait_hours'] as num?)?.toInt(),
         loadSize: j['load_size'] as String?,
         groupage: j['groupage'] == true,
+        imageUrl: j['image_url'] as String?,
       );
 
   /// Columns added by migration 0046 (left out if the database does not
@@ -160,6 +166,9 @@ class CargoModel {
 
   /// Columns added by migration 0055 (left out if not run yet).
   static const sizeColumns = ['load_size', 'groupage'];
+
+  /// Column added by migration 0058 (left out if not run yet).
+  static const imageColumns = ['image_url'];
 
   /// Cash / bank ticked; a load saved with an amount there (0046) counts
   /// as ticked.
@@ -177,7 +186,7 @@ class CargoModel {
 
   bool get hasTerms => paymentTerms.isNotEmpty || freeWaitHours != null;
 
-  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true, bool withSize = true}) => {
+  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true, bool withSize = true, bool withImage = true}) => {
         'owner_id': ownerId,
         'company_id': companyId,
         'pickup_country': pickupCountry,
@@ -217,6 +226,7 @@ class CargoModel {
           'load_size': loadSize,
           'groupage': groupage,
         },
+        if (withImage) 'image_url': imageUrl,
       };
 }
 

@@ -8,6 +8,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/cities.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/theme/app_theme.dart';
@@ -26,8 +27,10 @@ import '../../auth/domain/activities.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../carrier/presentation/providers/carrier_providers.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
+import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import '../domain/truck_types.dart';
+import 'widgets/cargo_picture.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -41,7 +44,11 @@ class CargoDetailScreen extends ConsumerWidget {
     final cargoAsync = ref.watch(cargoDetailProvider(cargoId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.t('detail_title'))),
+      appBar: AppBar(title: Text(strings.t('detail_title')), actions: [
+        // "Seçilmiş yüklər" (0058).
+        CargoFavoriteHeart(cargoId: cargoId, size: 24),
+        const SizedBox(width: 8),
+      ]),
       body: cargoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(strings.t('detail_not_found'))),
@@ -96,6 +103,22 @@ class _DetailBody extends ConsumerWidget {
         // Owner tools first, so editing is easy to find.
         if (isOwner) ...[
           _OwnerActions(cargo: cargo, strings: strings),
+          const SizedBox(height: 12),
+        ],
+        // Card picture (0058), only when the load has one.
+        if ((cargo.imageUrl ?? '').isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
+            ),
+          ),
+          if (user?.role == AppConstants.roleAdmin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: _AdminClearPicture(cargo: cargo, strings: strings),
+            ),
           const SizedBox(height: 12),
         ],
         // Route + price card — same visual language as the marketplace card.
@@ -1047,6 +1070,49 @@ class _ReportCargoButton extends StatelessWidget {
       style: TextButton.styleFrom(foregroundColor: AppColors.textSoft),
       icon: const Icon(Icons.flag_outlined, size: 18),
       label: Text(strings.t('report_button')),
+    );
+  }
+}
+
+/// Admin: take an unsuitable picture off the load (checked on the server,
+/// logged; nothing else on the load changes).
+class _AdminClearPicture extends ConsumerWidget {
+  final CargoModel cargo;
+  final AppStrings strings;
+  const _AdminClearPicture({required this.cargo, required this.strings});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextButton.icon(
+      key: const ValueKey('admin-clear-cargo-picture'),
+      icon: Icon(Icons.hide_image_outlined, size: 18, color: AppColors.danger),
+      label: Text(strings.t('cargo_pic_admin_remove'), style: TextStyle(color: AppColors.danger)),
+      onPressed: () async {
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            content: Text(strings.t('cargo_pic_admin_remove_q')),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(strings.t('common_cancel'))),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(strings.t('cargo_pic_admin_remove')),
+              ),
+            ],
+          ),
+        );
+        if (ok != true) return;
+        try {
+          await ref.read(cargoMediaRepositoryProvider).adminClearImage(cargo.id);
+          ref.invalidate(cargoDetailProvider(cargo.id));
+          ref.invalidate(marketplaceProvider);
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
+          }
+        }
+      },
     );
   }
 }

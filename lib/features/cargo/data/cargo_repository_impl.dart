@@ -61,18 +61,31 @@ class CargoRepositoryImpl implements CargoRepository {
     // RLS requires owner_id = auth.uid() (migration 0002); an attempt to
     // post cargo under someone else's id is rejected at the database,
     // not just hidden by the UI.
-    final row = await _withSize((size) => _withTerms((terms, choices) => _client
+    final row = await _withImage((image) => _withSize((size) => _withTerms((terms, choices) => _client
         .from('cargo')
-        .insert(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size))
+        .insert(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image))
         .select()
-        .single()));
+        .single())));
     return CargoModel.fromJson(row);
   }
 
   @override
   Future<void> update(CargoModel cargo) async {
-    await _withSize((size) => _withTerms((terms, choices) =>
-        _client.from('cargo').update(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size)).eq('id', cargo.id)));
+    await _withImage((image) => _withSize((size) => _withTerms((terms, choices) => _client
+        .from('cargo')
+        .update(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image))
+        .eq('id', cargo.id))));
+  }
+
+  /// The card picture needs migration 0058; until it is run the load is
+  /// saved without it.
+  Future<T> _withImage<T>(Future<T> Function(bool image) run) async {
+    try {
+      return await run(true);
+    } on PostgrestException catch (e) {
+      if (!isMissingImageColumn(e.code, e.message)) rethrow;
+      return run(false);
+    }
   }
 
   /// Big / small and groupage need migration 0055; until it is run the
@@ -133,6 +146,10 @@ bool isMissingTermsColumn(String? code, String message) =>
 /// Same for the 0055 columns.
 bool isMissingSizeColumn(String? code, String message) =>
     (code == 'PGRST204' || code == '42703') && CargoModel.sizeColumns.any(message.contains);
+
+/// Same for the 0058 picture column.
+bool isMissingImageColumn(String? code, String message) =>
+    (code == 'PGRST204' || code == '42703') && CargoModel.imageColumns.any(message.contains);
 
 /// Same for the 0047 columns.
 bool isMissingChoiceColumn(String? code, String message) =>

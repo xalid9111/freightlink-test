@@ -179,15 +179,16 @@ class _DesktopMarketplace extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 48),
                         child: LayoutBuilder(
+                          // Same picture tiles as the phone (owner, 22.10.2026),
+                          // as many as fit at about 200 px each.
                           builder: (context, c) => _DeskLoadGrid(
-                            columns: c.maxWidth >= 1440 ? 4 : 3,
+                            columns: ((c.maxWidth + 16) / 216).floor().clamp(3, 8),
                             plan: plan,
                             buildLoad: (i) {
                               final cargo = list[i];
-                              return CargoCard(
+                              return CargoTile(
                                 cargo: cargo,
                                 strings: strings,
-                                compact: true,
                                 onTap: () => context.pushOnce('/cargo/${cargo.id}'),
                               );
                             },
@@ -493,6 +494,7 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
     });
     final glass = AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.82);
     final unread = (ref.watch(unreadCountProvider).valueOrNull ?? 0) + ref.watch(groupUnreadTotalProvider);
+    final favCount = ref.watch(cargoFavoriteIdsProvider).length;
     final uid = ref.watch(currentUserIdProvider);
     final me = ref.watch(currentUserProvider);
     final profile = uid == null ? null : ref.watch(publicProfileProvider(uid)).valueOrNull;
@@ -546,6 +548,20 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
           ),
         ),
         const SizedBox(width: 14),
+        // "Seçilmiş yüklər" (owner, 22.10.2026): heart next to the bell.
+        HeaderCircle(
+          key: const ValueKey('desk-favorites'),
+          tooltip: s.t('fav_cargo_title'),
+          size: 54,
+          onTap: () => context.pushOnce('/cargo/favorites'),
+          child: Badge(
+            isLabelVisible: favCount > 0,
+            label: Text(favCount > 99 ? '99+' : '$favCount'),
+            backgroundColor: AppColors.accentFill,
+            child: Icon(favCount > 0 ? Icons.favorite : Icons.favorite_border, color: AppColors.accent, size: 26),
+          ),
+        ),
+        const SizedBox(width: 12),
         Tooltip(
           message: s.t('nav_messages'),
           child: InkWell(

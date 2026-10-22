@@ -12,6 +12,7 @@ import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/cargo/presentation/cargo_marketplace_screen.dart';
 import '../../features/cargo/presentation/cargo_quick_form.dart';
 import '../../features/cargo/presentation/en_route_screen.dart';
+import '../../features/cargo/presentation/favorite_cargo_screen.dart';
 import '../../features/cargo/presentation/my_cargo_screen.dart';
 import '../../features/cargo/presentation/cargo_detail_screen.dart';
 import '../../features/cargo/presentation/search_screen.dart';
@@ -144,6 +145,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/cargo/en-route',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: EnRouteScreen()),
+      ),
+      // "Seçilmiş yüklər" (owner, 22.10.2026): the heart at the top right.
+      GoRoute(
+        path: '/cargo/favorites',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: FavoriteCargoScreen()),
       ),
       GoRoute(
         path: '/cargo-edit/:id',

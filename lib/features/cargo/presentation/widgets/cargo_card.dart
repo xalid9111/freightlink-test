@@ -12,6 +12,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
 import '../../domain/truck_types.dart';
+import 'cargo_picture.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
 /// block (teal start dot, dashed line, end dot, flags + country + city),
@@ -87,7 +88,9 @@ class CargoCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              // Heart: "Seçilmiş yüklər" (0058).
+              CargoFavoriteHeart(cargoId: cargo.id, size: 20),
+              const SizedBox(width: 4),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -358,4 +361,98 @@ class _DashPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashPainter old) => old.color != color || old.vertical != vertical;
+}
+
+/// Loads page tile (owner, 22.10.2026): a square picture on top (the
+/// load's own / template picture, else its load type icon) with the heart,
+/// under it route, weight, load type, date and price. Two in a row on a
+/// phone. Every value is a real CargoModel field.
+class CargoTile extends ConsumerWidget {
+  final CargoModel cargo;
+  final AppStrings strings;
+  final VoidCallback onTap;
+  const CargoTile({super.key, required this.cargo, required this.strings, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeCode = ref.watch(currentLocaleProvider).languageCode;
+    final from = Countries.find(cargo.pickupCountry);
+    final to = Countries.find(cargo.destinationCountry);
+    final dateFmt = DateFormat('d MMM', localeCode);
+    final tons = cargo.weightKg / 1000;
+    final tonsText = tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1);
+    final weight = cargo.weightKg < 1000 ? '${_num(cargo.weightKg)} kg' : '$tonsText t';
+    final truck = (cargo.truckType ?? '').trim();
+    final type = cargo.groupage
+        ? strings.t('cargo_groupage_label')
+        : (truck.isEmpty ? null : truckTypeLabel(strings, truck));
+    final end = cargo.deliveryDeadline;
+    final date = end == null || !end.isAfter(cargo.pickupDate)
+        ? dateFmt.format(cargo.pickupDate)
+        : '${dateFmt.format(cargo.pickupDate)} – ${dateFmt.format(end)}';
+    final soft = TextStyle(fontSize: 12, color: AppColors.textSoft, height: 1.25);
+
+    Widget line(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Row(children: [
+            Icon(icon, size: 13, color: AppColors.textSoft),
+            const SizedBox(width: 5),
+            Expanded(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: soft)),
+          ]),
+        );
+
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: ValueKey('cargo-tile-${cargo.id}'),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.tileLine),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Stack(fit: StackFit.expand, children: [
+                CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
+                Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 17, onPhoto: true)),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
+                        .trim(),
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                  ),
+                ),
+                line(Icons.scale_outlined, weight),
+                if (type != null) line(Icons.local_shipping_outlined, type),
+                line(Icons.calendar_today_outlined, date),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: _num(cargo.offeredPrice), style: AppFonts.display(size: 17, color: AppColors.text, height: 1)),
+                      TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                    ]),
+                  ),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 }

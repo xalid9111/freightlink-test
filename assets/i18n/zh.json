@@ -1109,5 +1109,17 @@
   "enroute_off": "装货地距道路 {a} 公里，卸货地 {b} 公里",
   "enroute_skipped": "{n} 件货物无法在地图上定位，未计入。",
   "cat_open": "平板",
-  "cat_tanker": "罐车"
+  "cat_tanker": "罐车",
+  "fav_cargo_title": "收藏的货源",
+  "fav_cargo_empty": "还没有收藏的货源。点击货源旁的心形图标即可在此查看。",
+  "fav_cargo_failed": "操作失败，请稍后再试。",
+  "cargo_pic_label": "卡片图片（可选）",
+  "cargo_pic_hint": "选择一张现成图片，或上传您自己的图片。",
+  "cargo_pic_pick_type": "请先在上方选择货物类型以查看现成图片，也可以上传自己的图片。",
+  "cargo_pic_upload": "上传自己的图片",
+  "cargo_pic_upload_failed": "图片上传失败，请重试。",
+  "cargo_pic_remove": "移除图片",
+  "cargo_pic_admin_remove": "从货源移除图片",
+  "cargo_pic_admin_remove_q": "移除此货源的图片？货源本身不会改变。",
+  "cargo_groupage_label": "拼货"
 }
