@@ -1121,5 +1121,6 @@
   "cargo_pic_remove": "Remove picture",
   "cargo_pic_admin_remove": "Remove picture from load",
   "cargo_pic_admin_remove_q": "Remove this load's picture? The load itself does not change.",
-  "cargo_groupage_label": "Groupage"
+  "cargo_groupage_label": "Groupage",
+  "cargo_pic_add": "Add a picture"
 }

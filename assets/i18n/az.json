@@ -1121,5 +1121,6 @@
   "cargo_pic_remove": "Şəkli götür",
   "cargo_pic_admin_remove": "Şəkli yükdən götür",
   "cargo_pic_admin_remove_q": "Bu yükün şəkli götürülsün? Yükün özü dəyişmir.",
-  "cargo_groupage_label": "Qrupaj"
+  "cargo_groupage_label": "Qrupaj",
+  "cargo_pic_add": "Şəkil əlavə et"
 }

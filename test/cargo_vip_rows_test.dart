@@ -87,6 +87,22 @@ void main() {
       expect(m.contains('const kTileWidth = 128.0;'), isTrue);
     });
 
+    test("owner's design: orange VIP frame, gold medal, normal price, tiles on a panel", () {
+      final card = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
+      expect(card.contains('color: vip ? AppColors.accent : AppColors.tileLine'), isTrue);
+      expect(card.contains('child: VipMedal(size: 44)'), isTrue);
+      expect(card.contains('vipGoldText'), isFalse);
+      expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart').contains('DecoratedSliver('), isTrue);
+      expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').contains('color: AppColors.cardAlt'), isTrue);
+    });
+
+    test('my own load without a picture: "Şəkil əlavə et" saves only the picture', () {
+      final d = src('lib/features/cargo/presentation/cargo_detail_screen.dart');
+      expect(d.contains("key: const ValueKey('cargo-add-picture')"), isTrue);
+      expect(d.contains('media.setCargoImage(cargo.id, picked)'), isTrue);
+      expect(src('lib/features/cargo/data/cargo_media_repository.dart').contains(".update({'image_url': url})"), isTrue);
+    });
+
     test('admin: interval 2 / 3 / 4 and VIP on / off on a load', () {
       final a = src('lib/features/admin/presentation/admin_pages.dart');
       expect(a.contains('const _VipEveryBar()'), isTrue);

@@ -1121,5 +1121,6 @@
   "cargo_pic_remove": "移除图片",
   "cargo_pic_admin_remove": "从货源移除图片",
   "cargo_pic_admin_remove_q": "移除此货源的图片？货源本身不会改变。",
-  "cargo_groupage_label": "拼货"
+  "cargo_groupage_label": "拼货",
+  "cargo_pic_add": "添加图片"
 }

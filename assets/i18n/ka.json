@@ -1121,5 +1121,6 @@
   "cargo_pic_remove": "სურათის მოხსნა",
   "cargo_pic_admin_remove": "სურათის მოხსნა ტვირთიდან",
   "cargo_pic_admin_remove_q": "მოიხსნას ამ ტვირთის სურათი? თავად ტვირთი არ იცვლება.",
-  "cargo_groupage_label": "ჯგუფური ტვირთი"
+  "cargo_groupage_label": "ჯგუფური ტვირთი",
+  "cargo_pic_add": "სურათის დამატება"
 }

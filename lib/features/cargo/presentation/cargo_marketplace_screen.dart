@@ -164,8 +164,16 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 // the next rows.
                 final rows = buildLoadRows(list, vipEvery: vipEvery, columns: 2);
                 return [
+                  // The tiles stand on a rounded panel (owner's design, 23.10.2026).
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 96),
+                    sliver: DecoratedSliver(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardAlt,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      sliver: SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(8, kTileGap, 8, 0),
                     sliver: SliverList.builder(
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
@@ -189,6 +197,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                           ),
                         );
                       },
+                    ),
+                      ),
                     ),
                   ),
                 ];

@@ -81,6 +81,11 @@ class CargoMediaRepository {
     }
   }
 
+  /// The owner sets (or with null removes) the picture of his own load;
+  /// only image_url changes (RLS: owner only, 0058 check: our bucket only).
+  Future<void> setCargoImage(String cargoId, String? url) =>
+      _c.from('cargo').update({'image_url': url}).eq('id', cargoId).timeout(_timeout);
+
   // ---- favourites ("Seçilmiş yüklər") -------------------------------------
 
   Future<Set<String>> favoriteIds() async {

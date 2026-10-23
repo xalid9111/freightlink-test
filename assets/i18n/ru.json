@@ -1121,5 +1121,6 @@
   "cargo_pic_remove": "Убрать фото",
   "cargo_pic_admin_remove": "Убрать фото с груза",
   "cargo_pic_admin_remove_q": "Убрать фото этого груза? Сам груз не меняется.",
-  "cargo_groupage_label": "Сборный груз"
+  "cargo_groupage_label": "Сборный груз",
+  "cargo_pic_add": "Добавить фото"
 }

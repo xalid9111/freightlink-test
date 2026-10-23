@@ -31,6 +31,8 @@ import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import '../domain/truck_types.dart';
 import 'widgets/cargo_picture.dart';
+import 'widgets/cargo_picture_field.dart';
+import '../domain/cargo_pictures.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -104,6 +106,16 @@ class _DetailBody extends ConsumerWidget {
         if (isOwner) ...[
           _OwnerActions(cargo: cargo, strings: strings),
           const SizedBox(height: 12),
+          // No picture yet: add one straight from here (owner, 23.10.2026).
+          if ((cargo.imageUrl ?? '').isEmpty) ...[
+            OutlinedButton.icon(
+              key: const ValueKey('cargo-add-picture'),
+              onPressed: () => _addPicture(context, ref, cargo, strings),
+              icon: Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
+              label: Text(strings.t('cargo_pic_add')),
+            ),
+            const SizedBox(height: 12),
+          ],
         ],
         // Card picture (0058), only when the load has one.
         if ((cargo.imageUrl ?? '').isNotEmpty) ...[
@@ -1114,5 +1126,54 @@ class _AdminClearPicture extends ConsumerWidget {
         }
       },
     );
+  }
+}
+
+/// "Şəkil əlavə et" on my own load: the template pictures of its load type
+/// or my own photo; only the picture is saved.
+Future<void> _addPicture(BuildContext context, WidgetRef ref, CargoModel cargo, AppStrings strings) async {
+  final media = ref.read(cargoMediaRepositoryProvider);
+  final uploaded = <String>[];
+  String? picked;
+  final ok = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(strings.t('cargo_pic_label'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.text)),
+          const SizedBox(height: 12),
+          CargoPictureField(
+            strings: strings,
+            category: cargoPictureCategory(truckType: cargo.truckType, groupage: cargo.groupage),
+            value: picked,
+            onChanged: (url) => setState(() => picked = url),
+            onUploaded: uploaded.add,
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            key: const ValueKey('cargo-add-picture-save'),
+            onPressed: picked == null ? null : () => Navigator.pop(ctx, true),
+            child: Text(strings.t('quick_save')),
+          ),
+        ]),
+      ),
+    ),
+  );
+  // Photos uploaded but not kept are deleted again.
+  for (final url in uploaded) {
+    if (ok != true || url != picked) media.removeOwn(url);
+  }
+  if (ok != true || picked == null) return;
+  try {
+    await media.setCargoImage(cargo.id, picked);
+    ref.invalidate(cargoDetailProvider(cargo.id));
+    ref.invalidate(marketplaceProvider);
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('cargo_pic_upload_failed'))));
+    }
   }
 }
