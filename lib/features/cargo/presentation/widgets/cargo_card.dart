@@ -371,7 +371,10 @@ class CargoTile extends ConsumerWidget {
   final CargoModel cargo;
   final AppStrings strings;
   final VoidCallback onTap;
-  const CargoTile({super.key, required this.cargo, required this.strings, required this.onTap});
+  /// Shown in a VIP row (0059): gold frame, crown badge, gold price —
+  /// same size as every other tile.
+  final bool vip;
+  const CargoTile({super.key, required this.cargo, required this.strings, required this.onTap, this.vip = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -411,7 +414,7 @@ class CargoTile extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.tileLine),
+            border: Border.all(color: vip ? AppColors.vipGold : AppColors.tileLine, width: vip ? 2 : 1),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             AspectRatio(
@@ -419,6 +422,21 @@ class CargoTile extends ConsumerWidget {
               child: Stack(fit: StackFit.expand, children: [
                 CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
                 Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 17, onPhoto: true)),
+                if (vip)
+                  Positioned(
+                    key: const ValueKey('tile-vip'),
+                    top: 7,
+                    left: 7,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(color: AppColors.vipGold, borderRadius: BorderRadius.circular(20)),
+                      child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.workspace_premium, size: 13, color: Colors.black),
+                        SizedBox(width: 3),
+                        Text('VIP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.black)),
+                      ]),
+                    ),
+                  ),
               ]),
             ),
             Padding(
@@ -443,8 +461,12 @@ class CargoTile extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text.rich(
                     TextSpan(children: [
-                      TextSpan(text: _num(cargo.offeredPrice), style: AppFonts.display(size: 17, color: AppColors.text, height: 1)),
-                      TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                      TextSpan(
+                          text: _num(cargo.offeredPrice),
+                          style: AppFonts.display(size: 17, color: vip ? AppColors.vipGoldText : AppColors.text, height: 1)),
+                      TextSpan(
+                          text: ' ${cargo.currency}',
+                          style: TextStyle(fontSize: 11, color: vip ? AppColors.vipGoldText : AppColors.textSoft)),
                     ]),
                   ),
                 ),

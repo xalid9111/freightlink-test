@@ -75,6 +75,12 @@ class CargoModel {
   /// own photo; null = none (the load type icon is shown).
   final String? imageUrl;
 
+  /// VIP (0006 columns, given by an admin — 0059): shown in the VIP rows
+  /// of the Loads page while [featuredUntil] has not passed (null = no end).
+  /// Read only: never sent when a load is saved.
+  final bool isFeatured;
+  final DateTime? featuredUntil;
+
   const CargoModel({
     required this.id,
     required this.ownerId,
@@ -113,7 +119,11 @@ class CargoModel {
     this.loadSize,
     this.groupage = false,
     this.imageUrl,
+    this.isFeatured = false,
+    this.featuredUntil,
   });
+
+  bool isVipAt(DateTime now) => isFeatured && (featuredUntil == null || featuredUntil!.isAfter(now));
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
         id: j['id'] as String,
@@ -155,6 +165,8 @@ class CargoModel {
         loadSize: j['load_size'] as String?,
         groupage: j['groupage'] == true,
         imageUrl: j['image_url'] as String?,
+        isFeatured: j['is_featured'] == true,
+        featuredUntil: j['featured_until'] == null ? null : DateTime.tryParse('${j['featured_until']}'),
       );
 
   /// Columns added by migration 0046 (left out if the database does not

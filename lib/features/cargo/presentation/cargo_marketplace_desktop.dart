@@ -58,11 +58,8 @@ class _DesktopMarketplace extends ConsumerWidget {
     final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     final filter = ref.watch(routeFilterProvider);
     final query = ref.watch(_deskQueryProvider);
-    final allAds = ref.watch(liveAdsProvider).valueOrNull ?? const <Ad>[];
-    final adsOn = ref.watch(homeAdsEnabledProvider).valueOrNull ?? false;
-    final layout = ref.watch(adsFeedLayoutProvider).valueOrNull ?? AdFeedLayout.defaults;
-    final minute = layout.rotateMinutes > 0 ? (ref.watch(adMinuteTickProvider).valueOrNull ?? 0) : 0;
-    final rotation = layout.rotateMinutes > 0 ? minute ~/ layout.rotateMinutes : 0;
+    // No wide ad banner any more; VIP rows instead, as on the phone (0059).
+    final vipEvery = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
     // Load-type tile / big-small card (0055), as on the phone.
     final cat = ref.watch(cargoCategoryFilterProvider);
     final catFeed = ref.watch(categoryFeedProvider);
@@ -84,9 +81,7 @@ class _DesktopMarketplace extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(liveAdsProvider);
-          ref.invalidate(homeAdsEnabledProvider);
-          ref.invalidate(adsFeedLayoutProvider);
+          ref.invalidate(cargoVipEveryProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -169,10 +164,6 @@ class _DesktopMarketplace extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                final ads = allAds.where((ad) => _adMatchesLoads(ad, list)).toList()
-                  ..sort((a, b) => a.priority != b.priority ? a.priority.compareTo(b.priority) : a.startsAt.compareTo(b.startsAt));
-                final showAds = adsOn && ads.isNotEmpty;
-                final plan = _feedPlan(list.length, showAds, layout, maxAds: layout.repeat ? null : ads.length);
                 return [
                   SliverToBoxAdapter(
                     child: _DeskBody(
@@ -181,22 +172,22 @@ class _DesktopMarketplace extends ConsumerWidget {
                         child: LayoutBuilder(
                           // Same picture tiles as the phone (owner, 22.10.2026),
                           // as many as fit at about 200 px each.
-                          builder: (context, c) => _DeskLoadGrid(
-                            columns: ((c.maxWidth + 16) / 216).floor().clamp(3, 8),
-                            plan: plan,
-                            buildLoad: (i) {
-                              final cargo = list[i];
-                              return CargoTile(
-                                cargo: cargo,
-                                strings: strings,
-                                onTap: () => context.pushOnce('/cargo/${cargo.id}'),
-                              );
-                            },
-                            buildAd: (slot) {
-                              final ad = ads[(slot - rotation) % ads.length];
-                              return SponsoredBanner(key: ValueKey('ad-$slot-${ad.id}'), ad: ad, strings: strings);
-                            },
-                          ),
+                          builder: (context, c) {
+                            final columns = ((c.maxWidth + kTileGap) / (200 + kTileGap)).floor().clamp(3, 8);
+                            return _DeskLoadGrid(
+                              columns: columns,
+                              rows: buildLoadRows(list, vipEvery: vipEvery, columns: columns),
+                              buildLoad: (i, vip) {
+                                final cargo = list[i];
+                                return CargoTile(
+                                  cargo: cargo,
+                                  strings: strings,
+                                  vip: vip,
+                                  onTap: () => context.pushOnce('/cargo/${cargo.id}'),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -211,47 +202,30 @@ class _DesktopMarketplace extends ConsumerWidget {
   }
 }
 
-/// Open loads in rows of [columns] equal cards (same height per row); an
-/// ad slot of the feed plan takes a row of its own, at a readable width.
+/// Open loads in rows of [columns] equal cards (same height per row), 3 mm
+/// apart; a VIP row (0059) has the same card size.
 class _DeskLoadGrid extends StatelessWidget {
   final int columns;
-  final List<({bool isAd, int index})> plan;
-  final Widget Function(int index) buildLoad;
-  final Widget Function(int slot) buildAd;
-  const _DeskLoadGrid({required this.columns, required this.plan, required this.buildLoad, required this.buildAd});
+  final List<LoadRow> rows;
+  final Widget Function(int index, bool vip) buildLoad;
+  const _DeskLoadGrid({required this.columns, required this.rows, required this.buildLoad});
 
   @override
   Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    var pending = <int>[];
-    void flush() {
-      if (pending.isEmpty) return;
-      final cells = <Widget>[];
-      for (var k = 0; k < columns; k++) {
-        if (k > 0) cells.add(const SizedBox(width: 16));
-        cells.add(Expanded(child: k < pending.length ? buildLoad(pending[k]) : const SizedBox.shrink()));
-      }
-      rows.add(Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: cells)),
-      ));
-      pending = <int>[];
-    }
-
-    for (final slot in plan) {
-      if (slot.isAd) {
-        flush();
-        rows.add(Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 760), child: buildAd(slot.index))),
-        ));
-      } else {
-        pending.add(slot.index);
-        if (pending.length == columns) flush();
-      }
-    }
-    flush();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      for (final r in rows)
+        Padding(
+          padding: const EdgeInsets.only(bottom: kTileGap),
+          child: IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              for (var k = 0; k < columns; k++) ...[
+                if (k > 0) const SizedBox(width: kTileGap),
+                Expanded(child: k < r.loads.length ? buildLoad(r.loads[k], r.vip) : const SizedBox.shrink()),
+              ],
+            ]),
+          ),
+        ),
+    ]);
   }
 }
 

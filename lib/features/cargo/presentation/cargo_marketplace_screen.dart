@@ -16,13 +16,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/cargo_model.dart';
 import 'widgets/live_map.dart';
 import 'widgets/wheel_feed.dart';
-import '../../ads/presentation/ads_providers.dart';
-import '../../ads/presentation/sponsored_banner.dart';
-import '../../../models/ad_models.dart';
 import 'providers/route_filter.dart';
 import 'providers/category_providers.dart';
 import 'widgets/cargo_category_bar.dart';
 import '../domain/cargo_categories.dart';
+import '../domain/vip_rows.dart';
+import 'providers/vip_providers.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/layout/desktop_layout.dart';
@@ -47,13 +46,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     final marketplaceAsync = ref.watch(marketplaceProvider);
     final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     final filter = ref.watch(routeFilterProvider);
-    final allAds = ref.watch(liveAdsProvider).valueOrNull ?? const <Ad>[];
-    // Admin switch (default OFF): no ads and no empty ad slots at all.
-    final adsOn = ref.watch(homeAdsEnabledProvider).valueOrNull ?? false;
-    // Admin: position of the ads and how many minutes one ad stays (0025).
-    final layout = ref.watch(adsFeedLayoutProvider).valueOrNull ?? AdFeedLayout.defaults;
-    final minute = layout.rotateMinutes > 0 ? (ref.watch(adMinuteTickProvider).valueOrNull ?? 0) : 0;
-    final rotation = layout.rotateMinutes > 0 ? minute ~/ layout.rotateMinutes : 0;
+    // The old wide ad banner is gone from the Loads page (owner,
+    // 23.10.2026). VIP loads get rows of their own instead (0059).
+    final vipEvery = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
     // Load-type tile / big-small card (0055): the server's answer, or the
     // same rule on the loaded list until it arrives — instant either way.
     final cat = ref.watch(cargoCategoryFilterProvider);
@@ -77,9 +72,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(liveAdsProvider);
-          ref.invalidate(homeAdsEnabledProvider);
-          ref.invalidate(adsFeedLayoutProvider);
+          ref.invalidate(cargoVipEveryProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -144,13 +137,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
               ],
               data: (all) {
                 final list = visible(all);
-                // Admin order (0026): smaller priority first.
-                final ads = allAds.where((ad) => _adMatchesLoads(ad, list)).toList()
-                  ..sort((a, b) => a.priority != b.priority ? a.priority.compareTo(b.priority) : a.startsAt.compareTo(b.startsAt));
-                // No live ad → no ad slot at all (never an empty card).
-                final showAds = adsOn && ads.isNotEmpty;
-                // No repeat (default): at most one place per ad.
-                final plan = _feedPlan(list.length, showAds, layout, maxAds: layout.repeat ? null : ads.length);
                 if (list.isEmpty && anyFilter) {
                   return [
                     SliverToBoxAdapter(
@@ -173,42 +159,29 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                // Two tiles in a row (owner, 22.10.2026); an ad takes a row
-                // of its own. Scrolling down brings the next rows.
-                final rows = feedGridRows(plan, 2);
+                // Two tiles in a row (owner, 22.10.2026); after every 2 / 3 / 4
+                // rows (admin, 0059) a row of VIP loads. Scrolling down brings
+                // the next rows.
+                final rows = buildLoadRows(list, vipEvery: vipEvery, columns: 2);
                 return [
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                    // first ad after N loads, then one after every M loads (admin
-                    // setting); live ads take turns per slot and, if set, per X minutes.
                     sliver: SliverList.builder(
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
                         final row = rows[i];
-                        if (row.adSlot != null) {
-                          // Every X minutes the order moves one place: the last ad
-                          // comes to the front (Dart % is never negative here).
-                          final ad = ads[(row.adSlot! - rotation) % ads.length];
-                          return WheelItem(
-                            index: i,
-                            isAd: true,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 10, 0, 18),
-                              child: SponsoredBanner(key: ValueKey('ad-${row.adSlot}-${ad.id}'), ad: ad, strings: strings),
-                            ),
-                          );
-                        }
                         return WheelItem(
                           index: i,
                           isAd: false,
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(bottom: kTileGap),
                             child: _TileRow(
                               children: [
                                 for (final k in row.loads)
                                   CargoTile(
                                     cargo: list[k],
                                     strings: strings,
+                                    vip: row.vip,
                                     onTap: () => context.pushOnce('/cargo/${list[k].id}'),
                                   ),
                               ],
@@ -229,19 +202,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
   }
 }
 
-bool _adMatchesLoads(Ad ad, List<CargoModel> loads) {
-  if (ad.targetCountries.isEmpty && (ad.routeFrom ?? '').trim().isEmpty && (ad.routeTo ?? '').trim().isEmpty) return true;
-  String norm(String value) => Countries.normalize(value);
-  return loads.any((load) {
-    final fromCode = Countries.find(load.pickupCountry)?.code;
-    final toCode = Countries.find(load.destinationCountry)?.code;
-    final countryMatches = ad.targetCountries.isEmpty ||
-        ad.targetCountries.contains(fromCode) || ad.targetCountries.contains(toCode);
-    final fromMatches = (ad.routeFrom ?? '').trim().isEmpty || norm(Countries.canonical(ad.routeFrom!)) == norm(Countries.canonical(load.pickupCountry));
-    final toMatches = (ad.routeTo ?? '').trim().isEmpty || norm(Countries.canonical(ad.routeTo!)) == norm(Countries.canonical(load.destinationCountry));
-    return countryMatches && fromMatches && toMatches;
-  });
-}
 
 /// Dark hero: brand row, live-map title, the animated map and REAL stats
 /// computed from the open marketplace (no invented numbers).
@@ -798,71 +758,34 @@ class _RouteSearch extends ConsumerWidget {
   }
 }
 
-/// Feed plan: loads, with an ad slot after load [AdFeedLayout.firstAfter],
-/// then after every [AdFeedLayout.every] loads — only while more loads
-/// follow, so the list never ends on an ad. With [AdFeedLayout.firstAfter]
-/// loads or fewer there is one ad slot after the last load, so a live ad is
-/// still seen while the marketplace is small. Ad slots are numbered 0, 1, 2…
-/// [maxAds] limits the number of ad places (no repeats); null = no limit.
-List<({bool isAd, int index})> _feedPlan(int loads, bool adsOn, AdFeedLayout l, {int? maxAds}) {
-  final out = <({bool isAd, int index})>[];
-  var adSlot = 0;
-  for (var i = 0; i < loads; i++) {
-    out.add((isAd: false, index: i));
-    if (!adsOn) continue;
-    final shown = i + 1;
-    final atSlot = shown == l.firstAfter || (shown > l.firstAfter && (shown - l.firstAfter) % l.every == 0);
-    if (atSlot && shown < loads && (maxAds == null || adSlot < maxAds)) out.add((isAd: true, index: adSlot++));
-  }
-  if (adsOn && loads > 0 && loads <= l.firstAfter) out.add((isAd: true, index: 0));
-  return out;
-}
 
-/// One row of the Loads feed: [feedGridRows] makes the rows of the
-/// feed plan — up to [columns] loads side by side, or one ad slot.
-List<({int? adSlot, List<int> loads})> feedGridRows(List<({bool isAd, int index})> plan, int columns) {
-  final out = <({int? adSlot, List<int> loads})>[];
-  var pending = <int>[];
-  void flush() {
-    if (pending.isEmpty) return;
-    out.add((adSlot: null, loads: pending));
-    pending = <int>[];
-  }
 
-  for (final slot in plan) {
-    if (slot.isAd) {
-      flush();
-      out.add((adSlot: slot.index, loads: const <int>[]));
-    } else {
-      pending.add(slot.index);
-      if (pending.length == columns) flush();
-    }
-  }
-  flush();
-  return out;
-}
+/// Space between all load cards, across and down: 3 mm (owner,
+/// 23.10.2026; about 19 points on a phone).
+const kTileGap = 19.0;
 
-/// Two tiles side by side with space on both sides (owner's drawing,
-/// 22.10.2026): each about 2 × 2 cm picture wide on a phone; a last
-/// single tile keeps its place on the left. Same height per row.
+/// Width of a load card on a phone: 2 cm (owner: 2 × 4 cm cards).
+const kTileWidth = 128.0;
+
+/// Two tiles side by side with space on both sides (owner's drawing):
+/// 2 cm wide each, 3 mm apart; a last single tile keeps its place on the
+/// left. Same height per row.
 class _TileRow extends StatelessWidget {
   final List<Widget> children;
   const _TileRow({required this.children});
 
-  static const _gap = 14.0;
-  static const _maxTile = 150.0;
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, c) {
-      final w = ((c.maxWidth - _gap) / 2).clamp(0.0, _maxTile);
+      const gap = kTileGap;
+      final w = ((c.maxWidth - gap) / 2).clamp(0.0, kTileWidth);
       return Center(
         child: SizedBox(
-          width: w * 2 + _gap,
+          width: w * 2 + gap,
           child: IntrinsicHeight(
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               SizedBox(width: w, child: children.isNotEmpty ? children[0] : null),
-              const SizedBox(width: _gap),
+              const SizedBox(width: gap),
               SizedBox(width: w, child: children.length > 1 ? children[1] : null),
             ]),
           ),

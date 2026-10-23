@@ -110,6 +110,10 @@ class AppColors {
 
   /// Ground of a big / small card without a picture (both modes).
   static const Color sizeCardBg = Color(0xFF16243A);
+  /// VIP gold (TIR Bazarı and VIP loads, owner 23.10.2026).
+  static const Color vipGold = Color(0xFFFFC83D);
+  /// VIP gold for text: darker in day mode so it reads on white.
+  static Color get vipGoldText => isDay ? const Color(0xFFA87400) : vipGold;
 
   static Color get background => _p.background;
   static Color get hero => _p.hero;

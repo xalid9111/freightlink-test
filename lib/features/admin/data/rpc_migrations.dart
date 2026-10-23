@@ -113,4 +113,6 @@ const kRpcMigration = <String, String>{
   'admin_delete_cargo_image_template': '0058_cargo_pictures_favorites.sql',
   'admin_reorder_cargo_image_templates': '0058_cargo_pictures_favorites.sql',
   'admin_clear_cargo_image': '0058_cargo_pictures_favorites.sql',
+  'admin_set_cargo_vip': '0059_cargo_vip_rows.sql',
+  'admin_set_cargo_vip_every': '0059_cargo_vip_rows.sql',
 };

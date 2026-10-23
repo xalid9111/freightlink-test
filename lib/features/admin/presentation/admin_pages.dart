@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../cargo/domain/vip_rows.dart';
+import '../../cargo/presentation/providers/vip_providers.dart';
 import '../data/admin_repository.dart';
 import 'admin_providers.dart';
 import 'admin_widgets.dart';
@@ -238,6 +240,7 @@ Widget _cargoRow(BuildContext context, JsonRow c, Map<String, JsonRow> users) =>
       chips: [
         AdminChip.status(c['status']),
         if (c['is_hidden'] == true) AdminChip('Gizli', color: AppColors.danger),
+        if (_vipActive(c)) const AdminChip('VIP', color: AppColors.vipGold),
         if (c['is_demo'] == true) const AdminChip('Demo'),
       ],
       dimmed: c['is_hidden'] == true,
@@ -287,6 +290,8 @@ class _AdminCargoPageState extends ConsumerState<AdminCargoPage> {
       final list = rows.where((c) {
         if (_filter == 'hidden') {
           if (c['is_hidden'] != true) return false;
+        } else if (_filter == 'vip') {
+          if (!_vipActive(c)) return false;
         } else if (_filter != 'all' && c['status'] != _filter) {
           return false;
         }
@@ -296,10 +301,11 @@ class _AdminCargoPageState extends ConsumerState<AdminCargoPage> {
         title: 'Yüklər (${list.length})',
         header: [
           FilterBar(
-            options: {'all': 'Hamısı', for (final s in cargoStatuses) s: statusLabel(s), 'hidden': 'Gizli'},
+            options: {'all': 'Hamısı', for (final s in cargoStatuses) s: statusLabel(s), 'hidden': 'Gizli', 'vip': 'VIP'},
             selected: _filter,
             onSelected: (v) => setState(() => _filter = v),
           ),
+          const _VipEveryBar(),
         ],
         children: list.isEmpty ? [const EmptyNote('Yük tapılmadı')] : [for (final c in list) _cargoRow(context, c, users)],
       );
@@ -323,6 +329,9 @@ Future<void> showCargoDetail(BuildContext context, String id) {
           Wrap(spacing: 6, children: [
             AdminChip.status(cargo['status']),
             if (hidden) AdminChip('Gizli', color: AppColors.danger),
+            if (_vipActive(cargo))
+              AdminChip(cargo['featured_until'] == null ? 'VIP' : 'VIP · ${fmtDate(cargo['featured_until'])}-dək',
+                  color: AppColors.vipGold),
           ]),
           const SizedBox(height: 8),
           KV('Marşrut', _route(cargo)),
@@ -372,6 +381,25 @@ Future<void> showCargoDetail(BuildContext context, String id) {
               },
               icon: Icon(hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
               label: Text(hidden ? 'Aktivləşdir' : 'Gizlət'),
+            ),
+            // VIP (0059): a gold card in the VIP rows of the Loads page.
+            OutlinedButton.icon(
+              key: const ValueKey('admin-cargo-vip'),
+              onPressed: () async {
+                if (_vipActive(cargo)) {
+                  if (!await confirmAction(ctx, 'VIP-i götür', 'Bu yük adi yük kimi göstəriləcək.')) return;
+                  if (!ctx.mounted) return;
+                  await runAdmin(ctx, () => _repo(ctx).setCargoVip(id, false));
+                  return;
+                }
+                final d = await pickOne(ctx, 'VIP müddəti', {'7': '7 gün', '14': '14 gün', '30': '30 gün', '0': 'Müddətsiz'});
+                if (d == null || !ctx.mounted) return;
+                final days = int.parse(d);
+                await runAdmin(ctx, () => _repo(ctx).setCargoVip(id, true,
+                    until: days == 0 ? null : DateTime.now().add(Duration(days: days))));
+              },
+              icon: const Icon(Icons.workspace_premium, size: 18, color: AppColors.vipGold),
+              label: Text(_vipActive(cargo) ? 'VIP-i götür' : 'VIP et'),
             ),
             OutlinedButton.icon(
               style: _dangerStyle,
@@ -1320,6 +1348,45 @@ class _AdminSystemPageState extends ConsumerState<AdminSystemPage> {
         ),
       ],
       children: const [],
+    );
+  }
+}
+
+/// VIP is on and its end date (if any) has not passed (0059).
+bool _vipActive(JsonRow c) {
+  if (c['is_featured'] != true) return false;
+  final until = DateTime.tryParse('${c['featured_until'] ?? ''}');
+  return c['featured_until'] == null || (until != null && until.isAfter(DateTime.now()));
+}
+
+/// Admin → Yüklər: a VIP row after every 2 / 3 / 4 rows of normal loads
+/// (0059) — changed here, no code change needed.
+class _VipEveryBar extends ConsumerWidget {
+  const _VipEveryBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, runSpacing: 6, children: [
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.workspace_premium, size: 18, color: AppColors.vipGold),
+          const SizedBox(width: 6),
+          Text('VIP sırası neçə sıradan bir:', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+        ]),
+        for (final n in kVipEveryChoices)
+          ChoiceChip(
+            key: ValueKey('vip-every-$n'),
+            label: Text('$n sıra'),
+            selected: now == n,
+            onSelected: (_) async {
+              if (n == now) return;
+              final done = await runAdmin(context, () => ref.read(adminRepositoryProvider).setCargoVipEvery(n));
+              if (done) ref.invalidate(cargoVipEveryProvider);
+            },
+          ),
+      ]),
     );
   }
 }
