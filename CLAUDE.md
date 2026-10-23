@@ -105,9 +105,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   23.10.2026); ad templates are not deleted (history is kept).
 - Loads page (owner, 22–24.10.2026): picture tiles about 147 × 250 pt
   (owner's picture), two in a row, 3 mm apart, no panel behind; one flow
-  in pairs (only the last card may stand alone). VIP first, then VIP and
-  normal loads take turns one by one; the VIP order moves on every few
-  minutes so each VIP comes to the front (gold medal, orange frame);
+  in pairs (only the last card may stand alone). Chessboard order: load–VIP,
+  VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
+  few minutes so each VIP comes to the front (gold medal, orange frame);
   same logic on the computer.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.

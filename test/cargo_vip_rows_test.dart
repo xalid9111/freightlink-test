@@ -26,45 +26,50 @@ String show(List<CargoModel> l, List<List<LoadCell>> rows) =>
     rows.map((r) => '[${r.map((c) => '${c.vip ? 'V:' : ''}${l[c.index].id}').join(',')}]').join(' ');
 
 void main() {
-  test('VIP first, then VIP and normal loads take turns; the rest of the loads follow', () {
+  test("chessboard: load–VIP, VIP–load, load–VIP, VIP–load (owner's order)", () {
     final l = [
-      for (var i = 1; i <= 6; i++) load('n$i'),
-      load('v1', vip: true), load('v2', vip: true), load('v3', vip: true),
+      for (var i = 1; i <= 4; i++) load('n$i'),
+      for (var i = 1; i <= 4; i++) load('v$i', vip: true),
     ];
     expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 0)),
-        '[V:v1,n1] [V:v2,n2] [V:v3,n3] [n4,n5] [n6]');
+        '[n1,V:v1] [V:v2,n2] [n3,V:v3] [V:v4,n4]');
+  });
+
+  test('when VIPs run out the loads fill the rows (and the other way round)', () {
+    final l = [for (var i = 1; i <= 5; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true)];
+    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 0)), '[n1,V:v1] [V:v2,n2] [n3,n4] [n5]');
+    final m = [load('n1'), for (var i = 1; i <= 4; i++) load('v$i', vip: true)];
+    expect(show(m, buildLoadRows(m, columns: 2, now: now, rotation: 0)), '[n1,V:v1] [V:v2,V:v3] [V:v4]');
   });
 
   test('the VIP order moves on, so every VIP comes to the front in turn', () {
     final l = [load('n1'), load('n2'), load('v1', vip: true), load('v2', vip: true), load('v3', vip: true)];
-    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 1)), '[V:v2,n1] [V:v3,n2] [V:v1]');
-    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 2)), '[V:v3,n1] [V:v1,n2] [V:v2]');
+    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 1)), '[n1,V:v2] [V:v3,n2] [V:v1]');
+    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 2)), '[n1,V:v3] [V:v1,n2] [V:v2]');
     expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 3)), show(l, buildLoadRows(l, columns: 2, now: now, rotation: 0)));
-    // Every few minutes one step further.
     final t0 = DateTime(2026, 10, 24, 12, 0);
     expect(vipRotation(t0.add(const Duration(minutes: kVipRotateMinutes))), vipRotation(t0) + 1);
   });
 
   test('pairs everywhere; only the last card may stand alone; each load once', () {
-    final l = [for (var i = 1; i <= 4; i++) load('n$i'), load('v1', vip: true)];
+    final l = [for (var i = 1; i <= 6; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true), load('v3', vip: true)];
     final rows = buildLoadRows(l, columns: 2, now: now, rotation: 0);
     for (final r in rows.take(rows.length - 1)) {
       expect(r.length, 2);
     }
-    expect(show(l, rows), '[V:v1,n1] [n2,n3] [n4]');
     expect(rows.expand((r) => r).map((c) => c.index).toSet().length, l.length);
   });
 
   test('no VIP → just the loads, newest first; a VIP that ended is a normal load', () {
     final l = [load('old', vip: true, until: now.subtract(const Duration(hours: 1))), load('n1'), load('open', vip: true)];
-    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 0)), '[V:open,old] [n1]');
+    expect(show(l, buildLoadRows(l, columns: 2, now: now, rotation: 0)), '[old,V:open] [n1]');
     final m = [load('a'), load('b'), load('c')];
     expect(show(m, buildLoadRows(m, columns: 2, now: now)), '[a,b] [c]');
   });
 
-  test('computer: same flow, wider rows', () {
-    final l = [load('n1'), load('n2'), load('n3'), load('v1', vip: true), load('v2', vip: true)];
-    expect(show(l, buildLoadRows(l, columns: 3, now: now, rotation: 0)), '[V:v1,n1,V:v2] [n2,n3]');
+  test('computer: the same chessboard with wider rows', () {
+    final l = [for (var i = 1; i <= 3; i++) load('n$i'), for (var i = 1; i <= 3; i++) load('v$i', vip: true)];
+    expect(show(l, buildLoadRows(l, columns: 3, now: now, rotation: 0)), '[n1,V:v1,n2] [V:v2,n3,V:v3]');
   });
 
   test('VIP is read from the load, never sent when a load is saved', () {

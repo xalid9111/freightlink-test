@@ -46,7 +46,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     final filter = ref.watch(routeFilterProvider);
     // The old wide ad banner is gone from the Loads page (owner,
-    // 23.10.2026). VIP loads take turns with normal loads instead (0059).
+    // 23.10.2026). VIP and normal loads stand in a chessboard instead (0059).
     // Load-type tile / big-small card (0055): the server's answer, or the
     // same rule on the loaded list until it arrives — instant either way.
     final cat = ref.watch(cargoCategoryFilterProvider);
@@ -156,9 +156,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                // One flow, two tiles in a row (owner, 22–24.10.2026): VIP
-                // first, then VIP and normal loads take turns; the VIP order
-                // moves on every few minutes. Scrolling brings the next rows.
+                // Two tiles in a row (owner, 22–24.10.2026), chessboard:
+                // load–VIP, VIP–load …; the VIP order moves on every few
+                // minutes. Scrolling brings the next rows.
                 final rows = buildLoadRows(list, columns: 2);
                 return [
                   // No panel behind the tiles (owner, 24.10.2026): the page
