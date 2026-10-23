@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../cargo/domain/vip_rows.dart';
-import '../../cargo/presentation/providers/vip_providers.dart';
 import '../data/admin_repository.dart';
 import 'admin_providers.dart';
 import 'admin_widgets.dart';
@@ -305,7 +303,6 @@ class _AdminCargoPageState extends ConsumerState<AdminCargoPage> {
             selected: _filter,
             onSelected: (v) => setState(() => _filter = v),
           ),
-          const _VipEveryBar(),
         ],
         children: list.isEmpty ? [const EmptyNote('Yük tapılmadı')] : [for (final c in list) _cargoRow(context, c, users)],
       );
@@ -1357,36 +1354,4 @@ bool _vipActive(JsonRow c) {
   if (c['is_featured'] != true) return false;
   final until = DateTime.tryParse('${c['featured_until'] ?? ''}');
   return c['featured_until'] == null || (until != null && until.isAfter(DateTime.now()));
-}
-
-/// Admin → Yüklər: a VIP row after every 2 / 3 / 4 rows of normal loads
-/// (0059) — changed here, no code change needed.
-class _VipEveryBar extends ConsumerWidget {
-  const _VipEveryBar();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final now = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, runSpacing: 6, children: [
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.workspace_premium, size: 18, color: AppColors.vipGold),
-          const SizedBox(width: 6),
-          Text('VIP sırası neçə sıradan bir:', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
-        ]),
-        for (final n in kVipEveryChoices)
-          ChoiceChip(
-            key: ValueKey('vip-every-$n'),
-            label: Text('$n sıra'),
-            selected: now == n,
-            onSelected: (_) async {
-              if (n == now) return;
-              final done = await runAdmin(context, () => ref.read(adminRepositoryProvider).setCargoVipEvery(n));
-              if (done) ref.invalidate(cargoVipEveryProvider);
-            },
-          ),
-      ]),
-    );
-  }
 }

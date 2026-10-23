@@ -59,7 +59,6 @@ class _DesktopMarketplace extends ConsumerWidget {
     final filter = ref.watch(routeFilterProvider);
     final query = ref.watch(_deskQueryProvider);
     // No wide ad banner any more; VIP rows instead, as on the phone (0059).
-    final vipEvery = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
     // Load-type tile / big-small card (0055), as on the phone.
     final cat = ref.watch(cargoCategoryFilterProvider);
     final catFeed = ref.watch(categoryFeedProvider);
@@ -81,7 +80,6 @@ class _DesktopMarketplace extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(cargoVipEveryProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -179,7 +177,7 @@ class _DesktopMarketplace extends ConsumerWidget {
                                 padding: const EdgeInsets.fromLTRB(kTileGap, kTileGap, kTileGap, 0),
                                 child: _DeskLoadGrid(
                               columns: columns,
-                              rows: buildLoadRows(list, vipEvery: vipEvery, columns: columns),
+                              rows: buildLoadRows(list, columns: columns),
                               buildLoad: (i, vip) {
                                 final cargo = list[i];
                                 return CargoTile(
