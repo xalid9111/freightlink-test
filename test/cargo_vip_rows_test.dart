@@ -74,7 +74,7 @@ void main() {
 
   group('wiring', () {
     String src(String p) => File(p).readAsStringSync();
-    test('phone + computer: VIP rows, no old wide ad banner, 3 mm gaps, 2 cm cards', () {
+    test('phone + computer: VIP rows, no old wide ad banner, 3 mm gaps, cards as in the owner\'s picture', () {
       final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
       final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
       expect(m.contains('buildLoadRows(list, vipEvery: vipEvery, columns: 2)'), isTrue);
@@ -84,7 +84,7 @@ void main() {
         expect(f.contains('vip: '), isTrue);
       }
       expect(m.contains('const kTileGap = 19.0;'), isTrue);
-      expect(m.contains('const kTileWidth = 128.0;'), isTrue);
+      expect(m.contains('const kTileWidth = 147.0;'), isTrue);
     });
 
     test("owner's design: orange VIP frame, gold medal, normal price, tiles on a panel", () {

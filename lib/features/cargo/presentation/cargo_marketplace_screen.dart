@@ -166,7 +166,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 return [
                   // The tiles stand on a rounded panel (owner's design, 23.10.2026).
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 96),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                     sliver: DecoratedSliver(
                       decoration: BoxDecoration(
                         color: AppColors.cardAlt,
@@ -774,8 +774,9 @@ class _RouteSearch extends ConsumerWidget {
 /// 23.10.2026; about 19 points on a phone).
 const kTileGap = 19.0;
 
-/// Width of a load card on a phone: 2 cm (owner: 2 × 4 cm cards).
-const kTileWidth = 128.0;
+/// Width of a load card on a phone (owner's picture, 24.10.2026): about
+/// 147 points (≈ 2.3 cm) on a 390-point phone; smaller phones shrink it.
+const kTileWidth = 147.0;
 
 /// Two tiles side by side with space on both sides (owner's drawing):
 /// 2 cm wide each, 3 mm apart; a last single tile keeps its place on the
