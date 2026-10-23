@@ -207,10 +207,10 @@ class _DesktopMarketplace extends ConsumerWidget {
 }
 
 /// Open loads in rows of [columns] equal cards (same height per row), 3 mm
-/// apart; a VIP row (0059) has the same card size.
+/// apart; VIP cards (0059) join the same flow, same size.
 class _DeskLoadGrid extends StatelessWidget {
   final int columns;
-  final List<LoadRow> rows;
+  final List<List<LoadCell>> rows;
   final Widget Function(int index, bool vip) buildLoad;
   const _DeskLoadGrid({required this.columns, required this.rows, required this.buildLoad});
 
@@ -224,7 +224,7 @@ class _DeskLoadGrid extends StatelessWidget {
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               for (var k = 0; k < columns; k++) ...[
                 if (k > 0) const SizedBox(width: kTileGap),
-                Expanded(child: k < r.loads.length ? buildLoad(r.loads[k], r.vip) : const SizedBox.shrink()),
+                Expanded(child: k < r.length ? buildLoad(r[k].index, r[k].vip) : const SizedBox.shrink()),
               ],
             ]),
           ),

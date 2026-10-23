@@ -159,9 +159,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                // Two tiles in a row (owner, 22.10.2026); after every 2 / 3 / 4
-                // rows (admin, 0059) a row of VIP loads. Scrolling down brings
-                // the next rows.
+                // One flow, two tiles in a row (owner, 22–24.10.2026); after
+                // every 2 / 3 / 4 rows (admin, 0059) the next VIP load joins it,
+                // one at a time. Scrolling down brings the next rows.
                 final rows = buildLoadRows(list, vipEvery: vipEvery, columns: 2);
                 return [
                   // No panel behind the tiles (owner, 24.10.2026): the page
@@ -179,12 +179,12 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                             padding: const EdgeInsets.only(bottom: kTileGap),
                             child: _TileRow(
                               children: [
-                                for (final k in row.loads)
+                                for (final cell in row)
                                   CargoTile(
-                                    cargo: list[k],
+                                    cargo: list[cell.index],
                                     strings: strings,
-                                    vip: row.vip,
-                                    onTap: () => context.pushOnce('/cargo/${list[k].id}'),
+                                    vip: cell.vip,
+                                    onTap: () => context.pushOnce('/cargo/${list[cell.index].id}'),
                                   ),
                               ],
                             ),

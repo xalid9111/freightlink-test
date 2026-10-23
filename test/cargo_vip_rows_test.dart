@@ -22,43 +22,50 @@ CargoModel load(String id, {bool vip = false, DateTime? until}) => CargoModel(
       featuredUntil: until,
     );
 
-String show(List<CargoModel> l, List<LoadRow> rows) =>
-    rows.map((r) => '${r.vip ? 'V' : ''}[${r.loads.map((i) => l[i].id).join(',')}]').join(' ');
+String show(List<CargoModel> l, List<List<LoadCell>> rows) =>
+    rows.map((r) => '[${r.map((c) => '${c.vip ? 'V:' : ''}${l[c.index].id}').join(',')}]').join(' ');
 
 void main() {
-  test('a VIP row (2 side by side) after every 3 normal rows by default; normal order kept', () {
+  test('one flow in pairs; after every 3 rows of normal loads ONE VIP joins, in order', () {
     final l = [
       for (var i = 1; i <= 14; i++) load('n$i'),
-      load('v1', vip: true), load('v2', vip: true), load('v3', vip: true), load('v4', vip: true),
+      load('v1', vip: true), load('v2', vip: true), load('v3', vip: true),
     ];
     expect(show(l, buildLoadRows(l, vipEvery: kDefaultVipEvery, columns: 2, now: now)),
-        '[n1,n2] [n3,n4] [n5,n6] V[v1,v2] [n7,n8] [n9,n10] [n11,n12] V[v3,v4] [n13,n14]');
+        '[n1,n2] [n3,n4] [n5,n6] [V:v1,n7] [n8,n9] [n10,n11] [n12,V:v2] [n13,n14] [V:v3]');
   });
 
-  test('admin interval 2 / 3 / 4 rows', () {
-    final l = [for (var i = 1; i <= 8; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true), load('v3', vip: true)];
-    expect(show(l, buildLoadRows(l, vipEvery: 2, columns: 2, now: now)), '[n1,n2] [n3,n4] V[v1,v2] [n5,n6] [n7,n8] V[v3]');
-    expect(show(l, buildLoadRows(l, vipEvery: 4, columns: 2, now: now)), '[n1,n2] [n3,n4] [n5,n6] [n7,n8] V[v1,v2] V[v3]');
-    // Anything else falls back to the default (3).
-    expect(show(l, buildLoadRows(l, vipEvery: 7, columns: 2, now: now)), '[n1,n2] [n3,n4] [n5,n6] V[v1,v2] [n7,n8] V[v3]');
+  test('every row is a full pair; only the last card may stand alone at the bottom', () {
+    final l = [for (var i = 1; i <= 9; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true)];
+    final rows = buildLoadRows(l, vipEvery: 2, columns: 2, now: now);
+    for (final r in rows.take(rows.length - 1)) {
+      expect(r.length, 2);
+    }
+    expect(rows.expand((r) => r).length, l.length);
+    expect(show(l, rows), '[n1,n2] [n3,n4] [V:v1,n5] [n6,n7] [n8,V:v2] [n9]');
   });
 
-  test('no VIP left → no VIP row, never an empty card; each VIP shown once', () {
+  test('admin interval 2 / 3 / 4 rows; anything else = 3', () {
+    final l = [for (var i = 1; i <= 8; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true)];
+    expect(show(l, buildLoadRows(l, vipEvery: 4, columns: 2, now: now)), '[n1,n2] [n3,n4] [n5,n6] [n7,n8] [V:v1,V:v2]');
+    expect(show(l, buildLoadRows(l, vipEvery: 7, columns: 2, now: now)), '[n1,n2] [n3,n4] [n5,n6] [V:v1,n7] [n8,V:v2]');
+  });
+
+  test('no VIP left → nothing added, never an empty card; each VIP once', () {
     final l = [for (var i = 1; i <= 12; i++) load('n$i'), load('v1', vip: true)];
     final rows = buildLoadRows(l, vipEvery: 3, columns: 2, now: now);
-    expect(show(l, rows), '[n1,n2] [n3,n4] [n5,n6] V[v1] [n7,n8] [n9,n10] [n11,n12]');
-    expect(rows.every((r) => r.loads.isNotEmpty), isTrue);
-    expect(rows.expand((r) => r.loads).toSet().length, l.length);
+    expect(show(l, rows), '[n1,n2] [n3,n4] [n5,n6] [V:v1,n7] [n8,n9] [n10,n11] [n12]');
+    expect(rows.expand((r) => r).map((c) => c.index).toSet().length, l.length);
   });
 
   test('a VIP that ended is a normal load; no end date = VIP', () {
     final l = [load('old', vip: true, until: now.subtract(const Duration(hours: 1))), load('open', vip: true), load('n1')];
-    expect(show(l, buildLoadRows(l, vipEvery: 3, columns: 2, now: now)), '[old,n1] V[open]');
+    expect(show(l, buildLoadRows(l, vipEvery: 3, columns: 2, now: now)), '[old,n1] [V:open]');
   });
 
-  test('computer: wider normal rows, VIP rows still 2 cards', () {
-    final l = [for (var i = 1; i <= 9; i++) load('n$i'), load('v1', vip: true), load('v2', vip: true), load('v3', vip: true)];
-    expect(show(l, buildLoadRows(l, vipEvery: 3, columns: 3, now: now)), '[n1,n2,n3] [n4,n5,n6] [n7,n8,n9] V[v1,v2] V[v3]');
+  test('computer: same flow, wider rows', () {
+    final l = [for (var i = 1; i <= 9; i++) load('n$i'), load('v1', vip: true)];
+    expect(show(l, buildLoadRows(l, vipEvery: 2, columns: 3, now: now)), '[n1,n2,n3] [n4,n5,n6] [V:v1,n7,n8] [n9]');
   });
 
   test('VIP is read from the load, never sent when a load is saved', () {
