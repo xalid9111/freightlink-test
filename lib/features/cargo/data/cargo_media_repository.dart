@@ -119,6 +119,22 @@ class CargoMediaRepository {
     }
   }
 
+  /// The owner sets the pictures of his own load (main first; empty =
+  /// none). Only the pictures change (RLS: owner only; 0058 / 0060 checks:
+  /// our bucket only, at most 6). Until 0060 is run only the main one.
+  Future<void> setCargoPictures(String cargoId, List<String> urls) async {
+    try {
+      await _c
+          .from('cargo')
+          .update({'image_urls': urls, 'image_url': urls.isEmpty ? null : urls.first})
+          .eq('id', cargoId)
+          .timeout(_timeout);
+    } on PostgrestException catch (e) {
+      if (!((e.code == 'PGRST204' || e.code == '42703') && e.message.contains('image_urls'))) rethrow;
+      await _c.from('cargo').update({'image_url': urls.isEmpty ? null : urls.first}).eq('id', cargoId).timeout(_timeout);
+    }
+  }
+
   // ---- favourites ("Seçilmiş yüklər") -------------------------------------
 
   Future<Set<String>> favoriteIds() async {

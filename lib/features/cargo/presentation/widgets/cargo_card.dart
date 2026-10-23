@@ -1,7 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import '../../../../core/constants/cities.dart';
 import '../../../../core/constants/countries.dart';
 import '../../../../core/localization/app_strings.dart';
@@ -371,7 +373,10 @@ class CargoTile extends ConsumerWidget {
   final CargoModel cargo;
   final AppStrings strings;
   final VoidCallback onTap;
-  const CargoTile({super.key, required this.cargo, required this.strings, required this.onTap});
+  /// Shown in a VIP row (0059): orange frame and a gold VIP medal (owner's
+  /// design, 23.10.2026) — same size as every other tile.
+  final bool vip;
+  const CargoTile({super.key, required this.cargo, required this.strings, required this.onTap, this.vip = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -411,7 +416,7 @@ class CargoTile extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.tileLine),
+            border: Border.all(color: vip ? AppColors.accent : AppColors.tileLine, width: vip ? 2 : 1),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             AspectRatio(
@@ -419,6 +424,7 @@ class CargoTile extends ConsumerWidget {
               child: Stack(fit: StackFit.expand, children: [
                 CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
                 Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 17, onPhoto: true)),
+                if (vip) const Positioned(key: ValueKey('tile-vip'), top: 4, left: 4, child: VipMedal(size: 44)),
               ]),
             ),
             Padding(
@@ -455,4 +461,84 @@ class CargoTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Gold VIP medal (owner's design, 23.10.2026): a toothed gold disc with
+/// "VIP" and two ribbons under it. Drawn in code, same in day and night.
+class VipMedal extends StatelessWidget {
+  final double size;
+  const VipMedal({super.key, this.size = 44});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: 'VIP',
+        child: SizedBox(width: size, height: size * 1.25, child: CustomPaint(painter: _MedalPainter())),
+      );
+}
+
+class _MedalPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final c = Offset(w / 2, w / 2);
+    final r = w / 2;
+    const gold = AppColors.vipGold;
+    const dark = AppColors.vipGoldDark;
+    const ink = AppColors.vipInk;
+    // Two ribbons behind the disc.
+    final ribbon = Paint()..color = ink;
+    final edge = Paint()
+      ..color = gold
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.035;
+    for (final dir in [-1.0, 1.0]) {
+      final x0 = c.dx + dir * r * 0.30;
+      final path = Path()
+        ..moveTo(x0 - r * 0.20, c.dy + r * 0.45)
+        ..lineTo(x0 + r * 0.20, c.dy + r * 0.45)
+        ..lineTo(x0 + dir * r * 0.30 + r * 0.17, size.height)
+        ..lineTo(x0 + dir * r * 0.30, size.height - r * 0.18)
+        ..lineTo(x0 + dir * r * 0.30 - r * 0.17, size.height)
+        ..close();
+      canvas.drawPath(path, ribbon);
+      canvas.drawPath(path, edge);
+    }
+    // Toothed rim.
+    const teeth = 18;
+    final rim = Path();
+    for (var i = 0; i <= teeth * 2; i++) {
+      final a = i * math.pi / teeth - math.pi / 2;
+      final rr = i.isEven ? r : r * 0.86;
+      final p = Offset(c.dx + rr * math.cos(a), c.dy + rr * math.sin(a));
+      i == 0 ? rim.moveTo(p.dx, p.dy) : rim.lineTo(p.dx, p.dy);
+    }
+    rim.close();
+    canvas.drawPath(rim, Paint()..color = gold);
+    canvas.drawPath(
+        rim,
+        Paint()
+          ..color = dark
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.02);
+    // Dark centre with a gold ring.
+    canvas.drawCircle(c, r * 0.66, Paint()..color = ink);
+    canvas.drawCircle(
+        c,
+        r * 0.66,
+        Paint()
+          ..color = gold
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.045);
+    final tp = TextPainter(
+      text: TextSpan(
+        text: 'VIP',
+        style: TextStyle(fontSize: r * 0.62, fontWeight: FontWeight.w900, color: gold, height: 1, letterSpacing: -0.5),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, c - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "სურათი ძალიან დიდია (მაქს. 5 MB)",
   "cargo_pics_bad_type": "მხოლოდ JPG, PNG ან WEBP",
   "detail_cargo_kind": "ტვირთის ტიპი",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "სურათის დამატება"
 }

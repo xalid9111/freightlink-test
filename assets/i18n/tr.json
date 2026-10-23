@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "Resim çok büyük (en fazla 5 MB)",
   "cargo_pics_bad_type": "Yalnızca JPG, PNG veya WEBP",
   "detail_cargo_kind": "Yük türü",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Resim ekle"
 }

@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "Şəkil çox böyükdür (ən çox 5 MB)",
   "cargo_pics_bad_type": "Yalnız JPG, PNG və ya WEBP şəkil",
   "detail_cargo_kind": "Yük növü",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Şəkil əlavə et"
 }

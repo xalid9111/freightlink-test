@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "Фото слишком большое (макс. 5 МБ)",
   "cargo_pics_bad_type": "Только JPG, PNG или WEBP",
   "detail_cargo_kind": "Тип груза",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Добавить фото"
 }

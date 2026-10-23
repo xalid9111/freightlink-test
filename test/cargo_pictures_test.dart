@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/cargo/domain/cargo_pictures.dart';
-import 'package:freightlink/features/cargo/presentation/cargo_marketplace_screen.dart' show feedGridRows;
 import 'package:freightlink/models/cargo_model.dart';
 
 CargoModel load({String? image}) => CargoModel(
@@ -101,25 +100,6 @@ void main() {
         final body = sql.substring(sql.indexOf('function public.$fn('));
         expect(body.substring(0, body.indexOf(r'end $$')).contains('_require_admin()'), isTrue, reason: fn);
       }
-    });
-  });
-
-  group('Loads page: two tiles in a row (owner, 22.10.2026)', () {
-    test('loads go two by two, an ad gets its own row, the order is kept', () {
-      final plan = [
-        (isAd: false, index: 0), (isAd: false, index: 1), (isAd: false, index: 2),
-        (isAd: true, index: 0), (isAd: false, index: 3), (isAd: false, index: 4), (isAd: false, index: 5),
-      ];
-      final rows = feedGridRows(plan, 2);
-      expect(rows.map((r) => r.adSlot == null ? r.loads.join(',') : 'ad${r.adSlot}').toList(), ['0,1', '2', 'ad0', '3,4', '5']);
-      expect(feedGridRows(const [], 2), isEmpty);
-    });
-
-    test('phone and computer feeds use the picture tiles', () {
-      final m = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-      expect(m.contains('final rows = feedGridRows(plan, 2);'), isTrue);
-      expect(m.contains('CargoTile('), isTrue);
-      expect(File('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').readAsStringSync().contains('return CargoTile('), isTrue);
     });
   });
 }

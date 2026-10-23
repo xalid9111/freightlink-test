@@ -101,6 +101,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   `app_theme.dart`), never hard-coded. App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.
 - Ad banner layout 1200×400 coordinates never change.
+  The wide ad banner is no longer shown on the Loads page (owner,
+  23.10.2026); ad templates are not deleted (history is kept).
+- Loads page (owner, 22–23.10.2026): picture tiles 2 × 4 cm, two in a
+  row, 3 mm apart; after every 2 / 3 / 4 normal rows (admin setting,
+  default 3, 0059) a row of 2 VIP loads with a gold frame and crown;
+  same logic on the computer.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".

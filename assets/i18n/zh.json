@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "图片过大（最大 5 MB）",
   "cargo_pics_bad_type": "仅支持 JPG、PNG 或 WEBP",
   "detail_cargo_kind": "货物类型",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "添加图片"
 }

@@ -1136,5 +1136,6 @@
   "cargo_pics_too_big": "The picture is too large (max 5 MB)",
   "cargo_pics_bad_type": "Only JPG, PNG or WEBP pictures",
   "detail_cargo_kind": "Load type",
-  "detail_gallery_count": "{i} / {n}"
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Add a picture"
 }
