@@ -87,13 +87,14 @@ void main() {
       expect(m.contains('const kTileWidth = 147.0;'), isTrue);
     });
 
-    test("owner's design: orange VIP frame, gold medal, normal price, tiles on a panel", () {
+    test("owner's design: orange VIP frame, gold medal, normal price, no panel behind the tiles", () {
       final card = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
       expect(card.contains('color: vip ? AppColors.accent : AppColors.tileLine'), isTrue);
       expect(card.contains('child: VipMedal(size: 44)'), isTrue);
       expect(card.contains('vipGoldText'), isFalse);
-      expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart').contains('DecoratedSliver('), isTrue);
-      expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').contains('color: AppColors.cardAlt'), isTrue);
+      // No coloured panel behind the tiles any more (owner, 24.10.2026).
+      expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart').contains('DecoratedSliver('), isFalse);
+      expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart').contains('color: AppColors.cardAlt'), isFalse);
     });
 
     test('my own load without a picture: "Şəkil əlavə et" saves only the pictures', () {

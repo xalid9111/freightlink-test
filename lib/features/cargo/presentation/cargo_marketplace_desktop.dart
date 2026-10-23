@@ -174,10 +174,8 @@ class _DesktopMarketplace extends ConsumerWidget {
                           // as many as fit at about 200 px each.
                           builder: (context, c) {
                             final columns = ((c.maxWidth - 2 * kTileGap + kTileGap) / (200 + kTileGap)).floor().clamp(3, 8);
-                            // Rounded panel behind the tiles, as on the phone.
-                            return DecoratedBox(
-                              decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(24)),
-                              child: Padding(
+                            // No panel behind the tiles (owner, 24.10.2026).
+                            return Padding(
                                 padding: const EdgeInsets.fromLTRB(kTileGap, kTileGap, kTileGap, 0),
                                 child: _DeskLoadGrid(
                               columns: columns,
@@ -192,7 +190,6 @@ class _DesktopMarketplace extends ConsumerWidget {
                                 );
                               },
                                 ),
-                              ),
                             );
                           },
                         ),
