@@ -5,18 +5,21 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../../models/cargo_model.dart';
 import '../../data/cargo_media_repository.dart';
 import '../providers/cargo_media_providers.dart';
 
-/// "Şəkil" on the load form (owner, 22.10.2026): the admin's pictures for
-/// the chosen load type in one sideways row, then "Öz şəklini yüklə".
-/// Not required; tapping the chosen picture again removes it.
+/// "Şəkillər" on the load form (owner, 22–23.10.2026): up to 6 pictures,
+/// the first is the main one (shown on the Loads list). The chosen ones
+/// are shown first — remove, move left / right, make main — then the
+/// admin's pictures for the load type in one sideways row and
+/// "Öz şəklini yüklə". Not required.
 class CargoPictureField extends ConsumerStatefulWidget {
   final AppStrings strings;
   /// Template group of the chosen load type (null = none chosen / typed).
   final String? category;
-  final String? value;
-  final ValueChanged<String?> onChanged;
+  final List<String> value;
+  final ValueChanged<List<String>> onChanged;
   /// Called with each picture uploaded here, so the form can delete the
   /// ones that are not kept.
   final ValueChanged<String> onUploaded;
@@ -36,23 +39,56 @@ class CargoPictureField extends ConsumerStatefulWidget {
 class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
   bool _uploading = false;
 
+  static const _max = CargoModel.maxPictures;
+
+  void _say(String key) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.strings.t(key))));
+  }
+
   Future<void> _upload() async {
-    final s = widget.strings;
+    final left = _max - widget.value.length;
+    if (left <= 0) return _say('cargo_pics_full');
     // Resized on the phone before upload (fast, small files).
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, maxHeight: 1600, imageQuality: 80);
-    if (file == null || !mounted) return;
+    final files = await ImagePicker().pickMultiImage(maxWidth: 1600, maxHeight: 1600, imageQuality: 80, limit: left);
+    if (files.isEmpty || !mounted) return;
     setState(() => _uploading = true);
+    final next = [...widget.value];
     try {
-      final bytes = await file.readAsBytes();
-      final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
-      final url = await ref.read(cargoMediaRepositoryProvider).upload(bytes, name.split('.').last);
-      widget.onUploaded(url);
-      widget.onChanged(url);
+      for (final file in files.take(left)) {
+        final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
+        final ext = name.split('.').last.toLowerCase();
+        final bytes = await file.readAsBytes();
+        final problem = CargoMediaRepository.checkUpload(bytes.length, ext);
+        if (problem != null) {
+          _say(problem);
+          continue;
+        }
+        final url = await ref.read(cargoMediaRepositoryProvider).upload(bytes, ext);
+        widget.onUploaded(url);
+        next.add(url);
+        widget.onChanged([...next]);
+      }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('cargo_pic_upload_failed'))));
+      _say('cargo_pic_upload_failed');
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
+  }
+
+  void _toggleTemplate(String url) {
+    final v = widget.value;
+    if (v.contains(url)) return widget.onChanged([...v]..remove(url));
+    if (v.length >= _max) return _say('cargo_pics_full');
+    widget.onChanged([...v, url]);
+  }
+
+  void _move(int i, int d) {
+    final v = [...widget.value];
+    final j = i + d;
+    if (j < 0 || j >= v.length) return;
+    final x = v.removeAt(i);
+    v.insert(j, x);
+    widget.onChanged(v);
   }
 
   @override
@@ -63,9 +99,9 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
         ? const <CargoTemplate>[]
         : (ref.watch(cargoTemplatesProvider(cat)).valueOrNull ?? const <CargoTemplate>[]);
     final value = widget.value;
-    final own = value != null && !templates.any((t) => t.imageUrl == value);
+    final full = value.length >= _max;
 
-    Widget tile({required Widget child, required bool selected, required VoidCallback? onTap, Key? key}) => InkWell(
+    Widget frame({required Widget child, required bool selected, VoidCallback? onTap, Key? key}) => InkWell(
           key: key,
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
@@ -82,42 +118,91 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
           ),
         );
 
+    Widget small(IconData icon, String tip, VoidCallback? onTap, {Key? key}) => IconButton(
+          key: key,
+          tooltip: tip,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+          iconSize: 18,
+          onPressed: onTap,
+          icon: Icon(icon, color: onTap == null ? AppColors.line : AppColors.textSoft),
+        );
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text(cat == null ? s.t('cargo_pic_pick_type') : s.t('cargo_pic_hint'),
-          style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child: Text(s.t(cat == null ? 'cargo_pic_pick_type' : 'cargo_pic_hint'),
+              style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+        ),
+        const SizedBox(width: 8),
+        Text('${value.length} / $_max',
+            key: const ValueKey('cargo-pic-count'),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: full ? AppColors.accent : AppColors.textSoft)),
+      ]),
+      // The chosen pictures, main first.
+      if (value.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        Wrap(spacing: 10, runSpacing: 10, children: [
+          for (var i = 0; i < value.length; i++)
+            Column(key: ValueKey('cargo-pic-chosen-$i'), mainAxisSize: MainAxisSize.min, children: [
+              Stack(children: [
+                frame(
+                  selected: i == 0,
+                  child: Image.network(value[i], fit: BoxFit.cover, cacheWidth: 300,
+                      errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft)),
+                ),
+                if (i == 0)
+                  Positioned(
+                    left: 4,
+                    bottom: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(8)),
+                      child: Text(s.t('cargo_pics_main'),
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ),
+                  ),
+              ]),
+              SizedBox(
+                width: 96,
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  small(Icons.chevron_left, '←', i == 0 ? null : () => _move(i, -1)),
+                  small(Icons.star_outline, s.t('cargo_pics_make_main'), i == 0 ? null : () => _move(i, -i),
+                      key: ValueKey('cargo-pic-main-$i')),
+                  small(Icons.close, s.t('cargo_pic_remove'), () => widget.onChanged([...value]..removeAt(i)),
+                      key: ValueKey('cargo-pic-remove-$i')),
+                  small(Icons.chevron_right, '→', i == value.length - 1 ? null : () => _move(i, 1)),
+                ]),
+              ),
+            ]),
+        ]),
+      ],
       const SizedBox(height: 10),
+      // Templates of the load type + own upload.
       SizedBox(
         height: 72,
         child: MouseDragScroll(child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            if (own) ...[
-              tile(
-                key: const ValueKey('cargo-pic-own'),
-                selected: true,
-                onTap: () => widget.onChanged(null),
-                child: Image.network(value, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
-              ),
-              const SizedBox(width: 10),
-            ],
             for (final t in templates) ...[
-              tile(
+              frame(
                 key: ValueKey('cargo-pic-${t.id}'),
-                selected: value == t.imageUrl,
-                onTap: () => widget.onChanged(value == t.imageUrl ? null : t.imageUrl),
+                selected: value.contains(t.imageUrl),
+                onTap: () => _toggleTemplate(t.imageUrl),
                 child: Image.network(t.imageUrl, fit: BoxFit.cover, cacheWidth: 300,
                     errorBuilder: (_, __, ___) => const SizedBox.shrink()),
               ),
               const SizedBox(width: 10),
             ],
-            tile(
+            frame(
               key: const ValueKey('cargo-pic-upload'),
               selected: false,
-              onTap: _uploading ? null : _upload,
+              onTap: _uploading ? null : (full ? () => _say('cargo_pics_full') : _upload),
               child: _uploading
                   ? const Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)))
                   : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
+                      Icon(Icons.add_photo_alternate_outlined, color: full ? AppColors.textSoft : AppColors.accent),
                       const SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -131,16 +216,6 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
           ],
         )),
       ),
-      if (value != null)
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            key: const ValueKey('cargo-pic-remove'),
-            onPressed: () => widget.onChanged(null),
-            icon: Icon(Icons.close, size: 16, color: AppColors.textSoft),
-            label: Text(s.t('cargo_pic_remove'), style: TextStyle(color: AppColors.textSoft)),
-          ),
-        ),
     ]);
   }
 }

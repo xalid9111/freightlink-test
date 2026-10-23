@@ -1,5 +1,6 @@
-// "Zəng et" (owner, 20.10.2026): first the number, then a tap on the
-// number offers a phone call or WhatsApp.
+// "Zəng et" (owner, 23.10.2026): ONE tap opens the number, copy, a phone
+// call and WhatsApp together — shared by Loads, Messages, Services and
+// TIR Bazarı.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,33 +11,36 @@ import 'package:freightlink/features/chat/presentation/widgets/call_options.dart
 void main() {
   const s = AppStrings({
     'call_number_title': 'Phone number',
-    'call_tap_number': 'Tap the number to call',
     'chat_call_phone': 'Phone call',
     'chat_call_whatsapp': 'Via WhatsApp',
     'chat_call_whatsapp_hint': 'hint',
+    'call_no_whatsapp': 'no country code',
+    'chat_copy': 'Copy',
   });
 
-  testWidgets('number first, choice only after tapping it', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: CallOptionsSheet(strings: s, phone: '+994 50 123 45 67')),
-    ));
-    expect(find.text('+994 50 123 45 67'), findsOneWidget);
-    expect(find.text('Tap the number to call'), findsOneWidget);
-    expect(find.text('Phone call'), findsNothing);
-    expect(find.text('Via WhatsApp'), findsNothing);
+  Widget sheet(String phone) => MaterialApp(home: Scaffold(body: CallOptionsSheet(strings: s, phone: phone)));
 
-    await tester.tap(find.byKey(const ValueKey('call-number')));
-    await tester.pump();
+  testWidgets('number, copy, call and WhatsApp at once — no second tap', (tester) async {
+    await tester.pumpWidget(sheet('+994 50 123 45 67'));
+    expect(find.text('+994 50 123 45 67'), findsOneWidget);
+    expect(find.byKey(const ValueKey('call-copy')), findsOneWidget);
     expect(find.text('Phone call'), findsOneWidget);
     expect(find.text('Via WhatsApp'), findsOneWidget);
-    expect(find.text('Tap the number to call'), findsNothing);
+    expect(tester.widget<ListTile>(find.byKey(const ValueKey('call-whatsapp'))).enabled, isTrue);
   });
 
-  test('phone → tel:, WhatsApp → wa.me with digits only', () {
+  testWidgets('a number without its country code: call yes, WhatsApp off with the reason', (tester) async {
+    await tester.pumpWidget(sheet('050 123 45 67'));
+    expect(tester.widget<ListTile>(find.byKey(const ValueKey('call-phone'))).onTap, isNotNull);
+    expect(tester.widget<ListTile>(find.byKey(const ValueKey('call-whatsapp'))).enabled, isFalse);
+    expect(find.text('no country code'), findsOneWidget);
+  });
+
+  test('phone → tel:, WhatsApp → wa.me with the international digits', () {
     final src = File('lib/features/chat/presentation/widgets/call_options.dart').readAsStringSync();
-    expect(src.contains("launchUrl(Uri(scheme: 'tel', path: phone));"), isTrue);
-    expect(src.contains("launchUrl(Uri.parse('https://wa.me/\$digits'), mode: LaunchMode.externalApplication);"), isTrue);
-    expect(src.contains("phone.replaceAll(RegExp(r'[^0-9]'), '')"), isTrue);
+    expect(src.contains("launchUrl(Uri(scheme: 'tel', path: dial));"), isTrue);
+    expect(src.contains("launchUrl(Uri.parse('https://wa.me/\$wa'), mode: LaunchMode.externalApplication);"), isTrue);
+    expect(src.contains('final wa = whatsappDigits(shown);'), isTrue);
   });
 
   test('every call button uses this sheet', () {

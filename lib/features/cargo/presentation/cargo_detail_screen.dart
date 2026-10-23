@@ -30,6 +30,7 @@ import '../../chat/presentation/providers/chat_providers.dart';
 import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import '../domain/truck_types.dart';
+import '../../../core/utils/phone_utils.dart';
 import 'widgets/cargo_picture.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -74,13 +75,187 @@ class _RouteEnd extends StatelessWidget {
       children: [
         if (c != null) Text(c.flag, style: const TextStyle(fontSize: 26, height: 1)),
         const SizedBox(height: 4),
-        Text(
-          (c?.name(localeCode) ?? value).toUpperCase(),
-          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-          style: AppFonts.display(size: 24, color: AppColors.text, height: 1.05),
+        // One line, shrunk to fit — a long name never breaks in the middle
+        // ("AZƏRBAYCA / N", owner 23.10.2026).
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+          child: Text(
+            (c?.name(localeCode) ?? value).toUpperCase(),
+            maxLines: 1,
+            style: AppFonts.display(size: 24, color: AppColors.text, height: 1.05),
+          ),
         ),
-        Text(Cities.label(city, localeCode), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+        Text(Cities.label(city, localeCode),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+            style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
       ],
+    );
+  }
+}
+
+/// Price and currency, as on the load card.
+class _PriceLine extends StatelessWidget {
+  final CargoModel cargo;
+  final AppStrings strings;
+  const _PriceLine({required this.cargo, required this.strings});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(cargo.offeredPrice.toStringAsFixed(0), style: AppFonts.display(size: 36, color: AppColors.text, height: 1)),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+        const Spacer(),
+        Text(strings.t('detail_offered_price'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+      ],
+    );
+  }
+}
+
+/// Load pictures (0060): swipe through them; a tap opens them full
+/// screen (zoomable). Pictures keep their shape (cover here, contain full
+/// screen) — never stretched.
+class _Gallery extends StatefulWidget {
+  final List<String> pictures;
+  final AppStrings strings;
+  const _Gallery({required this.pictures, required this.strings});
+
+  @override
+  State<_Gallery> createState() => _GalleryState();
+}
+
+class _GalleryState extends State<_Gallery> {
+  int _page = 0;
+
+  void _full() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black,
+      builder: (_) => _FullScreenPictures(pictures: widget.pictures, initial: _page, strings: widget.strings),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.pictures;
+    return ClipRRect(
+      key: const ValueKey('detail-gallery'),
+      borderRadius: BorderRadius.circular(16),
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Stack(fit: StackFit.expand, children: [
+          PageView.builder(
+            itemCount: p.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (_, i) => GestureDetector(
+              onTap: _full,
+              child: Image.network(p[i], fit: BoxFit.cover, cacheWidth: 1200,
+                  errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.tileBg,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.broken_image_outlined, color: AppColors.textSoft, size: 36),
+                      )),
+            ),
+          ),
+          if (p.length > 1)
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(12)),
+                child: Text(widget.strings.t('detail_gallery_count', {'i': '${_page + 1}', 'n': '${p.length}'}),
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          Positioned(
+            right: 10,
+            top: 10,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: const CircleBorder(),
+              child: IconButton(
+                key: const ValueKey('detail-gallery-full'),
+                onPressed: _full,
+                icon: const Icon(Icons.fullscreen, color: Colors.white),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _FullScreenPictures extends StatefulWidget {
+  final List<String> pictures;
+  final int initial;
+  final AppStrings strings;
+  const _FullScreenPictures({required this.pictures, required this.initial, required this.strings});
+
+  @override
+  State<_FullScreenPictures> createState() => _FullScreenPicturesState();
+}
+
+class _FullScreenPicturesState extends State<_FullScreenPictures> {
+  late final PageController _ctrl = PageController(initialPage: widget.initial);
+  late int _page = widget.initial;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.pictures;
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: Stack(children: [
+        PageView.builder(
+          controller: _ctrl,
+          itemCount: p.length,
+          onPageChanged: (i) => setState(() => _page = i),
+          itemBuilder: (_, i) => InteractiveViewer(
+            maxScale: 4,
+            child: Center(child: Image.network(p[i], fit: BoxFit.contain)),
+          ),
+        ),
+        SafeArea(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              key: const ValueKey('detail-gallery-close'),
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close, color: Colors.white, size: 28),
+            ),
+          ),
+        ),
+        if (p.length > 1)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(widget.strings.t('detail_gallery_count', {'i': '${_page + 1}', 'n': '${p.length}'}),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ),
+      ]),
     );
   }
 }
@@ -97,32 +272,30 @@ class _DetailBody extends ConsumerWidget {
     final localeCode = ref.watch(currentLocaleProvider).languageCode;
     final dateFmt = DateFormat('d MMM yyyy', localeCode);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        // Owner tools first, so editing is easy to find.
-        if (isOwner) ...[
-          _OwnerActions(cargo: cargo, strings: strings),
-          const SizedBox(height: 12),
-        ],
-        // Card picture (0058), only when the load has one.
-        if ((cargo.imageUrl ?? '').isNotEmpty) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
-            ),
-          ),
-          if (user?.role == AppConstants.roleAdmin)
-            Align(
-              alignment: Alignment.centerRight,
-              child: _AdminClearPicture(cargo: cargo, strings: strings),
-            ),
-          const SizedBox(height: 12),
-        ],
-        // Route + price card — same visual language as the marketplace card.
-        Card(
+    final isAdmin = user?.role == AppConstants.roleAdmin;
+    final pictures = cargo.pictures;
+    final tons = cargo.weightKg / 1000;
+    final weight = cargo.weightKg < 1000
+        ? '${cargo.weightKg.toStringAsFixed(0)} kg'
+        : '${tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1)} t (${cargo.weightKg.toStringAsFixed(0)} kg)';
+    final kind = cargo.groupage
+        ? strings.t('cargo_groupage_label')
+        : ((cargo.cargoType ?? '').trim().isEmpty ? null : cargo.cargoType!.trim());
+
+    // Blocks (owner, 23.10.2026): gallery → route → load → price / payment
+    // → free waiting → notes → poster and contact. Phone: one column;
+    // computer: gallery and load on the left, price and contact on the right.
+    Widget gap() => const SizedBox(height: 16);
+    final gallery = <Widget>[
+      if (pictures.isNotEmpty) ...[
+        _Gallery(pictures: pictures, strings: strings),
+        if (isAdmin)
+          Align(alignment: Alignment.centerRight, child: _AdminClearPicture(cargo: cargo, strings: strings)),
+        gap(),
+      ],
+    ];
+    Widget routeCard({required bool withPrice}) => Card(
+          key: const ValueKey('detail-route'),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -131,103 +304,175 @@ class _DetailBody extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(child: _RouteEnd(value: cargo.pickupCountry, city: cargo.pickupCity, localeCode: localeCode, alignEnd: false)),
-                    Column(
-                      children: [
-                        if (cargo.distanceKm != null)
-                          Text('${cargo.distanceKm!.toStringAsFixed(0)} km', style: AppFonts.mono(color: AppColors.route)),
-                        const SizedBox(height: 4),
-                        Icon(Icons.arrow_forward, color: AppColors.route, size: 22),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Column(
+                        children: [
+                          if (cargo.distanceKm != null)
+                            Text('${cargo.distanceKm!.toStringAsFixed(0)} km', style: AppFonts.mono(color: AppColors.route)),
+                          const SizedBox(height: 4),
+                          Icon(Icons.arrow_forward, color: AppColors.route, size: 22),
+                        ],
+                      ),
                     ),
                     Expanded(child: _RouteEnd(value: cargo.destinationCountry, city: cargo.destinationCity, localeCode: localeCode, alignEnd: true)),
                   ],
                 ),
-                const SizedBox(height: 14),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(cargo.offeredPrice.toStringAsFixed(0), style: AppFonts.display(size: 36, color: AppColors.text, height: 1)),
-                    const SizedBox(width: 6),
-                    Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-                    const Spacer(),
-                    Text(strings.t('detail_offered_price'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-                  ],
-                ),
+                if (withPrice) ...[
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  _PriceLine(cargo: cargo, strings: strings),
+                ],
               ],
             ),
           ),
+        );
+    final loadCard = Card(
+      key: const ValueKey('detail-load'),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (kind != null) _InfoRow(strings.t('detail_cargo_kind'), kind),
+            _InfoRow(strings.t('detail_weight_label'), weight),
+            if (cargo.volumeM3 != null) _InfoRow(strings.t('detail_volume_label'), '${cargo.volumeM3} m³'),
+            if (cargo.palletCount != null) _InfoRow(strings.t('detail_pallets_label'), '${cargo.palletCount}'),
+            if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), truckTypeLabel(strings, cargo.truckType!)),
+            _InfoRow(strings.t('detail_pickup_date_label'), dateFmt.format(cargo.pickupDate)),
+            if (cargo.deliveryDeadline != null)
+              _InfoRow(strings.t('detail_delivery_deadline_label'), dateFmt.format(cargo.deliveryDeadline!)),
+            _InfoRow(strings.t('detail_status_label'), _statusLabel(strings, cargo.status)),
+          ],
         ),
-        const SizedBox(height: 16),
+      ),
+    );
+    // Payment terms and free waiting time (0046); only what the owner filled.
+    final terms = <Widget>[
+      if (cargo.hasTerms) ...[
+        gap(),
         Card(
+          key: const ValueKey('cargo-terms'),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _InfoRow(strings.t('detail_weight_label'), '${cargo.weightKg.toStringAsFixed(0)} kg'),
-                if (cargo.volumeM3 != null) _InfoRow(strings.t('detail_volume_label'), '${cargo.volumeM3} m³'),
-                if (cargo.palletCount != null) _InfoRow(strings.t('detail_pallets_label'), '${cargo.palletCount}'),
-                if (cargo.truckType != null) _InfoRow(strings.t('detail_truck_type_label'), truckTypeLabel(strings, cargo.truckType!)),
-                _InfoRow(strings.t('detail_pickup_date_label'), dateFmt.format(cargo.pickupDate)),
-                if (cargo.deliveryDeadline != null)
-                  _InfoRow(strings.t('detail_delivery_deadline_label'), dateFmt.format(cargo.deliveryDeadline!)),
-                _InfoRow(strings.t('detail_status_label'), _statusLabel(strings, cargo.status)),
-                if (cargo.description != null && cargo.description!.isNotEmpty)
-                  _InfoRow(strings.t('detail_description_label'), cargo.description!),
+                Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                for (final (key, amount) in cargo.paymentTerms)
+                  // Only the advance has an amount; the others are just ticked.
+                  _InfoRow(strings.t(key), amount == null ? '✓' : '${_amount(amount)} ${cargo.currency}'),
+                if (cargo.freeWaitHours != null)
+                  _InfoRow(strings.t('cargo_wait_short'), strings.t('cargo_wait_hours', {'n': '${cargo.freeWaitHours}'})),
               ],
             ),
           ),
         ),
-        // Payment terms and free waiting time (0046); only what the owner filled.
-        if (cargo.hasTerms) ...[
-          const SizedBox(height: 16),
-          Card(
-            key: const ValueKey('cargo-terms'),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  for (final (key, amount) in cargo.paymentTerms)
-                    // Only the advance has an amount; the others are just ticked.
-                    _InfoRow(strings.t(key), amount == null ? '✓' : '${_amount(amount)} ${cargo.currency}'),
-                  if (cargo.freeWaitHours != null)
-                    _InfoRow(strings.t('cargo_wait_short'), strings.t('cargo_wait_hours', {'n': '${cargo.freeWaitHours}'})),
-                ],
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        // Route map (A loading → B unloading) with road distance; the
-        // owner can fine-tune the points. (The delivery-stage stepper
-        // lives on the Shipments tab.)
-        CargoRouteMap(cargo: cargo, strings: strings, isOwner: isOwner),
-        const SizedBox(height: 16),
-        _NavigationButtons(cargo: cargo, strings: strings),
-
-        if (!isOwner) ...[
-          const SizedBox(height: 16),
-          _OwnerContactSection(cargo: cargo, strings: strings),
-          const SizedBox(height: 16),
-          _MessageOwnerButton(cargo: cargo, strings: strings),
-          const SizedBox(height: 16),
-          _CarrierOfferSection(cargo: cargo, strings: strings),
-          const SizedBox(height: 8),
-          Align(alignment: Alignment.centerLeft, child: _ReportCargoButton(cargo: cargo, strings: strings)),
-        ],
-
-        if (isOwner) ...[
-          const SizedBox(height: 16),
-          _OffersReceivedSection(cargo: cargo, strings: strings),
-        ],
       ],
-    );
+    ];
+    final notes = <Widget>[
+      if ((cargo.description ?? '').trim().isNotEmpty) ...[
+        gap(),
+        Card(
+          key: const ValueKey('detail-notes'),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(strings.t('detail_description_label'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Text(cargo.description!.trim(), style: TextStyle(color: AppColors.text, height: 1.35)),
+            ]),
+          ),
+        ),
+      ],
+    ];
+    // Route map (A loading → B unloading) with road distance; the owner can
+    // fine-tune the points. (The delivery-stage stepper lives on Shipments.)
+    final map = <Widget>[
+      const SizedBox(height: 12),
+      CargoRouteMap(cargo: cargo, strings: strings, isOwner: isOwner),
+      gap(),
+      _NavigationButtons(cargo: cargo, strings: strings),
+    ];
+    final contact = <Widget>[
+      if (!isOwner) ...[
+        _OwnerContactSection(cargo: cargo, strings: strings),
+        gap(),
+        _MessageOwnerButton(cargo: cargo, strings: strings),
+        gap(),
+        _CarrierOfferSection(cargo: cargo, strings: strings),
+        const SizedBox(height: 8),
+        Align(alignment: Alignment.centerLeft, child: _ReportCargoButton(cargo: cargo, strings: strings)),
+      ],
+      if (isOwner) _OffersReceivedSection(cargo: cargo, strings: strings),
+    ];
+    // Owner tools first, so editing is easy to find.
+    final ownerTools = <Widget>[
+      if (isOwner) ...[
+        _OwnerActions(cargo: cargo, strings: strings),
+        const SizedBox(height: 12),
+      ],
+    ];
+
+    return LayoutBuilder(builder: (context, c) {
+      if (c.maxWidth < 900) {
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
+            ...ownerTools,
+            ...gallery,
+            routeCard(withPrice: true),
+            gap(),
+            loadCard,
+            ...terms,
+            ...notes,
+            ...map,
+            gap(),
+            ...contact,
+          ],
+        );
+      }
+      // Computer: two columns, the right one keeps price and contact.
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              ...ownerTools,
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    ...gallery,
+                    routeCard(withPrice: false),
+                    gap(),
+                    loadCard,
+                    ...terms,
+                    ...notes,
+                    ...map,
+                  ]),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 2,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Card(
+                      key: const ValueKey('detail-price'),
+                      child: Padding(padding: const EdgeInsets.all(16), child: _PriceLine(cargo: cargo, strings: strings)),
+                    ),
+                    gap(),
+                    ...contact,
+                  ]),
+                ),
+              ]),
+            ]),
+          ),
+        ),
+      );
+    });
   }
 
   static String _amount(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
@@ -361,7 +606,8 @@ class _OwnerContactSection extends ConsumerWidget {
               error: (_, __) => Text(strings.t('error_generic')),
               data: (contact) {
                 final name = contact['full_name'];
-                final phone = contact['phone'];
+                // The load's own number (0060) or the registered one.
+                final phone = cargoContactNumber(contactPhone: contact['contact_phone'], registeredPhone: contact['phone']);
                 final email = contact['email'];
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,8 +659,11 @@ class _OwnerContactSection extends ConsumerWidget {
                         ),
                         ),
                       ),
-                    if (phone != null && phone.isNotEmpty)
+                    if (phone != null) ...[
+                      // One tap on the number or "Əlaqə saxla": number, copy,
+                      // phone call and WhatsApp at once (owner, 23.10.2026).
                       InkWell(
+                        key: const ValueKey('detail-phone'),
                         borderRadius: BorderRadius.circular(10),
                         onTap: () => showCallOptions(context, strings, phone),
                         child: ConstrainedBox(
@@ -427,6 +676,21 @@ class _OwnerContactSection extends ConsumerWidget {
                             ],
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                      FilledButton.icon(
+                        key: const ValueKey('detail-contact'),
+                        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+                        onPressed: () => showCallOptions(context, strings, phone),
+                        icon: const Icon(Icons.call),
+                        label: Text(strings.t('contact_owner_btn')),
+                      ),
+                      const SizedBox(height: 6),
+                    ] else
+                      Padding(
+                        key: const ValueKey('detail-no-phone'),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(strings.t('contact_no_phone'), style: TextStyle(color: AppColors.textSoft)),
                       ),
                     if (email != null && email.isNotEmpty)
                       _ContactLine(icon: Icons.mail_outline, value: email, uri: Uri(scheme: 'mailto', path: email)),

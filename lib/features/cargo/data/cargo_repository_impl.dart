@@ -61,9 +61,9 @@ class CargoRepositoryImpl implements CargoRepository {
     // RLS requires owner_id = auth.uid() (migration 0002); an attempt to
     // post cargo under someone else's id is rejected at the database,
     // not just hidden by the UI.
-    final row = await _withImage((image) => _withSize((size) => _withTerms((terms, choices) => _client
+    final row = await _withImage((image, images) => _withSize((size) => _withTerms((terms, choices) => _client
         .from('cargo')
-        .insert(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image))
+        .insert(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image, withImages: images))
         .select()
         .single())));
     return CargoModel.fromJson(row);
@@ -71,20 +71,29 @@ class CargoRepositoryImpl implements CargoRepository {
 
   @override
   Future<void> update(CargoModel cargo) async {
-    await _withImage((image) => _withSize((size) => _withTerms((terms, choices) => _client
+    await _withImage((image, images) => _withSize((size) => _withTerms((terms, choices) => _client
         .from('cargo')
-        .update(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image))
+        .update(cargo.toInsertJson(withTerms: terms, withChoices: choices, withSize: size, withImage: image, withImages: images))
         .eq('id', cargo.id))));
   }
 
-  /// The card picture needs migration 0058; until it is run the load is
-  /// saved without it.
-  Future<T> _withImage<T>(Future<T> Function(bool image) run) async {
+  /// Pictures: the list needs 0060, the main picture 0058. Until they
+  /// are run the load is saved with what the database has (only the main
+  /// picture, or none).
+  Future<T> _withImage<T>(Future<T> Function(bool image, bool images) run) async {
     try {
-      return await run(true);
+      return await run(true, true);
     } on PostgrestException catch (e) {
+      if (isMissingImagesColumn(e.code, e.message)) {
+        try {
+          return await run(true, false);
+        } on PostgrestException catch (e2) {
+          if (!isMissingImageColumn(e2.code, e2.message)) rethrow;
+          return run(false, false);
+        }
+      }
       if (!isMissingImageColumn(e.code, e.message)) rethrow;
-      return run(false);
+      return run(false, false);
     }
   }
 
@@ -147,9 +156,15 @@ bool isMissingTermsColumn(String? code, String message) =>
 bool isMissingSizeColumn(String? code, String message) =>
     (code == 'PGRST204' || code == '42703') && CargoModel.sizeColumns.any(message.contains);
 
+/// Same for the 0060 picture list ("image_urls" — checked before
+/// image_url, whose name it contains).
+bool isMissingImagesColumn(String? code, String message) =>
+    (code == 'PGRST204' || code == '42703') && CargoModel.imagesColumns.any(message.contains);
+
 /// Same for the 0058 picture column.
 bool isMissingImageColumn(String? code, String message) =>
-    (code == 'PGRST204' || code == '42703') && CargoModel.imageColumns.any(message.contains);
+    (code == 'PGRST204' || code == '42703') &&
+    RegExp(r'image_url(?!s)').hasMatch(message);
 
 /// Same for the 0047 columns.
 bool isMissingChoiceColumn(String? code, String message) =>

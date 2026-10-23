@@ -110,6 +110,8 @@ class AppColors {
 
   /// Ground of a big / small card without a picture (both modes).
   static const Color sizeCardBg = Color(0xFF16243A);
+  /// WhatsApp brand green (call sheet).
+  static const Color whatsapp = Color(0xFF25D366);
 
   static Color get background => _p.background;
   static Color get hero => _p.hero;

@@ -1121,5 +1121,20 @@
   "cargo_pic_remove": "სურათის მოხსნა",
   "cargo_pic_admin_remove": "სურათის მოხსნა ტვირთიდან",
   "cargo_pic_admin_remove_q": "მოიხსნას ამ ტვირთის სურათი? თავად ტვირთი არ იცვლება.",
-  "cargo_groupage_label": "ჯგუფური ტვირთი"
+  "cargo_groupage_label": "ჯგუფური ტვირთი",
+  "call_no_whatsapp": "ნომერს ქვეყნის კოდი არ აქვს (+…), WhatsApp ვერ გაიხსნება",
+  "contact_owner_btn": "დაკავშირება",
+  "contact_no_phone": "განცხადების ავტორს ტელეფონი არ დაუმატებია. მისწერეთ შეტყობინება.",
+  "cargo_alt_phone_label": "ალტერნატიული საკონტაქტო ნომერი",
+  "cargo_alt_phone_hint": "არასავალდებულო. თუ ცარიელია, ჩანს რეგისტრაციის ნომერი",
+  "cargo_alt_phone_invalid": "შეიყვანეთ ნომერი ქვეყნის კოდით, მაგ. +995 555 12 34 56",
+  "cargo_alt_phone_not_saved": "ალტერნატიული ნომერი ვერ შეინახა (სერვერი ჯერ მზად არ არის). ტვირთი შენახულია.",
+  "cargo_pics_label": "სურათები (მაქს. 6, არასავალდებულო)",
+  "cargo_pics_main": "მთავარი",
+  "cargo_pics_make_main": "მთავრად დაყენება",
+  "cargo_pics_full": "არჩეულია 6 სურათი — ახლისთვის წაშალეთ ერთი",
+  "cargo_pics_too_big": "სურათი ძალიან დიდია (მაქს. 5 MB)",
+  "cargo_pics_bad_type": "მხოლოდ JPG, PNG ან WEBP",
+  "detail_cargo_kind": "ტვირთის ტიპი",
+  "detail_gallery_count": "{i} / {n}"
 }

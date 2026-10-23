@@ -63,8 +63,10 @@ void main() {
     test('load form: picture card, kept on edit, uploads cleaned up without reading ref in dispose', () {
       final f = src('lib/features/cargo/presentation/cargo_quick_form.dart');
       expect(f.contains('CargoPictureField('), isTrue);
-      expect(f.contains('_image = c.imageUrl;'), isTrue);
-      expect(f.contains('imageUrl: _image,'), isTrue);
+      // Up to 6 pictures since 0060: the list is kept on edit, the first is image_url.
+      expect(f.contains('_images = c.pictures;'), isTrue);
+      expect(f.contains('imageUrl: _images.isEmpty ? null : _images.first,'), isTrue);
+      expect(f.contains('imageUrls: _images,'), isTrue);
       final dispose = f.substring(f.indexOf('void dispose()'), f.indexOf('super.dispose();'));
       expect(dispose.contains('ref.'), isFalse);
     });

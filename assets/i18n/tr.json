@@ -1121,5 +1121,20 @@
   "cargo_pic_remove": "Resmi kaldır",
   "cargo_pic_admin_remove": "Resmi yükten kaldır",
   "cargo_pic_admin_remove_q": "Bu yükün resmi kaldırılsın mı? Yükün kendisi değişmez.",
-  "cargo_groupage_label": "Parsiyel"
+  "cargo_groupage_label": "Parsiyel",
+  "call_no_whatsapp": "Numara ülke koduyla değil (+90…), WhatsApp açılamıyor",
+  "contact_owner_btn": "İletişime geç",
+  "contact_no_phone": "İlan sahibi telefon numarası eklememiş. Mesaj yazın.",
+  "cargo_alt_phone_label": "Alternatif iletişim numarası",
+  "cargo_alt_phone_hint": "Zorunlu değil. Boş kalırsa kayıt numaranız gösterilir",
+  "cargo_alt_phone_invalid": "Numarayı ülke koduyla yazın, örn. +90 532 123 45 67",
+  "cargo_alt_phone_not_saved": "Alternatif numara kaydedilmedi (sunucu henüz hazır değil). Yük kaydedildi.",
+  "cargo_pics_label": "Resimler (en fazla 6, zorunlu değil)",
+  "cargo_pics_main": "Ana",
+  "cargo_pics_make_main": "Ana yap",
+  "cargo_pics_full": "6 resim seçildi — yenisi için birini silin",
+  "cargo_pics_too_big": "Resim çok büyük (en fazla 5 MB)",
+  "cargo_pics_bad_type": "Yalnızca JPG, PNG veya WEBP",
+  "detail_cargo_kind": "Yük türü",
+  "detail_gallery_count": "{i} / {n}"
 }
