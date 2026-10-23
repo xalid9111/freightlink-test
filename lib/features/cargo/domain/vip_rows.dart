@@ -1,46 +1,66 @@
 import '../../../models/cargo_model.dart';
 
-/// VIP loads on the Loads page (owner, 23.10.2026, migration 0059).
+/// VIP loads on the Loads page (owner, 23–24.10.2026, migration 0059).
 ///
-/// * Normal loads keep their order (newest first) in rows of [columns].
-/// * After every [vipEvery] normal rows (admin: 2 / 3 / 4, default 3) comes
-///   one row of [vipColumns] (2) VIP loads side by side, in their own order
-///   — the same on the phone and the computer.
-/// * When the VIP loads run out no VIP row is shown (never an empty card);
-///   VIP loads left over after the last normal row follow at the end, so
-///   none is hidden. A VIP load is shown only once, in a VIP row.
+/// * Chessboard order (owner, 24.10.2026): every row has one normal load
+///   and one VIP, and they swap sides row by row:
+///     load – VIP
+///     VIP – load
+///     load – VIP
+///     VIP – load …
+///   When one kind runs out the other simply fills the rows (never an
+///   empty card). Each load is shown once.
+/// * The VIP order moves on by one place every [kVipRotateMinutes]
+///   minutes ([rotation]), so every VIP comes to the front in turn —
+///   none always stays at the back.
+/// * Normal loads keep their order (newest first).
+/// * Rows of [columns] (2 on a phone): always pairs; only the very last
+///   card may stand alone, at the bottom. The computer uses the same
+///   chessboard with wider rows.
+const kVipRotateMinutes = 5;
+
+/// 0059 interval setting (2 / 3 / 4 rows) — kept in the database, no
+/// longer used by the Loads page (chessboard order instead).
 const kVipEveryChoices = [2, 3, 4];
 const kDefaultVipEvery = 3;
 
-typedef LoadRow = ({bool vip, List<int> loads});
+typedef LoadCell = ({int index, bool vip});
 
-List<LoadRow> buildLoadRows(List<CargoModel> loads,
-    {required int vipEvery, required int columns, int vipColumns = 2, DateTime? now}) {
+/// How far the VIP order has moved at [now] (every [kVipRotateMinutes]).
+int vipRotation(DateTime now) => now.millisecondsSinceEpoch ~/ (kVipRotateMinutes * 60 * 1000);
+
+/// The cards in order, chessboard by rows of [columns].
+List<LoadCell> buildLoadFlow(List<CargoModel> loads, {int columns = 2, DateTime? now, int? rotation}) {
   final t = now ?? DateTime.now();
-  final every = kVipEveryChoices.contains(vipEvery) ? vipEvery : kDefaultVipEvery;
   final cols = columns < 1 ? 1 : columns;
-  final vipCols = vipColumns < 1 ? 1 : vipColumns;
   final vip = <int>[];
   final normal = <int>[];
   for (var i = 0; i < loads.length; i++) {
     (loads[i].isVipAt(t) ? vip : normal).add(i);
   }
-  final out = <LoadRow>[];
-  var v = 0;
-  void vipRow() {
-    if (v >= vip.length) return;
-    final end = (v + vipCols).clamp(0, vip.length);
-    out.add((vip: true, loads: vip.sublist(v, end)));
-    v = end;
+  if (vip.length > 1) {
+    final r = (rotation ?? vipRotation(t)) % vip.length;
+    vip.setAll(0, [...vip.sublist(r), ...vip.sublist(0, r)]);
   }
-
-  var rows = 0;
-  for (var i = 0; i < normal.length; i += cols) {
-    out.add((vip: false, loads: normal.sublist(i, (i + cols).clamp(0, normal.length))));
-    if (++rows % every == 0) vipRow();
-  }
-  while (v < vip.length) {
-    vipRow();
+  final out = <LoadCell>[];
+  var v = 0, n = 0;
+  while (v < vip.length || n < normal.length) {
+    final pos = out.length;
+    // Row r, place k: VIP where (r + k) is odd — load–VIP, then VIP–load …
+    final wantVip = ((pos ~/ cols) + (pos % cols)).isOdd;
+    final takeVip = wantVip ? v < vip.length : n >= normal.length;
+    if (takeVip) {
+      out.add((index: vip[v++], vip: true));
+    } else {
+      out.add((index: normal[n++], vip: false));
+    }
   }
   return out;
+}
+
+/// The flow cut into rows of [columns] (only the last row can be short).
+List<List<LoadCell>> buildLoadRows(List<CargoModel> loads, {required int columns, DateTime? now, int? rotation}) {
+  final cols = columns < 1 ? 1 : columns;
+  final flow = buildLoadFlow(loads, columns: cols, now: now, rotation: rotation);
+  return [for (var i = 0; i < flow.length; i += cols) flow.sublist(i, (i + cols).clamp(0, flow.length))];
 }

@@ -21,7 +21,6 @@ import 'providers/category_providers.dart';
 import 'widgets/cargo_category_bar.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/vip_rows.dart';
-import 'providers/vip_providers.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/layout/desktop_layout.dart';
@@ -47,8 +46,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     final filter = ref.watch(routeFilterProvider);
     // The old wide ad banner is gone from the Loads page (owner,
-    // 23.10.2026). VIP loads get rows of their own instead (0059).
-    final vipEvery = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
+    // 23.10.2026). VIP and normal loads stand in a chessboard instead (0059).
     // Load-type tile / big-small card (0055): the server's answer, or the
     // same rule on the loaded list until it arrives — instant either way.
     final cat = ref.watch(cargoCategoryFilterProvider);
@@ -72,7 +70,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(cargoVipEveryProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -159,21 +156,15 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                // Two tiles in a row (owner, 22.10.2026); after every 2 / 3 / 4
-                // rows (admin, 0059) a row of VIP loads. Scrolling down brings
-                // the next rows.
-                final rows = buildLoadRows(list, vipEvery: vipEvery, columns: 2);
+                // Two tiles in a row (owner, 22–24.10.2026), chessboard:
+                // load–VIP, VIP–load …; the VIP order moves on every few
+                // minutes. Scrolling brings the next rows.
+                final rows = buildLoadRows(list, columns: 2);
                 return [
-                  // The tiles stand on a rounded panel (owner's design, 23.10.2026).
+                  // No panel behind the tiles (owner, 24.10.2026): the page
+                  // ground shows between them.
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 96),
-                    sliver: DecoratedSliver(
-                      decoration: BoxDecoration(
-                        color: AppColors.cardAlt,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      sliver: SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(8, kTileGap, 8, 0),
+                    padding: const EdgeInsets.fromLTRB(24, kTileGap, 24, 96),
                     sliver: SliverList.builder(
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
@@ -185,20 +176,18 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                             padding: const EdgeInsets.only(bottom: kTileGap),
                             child: _TileRow(
                               children: [
-                                for (final k in row.loads)
+                                for (final cell in row)
                                   CargoTile(
-                                    cargo: list[k],
+                                    cargo: list[cell.index],
                                     strings: strings,
-                                    vip: row.vip,
-                                    onTap: () => context.pushOnce('/cargo/${list[k].id}'),
+                                    vip: cell.vip,
+                                    onTap: () => context.pushOnce('/cargo/${list[cell.index].id}'),
                                   ),
                               ],
                             ),
                           ),
                         );
                       },
-                    ),
-                      ),
                     ),
                   ),
                 ];
@@ -774,8 +763,9 @@ class _RouteSearch extends ConsumerWidget {
 /// 23.10.2026; about 19 points on a phone).
 const kTileGap = 19.0;
 
-/// Width of a load card on a phone: 2 cm (owner: 2 × 4 cm cards).
-const kTileWidth = 128.0;
+/// Width of a load card on a phone (owner's picture, 24.10.2026): about
+/// 147 points (≈ 2.3 cm) on a 390-point phone; smaller phones shrink it.
+const kTileWidth = 147.0;
 
 /// Two tiles side by side with space on both sides (owner's drawing):
 /// 2 cm wide each, 3 mm apart; a last single tile keeps its place on the

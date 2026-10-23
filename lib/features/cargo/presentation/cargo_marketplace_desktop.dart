@@ -59,7 +59,6 @@ class _DesktopMarketplace extends ConsumerWidget {
     final filter = ref.watch(routeFilterProvider);
     final query = ref.watch(_deskQueryProvider);
     // No wide ad banner any more; VIP rows instead, as on the phone (0059).
-    final vipEvery = ref.watch(cargoVipEveryProvider).valueOrNull ?? kDefaultVipEvery;
     // Load-type tile / big-small card (0055), as on the phone.
     final cat = ref.watch(cargoCategoryFilterProvider);
     final catFeed = ref.watch(categoryFeedProvider);
@@ -81,7 +80,6 @@ class _DesktopMarketplace extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(cargoVipEveryProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -174,14 +172,12 @@ class _DesktopMarketplace extends ConsumerWidget {
                           // as many as fit at about 200 px each.
                           builder: (context, c) {
                             final columns = ((c.maxWidth - 2 * kTileGap + kTileGap) / (200 + kTileGap)).floor().clamp(3, 8);
-                            // Rounded panel behind the tiles, as on the phone.
-                            return DecoratedBox(
-                              decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(24)),
-                              child: Padding(
+                            // No panel behind the tiles (owner, 24.10.2026).
+                            return Padding(
                                 padding: const EdgeInsets.fromLTRB(kTileGap, kTileGap, kTileGap, 0),
                                 child: _DeskLoadGrid(
                               columns: columns,
-                              rows: buildLoadRows(list, vipEvery: vipEvery, columns: columns),
+                              rows: buildLoadRows(list, columns: columns),
                               buildLoad: (i, vip) {
                                 final cargo = list[i];
                                 return CargoTile(
@@ -192,7 +188,6 @@ class _DesktopMarketplace extends ConsumerWidget {
                                 );
                               },
                                 ),
-                              ),
                             );
                           },
                         ),
@@ -210,10 +205,10 @@ class _DesktopMarketplace extends ConsumerWidget {
 }
 
 /// Open loads in rows of [columns] equal cards (same height per row), 3 mm
-/// apart; a VIP row (0059) has the same card size.
+/// apart; VIP cards (0059) join the same flow, same size.
 class _DeskLoadGrid extends StatelessWidget {
   final int columns;
-  final List<LoadRow> rows;
+  final List<List<LoadCell>> rows;
   final Widget Function(int index, bool vip) buildLoad;
   const _DeskLoadGrid({required this.columns, required this.rows, required this.buildLoad});
 
@@ -227,7 +222,7 @@ class _DeskLoadGrid extends StatelessWidget {
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               for (var k = 0; k < columns; k++) ...[
                 if (k > 0) const SizedBox(width: kTileGap),
-                Expanded(child: k < r.loads.length ? buildLoad(r.loads[k], r.vip) : const SizedBox.shrink()),
+                Expanded(child: k < r.length ? buildLoad(r[k].index, r[k].vip) : const SizedBox.shrink()),
               ],
             ]),
           ),
