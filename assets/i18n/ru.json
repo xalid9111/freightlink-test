@@ -1121,5 +1121,21 @@
   "cargo_pic_remove": "Убрать фото",
   "cargo_pic_admin_remove": "Убрать фото с груза",
   "cargo_pic_admin_remove_q": "Убрать фото этого груза? Сам груз не меняется.",
-  "cargo_groupage_label": "Сборный груз"
+  "cargo_groupage_label": "Сборный груз",
+  "call_no_whatsapp": "Номер без кода страны (+…), WhatsApp открыть нельзя",
+  "contact_owner_btn": "Связаться",
+  "contact_no_phone": "Автор объявления не указал телефон. Напишите сообщение.",
+  "cargo_alt_phone_label": "Дополнительный номер для связи",
+  "cargo_alt_phone_hint": "Необязательно. Если пусто, показывается номер из регистрации",
+  "cargo_alt_phone_invalid": "Введите номер с кодом страны, напр. +994 50 123 45 67",
+  "cargo_alt_phone_not_saved": "Доп. номер не сохранён (сервер ещё не готов). Груз сохранён.",
+  "cargo_pics_label": "Фото (до 6, необязательно)",
+  "cargo_pics_main": "Главное",
+  "cargo_pics_make_main": "Сделать главным",
+  "cargo_pics_full": "Выбрано 6 фото — удалите одно, чтобы добавить",
+  "cargo_pics_too_big": "Фото слишком большое (макс. 5 МБ)",
+  "cargo_pics_bad_type": "Только JPG, PNG или WEBP",
+  "detail_cargo_kind": "Тип груза",
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Добавить фото"
 }

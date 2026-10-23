@@ -110,6 +110,13 @@ class AppColors {
 
   /// Ground of a big / small card without a picture (both modes).
   static const Color sizeCardBg = Color(0xFF16243A);
+  /// WhatsApp brand green (call sheet).
+  static const Color whatsapp = Color(0xFF25D366);
+  /// VIP gold (TIR Bazarı and VIP loads, owner 23.10.2026).
+  static const Color vipGold = Color(0xFFFFC83D);
+  /// VIP medal: gold rim shade and the dark centre / ribbons.
+  static const Color vipGoldDark = Color(0xFF7A5200);
+  static const Color vipInk = Color(0xFF1A1206);
 
   static Color get background => _p.background;
   static Color get hero => _p.hero;

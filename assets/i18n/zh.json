@@ -1121,5 +1121,21 @@
   "cargo_pic_remove": "移除图片",
   "cargo_pic_admin_remove": "从货源移除图片",
   "cargo_pic_admin_remove_q": "移除此货源的图片？货源本身不会改变。",
-  "cargo_groupage_label": "拼货"
+  "cargo_groupage_label": "拼货",
+  "call_no_whatsapp": "号码缺少国家代码（+…），无法打开 WhatsApp",
+  "contact_owner_btn": "联系",
+  "contact_no_phone": "发布者未添加电话号码，请发送消息。",
+  "cargo_alt_phone_label": "备用联系电话",
+  "cargo_alt_phone_hint": "可选。留空则显示您的注册号码",
+  "cargo_alt_phone_invalid": "请输入带国家代码的号码，例如 +994 50 123 45 67",
+  "cargo_alt_phone_not_saved": "备用号码未保存（服务器尚未就绪）。货源已保存。",
+  "cargo_pics_label": "图片（最多 6 张，可选）",
+  "cargo_pics_main": "主图",
+  "cargo_pics_make_main": "设为主图",
+  "cargo_pics_full": "已选 6 张 — 删除一张后才能再添加",
+  "cargo_pics_too_big": "图片过大（最大 5 MB）",
+  "cargo_pics_bad_type": "仅支持 JPG、PNG 或 WEBP",
+  "detail_cargo_kind": "货物类型",
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "添加图片"
 }

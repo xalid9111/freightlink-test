@@ -75,6 +75,15 @@ class CargoModel {
   /// own photo; null = none (the load type icon is shown).
   final String? imageUrl;
 
+  /// Up to 6 pictures, the first is the main one (0060). Empty on loads
+  /// saved before 0060 — use [pictures], which falls back to [imageUrl].
+  final List<String> imageUrls;
+  /// VIP (0006 columns, given by an admin — 0059): shown in the VIP rows
+  /// of the Loads page while [featuredUntil] has not passed (null = no end).
+  /// Read only: never sent when a load is saved.
+  final bool isFeatured;
+  final DateTime? featuredUntil;
+
   const CargoModel({
     required this.id,
     required this.ownerId,
@@ -113,7 +122,12 @@ class CargoModel {
     this.loadSize,
     this.groupage = false,
     this.imageUrl,
+    this.imageUrls = const [],
+    this.isFeatured = false,
+    this.featuredUntil,
   });
+
+  bool isVipAt(DateTime now) => isFeatured && (featuredUntil == null || featuredUntil!.isAfter(now));
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
         id: j['id'] as String,
@@ -155,6 +169,9 @@ class CargoModel {
         loadSize: j['load_size'] as String?,
         groupage: j['groupage'] == true,
         imageUrl: j['image_url'] as String?,
+        imageUrls: [for (final u in (j['image_urls'] as List? ?? const [])) if (u is String && u.isNotEmpty) u],
+        isFeatured: j['is_featured'] == true,
+        featuredUntil: j['featured_until'] == null ? null : DateTime.tryParse('${j['featured_until']}'),
       );
 
   /// Columns added by migration 0046 (left out if the database does not
@@ -169,6 +186,20 @@ class CargoModel {
 
   /// Column added by migration 0058 (left out if not run yet).
   static const imageColumns = ['image_url'];
+
+  /// Column added by migration 0060 (left out if not run yet).
+  static const imagesColumns = ['image_urls'];
+
+  /// Most pictures on one load (0060).
+  static const maxPictures = 6;
+
+  /// The load's pictures, main first: the 0060 list, or the single 0058
+  /// picture of an older load (never rewritten in the database).
+  List<String> get pictures {
+    if (imageUrls.isNotEmpty) return imageUrls;
+    final one = (imageUrl ?? '').trim();
+    return one.isEmpty ? const [] : [one];
+  }
 
   /// Cash / bank ticked; a load saved with an amount there (0046) counts
   /// as ticked.
@@ -186,7 +217,7 @@ class CargoModel {
 
   bool get hasTerms => paymentTerms.isNotEmpty || freeWaitHours != null;
 
-  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true, bool withSize = true, bool withImage = true}) => {
+  Map<String, dynamic> toInsertJson({bool withTerms = true, bool withChoices = true, bool withSize = true, bool withImage = true, bool withImages = true}) => {
         'owner_id': ownerId,
         'company_id': companyId,
         'pickup_country': pickupCountry,
@@ -226,7 +257,10 @@ class CargoModel {
           'load_size': loadSize,
           'groupage': groupage,
         },
-        if (withImage) 'image_url': imageUrl,
+        // image_url = the main (first) picture; the server keeps both in
+        // step (0060 trigger). Without 0060 only the main one is saved.
+        if (withImage) 'image_url': pictures.isEmpty ? null : pictures.first,
+        if (withImage && withImages) 'image_urls': pictures,
       };
 }
 

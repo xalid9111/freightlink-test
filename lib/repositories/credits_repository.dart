@@ -91,6 +91,8 @@ class CreditsRepository {
       'full_name': row?['full_name'] as String?,
       'phone': row?['phone'] as String?,
       'email': row?['email'] as String?,
+      // The load's own contact number (0060); null = use 'phone'.
+      'contact_phone': row?['contact_phone'] as String?,
     };
   }
 }

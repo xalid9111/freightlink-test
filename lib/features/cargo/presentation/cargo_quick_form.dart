@@ -15,6 +15,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../domain/cargo_categories.dart';
 import '../data/cargo_media_repository.dart';
 import '../domain/cargo_pictures.dart';
+import '../../../core/utils/phone_utils.dart';
 import '../domain/truck_types.dart';
 import 'widgets/cargo_category_bar.dart';
 import 'widgets/cargo_picture_field.dart';
@@ -46,6 +47,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   final _truckOtherCtrl = TextEditingController();
   // Advance amount (0046); the other payment ways are only ticked (0047).
   final _advanceCtrl = TextEditingController();
+  // Optional contact number of this load (0060); empty = registered phone.
+  final _altPhoneCtrl = TextEditingController();
+  String? _altPhoneSaved;
   int _freeWait = kDefaultFreeWaitHours;
   // Ticked payment ways: advance (its box opens), cash, delivery, bank.
   final Set<String> _payOn = {};
@@ -65,7 +69,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   String? _size;
   bool _groupage = false;
   // Card picture (0058): a template or an own photo; not required.
-  String? _image;
+  // Up to 6 pictures, main first (0060).
+  List<String> _images = const [];
   // Own photos uploaded in this session (deleted again if not kept).
   final List<String> _uploaded = [];
   bool _saved = false;
@@ -92,9 +97,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     // Leaving without saving (or a photo replaced before saving): its
     // uploaded files are deleted again; the load is not touched.
     // (_media is taken in initState: ref must not be read in dispose.)
-    final keep = _saved ? _image : _original?.imageUrl;
+    final keep = _saved ? _images : (_original?.pictures ?? const <String>[]);
     for (final url in _uploaded) {
-      if (url != keep) _media.removeOwn(url);
+      if (!keep.contains(url)) _media.removeOwn(url);
     }
     for (final c in [
       _priceCtrl,
@@ -104,6 +109,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _palletCtrl,
       _truckOtherCtrl,
       _advanceCtrl,
+      _altPhoneCtrl,
     ]) {
       c.dispose();
     }
@@ -135,7 +141,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     }
     _size = c.loadSize;
     _groupage = c.groupage;
-    _image = c.imageUrl;
+    _images = c.pictures;
+    // The load's own contact number (owner only, 0060): filled in when
+    // it arrives; never overwrites what the owner typed meanwhile.
+    _media.contactPhone(c.id).then((p) {
+      if (!mounted || p == null) return;
+      _altPhoneSaved = p;
+      if (_altPhoneCtrl.text.trim().isEmpty) setState(() => _altPhoneCtrl.text = p);
+    });
     _pickupDate = c.pickupDate;
     String amount(double? v) => v == null ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
     _advanceCtrl.text = amount(c.payAdvance);
@@ -277,7 +290,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         freeWaitHours: _freeWait,
         loadSize: effectiveLoadSize(groupage: _groupage, picked: _size),
         groupage: _groupage,
-        imageUrl: _image,
+        imageUrl: _images.isEmpty ? null : _images.first,
+        imageUrls: _images,
       );
 
       final repo = ref.read(cargoRepositoryProvider);
@@ -288,13 +302,25 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         await repo.update(cargo);
         id = o.id;
         ref.invalidate(cargoDetailProvider(id));
-        // The owner's previous own photo is not used any more.
-        final old = o.imageUrl;
-        if (old != null && old != _image && !_uploaded.contains(old)) {
-          _media.removeOwn(old);
+        // The owner's previous own photos that are not used any more.
+        for (final old in o.pictures) {
+          if (!_images.contains(old) && !_uploaded.contains(old)) _media.removeOwn(old);
         }
       }
       _saved = true;
+      // Optional contact number (0060), only when it changed. The load is
+      // already saved; a refusal here only says so.
+      final alt = normalizePhone(_altPhoneCtrl.text);
+      if (alt != _altPhoneSaved) {
+        try {
+          await _media.setContactPhone(id, alt);
+          _altPhoneSaved = alt;
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('cargo_alt_phone_not_saved'))));
+          }
+        }
+      }
       ref.invalidate(marketplaceProvider);
       ref.invalidate(myCargoProvider);
       if (!mounted) return;
@@ -527,17 +553,17 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
               ),
 
               const SizedBox(height: 18),
-              // Card picture (owner, 22.10.2026): the admin's pictures for
-              // this load type or an own photo; not required.
+              // Pictures (owner, 22–23.10.2026): up to 6, the first is the
+              // main one; admin pictures for this load type or own photos.
               _FormCard(
                 icon: Icons.image_outlined,
-                title: strings.t('cargo_pic_label'),
+                title: strings.t('cargo_pics_label'),
                 child: CargoPictureField(
                   key: const ValueKey('cargo-picture'),
                   strings: strings,
                   category: cargoPictureCategory(truckType: _truckOther ? null : _truck, groupage: _groupage),
-                  value: _image,
-                  onChanged: (url) => setState(() => _image = url),
+                  value: _images,
+                  onChanged: (list) => setState(() => _images = list),
                   onUploaded: _uploaded.add,
                 ),
               ),
@@ -601,6 +627,24 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 onFreeWait: (h) => setState(() => _freeWait = h),
               ),
 
+              const SizedBox(height: 18),
+              // Optional contact number of this load (0060).
+              TextFormField(
+                key: const ValueKey('cargo-alt-phone'),
+                controller: _altPhoneCtrl,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ()-]')), LengthLimitingTextInputFormatter(22)],
+                decoration: InputDecoration(
+                  labelText: strings.t('cargo_alt_phone_label'),
+                  hintText: '+994 50 123 45 67',
+                  helperText: strings.t('cargo_alt_phone_hint'),
+                  helperMaxLines: 2,
+                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textSoft),
+                ),
+                validator: (v) => (v ?? '').trim().isEmpty || normalizePhone(v) != null
+                    ? null
+                    : strings.t('cargo_alt_phone_invalid'),
+              ),
               const SizedBox(height: 18),
               _Label(strings.t('quick_note')),
               TextFormField(

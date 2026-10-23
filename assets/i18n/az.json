@@ -1121,5 +1121,21 @@
   "cargo_pic_remove": "Şəkli götür",
   "cargo_pic_admin_remove": "Şəkli yükdən götür",
   "cargo_pic_admin_remove_q": "Bu yükün şəkli götürülsün? Yükün özü dəyişmir.",
-  "cargo_groupage_label": "Qrupaj"
+  "cargo_groupage_label": "Qrupaj",
+  "call_no_whatsapp": "Nömrə ölkə kodu ilə deyil (+994…), WhatsApp açıla bilmir",
+  "contact_owner_btn": "Əlaqə saxla",
+  "contact_no_phone": "Elan sahibi telefon nömrəsi əlavə etməyib. Mesaj yazın.",
+  "cargo_alt_phone_label": "Alternativ əlaqə nömrəsi",
+  "cargo_alt_phone_hint": "Məcburi deyil. Boş qalsa, qeydiyyat nömrəniz göstərilir",
+  "cargo_alt_phone_invalid": "Nömrəni ölkə kodu ilə yazın, məsələn +994 50 123 45 67",
+  "cargo_alt_phone_not_saved": "Alternativ nömrə saxlanmadı (server hələ hazır deyil). Yük saxlanıldı.",
+  "cargo_pics_label": "Şəkillər (ən çox 6, məcburi deyil)",
+  "cargo_pics_main": "Əsas",
+  "cargo_pics_make_main": "Əsas et",
+  "cargo_pics_full": "6 şəkil seçilib — yenisi üçün birini silin",
+  "cargo_pics_too_big": "Şəkil çox böyükdür (ən çox 5 MB)",
+  "cargo_pics_bad_type": "Yalnız JPG, PNG və ya WEBP şəkil",
+  "detail_cargo_kind": "Yük növü",
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Şəkil əlavə et"
 }

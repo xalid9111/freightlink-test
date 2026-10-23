@@ -53,6 +53,17 @@ class CargoMediaRepository {
 
   // ---- pictures (public bucket) -------------------------------------------
 
+  /// Pictures the app accepts (the bucket allows up to 5 MB).
+  static const maxBytes = 5 * 1024 * 1024;
+  static const types = ['jpg', 'jpeg', 'png', 'webp'];
+
+  /// Why a picture cannot be uploaded (i18n key), or null when it is fine.
+  static String? checkUpload(int bytes, String ext) {
+    if (!types.contains(ext.toLowerCase())) return 'cargo_pics_bad_type';
+    if (bytes > maxBytes) return 'cargo_pics_too_big';
+    return null;
+  }
+
   /// Uploads a picture: the user's own folder, or (admin) the templates
   /// folder of [templateCategory]. Returns its public address.
   Future<String> upload(Uint8List bytes, String ext, {String? templateCategory}) async {
@@ -78,6 +89,49 @@ class CargoMediaRepository {
       await _c.storage.from(kCargoPhotoBucket).remove([path]).timeout(_timeout);
     } catch (_) {
       // A file left behind costs nothing; the load is already saved.
+    }
+  }
+
+  // ---- optional contact number of a load (0060) ---------------------------
+
+  /// My load's own contact number (owner only, RLS); null = none / 0060
+  /// not run yet.
+  Future<String?> contactPhone(String cargoId) async {
+    try {
+      final row = await _c.from('cargo_contacts').select('phone').eq('cargo_id', cargoId).maybeSingle().timeout(_timeout);
+      return row?['phone'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Saves (or with null removes) my load's contact number, already in
+  /// international format. Throws when the server refuses / 0060 is
+  /// missing — the load itself is saved before this.
+  Future<void> setContactPhone(String cargoId, String? phone) async {
+    if (phone == null) {
+      await _c.from('cargo_contacts').delete().eq('cargo_id', cargoId).timeout(_timeout);
+    } else {
+      await _c
+          .from('cargo_contacts')
+          .upsert({'cargo_id': cargoId, 'phone': phone, 'updated_at': DateTime.now().toUtc().toIso8601String()})
+          .timeout(_timeout);
+    }
+  }
+
+  /// The owner sets the pictures of his own load (main first; empty =
+  /// none). Only the pictures change (RLS: owner only; 0058 / 0060 checks:
+  /// our bucket only, at most 6). Until 0060 is run only the main one.
+  Future<void> setCargoPictures(String cargoId, List<String> urls) async {
+    try {
+      await _c
+          .from('cargo')
+          .update({'image_urls': urls, 'image_url': urls.isEmpty ? null : urls.first})
+          .eq('id', cargoId)
+          .timeout(_timeout);
+    } on PostgrestException catch (e) {
+      if (!((e.code == 'PGRST204' || e.code == '42703') && e.message.contains('image_urls'))) rethrow;
+      await _c.from('cargo').update({'image_url': urls.isEmpty ? null : urls.first}).eq('id', cargoId).timeout(_timeout);
     }
   }
 

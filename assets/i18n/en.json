@@ -1121,5 +1121,21 @@
   "cargo_pic_remove": "Remove picture",
   "cargo_pic_admin_remove": "Remove picture from load",
   "cargo_pic_admin_remove_q": "Remove this load's picture? The load itself does not change.",
-  "cargo_groupage_label": "Groupage"
+  "cargo_groupage_label": "Groupage",
+  "call_no_whatsapp": "The number has no country code (+…), WhatsApp cannot be opened",
+  "contact_owner_btn": "Contact",
+  "contact_no_phone": "The poster has not added a phone number. Send a message.",
+  "cargo_alt_phone_label": "Alternative contact number",
+  "cargo_alt_phone_hint": "Optional. Left empty, your registered number is shown",
+  "cargo_alt_phone_invalid": "Enter the number with its country code, e.g. +994 50 123 45 67",
+  "cargo_alt_phone_not_saved": "The alternative number was not saved (server not ready yet). The load was saved.",
+  "cargo_pics_label": "Pictures (up to 6, optional)",
+  "cargo_pics_main": "Main",
+  "cargo_pics_make_main": "Make main",
+  "cargo_pics_full": "6 pictures chosen — remove one to add another",
+  "cargo_pics_too_big": "The picture is too large (max 5 MB)",
+  "cargo_pics_bad_type": "Only JPG, PNG or WEBP pictures",
+  "detail_cargo_kind": "Load type",
+  "detail_gallery_count": "{i} / {n}",
+  "cargo_pic_add": "Add a picture"
 }

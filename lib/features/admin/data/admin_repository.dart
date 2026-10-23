@@ -39,6 +39,15 @@ class AdminRepository {
   Future<void> setCargoHidden(String id, bool hidden) async {
     await _c.rpc('admin_set_cargo_hidden', params: {'p_id': id, 'p_hidden': hidden});
   }
+  /// VIP on (until [until]; null = no end) / off — 0059.
+  Future<void> setCargoVip(String id, bool on, {DateTime? until}) async {
+    await _c.rpc('admin_set_cargo_vip',
+        params: {'p_id': id, 'p_on': on, 'p_until': on ? until?.toUtc().toIso8601String() : null});
+  }
+  /// A VIP row after every 2 / 3 / 4 rows of normal loads — 0059.
+  Future<void> setCargoVipEvery(int rows) async {
+    await _c.rpc('admin_set_cargo_vip_every', params: {'p_rows': rows});
+  }
   Future<void> deleteCargo(String id, String? reason) async {
     await _c.rpc('admin_delete_cargo', params: {'p_id': id, 'p_reason': reason});
   }
