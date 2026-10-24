@@ -442,6 +442,24 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                       items: {for (final y in marketYears()) y: '$y'},
                       onChanged: (v) => setState(() => _d.year = v),
                     ),
+                    // Body type (owner, 25.10.2026): not required, one tap;
+                    // a second tap on the chosen one clears it.
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(s.t('mk_body_type_optional'),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      for (final b in kMarketBodyTypes)
+                        ChoiceChip(
+                          key: ValueKey('mk-body-$b'),
+                          label: Text(s.t('mk_body_$b')),
+                          selected: _d.bodyType == b,
+                          onSelected: (on) => setState(() => _d.bodyType = on ? b : null),
+                        ),
+                    ]),
                   ])),
                   _Section(n: 3, title: s.t('mk_s_tech'), child: Column(children: [
                     Row(children: [

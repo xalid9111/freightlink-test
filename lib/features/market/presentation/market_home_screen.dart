@@ -21,6 +21,8 @@ import 'market_providers.dart';
 
 IconData marketCategoryIcon(MarketCategory c) => switch (c) {
       MarketCategory.truck => Icons.local_shipping,
+      MarketCategory.mediumTruck => Icons.fire_truck,
+      MarketCategory.lightTruck => Icons.local_shipping_outlined,
       MarketCategory.trailer => Icons.rv_hookup,
       MarketCategory.semitrailer => Icons.airport_shuttle,
       MarketCategory.construction => Icons.construction,
@@ -430,6 +432,7 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
   late final _yearFrom = TextEditingController(text: widget.filter.yearFrom?.toString() ?? '');
   late final _yearTo = TextEditingController(text: widget.filter.yearTo?.toString() ?? '');
   late final _maxKm = TextEditingController(text: widget.filter.maxMileage?.toString() ?? '');
+  late String? _body = widget.filter.bodyType;
 
   @override
   void dispose() {
@@ -478,6 +481,18 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
             const SizedBox(height: 10),
             field(_model, s.t('mk_model')),
             const SizedBox(height: 10),
+            DropdownButtonFormField<String?>(
+              key: const ValueKey('mk-filter-body'),
+              initialValue: _body,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: s.t('mk_body_type'), isDense: true),
+              items: [
+                DropdownMenuItem(value: null, child: Text(s.t('svc_all'))),
+                for (final b in kMarketBodyTypes) DropdownMenuItem(value: b, child: Text(s.t('mk_body_$b'))),
+              ],
+              onChanged: (v) => setState(() => _body = v),
+            ),
+            const SizedBox(height: 10),
             field(_city, s.t('mk_city')),
             const SizedBox(height: 10),
             Row(children: [
@@ -510,6 +525,7 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
                     widget.filter.copyWith(
                       brand: () => _t(_brand),
                       model: () => _t(_model),
+                      bodyType: () => _body,
                       city: () => _t(_city),
                       minPrice: () => _i(_minPrice)?.toDouble(),
                       maxPrice: () => _i(_maxPrice)?.toDouble(),

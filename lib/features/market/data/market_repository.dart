@@ -32,8 +32,16 @@ class MarketRepository {
       final v = params[k] as String?;
       if (v != null) params[k] = Cities.find(v)?.en ?? v;
     }
-    final res = await _c.rpc('market_search', params: params).timeout(_timeout);
-    return _list(res);
+    try {
+      return _list(await _c.rpc('market_search', params: params).timeout(_timeout));
+    } on PostgrestException catch (e) {
+      // 0064 not run yet: the search without body type / other spellings.
+      const added = ['p_body_type', 'p_brands', 'p_models'];
+      if (!added.any(params.containsKey) || !(e.code == 'PGRST202' || e.code == '42883')) rethrow;
+      return _list(await _c
+          .rpc('market_search', params: {...params}..removeWhere((k, _) => added.contains(k)))
+          .timeout(_timeout));
+    }
   }
 
   /// Brand + model of every active ad (of [category]) — for the real
@@ -88,9 +96,20 @@ class MarketRepository {
     try {
       return MarketListing.fromJson(await write(data));
     } on PostgrestException catch (e) {
-      // 0053 not run yet: save without the "exact place" mark.
-      if (!((e.code == 'PGRST204' || e.code == '42703') && e.message.contains('location_exact'))) rethrow;
-      return MarketListing.fromJson(await write({...data}..remove('location_exact')));
+      // 0053 / 0064 not run yet: save without the "exact place" mark or
+      // the body type (both optional).
+      if (!(e.code == 'PGRST204' || e.code == '42703')) rethrow;
+      final missing = ['location_exact', 'body_type'].where(e.message.contains).toList();
+      if (missing.isEmpty) rethrow;
+      final rest = {...data}..removeWhere((k, _) => missing.contains(k));
+      try {
+        return MarketListing.fromJson(await write(rest));
+      } on PostgrestException catch (e2) {
+        // Both columns missing: the second one is named only now.
+        final more = ['location_exact', 'body_type'].where((k) => e2.message.contains(k) && rest.containsKey(k));
+        if (!(e2.code == 'PGRST204' || e2.code == '42703') || more.isEmpty) rethrow;
+        return MarketListing.fromJson(await write({...rest}..removeWhere((k, _) => more.contains(k))));
+      }
     }
   }
 

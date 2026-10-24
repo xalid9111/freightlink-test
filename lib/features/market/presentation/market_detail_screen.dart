@@ -684,7 +684,8 @@ class _Specs extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       decoration: BoxDecoration(
           color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
-      child: GridView.count(
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        GridView.count(
         crossAxisCount: columns,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -709,6 +710,22 @@ class _Specs extends StatelessWidget {
             ),
         ],
       ),
+        // Body type only when the seller chose one (0064); the grid of six
+        // stays as it was.
+        if (l.bodyType != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+            child: Row(children: [
+              Icon(Icons.local_shipping_outlined, color: AppColors.accent, size: 20),
+              const SizedBox(width: 8),
+              Text('${s.t('mk_body_type')}: ', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+              Flexible(
+                child: Text(s.t('mk_body_${l.bodyType}'),
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              ),
+            ]),
+          ),
+      ]),
     );
   }
 }

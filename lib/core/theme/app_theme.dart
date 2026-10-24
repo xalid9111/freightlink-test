@@ -106,6 +106,10 @@ class AppColors {
   static Color get tileBg => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF0E1A2E);
   static Color get tileFg => isDay ? const Color(0xFF16243A) : const Color(0xFFFFFFFF);
   static Color get tileLine => isDay ? const Color(0xFFE2E7EE) : const Color(0xFF2A3B57);
+  /// Plate behind a brand logo: white in day and night, so dark logos stay
+  /// readable (owner, 25.10.2026); letters on it are dark.
+  static Color get logoPlate => const Color(0xFFFFFFFF);
+  static Color get logoPlateText => const Color(0xFF16243A);
   static Color get tileSelectedBg => isDay ? const Color(0xFFFFEADF) : const Color(0xFF1A1410);
 
   /// Ground of a big / small card without a picture (both modes).

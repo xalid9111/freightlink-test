@@ -3,6 +3,12 @@
 /// real number of active ads, then every brand A–Z; then the models of
 /// the chosen brand the same way. Counts come from the active ads only —
 /// a brand without ads shows no number (never a made-up one).
+/// Other spellings ("Mercedes", "КАМАЗ" …) are counted under the catalogue
+/// name (owner, 25.10.2026); the stored ads are not changed.
+library;
+
+import 'market_catalog.dart';
+
 class BrandCount {
   final String name;
   final int count;
@@ -24,13 +30,15 @@ class MarketBrandIndex {
     final brands = <String, BrandCount>{};
     final models = <String, Map<String, BrandCount>>{};
     for (final r in rows) {
-      final b = '${r['brand'] ?? ''}'.trim();
-      if (b.isEmpty) continue;
+      final typed = '${r['brand'] ?? ''}'.trim();
+      if (typed.isEmpty) continue;
+      final b = canonicalMarketBrand(typed);
       final bk = b.toLowerCase();
       final prev = brands[bk];
       brands[bk] = BrandCount(prev?.name ?? b, (prev?.count ?? 0) + 1);
-      final m = '${r['model'] ?? ''}'.trim();
-      if (m.isEmpty) continue;
+      final typedModel = '${r['model'] ?? ''}'.trim();
+      if (typedModel.isEmpty) continue;
+      final m = canonicalMarketModel(b, typedModel);
       final ms = models.putIfAbsent(bk, () => {});
       final mk = m.toLowerCase();
       final pm = ms[mk];
@@ -39,7 +47,7 @@ class MarketBrandIndex {
     return MarketBrandIndex._(brands, models);
   }
 
-  int countOf(String brand) => _brands[brand.toLowerCase()]?.count ?? 0;
+  int countOf(String brand) => _brands[canonicalMarketBrand(brand).toLowerCase()]?.count ?? 0;
 
   /// Brands with the most ads, most first (ties A–Z).
   List<BrandCount> popular({int top = 10}) {
@@ -53,7 +61,7 @@ class MarketBrandIndex {
 
   /// Models of [brand]: catalogue ones plus every model that has ads.
   List<BrandCount> models(String brand, Iterable<String> catalogue) =>
-      _merge(catalogue, _models[brand.toLowerCase()] ?? const {});
+      _merge(catalogue, _models[canonicalMarketBrand(brand).toLowerCase()] ?? const {});
 
   static List<BrandCount> _merge(Iterable<String> catalogue, Map<String, BrandCount> counted) {
     final out = <String, BrandCount>{};
@@ -65,7 +73,8 @@ class MarketBrandIndex {
   }
 }
 
-/// Letters on a brand's square (no logos: brand marks are not ours):
+/// Letters on a brand's square when no checked logo is packaged
+/// (market_brand_logos.dart):
 /// "DAF" → DAF, "Mercedes-Benz" → MB, "Schmitz Cargobull" → SC, "Volvo" → VO.
 String brandInitials(String brand) {
   final b = brand.trim();

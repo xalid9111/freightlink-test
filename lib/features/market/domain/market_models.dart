@@ -1,14 +1,31 @@
 // TIR Bazarı (migration 0040) — models and pure logic, no Flutter and no
 // Supabase, unit-tested in test/market_logic_test.dart.
+import 'market_catalog.dart';
 
-enum MarketCategory { truck, trailer, semitrailer, construction, other }
+/// Vehicle class. Medium (3.5–16 t) and light (Qazel, vans, up to 3.5 t)
+/// trucks were added after TIR (owner, 25.10.2026, 0064); the first five
+/// keep their stored names.
+enum MarketCategory { truck, mediumTruck, lightTruck, trailer, semitrailer, construction, other }
 
 extension MarketCategoryX on MarketCategory {
-  String get wire => name;
-  String get labelKey => 'mk_cat_$name';
+  String get wire => switch (this) {
+        MarketCategory.mediumTruck => 'medium_truck',
+        MarketCategory.lightTruck => 'light_truck',
+        _ => name,
+      };
+  String get labelKey => 'mk_cat_$wire';
   static MarketCategory parse(String? s) =>
-      MarketCategory.values.firstWhere((c) => c.name == s, orElse: () => MarketCategory.truck);
+      MarketCategory.values.firstWhere((c) => c.wire == s, orElse: () => MarketCategory.truck);
 }
+
+/// Body / superstructure (owner, 25.10.2026, 0064) — apart from brand,
+/// model and category; not required. Codes as on the Loads page.
+const kMarketBodyTypes = [
+  'tractor_unit', 'tent', 'ref', 'van', 'dump', 'tow_truck', 'manipulator', 'car_carrier', //
+  'tanker', 'open', 'lowbed', 'container', 'chassis', 'concrete_mixer', 'special',
+];
+
+String? marketBodyType(String? s) => kMarketBodyTypes.contains(s) ? s : null;
 
 const kMarketGearboxes = ['manual', 'automatic', 'semi'];
 const kMarketFuels = ['diesel', 'petrol', 'gas', 'electric', 'hybrid'];
@@ -28,6 +45,8 @@ class MarketListing {
   final MarketStatus status;
   final MarketCategory category;
   final String? brand, model;
+  /// [kMarketBodyTypes] code or null (not said / before 0064).
+  final String? bodyType;
   final int? year, mileageKm, powerHp;
   final double? engineL, price;
   final String? gearbox, fuel;
@@ -54,6 +73,7 @@ class MarketListing {
     required this.category,
     this.brand,
     this.model,
+    this.bodyType,
     this.year,
     this.mileageKm,
     this.powerHp,
@@ -102,6 +122,7 @@ class MarketListing {
         category: MarketCategoryX.parse(j['category'] as String?),
         brand: j['brand'] as String?,
         model: j['model'] as String?,
+        bodyType: marketBodyType(j['body_type'] as String?),
         year: _i(j['year']),
         mileageKm: _i(j['mileage_km']),
         powerHp: _i(j['power_hp']),
@@ -132,6 +153,7 @@ class MarketListing {
 class MarketDraft {
   MarketCategory category;
   String? brand, model, gearbox, fuel, country, city, phone, description;
+  String? bodyType;
   int? year, mileageKm, powerHp;
   double? engineL, price, lat, lng;
   /// The seller marked the place on the map (0053).
@@ -143,6 +165,7 @@ class MarketDraft {
     this.category = MarketCategory.truck,
     this.brand,
     this.model,
+    this.bodyType,
     this.gearbox,
     this.fuel,
     this.country,
@@ -165,6 +188,7 @@ class MarketDraft {
         category: l.category,
         brand: l.brand,
         model: l.model,
+        bodyType: l.bodyType,
         gearbox: l.gearbox,
         fuel: l.fuel,
         country: l.country,
@@ -189,6 +213,8 @@ class MarketDraft {
         'category': category.wire,
         'brand': _n(brand),
         'model': _n(model),
+        // Left out by the repository while 0064 is not run.
+        'body_type': marketBodyType(bodyType),
         'year': year,
         'mileage_km': mileageKm,
         'engine_l': engineL,
@@ -223,6 +249,8 @@ class MarketDraft {
 class MarketFilter {
   final MarketCategory? category;
   final String? q, brand, model, city;
+  /// [kMarketBodyTypes] code (0064).
+  final String? bodyType;
   final double? minPrice, maxPrice;
   final int? yearFrom, yearTo, maxMileage;
 
@@ -232,6 +260,7 @@ class MarketFilter {
     this.brand,
     this.model,
     this.city,
+    this.bodyType,
     this.minPrice,
     this.maxPrice,
     this.yearFrom,
@@ -239,8 +268,8 @@ class MarketFilter {
     this.maxMileage,
   });
 
-  bool get hasDetails => brand != null || model != null || city != null || minPrice != null || maxPrice != null ||
-      yearFrom != null || yearTo != null || maxMileage != null;
+  bool get hasDetails => brand != null || model != null || city != null || bodyType != null || minPrice != null ||
+      maxPrice != null || yearFrom != null || yearTo != null || maxMileage != null;
 
   MarketFilter copyWith({
     MarketCategory? Function()? category,
@@ -248,6 +277,7 @@ class MarketFilter {
     String? Function()? brand,
     String? Function()? model,
     String? Function()? city,
+    String? Function()? bodyType,
     double? Function()? minPrice,
     double? Function()? maxPrice,
     int? Function()? yearFrom,
@@ -260,6 +290,7 @@ class MarketFilter {
         brand: brand != null ? brand() : this.brand,
         model: model != null ? model() : this.model,
         city: city != null ? city() : this.city,
+        bodyType: bodyType != null ? bodyType() : this.bodyType,
         minPrice: minPrice != null ? minPrice() : this.minPrice,
         maxPrice: maxPrice != null ? maxPrice() : this.maxPrice,
         yearFrom: yearFrom != null ? yearFrom() : this.yearFrom,
@@ -267,14 +298,19 @@ class MarketFilter {
         maxMileage: maxMileage != null ? maxMileage() : this.maxMileage,
       );
 
-  /// Parameters of market_search().
+  /// Parameters of market_search(). The 0064 ones (body type, every
+  /// spelling of the brand / model) are added only when used, so the
+  /// search keeps working before 0064 is run.
   Map<String, dynamic> toParams({int limit = 20, int offset = 0}) {
     String? n(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
+    final b = n(brand), m = n(model);
+    final brands = b == null ? const <String>[] : marketBrandSpellings(b);
+    final models = b == null || m == null ? const <String>[] : marketModelSpellings(b, m);
     return {
       'p_category': category?.wire,
       'p_q': n(q),
-      'p_brand': n(brand),
-      'p_model': n(model),
+      'p_brand': b,
+      'p_model': m,
       'p_city': n(city),
       'p_min_price': minPrice,
       'p_max_price': maxPrice,
@@ -283,6 +319,9 @@ class MarketFilter {
       'p_max_mileage': maxMileage,
       'p_limit': limit,
       'p_offset': offset,
+      if (marketBodyType(bodyType) != null) 'p_body_type': bodyType,
+      if (brands.length > 1) 'p_brands': brands,
+      if (models.length > 1) 'p_models': models,
     };
   }
 
@@ -294,6 +333,7 @@ class MarketFilter {
       other.brand == brand &&
       other.model == model &&
       other.city == city &&
+      other.bodyType == bodyType &&
       other.minPrice == minPrice &&
       other.maxPrice == maxPrice &&
       other.yearFrom == yearFrom &&
@@ -301,7 +341,8 @@ class MarketFilter {
       other.maxMileage == maxMileage;
 
   @override
-  int get hashCode => Object.hash(category, q, brand, model, city, minPrice, maxPrice, yearFrom, yearTo, maxMileage);
+  int get hashCode =>
+      Object.hash(category, q, brand, model, city, bodyType, minPrice, maxPrice, yearFrom, yearTo, maxMileage);
 }
 
 /// "32 500 €" / "67 000 USD"
