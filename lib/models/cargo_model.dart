@@ -46,6 +46,8 @@ class CargoModel {
   /// Hidden by an admin (migration 0012). Hidden loads never appear in
   /// the marketplace; the owner still sees them in "My loads".
   final bool isHidden;
+  /// Turned off by its owner in "Yüklərim" (0061); kept, only not listed.
+  final bool isPaused;
 
   /// "Ödəniş və gözləmə şərtləri" (migration 0046): amounts in [currency]
   /// for advance / cash / bank transfer; null = not offered (not shown).
@@ -112,6 +114,7 @@ class CargoModel {
     this.status = 'new',
     this.isDemo = false,
     this.isHidden = false,
+    this.isPaused = false,
     this.payAdvance,
     this.payCash,
     this.payBank,
@@ -126,6 +129,14 @@ class CargoModel {
     this.isFeatured = false,
     this.featuredUntil,
   });
+
+  /// The loading day is over (owner, 24.10.2026): the load leaves the
+  /// Loads page the day after its loading date. Nothing is deleted.
+  bool isExpiredOn(DateTime now) =>
+      DateTime(pickupDate.year, pickupDate.month, pickupDate.day).isBefore(DateTime(now.year, now.month, now.day));
+
+  /// Shown to others (Loads page, search, map, profile, favourites).
+  bool isListedOn(DateTime now) => status == 'new' && !isHidden && !isPaused && !isExpiredOn(now);
 
   bool isVipAt(DateTime now) => isFeatured && (featuredUntil == null || featuredUntil!.isAfter(now));
 
@@ -159,6 +170,7 @@ class CargoModel {
         status: j['status'] as String? ?? 'new',
         isDemo: j['is_demo'] as bool? ?? false,
         isHidden: j['is_hidden'] == true,
+        isPaused: j['is_paused'] == true,
         payAdvance: (j['pay_advance'] as num?)?.toDouble(),
         payCash: (j['pay_cash'] as num?)?.toDouble(),
         payBank: (j['pay_bank'] as num?)?.toDouble(),

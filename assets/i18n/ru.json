@@ -1137,5 +1137,13 @@
   "cargo_pics_bad_type": "Только JPG, PNG или WEBP",
   "detail_cargo_kind": "Тип груза",
   "detail_gallery_count": "{i} / {n}",
-  "cargo_pic_add": "Добавить фото"
+  "cargo_pic_add": "Добавить фото",
+  "cargo_state_active": "Активен",
+  "cargo_state_paused": "Неактивен",
+  "cargo_state_expired": "Срок истёк",
+  "cargo_activate": "Активировать",
+  "cargo_deactivate": "Деактивировать",
+  "cargo_activate_date": "Выберите дату загрузки",
+  "cargo_activated": "Груз снова активен",
+  "cargo_deactivated": "Груз деактивирован — другие его не видят"
 }

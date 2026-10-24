@@ -35,6 +35,7 @@ import '../../../core/utils/phone_utils.dart';
 import 'widgets/cargo_picture.dart';
 import 'widgets/cargo_picture_field.dart';
 import '../domain/cargo_pictures.dart';
+import '../data/cargo_media_repository.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 
@@ -277,6 +278,12 @@ class _DetailBody extends ConsumerWidget {
 
     final isAdmin = user?.role == AppConstants.roleAdmin;
     final pictures = cargo.pictures;
+    final templateCat = cargoPictureCategory(truckType: cargo.truckType, groupage: cargo.groupage);
+    final template = pictures.isNotEmpty || templateCat == null
+        ? null
+        : templateFor([
+            for (final t in ref.watch(cargoTemplatesProvider(templateCat)).valueOrNull ?? const <CargoTemplate>[]) t.imageUrl
+          ], cargo.id);
     final tons = cargo.weightKg / 1000;
     final weight = cargo.weightKg < 1000
         ? '${cargo.weightKg.toStringAsFixed(0)} kg'
@@ -294,6 +301,10 @@ class _DetailBody extends ConsumerWidget {
         _Gallery(pictures: pictures, strings: strings),
         if (isAdmin)
           Align(alignment: Alignment.centerRight, child: _AdminClearPicture(cargo: cargo, strings: strings)),
+        gap(),
+      ] else if (template != null) ...[
+        // No own picture: the admin template of its type (owner, 24.10.2026).
+        _Gallery(pictures: [template], strings: strings),
         gap(),
       ],
     ];
@@ -853,9 +864,9 @@ class _CarrierOfferSectionState extends ConsumerState<_CarrierOfferSection> {
           ));
       _invalidateOffers(carrierId);
     } on AppException catch (e) {
-      setState(() => _error = widget.strings.error(e.code));
+      if (mounted) setState(() => _error = widget.strings.error(e.code));
     } catch (_) {
-      setState(() => _error = widget.strings.t('error_generic'));
+      if (mounted) setState(() => _error = widget.strings.t('error_generic'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -879,9 +890,9 @@ class _CarrierOfferSectionState extends ConsumerState<_CarrierOfferSection> {
           );
       _invalidateOffers(carrierId);
     } on AppException catch (e) {
-      setState(() => _error = widget.strings.error(e.code));
+      if (mounted) setState(() => _error = widget.strings.error(e.code));
     } catch (_) {
-      setState(() => _error = widget.strings.t('error_generic'));
+      if (mounted) setState(() => _error = widget.strings.t('error_generic'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -892,12 +903,18 @@ class _CarrierOfferSectionState extends ConsumerState<_CarrierOfferSection> {
     try {
       await ref.read(offerRepositoryProvider).withdraw(offerId);
       _invalidateOffers(carrierId);
+    } on AppException catch (e) {
+      if (mounted) setState(() => _error = widget.strings.error(e.code));
+    } catch (_) {
+      // Was unhandled: a failed withdraw now says so.
+      if (mounted) setState(() => _error = widget.strings.t('error_generic'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   void _invalidateOffers(String carrierId) {
+    if (!mounted) return; // the page was closed meanwhile ("ref" would throw)
     ref.invalidate(myOfferHistoryProvider(CarrierCargoKey(widget.cargo.id, carrierId)));
     ref.invalidate(offersForCargoProvider(widget.cargo.id));
   }
@@ -1087,6 +1104,8 @@ class _OffersReceivedSectionState extends ConsumerState<_OffersReceivedSection> 
       _busyOfferIds.add(offer.id);
       _error = null;
     });
+    // Taken before the awaits: "ref" of a closed page throws.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await ref.read(offerRepositoryProvider).respond(offerId: offer.id, status: status);
       if (status == 'accepted') {
@@ -1104,20 +1123,21 @@ class _OffersReceivedSectionState extends ConsumerState<_OffersReceivedSection> 
               acceptedOfferId: offer.id,
             );
         await ref.read(shipmentRepositoryProvider).setCargoStatus(cargoId: widget.cargo.id, status: 'agreed');
-        ref.invalidate(marketplaceProvider);
-        ref.invalidate(myShipmentsProvider);
+        container.invalidate(marketplaceProvider);
+        container.invalidate(myShipmentsProvider);
+        container.invalidate(myCargoProvider); // "Yüklərim": no longer Active
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(widget.strings.t('detail_offer_accepted_note'))),
           );
         }
       }
-      ref.invalidate(offersForCargoProvider(widget.cargo.id));
-      ref.invalidate(cargoDetailProvider(widget.cargo.id));
+      container.invalidate(offersForCargoProvider(widget.cargo.id));
+      container.invalidate(cargoDetailProvider(widget.cargo.id));
     } on AppException catch (e) {
-      setState(() => _error = widget.strings.error(e.code));
+      if (mounted) setState(() => _error = widget.strings.error(e.code));
     } catch (_) {
-      setState(() => _error = widget.strings.t('error_generic'));
+      if (mounted) setState(() => _error = widget.strings.t('error_generic'));
     } finally {
       if (mounted) setState(() => _busyOfferIds.remove(offer.id));
     }
@@ -1228,12 +1248,15 @@ class _OwnerActionsState extends ConsumerState<_OwnerActions> {
     if (ok != true || !mounted) return;
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    // Taken before the await: leaving during the delete made "ref" throw
+    // and a successful delete was shown as an error.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       // Server function (migration 0016): owner only, refused once a
       // shipment exists; chats about the load are kept.
       await SupabaseConfig.client.rpc('delete_my_cargo', params: {'p_id': widget.cargo.id}).timeout(const Duration(seconds: 20));
-      ref.invalidate(marketplaceProvider);
-      ref.invalidate(myCargoProvider);
+      container.invalidate(marketplaceProvider);
+      container.invalidate(myCargoProvider);
       messenger.showSnackBar(SnackBar(content: Text(s.t('cargo_deleted'))));
       if (mounted) {
         if (context.canPop()) {
@@ -1431,11 +1454,12 @@ Future<void> _addPicture(BuildContext context, WidgetRef ref, CargoModel cargo, 
   for (final url in uploaded) {
     if (ok != true || !picked.contains(url)) media.removeOwn(url);
   }
-  if (ok != true || picked.isEmpty) return;
+  if (ok != true || picked.isEmpty || !context.mounted) return;
+  final container = ProviderScope.containerOf(context, listen: false);
   try {
     await media.setCargoPictures(cargo.id, picked);
-    ref.invalidate(cargoDetailProvider(cargo.id));
-    ref.invalidate(marketplaceProvider);
+    container.invalidate(cargoDetailProvider(cargo.id));
+    container.invalidate(marketplaceProvider);
   } catch (e, st) {
     AutoFix.instance.capture(e, st, source: 'cargo.pictures');
     if (context.mounted) {

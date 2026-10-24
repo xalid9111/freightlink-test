@@ -135,6 +135,31 @@ class CargoMediaRepository {
     }
   }
 
+  // ---- on / off ("Yüklərim", 0061) ---------------------------------------
+
+  /// The owner switches his load off (not listed, nothing deleted).
+  /// Throws until 0061 is run.
+  Future<void> pauseCargo(String cargoId) =>
+      _c.from('cargo').update({'is_paused': true}).eq('id', cargoId).timeout(_timeout);
+
+  /// "Aktiv et": on again with a new loading date (a delivery deadline
+  /// before it is cleared). Before 0061 only the date is saved — an
+  /// expired load still comes back.
+  Future<void> activateCargo(CargoModel cargo, DateTime pickupDate) async {
+    final day = pickupDate.toIso8601String().split('T').first;
+    final dl = cargo.deliveryDeadline;
+    final row = <String, dynamic>{
+      'pickup_date': day,
+      if (dl != null && dl.isBefore(DateTime(pickupDate.year, pickupDate.month, pickupDate.day))) 'delivery_deadline': null,
+    };
+    try {
+      await _c.from('cargo').update({...row, 'is_paused': false}).eq('id', cargo.id).timeout(_timeout);
+    } on PostgrestException catch (e) {
+      if (!((e.code == 'PGRST204' || e.code == '42703') && e.message.contains('is_paused'))) rethrow;
+      await _c.from('cargo').update(row).eq('id', cargo.id).timeout(_timeout);
+    }
+  }
+
   // ---- favourites ("Seçilmiş yüklər") -------------------------------------
 
   Future<Set<String>> favoriteIds() async {
@@ -154,7 +179,7 @@ class CargoMediaRepository {
     final byId = {for (final r in rows as List) '${r['id']}': CargoModel.fromJson(Map<String, dynamic>.from(r as Map))};
     return [
       for (final id in ids)
-        if (byId[id] case final c? when c.status == 'new' && !c.isHidden) c,
+        if (byId[id] case final c? when c.isListedOn(DateTime.now())) c,
     ];
   }
 

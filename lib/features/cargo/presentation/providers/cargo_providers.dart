@@ -55,7 +55,9 @@ final marketplaceProvider = FutureProvider<List<CargoModel>>((ref) {
 /// Search tab: same fetch, parameterized by whatever filter is active.
 /// `.family` keys the cache by filter value, so switching filters and
 /// switching back doesn't always re-fetch.
-final filteredCargoProvider = FutureProvider.family<List<CargoModel>, CargoFilter>((ref, filter) {
+// autoDispose: fresh results each time Search opens (the cached first
+// result never changed before).
+final filteredCargoProvider = FutureProvider.autoDispose.family<List<CargoModel>, CargoFilter>((ref, filter) {
   ref.watch(currentUserIdProvider); // re-fetch when the signed-in account changes
   return ref.watch(cargoRepositoryProvider).fetchMarketplace(
         pickupCountry: filter.pickupCountry,

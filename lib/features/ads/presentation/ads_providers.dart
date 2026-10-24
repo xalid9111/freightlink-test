@@ -119,7 +119,7 @@ final userOpenCargoProvider = FutureProvider.autoDispose.family<List<CargoModel>
       .limit(30);
   return (rows as List)
       .map((r) => CargoModel.fromJson(Map<String, dynamic>.from(r as Map)))
-      .where((c) => !c.isHidden)
+      .where((c) => c.isListedOn(DateTime.now()))
       .toList();
 });
 
