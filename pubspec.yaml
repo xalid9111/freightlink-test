@@ -126,11 +126,13 @@ flutter:
   fonts:
     - family: Arial
       fonts:
-        - asset: assets/fonts/LiberationSans-Regular.ttf
-        - asset: assets/fonts/LiberationSans-Bold.ttf
+        # FreightLink Sans = Liberation Sans 2.1.5 (SIL OFL 1.1, see
+        # assets/fonts/OFL.txt) cut to the letters the app uses and without
+        # hinting: 1.65 MB -> 0.45 MB at start-up (owner, 24.10.2026, "sayt
+        # gec yüklənir"). Renamed as the OFL asks for a changed font. Bold
+        # italic is never used (the browser slants Bold if ever needed).
+        - asset: assets/fonts/FreightLinkSans-Regular.ttf
+        - asset: assets/fonts/FreightLinkSans-Bold.ttf
           weight: 700
-        - asset: assets/fonts/LiberationSans-Italic.ttf
-          style: italic
-        - asset: assets/fonts/LiberationSans-BoldItalic.ttf
-          weight: 700
+        - asset: assets/fonts/FreightLinkSans-Italic.ttf
           style: italic

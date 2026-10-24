@@ -1146,5 +1146,7 @@
   "cargo_activate_date": "Выберите дату загрузки",
   "cargo_activated": "Груз снова активен",
   "cargo_deactivated": "Груз деактивирован — другие его не видят",
-  "text_size_title": "Размер текста"
+  "text_size_title": "Размер текста",
+  "route_whole_country": "Вся страна",
+  "route_city_search": "Поиск города или района"
 }

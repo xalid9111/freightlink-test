@@ -609,6 +609,7 @@ class _DeskRouteSearch extends ConsumerWidget {
 
     Widget field({required bool isFrom}) {
       final code = isFrom ? filter.from : filter.to;
+      final city = isFrom ? filter.fromCity : filter.toCity;
       return Expanded(
         child: InkWell(
           key: ValueKey(isFrom ? 'desk-from' : 'desk-to'),
@@ -633,7 +634,7 @@ class _DeskRouteSearch extends ConsumerWidget {
                     children: [
                       Text(strings.t(isFrom ? 'route_from' : 'route_to'), style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
                       Text(
-                        mobile._label(code, lang, strings.t('route_any_country')),
+                        mobile._label(code, city, lang, strings.t('route_any_country')),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.text),
@@ -689,7 +690,7 @@ class _DeskRouteSearch extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: IconButton(
                       tooltip: strings.t('route_swap'),
-                      onPressed: () => ref.read(routeFilterProvider.notifier).state = RouteFilter(from: filter.to, to: filter.from),
+                      onPressed: () => ref.read(routeFilterProvider.notifier).state = filter.swapped,
                       icon: Icon(Icons.swap_horiz, color: AppColors.accent, size: 30),
                     ),
                   ),
@@ -723,7 +724,7 @@ class _DeskRouteSearch extends ConsumerWidget {
                     Text(strings.t('route_my_routes'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                     for (final k in saved)
                       InputChip(
-                        label: Text(mobile._short(k)),
+                        label: Text(mobile._short(k, lang)),
                         selected: k == filter.key,
                         selectedColor: AppColors.accent.withValues(alpha: 0.2),
                         onPressed: () {

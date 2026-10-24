@@ -1146,5 +1146,7 @@
   "cargo_activate_date": "Choose the loading date",
   "cargo_activated": "The load is active again",
   "cargo_deactivated": "Load deactivated — others no longer see it",
-  "text_size_title": "Text size"
+  "text_size_title": "Text size",
+  "route_whole_country": "Whole country",
+  "route_city_search": "Search a city or district"
 }

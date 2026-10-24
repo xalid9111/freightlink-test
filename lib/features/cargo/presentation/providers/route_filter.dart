@@ -1,33 +1,61 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/constants/cities.dart';
 import '../../../../core/constants/countries.dart';
 import '../../../../models/cargo_model.dart';
 
-/// Route filter on the Loads home screen: from-country → to-country
-/// (ISO codes; null = any). Filtering is instant and client-side over the
-/// already-loaded open marketplace.
+/// Route filter on the Loads home screen: from → to, each a country (ISO
+/// code; null = any) and, inside it, optionally one city or district
+/// (owner, 24.10.2026; null = the whole country). Filtering is instant and
+/// client-side over the already-loaded open marketplace.
 class RouteFilter {
   final String? from;
   final String? to;
-  const RouteFilter({this.from, this.to});
+  /// City / district inside [from] / [to] (English catalogue name, or the
+  /// name as stored on loads); null = the whole country.
+  final String? fromCity;
+  final String? toCity;
+  const RouteFilter({this.from, this.to, this.fromCity, this.toCity});
 
   bool get isActive => from != null || to != null;
 
-  /// "AZ>RU", "AZ>*", "*>RU" — also the storage key for saved routes.
-  String get key => '${from ?? '*'}>${to ?? '*'}';
+  /// From and to exchanged (⇅), cities included.
+  RouteFilter get swapped => RouteFilter(from: to, to: from, fromCity: toCity, toCity: fromCity);
+
+  /// "AZ>RU", "AZ>*", "*>RU", "AZ/Baku>RU" — also the storage key for
+  /// saved routes (keys saved before cities existed stay valid).
+  String get key => '${_part(from, fromCity)}>${_part(to, toCity)}';
+
+  static String _part(String? code, String? city) =>
+      code == null ? '*' : (city == null ? code : '$code/$city');
 
   static RouteFilter? fromKey(String k) {
     final parts = k.split('>');
     if (parts.length != 2) return null;
-    String? norm(String v) => v == '*' || v.isEmpty ? null : v;
-    return RouteFilter(from: norm(parts[0]), to: norm(parts[1]));
+    (String?, String?) side(String v) {
+      if (v == '*' || v.isEmpty) return (null, null);
+      final i = v.indexOf('/');
+      if (i < 0) return (v, null);
+      final city = v.substring(i + 1);
+      return (v.substring(0, i), city.isEmpty ? null : city);
+    }
+
+    final (from, fromCity) = side(parts[0]);
+    final (to, toCity) = side(parts[1]);
+    return RouteFilter(from: from, to: to, fromCity: fromCity, toCity: toCity);
   }
 
   static String _code(String country) => Countries.find(country)?.code ?? Countries.normalize(country);
 
+  /// One city written in any language / spelling ("Bakı", "Baku").
+  static String cityKey(String city) => Countries.normalize(Cities.find(city)?.en ?? city);
+
+  static bool _side(String? code, String? city, String country, String loadCity) =>
+      (code == null || _code(country) == code) && (city == null || cityKey(loadCity) == cityKey(city));
+
   bool matches(CargoModel c) =>
-      (from == null || _code(c.pickupCountry) == from) && (to == null || _code(c.destinationCountry) == to);
+      _side(from, fromCity, c.pickupCountry, c.pickupCity) && _side(to, toCity, c.destinationCountry, c.destinationCity);
 }
 
 final routeFilterProvider = StateProvider<RouteFilter>((ref) => const RouteFilter());

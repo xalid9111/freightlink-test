@@ -1146,5 +1146,7 @@
   "cargo_activate_date": "აირჩიეთ დატვირთვის თარიღი",
   "cargo_activated": "ტვირთი კვლავ აქტიურია",
   "cargo_deactivated": "ტვირთი დეაქტივირებულია — სხვები ვეღარ ხედავენ",
-  "text_size_title": "ტექსტის ზომა"
+  "text_size_title": "ტექსტის ზომა",
+  "route_whole_country": "მთელი ქვეყანა",
+  "route_city_search": "მოძებნეთ ქალაქი ან რაიონი"
 }

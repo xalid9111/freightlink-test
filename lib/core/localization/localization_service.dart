@@ -25,21 +25,24 @@ class LocalizationService {
   static const Locale fallbackLocale = Locale('az');
 
   static Future<Map<Locale, AppStrings>> loadAll() async {
-    final result = <Locale, AppStrings>{};
+    // All files are requested at once (not one after another): start-up
+    // waits for one round trip instead of seven (owner, 24.10.2026).
+    Future<Map<String, String>> read(String code) async {
+      try {
+        final raw = await rootBundle.loadString('assets/i18n/$code.json');
+        return (json.decode(raw) as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
+      } catch (_) {
+        return const {};
+      }
+    }
+
+    final files = await Future.wait([read('en'), for (final l in supportedLocales) read(l.languageCode)]);
     // English is the safety net: a key missing in one language shows the
     // English text instead of the raw key.
-    Map<String, String> english = const {};
-    try {
-      final rawEn = await rootBundle.loadString('assets/i18n/en.json');
-      english = (json.decode(rawEn) as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
-    } catch (_) {}
-    for (final locale in supportedLocales) {
-      Map<String, String> own = const {};
-      try {
-        final raw = await rootBundle.loadString('assets/i18n/${locale.languageCode}.json');
-        own = (json.decode(raw) as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
-      } catch (_) {}
-      result[locale] = AppStrings({...english, ...own});
+    final english = files.first;
+    final result = <Locale, AppStrings>{};
+    for (var i = 0; i < supportedLocales.length; i++) {
+      result[supportedLocales[i]] = AppStrings({...english, ...files[i + 1]});
     }
     return result;
   }
