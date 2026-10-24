@@ -8,37 +8,84 @@ import '../../domain/cargo_categories.dart';
 import '../providers/category_providers.dart';
 
 /// The load-type choices (owner, 21.10.2026): TENT · REF · KONTEYNER ·
-/// SAMOSVAL · QRUPAJ · AÇIQ · SİSTERN — only the picture and the name, no
-/// tile behind them; the chosen one is orange. One row that scrolls
-/// sideways with a finger when it does not fit the screen.
-class CargoTypeTiles extends ConsumerWidget {
+/// SAMOSVAL · QRUPAJ · AÇIQ · SİSTERN, then the six of 25.10.2026 — only
+/// the picture and the name, no tile behind them; the chosen one is
+/// orange. One row that scrolls sideways with a finger when it does not
+/// fit the screen. The remembered choice is brought into view when the
+/// page opens (owner, 25.10.2026).
+class CargoTypeTiles extends ConsumerStatefulWidget {
   final AppStrings strings;
   final double tileHeight;
   final VoidCallback? onChanged;
   const CargoTypeTiles({super.key, required this.strings, this.tileHeight = 64, this.onChanged});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CargoTypeTiles> createState() => _CargoTypeTilesState();
+}
+
+class _CargoTypeTilesState extends ConsumerState<CargoTypeTiles> {
+  static const _choiceWidth = 64.0;
+  static const _gap = 12.0;
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _reveal(ref.read(cargoCategoryFilterProvider), animate: false);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Scrolls the row only when the chosen one is (partly) out of view.
+  void _reveal(CargoCategoryFilter f, {required bool animate}) {
+    final i = kCategoryChoices.indexOf(f.groupage ? 'groupage' : (f.truckType ?? ''));
+    if (i < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      final pos = _scroll.position;
+      final left = i * (_choiceWidth + _gap);
+      final right = left + _choiceWidth;
+      if (left >= pos.pixels && right <= pos.pixels + pos.viewportDimension) return;
+      final to = (left - (pos.viewportDimension - _choiceWidth) / 2).clamp(0.0, pos.maxScrollExtent);
+      if (animate) {
+        _scroll.animateTo(to, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      } else {
+        _scroll.jumpTo(to);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final f = ref.watch(cargoCategoryFilterProvider);
+    // A choice that arrives later (the account's saved one) is shown too.
+    ref.listen(cargoCategoryFilterProvider, (prev, next) {
+      if (prev != next) _reveal(next, animate: true);
+    });
     void set(CargoCategoryFilter n) {
       ref.read(cargoCategoryFilterProvider.notifier).state = n;
-      onChanged?.call();
+      widget.onChanged?.call();
     }
 
     return SizedBox(
-      height: tileHeight,
+      height: widget.tileHeight,
       child: MouseDragScroll(child: ListView.separated(
+          controller: _scroll,
           scrollDirection: Axis.horizontal,
           itemCount: kCategoryChoices.length,
           // 4½ choices fit a phone: the cut one shows there is more to the side.
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, __) => const SizedBox(width: _gap),
           itemBuilder: (_, i) {
             final c = kCategoryChoices[i];
             final groupage = c == 'groupage';
             return CargoTypeChoice(
               key: ValueKey('cat-$c'),
               code: c,
-              label: strings.t('cat_$c'),
+              label: widget.strings.t('cat_$c'),
               selected: groupage ? f.groupage : f.truckType == c,
               onTap: () => set(groupage ? f.tapGroupage() : f.tapTruck(c)),
             );

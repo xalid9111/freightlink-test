@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../models/cargo_model.dart';
+import '../domain/cargo_categories.dart';
 import '../domain/cargo_repository.dart';
 
 class CargoRepositoryImpl implements CargoRepository {
@@ -42,12 +43,19 @@ class CargoRepositoryImpl implements CargoRepository {
   Future<List<CargoModel>> fetchByCategory({String? truckType, bool groupage = false, String? loadSize}) async {
     try {
       var query = _client.from('cargo').select().eq('status', 'new');
-      if (truckType != null) query = query.eq('truck_type', truckType);
+      // The code in any letter case and the other spellings typed under
+      // "Digər" ("Tent", "soyuducu reff" …, owner 25.10.2026); the exact
+      // rule is applied below (truckCategoryOf). Nothing stored changes.
+      if (truckType != null) query = query.or(truckTypeOrFilter(truckType));
       if (groupage) query = query.eq('groupage', true);
       if (loadSize != null) query = query.eq('load_size', loadSize);
       final rows = await query.order('created_at', ascending: false);
       final now = DateTime.now();
-      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => c.isListedOn(now)).toList();
+      return (rows as List)
+          .map((r) => CargoModel.fromJson(r))
+          .where((c) => c.isListedOn(now))
+          .where((c) => truckType == null || truckCategoryOf(c.truckType) == truckType)
+          .toList();
     } on PostgrestException catch (e) {
       throw AppException(e.message, code: e.code);
     }

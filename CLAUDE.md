@@ -110,6 +110,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   few minutes so each VIP comes to the front; VIP picture in the gold VIP
   frame (owner, 24.10.2026 — replaces medal + orange frame, also TIR Bazarı);
   same logic on the computer.
+- Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
+  move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
+  Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
+  or "Sıfırla" changes it. The chosen tile (or QRUPAJ) is kept on the
+  device per account and brought into view on open; big / small is not
+  kept. Typed spellings ("Tent", "soyuducu reff", "Qazel" …) are matched
+  by `truckCategoryOf` — stored loads are never rewritten.
 - Text size (owner, 24.10.2026): 5 steps 1—2—3—4—5 in Profil and in
   Settings (90 / 100 / 108 / 115 / 125 %), kept on the device; 2 = normal
   (the default look). Load page text is larger (info rows 15/17).
