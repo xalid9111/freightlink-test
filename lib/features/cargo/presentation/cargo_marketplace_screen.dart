@@ -164,7 +164,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   // No panel behind the tiles (owner, 24.10.2026): the page
                   // ground shows between them.
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, kTileGap, 24, 96),
+                    padding: const EdgeInsets.fromLTRB(12, kTileGap, 12, 96),
                     sliver: SliverList.builder(
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
@@ -763,9 +763,10 @@ class _RouteSearch extends ConsumerWidget {
 /// 23.10.2026; about 19 points on a phone).
 const kTileGap = 19.0;
 
-/// Width of a load card on a phone (owner's picture, 24.10.2026): about
-/// 147 points (≈ 2.3 cm) on a 390-point phone; smaller phones shrink it.
-const kTileWidth = 147.0;
+/// Width of a load card on a phone (owner, 24.10.2026: 15 % bigger than
+/// the 147-point picture): 169 points on a 390-point phone; smaller phones
+/// shrink it to fit.
+const kTileWidth = 169.0;
 
 /// Two tiles side by side with space on both sides (owner's drawing):
 /// 2 cm wide each, 3 mm apart; a last single tile keeps its place on the
