@@ -6,6 +6,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freightlink/models/cargo_model.dart';
+import 'package:freightlink/features/cargo/domain/vip_rows.dart';
+import 'package:freightlink/core/utils/vip_chessboard.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/features/finance/data/finance_repository.dart';
 import 'package:freightlink/features/finance/domain/finance_models.dart';
@@ -160,7 +163,8 @@ void main() {
     test('computer page only on a wide window; the phone page stays', () {
       final home = read('lib/features/market/presentation/market_home_screen.dart');
       expect(home.contains('if (isDesktopLayout(context)) return const MarketHomeDesktop();'), isTrue);
-      expect(home.contains('_VipGrid(items: vipTop)'), isTrue);
+      // Owner, 24.10.2026: no VIP row under the banner any more.
+      expect(home.contains('_VipGrid'), isFalse);
     });
     test('banner edit button only for an admin', () {
       final d = read('lib/features/market/presentation/market_home_desktop.dart');
@@ -205,13 +209,48 @@ void main() {
       expect(marketCardDetails(l), '2017, 2.2 L, 140 000 km');
     });
 
-    test('phone feed and top VIP use the new card; the computer keeps MarketCard', () {
+    test('phone feed (VIP among the ads) uses the new card; the computer keeps MarketCard', () {
       final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
       expect(home.contains('(context, i) => MarketFeedCard('), isTrue);
-      expect(home.contains('MarketFeedCard(key: ValueKey(\'vip-top-'), isTrue);
       expect(home.contains('_VipTile'), isFalse);
       final desk = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
       expect(desk.contains('MarketCard(key: ValueKey(chunk[j].id), l: chunk[j])'), isTrue);
+    });
+  });
+
+  // Owner, 24.10.2026: TIR Bazarı VIP ads move down among the ads and change
+  // places with the same algorithm as the Loads page.
+  group('phone: VIP chessboard as on the Loads page', () {
+    final plain = List.generate(6, (i) => 'a$i');
+    test('ad–VIP, VIP–ad, ad–VIP …; each VIP once; then ads fill the rows', () {
+      final flow = vipChessboard(plain, ['v1', 'v2', 'v3']);
+      expect([for (final e in flow) e.$1], ['a0', 'v1', 'v2', 'a1', 'a2', 'v3', 'a3', 'a4', 'a5']);
+      expect([for (final e in flow) if (e.$2) e.$1], ['v1', 'v2', 'v3']);
+    });
+    test('the VIP order moves on with the rotation', () {
+      final flow = vipChessboard(plain, ['v1', 'v2', 'v3'], rotation: 1);
+      expect([for (final e in flow) if (e.$2) e.$1], ['v2', 'v3', 'v1']);
+    });
+    test('exactly the Loads page order (buildLoadFlow) for the same cards', () {
+      CargoModel load(String id, bool vip) => CargoModel(
+          id: id, ownerId: 'o', pickupCountry: 'AZ', pickupCity: 'Baku', destinationCountry: 'GE', destinationCity: 'Tbilisi',
+          weightKg: 1, pickupDate: DateTime(2026, 10, 30), offeredPrice: 1, isFeatured: vip);
+      for (final (nVip, nPlain, rot) in [(3, 6, 0), (5, 2, 2), (0, 4, 1), (4, 0, 3), (2, 7, 5)]) {
+        final loads = [for (var i = 0; i < nVip; i++) load('v$i', true), for (var i = 0; i < nPlain; i++) load('a$i', false)];
+        final cargo = [for (final c in buildLoadFlow(loads, columns: 2, rotation: rot)) loads[c.index].id];
+        final market = [
+          for (final e in vipChessboard([for (final l in loads) if (!l.isFeatured) l.id], [for (final l in loads) if (l.isFeatured) l.id],
+              columns: 2, rotation: rot))
+            e.$1
+        ];
+        expect(market, cargo, reason: '$nVip VIP, $nPlain ads, rotation $rot');
+      }
+    });
+    test('wired on the phone page, no VIP row under the banner', () {
+      final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
+      expect(home, contains('vipChessboard('));
+      expect(home, contains('rotation: vipRotation(DateTime.now())'));
+      expect(home.contains('vipTop'), isFalse);
     });
   });
 }

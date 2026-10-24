@@ -6,10 +6,12 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/vip_chessboard.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
 import '../../auth/data/activities_repository.dart';
 import '../../auth/domain/activities.dart';
+import '../../cargo/domain/vip_rows.dart' show vipRotation;
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
@@ -51,7 +53,7 @@ Future<void> openNewMarketAd(BuildContext context, WidgetRef ref, AppStrings s) 
   if (context.mounted) context.pushOnce('/market/new');
 }
 
-/// TIR Bazarı (Şəkil 2): VIP ads on top in two columns, "Satış elanı
+/// TIR Bazarı (Şəkil 2): banner, "Satış elanı
 /// yerləşdir", categories, search + filters, all ads in two columns loaded
 /// page by page. Loaded as a separate part of the app (deferred).
 class MarketHomeScreen extends ConsumerStatefulWidget {
@@ -94,8 +96,13 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
     final filter = ref.watch(marketFilterProvider);
     final feed = ref.watch(marketFeedProvider);
     final vip = ref.watch(marketVipQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
-    // 2 newest VIP under the banner, then 2 VIP after every 4 ads.
-    final (vipTop, entries) = marketPhoneVipLayout(vip, [for (final l in feed.items) if (!l.vipActive()) l]);
+    // VIP ads among the ads, as on the Loads page (owner, 24.10.2026): no
+    // VIP row under the banner any more; ad–VIP, VIP–ad … and the VIP
+    // order moves on every few minutes so each VIP comes to the front.
+    // Columns exactly as the grid below lays them out (2 on a phone).
+    final columns = ((MediaQuery.sizeOf(context).width - 32) / (260 + 12)).ceil().clamp(1, 8);
+    final entries = vipChessboard([for (final l in feed.items) if (!l.vipActive()) l], vip,
+        columns: columns, rotation: vipRotation(DateTime.now()));
     // Filter changed elsewhere ("Hamısına bax", reset): show its text.
     ref.listen<MarketFilter>(marketFilterProvider, (_, next) {
       if (!_searchFocused && _search.text != (next.q ?? '')) _search.text = next.q ?? '';
@@ -145,10 +152,6 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       icon: Icons.local_shipping,
                       height: 150,
                     ),
-                    if (vipTop.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      _VipGrid(items: vipTop),
-                    ],
                     const SizedBox(height: 14),
                     _SellBanner(s: s, onTap: () => openNewMarketAd(context, ref, s)),
                     const SizedBox(height: 14),
@@ -273,28 +276,6 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
       builder: (_) => MarketFilterSheet(filter: f, s: s),
     );
     if (res != null) _setFilter(res);
-  }
-}
-
-/// The 2 newest VIP under the banner: the same cards as the feed.
-class _VipGrid extends StatelessWidget {
-  final List<MarketListing> items;
-  const _VipGrid({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 260,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        mainAxisExtent: MarketFeedCard.extent,
-      ),
-      children: [for (final l in items) MarketFeedCard(key: ValueKey('vip-top-${l.id}'), l: l)],
-    );
   }
 }
 
