@@ -102,4 +102,31 @@ void main() {
       }
     });
   });
+
+  // Owner, 24.10.2026: "Yükü redaktə et — şəkil yüklənmir, yadda saxlanılmır".
+  group('edit save + picture address', () {
+    const ok = 'https://p.supabase.co/storage/v1/object/public/cargo-photos/u/1.jpg';
+    final dbCheck = RegExp(r'^https://[^/]+/storage/v1/object/public/cargo-photos/');
+    test('a doubled "/" (server address with a trailing "/") is removed', () {
+      expect(cleanStorageUrl('https://p.supabase.co//storage/v1/object/public/cargo-photos/u/1.jpg'), ok);
+      expect(cleanStorageUrl(ok), ok);
+      expect(dbCheck.hasMatch(cleanStorageUrl('https://p.supabase.co//storage/v1/object/public/cargo-photos//u/1.jpg')), isTrue);
+    });
+    test('uploads return the cleaned address', () {
+      final repo = File('lib/features/cargo/data/cargo_media_repository.dart').readAsStringSync();
+      expect(repo, contains('return cleanStorageUrl(_c.storage.from(kCargoPhotoBucket).getPublicUrl(path));'));
+    });
+    test('saving an edit never fails on "nothing to go back to"', () {
+      final form = File('lib/features/cargo/presentation/cargo_quick_form.dart').readAsStringSync();
+      expect(form, contains('} else if (context.canPop()) {'));
+      expect(form, contains("context.go('/cargo/\$id');"));
+      expect(form, contains("source: 'cargo.save'"));
+    });
+    test('picture failures are reported to AutoFix (not hidden)', () {
+      expect(File('lib/features/cargo/presentation/widgets/cargo_picture_field.dart').readAsStringSync(),
+          contains("source: 'cargo.picture_upload'"));
+      expect(File('lib/features/cargo/presentation/cargo_detail_screen.dart').readAsStringSync(),
+          contains("source: 'cargo.pictures'"));
+    });
+  });
 }

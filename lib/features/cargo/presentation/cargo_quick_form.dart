@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/autofix/autofix.dart';
 import '../../../core/constants/currencies.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
@@ -329,12 +330,18 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       );
       if (o == null) {
         context.pushReplacement('/cargo/$id');
-      } else {
+      } else if (context.canPop()) {
         context.pop();
+      } else {
+        // Opened on its own (iPhone reloads the page after the photo
+        // picker): nothing to go back to — show the saved load.
+        context.go('/cargo/$id');
       }
     } on AppException catch (e) {
       setState(() => _error = strings.error(e.code));
-    } catch (_) {
+    } catch (e, st) {
+      AutoFix.instance.capture(e, st, source: 'cargo.save');
+      if (!mounted) return;
       setState(() => _error = strings.t('error_generic'));
     } finally {
       if (mounted) setState(() => _submitting = false);

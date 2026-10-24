@@ -75,7 +75,7 @@ class CargoMediaRepository {
         .uploadBinary(path, bytes,
             fileOptions: FileOptions(contentType: e == 'png' ? 'image/png' : (e == 'webp' ? 'image/webp' : 'image/jpeg')))
         .timeout(const Duration(minutes: 2));
-    return _c.storage.from(kCargoPhotoBucket).getPublicUrl(path);
+    return cleanStorageUrl(_c.storage.from(kCargoPhotoBucket).getPublicUrl(path));
   }
 
   /// Deletes one of my own uploaded pictures (templates are never deleted
