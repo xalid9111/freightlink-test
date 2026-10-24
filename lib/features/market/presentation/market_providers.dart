@@ -102,8 +102,8 @@ final marketVipLatestProvider = FutureProvider.autoDispose.family<List<MarketLis
   return ref.watch(marketRepositoryProvider).vipLatest(category: c);
 });
 
-/// All VIP ads, newest VIP first (phone: 2 under the banner, then 2 after
-/// every 4 ads — marketPhoneVipLayout).
+/// All VIP ads, newest VIP first (phone: among the ads, chessboard as on
+/// the Loads page — vipChessboard, owner 24.10.2026).
 final marketVipQueueProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
   ref.watch(currentUserIdProvider);
   return ref.watch(marketRepositoryProvider).vipLatest(category: c, limit: 24);
