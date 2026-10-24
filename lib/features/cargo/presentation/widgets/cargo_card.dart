@@ -395,12 +395,14 @@ class CargoTile extends ConsumerWidget {
     final date = end == null || !end.isAfter(cargo.pickupDate)
         ? dateFmt.format(cargo.pickupDate)
         : '${dateFmt.format(cargo.pickupDate)} – ${dateFmt.format(end)}';
-    final soft = TextStyle(fontSize: 12, color: AppColors.textSoft, height: 1.25);
+    // Readable on a phone (owner, 24.10.2026): bigger and in the main
+    // text colour; only the small icons stay soft.
+    final soft = TextStyle(fontSize: 14, color: AppColors.text, height: 1.25);
 
     Widget line(IconData icon, String text) => Padding(
           padding: const EdgeInsets.only(top: 3),
           child: Row(children: [
-            Icon(icon, size: 13, color: AppColors.textSoft),
+            Icon(icon, size: 15, color: AppColors.textSoft),
             const SizedBox(width: 5),
             Expanded(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: soft)),
           ]),
@@ -423,22 +425,20 @@ class CargoTile extends ConsumerWidget {
               aspectRatio: 1,
               child: Stack(fit: StackFit.expand, children: [
                 CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
-                Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 17, onPhoto: true)),
-                if (vip) const Positioned(key: ValueKey('tile-vip'), top: 4, left: 4, child: VipMedal(size: 44)),
+                Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 19, onPhoto: true)),
+                if (vip) const Positioned(key: ValueKey('tile-vip'), top: 4, left: 4, child: VipMedal(size: 50)),
               ]),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+              padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
-                        .trim(),
-                    maxLines: 1,
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.text),
-                  ),
+                // Full size, never shrunk; a long route takes a second line.
+                Text(
+                  '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
+                      .trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text, height: 1.2),
                 ),
                 line(Icons.scale_outlined, weight),
                 if (type != null) line(Icons.local_shipping_outlined, type),
@@ -449,8 +449,8 @@ class CargoTile extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text.rich(
                     TextSpan(children: [
-                      TextSpan(text: _num(cargo.offeredPrice), style: AppFonts.display(size: 17, color: AppColors.text, height: 1)),
-                      TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
+                      TextSpan(text: _num(cargo.offeredPrice), style: AppFonts.display(size: 20, color: AppColors.text, height: 1)),
+                      TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                     ]),
                   ),
                 ),

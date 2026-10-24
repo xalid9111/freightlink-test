@@ -103,8 +103,8 @@ files to the owner separately (they are run by hand in the SQL editor).
 - Ad banner layout 1200×400 coordinates never change.
   The wide ad banner is no longer shown on the Loads page (owner,
   23.10.2026); ad templates are not deleted (history is kept).
-- Loads page (owner, 22–24.10.2026): picture tiles about 147 × 250 pt
-  (owner's picture), two in a row, 3 mm apart, no panel behind; one flow
+- Loads page (owner, 22–24.10.2026): picture tiles 169 pt wide (147 pt
+  owner's picture + 15 %, 24.10.2026), readable text, two in a row, 3 mm apart, no panel behind; one flow
   in pairs (only the last card may stand alone). Chessboard order: load–VIP,
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
   few minutes so each VIP comes to the front (gold medal, orange frame);
