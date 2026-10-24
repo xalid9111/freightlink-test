@@ -94,7 +94,7 @@ class _RouteEnd extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-            style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+            style: TextStyle(fontSize: 16, color: AppColors.textSoft)),
       ],
     );
   }
@@ -108,21 +108,36 @@ class _PriceLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Price + currency keep most of the line; the label takes the rest
+    // (two lines if needed) — with a big text size the price stays big.
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Flexible(
+          flex: 3,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(cargo.offeredPrice.toStringAsFixed(0), style: AppFonts.display(size: 36, color: AppColors.text, height: 1)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(cargo.offeredPrice.toStringAsFixed(0), style: AppFonts.display(size: 36, color: AppColors.text, height: 1)),
+                const SizedBox(width: 6),
+                Text(cargo.currency, style: TextStyle(fontSize: 16, color: AppColors.textSoft)),
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 6),
-        Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-        const Spacer(),
-        Text(strings.t('detail_offered_price'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+        const SizedBox(width: 10),
+        Flexible(
+          flex: 2,
+          child: Text(strings.t('detail_offered_price'),
+              maxLines: 2,
+              textAlign: TextAlign.end,
+              style: TextStyle(fontSize: 14, color: AppColors.textSoft)),
+        ),
       ],
     );
   }
@@ -373,7 +388,7 @@ class _DetailBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(strings.t('cargo_terms_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(strings.t('cargo_terms_title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 for (final (key, amount) in cargo.paymentTerms)
                   // Only the advance has an amount; the others are just ticked.
@@ -394,9 +409,9 @@ class _DetailBody extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(strings.t('detail_description_label'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(strings.t('detail_description_label'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
-              Text(cargo.description!.trim(), style: TextStyle(color: AppColors.text, height: 1.35)),
+              Text(cargo.description!.trim(), style: TextStyle(fontSize: 17, color: AppColors.text, height: 1.35)),
             ]),
           ),
         ),
@@ -519,13 +534,22 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Bigger, easy to read on a phone (owner, 24.10.2026).
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 130, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
-          Expanded(child: Text(value, style: Theme.of(context).textTheme.bodyMedium)),
+          // The label column grows with the chosen text size (1–5).
+          SizedBox(
+              width: MediaQuery.textScalerOf(context).scale(140).clamp(140.0, 190.0),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Text(label, style: TextStyle(fontSize: 15, color: AppColors.textSoft, height: 1.3)),
+              )),
+          Expanded(
+              child: Text(value,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.3))),
         ],
       ),
     );

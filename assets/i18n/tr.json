@@ -1145,5 +1145,6 @@
   "cargo_deactivate": "Pasif et",
   "cargo_activate_date": "Yükleme tarihini seçin",
   "cargo_activated": "Yük yeniden aktif",
-  "cargo_deactivated": "Yük pasif edildi — başkalarına görünmüyor"
+  "cargo_deactivated": "Yük pasif edildi — başkalarına görünmüyor",
+  "text_size_title": "Yazı boyutu"
 }

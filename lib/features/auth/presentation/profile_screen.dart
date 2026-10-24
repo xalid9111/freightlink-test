@@ -7,6 +7,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/text_size_picker.dart';
 import '../../../repositories/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -132,6 +133,24 @@ class ProfileScreen extends ConsumerWidget {
                       onTap: () => context.pushOnce('/ads'),
                     );
                   }),
+                ]),
+                const SizedBox(height: 14),
+                // Text size 1—5 for everyone (owner, 24.10.2026), right in Profil.
+                _MenuCard(children: [
+                  Padding(
+                    key: const ValueKey('profile-text-size'),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      Row(children: [
+                        Icon(Icons.format_size, size: 20, color: AppColors.accent),
+                        const SizedBox(width: 10),
+                        Text(strings.t('text_size_title'),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
+                      ]),
+                      const SizedBox(height: 8),
+                      const TextSizePicker(),
+                    ]),
+                  ),
                 ]),
                 const SizedBox(height: 14),
                 _MenuCard(children: [
