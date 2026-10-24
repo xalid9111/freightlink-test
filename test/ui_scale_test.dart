@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/theme/ui_scale.dart';
+import 'package:freightlink/core/widgets/text_size_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Minimal app wired exactly like main.dart (theme + builder).
@@ -34,10 +37,12 @@ class _App extends ConsumerWidget {
 }
 
 void main() {
-  test('three sizes: 90 % · 100 % · 115 %, unknown → normal', () {
-    expect(AppUiScale.small.factor, 0.90);
-    expect(AppUiScale.normal.factor, 1.00);
-    expect(AppUiScale.large.factor, 1.15);
+  test('five sizes 1–5: 90 % · 100 % · 108 % · 115 % · 125 %, unknown → normal (2)', () {
+    expect([for (final s in AppUiScale.values) s.level], [1, 2, 3, 4, 5]);
+    expect([for (final s in AppUiScale.values) s.factor], [0.90, 1.00, 1.08, 1.15, 1.25]);
+    // Keys of the old three sizes are kept: a size chosen before stays.
+    expect(AppUiScale.fromKey('small'), AppUiScale.small);
+    expect(AppUiScale.fromKey('normal'), AppUiScale.normal);
     expect(AppUiScale.fromKey('large'), AppUiScale.large);
     expect(AppUiScale.fromKey(null), AppUiScale.normal);
     expect(AppUiScale.fromKey('zoom'), AppUiScale.normal);
@@ -88,5 +93,42 @@ void main() {
     await loadSavedUiScale();
     await tester.pumpWidget(const ProviderScope(child: _App()));
     expect(find.text('scale:11.50'), findsOneWidget);
+  });
+
+  testWidgets('Profil / Settings picker: tapping 5 makes text 125 %, saved on the device', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await loadSavedUiScale();
+    await tester.pumpWidget(ProviderScope(
+      child: Consumer(builder: (context, ref, _) {
+        final scale = ref.watch(uiScaleProvider);
+        return MaterialApp(
+          builder: (context, child) => applyUiScale(context, scale, child),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Column(children: [
+                Text('scale:${MediaQuery.textScalerOf(context).scale(10).toStringAsFixed(2)}'),
+                const Padding(padding: EdgeInsets.all(16), child: TextSizePicker()),
+              ]),
+            ),
+          ),
+        );
+      }),
+    ));
+    expect(find.text('scale:10.00'), findsOneWidget);
+    for (var i = 1; i <= 5; i++) {
+      expect(find.byKey(ValueKey('ui-scale-$i')), findsOneWidget);
+    }
+    await tester.tap(find.byKey(const ValueKey('ui-scale-5')));
+    await tester.pumpAndSettle();
+    expect(find.text('scale:12.50'), findsOneWidget);
+    expect((await SharedPreferences.getInstance()).getString(kUiScaleKey), 'xlarge');
+    await tester.tap(find.byKey(const ValueKey('ui-scale-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('scale:9.00'), findsOneWidget);
+  });
+
+  test('picker is in Profil and in Settings', () {
+    expect(File('lib/features/auth/presentation/profile_screen.dart').readAsStringSync(), contains('const TextSizePicker()'));
+    expect(File('lib/features/auth/presentation/settings_screen.dart').readAsStringSync(), contains('const TextSizePicker()'));
   });
 }

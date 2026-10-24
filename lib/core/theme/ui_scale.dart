@@ -2,19 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Display size chosen in Settings (Kiçik 90 % · Normal 100 % · Böyük 115 %),
-/// kept on this device. Not a zoom of the whole screen: text grows through
+/// Text size chosen in Profil / Settings, 5 steps 1–2–3–4–5 (owner,
+/// 24.10.2026): 90 % · 100 % (normal, the default) · 108 % · 115 % · 125 %,
+/// kept on this device. The keys of the old 3 sizes are kept, so a size
+/// chosen before stays the same. Not a zoom of the whole screen: text grows through
 /// Flutter's text scaling (so rows re-flow and long text wraps), icons
 /// follow the same scale, and buttons / tap areas / spacing come from the
 /// theme (visual density, minimum sizes). Normal changes nothing at all.
 enum AppUiScale {
   small('small', 0.90),
   normal('normal', 1.00),
-  large('large', 1.15);
+  medium('medium', 1.08),
+  large('large', 1.15),
+  xlarge('xlarge', 1.25);
 
   const AppUiScale(this.key, this.factor);
   final String key;
   final double factor;
+
+  /// 1 … 5 as shown to the user.
+  int get level => index + 1;
 
   static AppUiScale fromKey(String? key) =>
       AppUiScale.values.firstWhere((s) => s.key == key, orElse: () => AppUiScale.normal);
@@ -73,7 +80,7 @@ class ScaledTextScaler extends TextScaler {
 /// Theme for the chosen size. Normal returns [base] unchanged.
 ThemeData themeForUiScale(ThemeData base, AppUiScale scale) {
   if (scale == AppUiScale.normal) return base;
-  final large = scale == AppUiScale.large;
+  final large = scale.factor > 1;
   // Icons (also ones with an explicit size) follow the text scale.
   final icons = base.iconTheme.copyWith(applyTextScaling: true);
   const minTap = Size(48, 48);

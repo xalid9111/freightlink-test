@@ -11,7 +11,7 @@ import '../../../core/notify/notify_settings.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_mode.dart';
-import '../../../core/theme/ui_scale.dart';
+import '../../../core/widgets/text_size_picker.dart';
 import '../../../core/layout/desktop_layout.dart';
 import '../../../core/layout/desktop_preview.dart';
 import 'providers/auth_providers.dart';
@@ -153,19 +153,10 @@ class SettingsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                   child: Column(
                     children: [
-                      Text(s.t('ui_size'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(s.t('text_size_title'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
-                      SegmentedButton<AppUiScale>(
-                        key: const ValueKey('ui-scale'),
-                        segments: [
-                          ButtonSegment(value: AppUiScale.small, label: Text(s.t('ui_size_small'), style: const TextStyle(fontSize: 12.5))),
-                          ButtonSegment(value: AppUiScale.normal, label: Text(s.t('ui_size_normal'))),
-                          ButtonSegment(value: AppUiScale.large, label: Text(s.t('ui_size_large'), style: const TextStyle(fontSize: 16.5))),
-                        ],
-                        selected: {ref.watch(uiScaleProvider)},
-                        showSelectedIcon: false,
-                        onSelectionChanged: (v) => ref.read(uiScaleProvider.notifier).choose(v.first),
-                      ),
+                      // 1—2—3—4—5 (owner, 24.10.2026); same picker as in Profil.
+                      const TextSizePicker(),
                     ],
                   ),
                 ),

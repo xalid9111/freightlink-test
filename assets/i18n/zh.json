@@ -1145,5 +1145,6 @@
   "cargo_deactivate": "下架",
   "cargo_activate_date": "选择装货日期",
   "cargo_activated": "货源已重新上架",
-  "cargo_deactivated": "货源已下架——其他人看不到"
+  "cargo_deactivated": "货源已下架——其他人看不到",
+  "text_size_title": "文字大小"
 }
