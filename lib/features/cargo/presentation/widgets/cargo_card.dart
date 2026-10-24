@@ -8,6 +8,7 @@ import '../../../../core/constants/cities.dart';
 import '../../../../core/constants/countries.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
+import '../../../../core/widgets/vip_frame.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../models/cargo_model.dart';
@@ -418,15 +419,23 @@ class CargoTile extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: vip ? AppColors.accent : AppColors.tileLine, width: vip ? 2 : 1),
+            // VIP: the gold frame on the picture (owner, 24.10.2026) instead
+            // of the orange card frame — one VIP mark, not two.
+            border: Border.all(color: AppColors.tileLine, width: 1),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             AspectRatio(
               aspectRatio: 1,
               child: Stack(fit: StackFit.expand, children: [
-                CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
+                if (vip)
+                  VipPictureFrame(
+                    key: const ValueKey('tile-vip'),
+                    radius: 13,
+                    child: CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
+                  )
+                else
+                  CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
                 Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 19, onPhoto: true)),
-                if (vip) const Positioned(key: ValueKey('tile-vip'), top: 4, left: 4, child: VipMedal(size: 50)),
               ]),
             ),
             Padding(

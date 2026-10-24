@@ -98,10 +98,13 @@ void main() {
       expect(m.contains('const kTileWidth = 169.0;'), isTrue);
     });
 
-    test("owner's design: orange VIP frame, gold medal, normal price, no panel behind the tiles", () {
+    test("owner's design: gold VIP frame on the picture (no orange frame / medal twice), normal price, no panel", () {
       final card = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
-      expect(card.contains('color: vip ? AppColors.accent : AppColors.tileLine'), isTrue);
-      expect(card.contains('child: VipMedal(size: 50)'), isTrue);
+      // Owner, 24.10.2026: the picture in the gold VIP frame replaces the
+      // orange card frame and the medal — one VIP mark only.
+      expect(card.contains('VipPictureFrame('), isTrue);
+      expect(card.contains('color: vip ? AppColors.accent : AppColors.tileLine'), isFalse);
+      expect(card.contains('child: VipMedal(size: 50)'), isFalse);
       expect(card.contains('vipGoldText'), isFalse);
       // No coloured panel behind the tiles any more (owner, 24.10.2026).
       expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart').contains('DecoratedSliver('), isFalse);

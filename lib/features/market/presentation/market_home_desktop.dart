@@ -8,6 +8,7 @@ import '../../../core/layout/desk_header_actions.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/vip_frame.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
@@ -651,11 +652,8 @@ class _VipPlace extends StatelessWidget {
       color: AppColors.card,
       child: InkWell(
         onTap: () => context.pushOnce('/market/l/${l.id}'),
-        child: Container(
-          foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kVipGold.withValues(alpha: 0.7), width: 1.4),
-          ),
+        // Gold VIP frame over the whole picture (owner, 24.10.2026).
+        child: SizedBox.expand(
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -670,7 +668,7 @@ class _VipPlace extends StatelessWidget {
                   ),
                 ),
               ),
-              const Positioned(left: 8, top: 8, child: VipBadge()),
+              const IgnorePointer(child: CustomPaint(painter: VipFramePainter(radius: 16))),
               Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
               Positioned(
                 left: 12,

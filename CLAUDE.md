@@ -107,7 +107,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   owner's picture + 15 %, 24.10.2026), readable text, two in a row, 3 mm apart, no panel behind; one flow
   in pairs (only the last card may stand alone). Chessboard order: load–VIP,
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
-  few minutes so each VIP comes to the front (gold medal, orange frame);
+  few minutes so each VIP comes to the front; VIP picture in the gold VIP
+  frame (owner, 24.10.2026 — replaces medal + orange frame, also TIR Bazarı);
   same logic on the computer.
 - Text size (owner, 24.10.2026): 5 steps 1—2—3—4—5 in Profil and in
   Settings (90 / 100 / 108 / 115 / 125 %), kept on the device; 2 = normal

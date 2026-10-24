@@ -117,6 +117,10 @@ class AppColors {
   /// VIP medal: gold rim shade and the dark centre / ribbons.
   static const Color vipGoldDark = Color(0xFF7A5200);
   static const Color vipInk = Color(0xFF1A1206);
+  /// VIP picture frame (owner, 24.10.2026): light gold of the metal shine
+  /// and the white of the small sparkles.
+  static const Color vipGoldLight = Color(0xFFFFF0B3);
+  static const Color vipSpark = Color(0xFFFFFDF2);
 
   static Color get background => _p.background;
   static Color get hero => _p.hero;
