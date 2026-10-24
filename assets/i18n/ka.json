@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "ტვირთი დეაქტივირებულია — სხვები ვეღარ ხედავენ",
   "text_size_title": "ტექსტის ზომა",
   "route_whole_country": "მთელი ქვეყანა",
-  "route_city_search": "მოძებნეთ ქალაქი ან რაიონი"
+  "route_city_search": "მოძებნეთ ქალაქი ან რაიონი",
+  "mk_pick_brand_search": "მარკის ძებნა",
+  "mk_pick_model_search": "მოდელის ძებნა",
+  "mk_popular": "პოპულარული",
+  "mk_all_brands": "ყველა მარკა",
+  "mk_all_models": "ყველა მოდელი",
+  "mk_search_for": "ძებნა: «{q}»"
 }

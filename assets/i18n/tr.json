@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "Yük pasif edildi — başkalarına görünmüyor",
   "text_size_title": "Yazı boyutu",
   "route_whole_country": "Tüm ülke",
-  "route_city_search": "Şehir veya ilçe ara"
+  "route_city_search": "Şehir veya ilçe ara",
+  "mk_pick_brand_search": "Marka ara",
+  "mk_pick_model_search": "Model ara",
+  "mk_popular": "Popüler",
+  "mk_all_brands": "Tüm markalar",
+  "mk_all_models": "Tüm modeller",
+  "mk_search_for": "«{q}» ara"
 }

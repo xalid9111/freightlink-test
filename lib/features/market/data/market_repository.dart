@@ -36,6 +36,15 @@ class MarketRepository {
     return _list(res);
   }
 
+  /// Brand + model of every active ad (of [category]) — for the real
+  /// counts on the "Marka" / "Model" search pages (owner, 24.10.2026).
+  Future<List<Map<String, dynamic>>> activeBrandRows({MarketCategory? category}) async {
+    var q = _c.from('market_listings').select('brand, model').eq('status', 'active');
+    if (category != null) q = q.eq('category', category.wire);
+    final rows = await q.limit(5000).timeout(_timeout);
+    return [for (final r in rows as List) Map<String, dynamic>.from(r as Map)];
+  }
+
   /// VIP ads for the top of the page.
   Future<List<MarketListing>> vip({MarketCategory? category, int limit = 6}) async {
     final res = await _c
