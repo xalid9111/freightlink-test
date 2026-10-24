@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/market_repository.dart';
 import '../domain/market_models.dart';
+import '../domain/market_brand_index.dart';
 
 /// Filters of the TIR Bazarı feed (category chip, search, filter sheet).
 final marketFilterProvider = StateProvider<MarketFilter>((ref) => const MarketFilter());
@@ -113,4 +114,15 @@ final marketVipQueueProvider = FutureProvider.autoDispose.family<List<MarketList
 final marketVipPlansProvider = FutureProvider.autoDispose.family<List<MarketVipPlan>, bool>((ref, activeOnly) {
   ref.watch(currentUserIdProvider);
   return ref.watch(marketRepositoryProvider).vipPlans(activeOnly: activeOnly);
+});
+
+/// Real numbers of active ads per brand / model (search pages); empty when
+/// the list cannot be read (the pages still work, without numbers).
+final marketBrandIndexProvider = FutureProvider.autoDispose.family<MarketBrandIndex, MarketCategory?>((ref, c) async {
+  ref.watch(currentUserIdProvider);
+  try {
+    return MarketBrandIndex.fromRows(await ref.watch(marketRepositoryProvider).activeBrandRows(category: c));
+  } catch (_) {
+    return MarketBrandIndex.empty;
+  }
 });

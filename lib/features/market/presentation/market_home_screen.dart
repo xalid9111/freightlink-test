@@ -14,6 +14,7 @@ import '../../auth/domain/activities.dart';
 import '../../cargo/domain/vip_rows.dart' show vipRotation;
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
+import 'market_brand_picker.dart';
 import 'market_card.dart';
 import 'market_home_desktop.dart';
 import 'market_providers.dart';
@@ -72,7 +73,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _search = TextEditingController(text: ref.read(marketFilterProvider).q ?? '');
+    _search = TextEditingController(text: _searchLabel(ref.read(marketFilterProvider)));
   }
 
   @override
@@ -105,7 +106,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
         columns: columns, rotation: vipRotation(DateTime.now()));
     // Filter changed elsewhere ("Hamısına bax", reset): show its text.
     ref.listen<MarketFilter>(marketFilterProvider, (_, next) {
-      if (!_searchFocused && _search.text != (next.q ?? '')) _search.text = next.q ?? '';
+      final label = _searchLabel(next);
+      if (_search.text != label) _search.text = label;
     });
 
     return Scaffold(
@@ -182,8 +184,11 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       controller: _search,
                       hint: s.t('mk_search_hint'),
                       highlighted: filter.hasDetails,
-                      onFocus: (f) => _searchFocused = f,
-                      onSubmit: (v) => _setFilter(filter.copyWith(q: () => v.trim().isEmpty ? null : v.trim())),
+                      // Owner, 24.10.2026: a tap opens the "Marka" page.
+                      onOpen: () => _openSearch(context, s, filter),
+                      onClear: filter.brand != null || filter.model != null || (filter.q ?? '').isNotEmpty
+                          ? () => _setFilter(filter.copyWith(q: () => null, brand: () => null, model: () => null))
+                          : null,
                       onFilters: () => _openFilters(context, s, filter),
                     ),
                     const SizedBox(height: 16),
@@ -266,7 +271,22 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
     );
   }
 
-  bool _searchFocused = false;
+  /// Text in the search field: the free text, or "Brand Model".
+  static String _searchLabel(MarketFilter f) =>
+      (f.q ?? '').isNotEmpty ? f.q! : [f.brand, f.model].whereType<String>().join(' ');
+
+  Future<void> _openSearch(BuildContext context, AppStrings s, MarketFilter f) async {
+    final pick = await openMarketSearch(context, s: s, filter: f);
+    if (pick == null || !mounted) return;
+    final cur = ref.read(marketFilterProvider);
+    if (pick.cleared) {
+      _setFilter(cur.copyWith(q: () => null, brand: () => null, model: () => null));
+    } else if (pick.text != null) {
+      _setFilter(cur.copyWith(q: () => pick.text, brand: () => null, model: () => null));
+    } else {
+      _setFilter(cur.copyWith(q: () => null, brand: () => pick.brand, model: () => pick.model));
+    }
+  }
 
   Future<void> _openFilters(BuildContext context, AppStrings s, MarketFilter f) async {
     final res = await showModalBottomSheet<MarketFilter>(
@@ -348,33 +368,37 @@ class _SearchBox extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final bool highlighted;
-  final ValueChanged<bool> onFocus;
-  final ValueChanged<String> onSubmit;
+  final VoidCallback onOpen;
+  final VoidCallback? onClear;
   final VoidCallback onFilters;
   const _SearchBox({
     required this.controller,
     required this.hint,
     required this.highlighted,
-    required this.onFocus,
-    required this.onSubmit,
+    required this.onOpen,
+    required this.onClear,
     required this.onFilters,
   });
 
   @override
   Widget build(BuildContext context) {
     return Focus(
-      onFocusChange: onFocus,
       child: TextField(
+        key: const ValueKey('mk-search-box'),
         controller: controller,
-        textInputAction: TextInputAction.search,
-        onSubmitted: onSubmit,
+        readOnly: true,
+        onTap: onOpen,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: Icon(Icons.search, color: AppColors.accent),
-          suffixIcon: IconButton(
-            icon: Icon(Icons.tune, color: highlighted ? AppColors.accent : AppColors.text),
-            onPressed: onFilters,
-          ),
+          suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (onClear != null)
+              IconButton(key: const ValueKey('mk-search-clear'), icon: Icon(Icons.close, color: AppColors.textSoft), onPressed: onClear),
+            IconButton(
+              icon: Icon(Icons.tune, color: highlighted ? AppColors.accent : AppColors.text),
+              onPressed: onFilters,
+            ),
+          ]),
           filled: true,
           fillColor: AppColors.card,
           border: OutlineInputBorder(

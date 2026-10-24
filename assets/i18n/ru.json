@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "Груз деактивирован — другие его не видят",
   "text_size_title": "Размер текста",
   "route_whole_country": "Вся страна",
-  "route_city_search": "Поиск города или района"
+  "route_city_search": "Поиск города или района",
+  "mk_pick_brand_search": "Поиск марки",
+  "mk_pick_model_search": "Поиск модели",
+  "mk_popular": "Популярные",
+  "mk_all_brands": "Все марки",
+  "mk_all_models": "Все модели",
+  "mk_search_for": "Искать «{q}»"
 }

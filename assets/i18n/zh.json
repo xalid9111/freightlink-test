@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "货源已下架——其他人看不到",
   "text_size_title": "文字大小",
   "route_whole_country": "全国",
-  "route_city_search": "搜索城市或地区"
+  "route_city_search": "搜索城市或地区",
+  "mk_pick_brand_search": "搜索品牌",
+  "mk_pick_model_search": "搜索型号",
+  "mk_popular": "热门",
+  "mk_all_brands": "全部品牌",
+  "mk_all_models": "全部型号",
+  "mk_search_for": "搜索“{q}”"
 }

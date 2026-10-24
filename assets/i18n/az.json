@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "Yük deaktiv edildi — başqalarına görünmür",
   "text_size_title": "Yazı ölçüsü",
   "route_whole_country": "Bütün ölkə",
-  "route_city_search": "Şəhər və ya rayon axtar"
+  "route_city_search": "Şəhər və ya rayon axtar",
+  "mk_pick_brand_search": "Marka axtar",
+  "mk_pick_model_search": "Model axtar",
+  "mk_popular": "Populyar",
+  "mk_all_brands": "Bütün markalar",
+  "mk_all_models": "Bütün modellər",
+  "mk_search_for": "«{q}» üzrə axtar"
 }

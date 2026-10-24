@@ -1148,5 +1148,11 @@
   "cargo_deactivated": "Load deactivated — others no longer see it",
   "text_size_title": "Text size",
   "route_whole_country": "Whole country",
-  "route_city_search": "Search a city or district"
+  "route_city_search": "Search a city or district",
+  "mk_pick_brand_search": "Search brand",
+  "mk_pick_model_search": "Search model",
+  "mk_popular": "Popular",
+  "mk_all_brands": "All brands",
+  "mk_all_models": "All models",
+  "mk_search_for": "Search for “{q}”"
 }
