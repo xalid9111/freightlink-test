@@ -19,6 +19,8 @@ import 'widgets/wheel_feed.dart';
 import 'providers/route_filter.dart';
 import 'providers/category_providers.dart';
 import 'widgets/cargo_category_bar.dart';
+import 'widgets/route_city_sheet.dart';
+import '../../../core/constants/cities.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/vip_rows.dart';
 import '../../../core/widgets/country_picker.dart';
@@ -615,27 +617,48 @@ class _RouteSearch extends ConsumerWidget {
     );
     if (picked == null) return;
     final code = identical(picked, anyCountry) || picked.code == anyCountry.code ? null : picked.code;
+    // Owner, 24.10.2026: inside the country, a city or district (or the
+    // whole country). Closing the list keeps the whole country.
+    String? city;
+    if (code != null && context.mounted) {
+      final loads = ref.read(marketplaceProvider).valueOrNull ?? const <CargoModel>[];
+      final v = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => RouteCitySheet(
+          country: picked,
+          cities: routeCitiesOf(code, loads, isFrom: isFrom, lang: lang),
+          languageCode: lang,
+          strings: strings,
+        ),
+      );
+      city = (v == null || v == kWholeCountry) ? null : v;
+    }
     final f = ref.read(routeFilterProvider);
-    ref.read(routeFilterProvider.notifier).state =
-        isFrom ? RouteFilter(from: code, to: f.to) : RouteFilter(from: f.from, to: code);
+    ref.read(routeFilterProvider.notifier).state = isFrom
+        ? RouteFilter(from: code, fromCity: city, to: f.to, toCity: f.toCity)
+        : RouteFilter(from: f.from, fromCity: f.fromCity, to: code, toCity: city);
   }
 
-  String _label(String? code, String lang, String anyText) {
+  String _label(String? code, String? city, String lang, String anyText) {
     if (code == null) return anyText;
     final c = Countries.all.where((x) => x.code == code);
-    return c.isEmpty ? code : '${c.first.flag} ${c.first.name(lang)}';
+    if (c.isEmpty) return code;
+    return city == null ? '${c.first.flag} ${c.first.name(lang)}' : '${c.first.flag} ${Cities.label(city, lang)}';
   }
 
-  String _short(String key) {
+  String _short(String key, String lang) {
     final f = RouteFilter.fromKey(key);
     if (f == null) return key;
-    String part(String? code) {
+    String part(String? code, String? city) {
       if (code == null) return '🌍';
       final c = Countries.all.where((x) => x.code == code);
-      return c.isEmpty ? code : '${c.first.flag} ${c.first.code}';
+      if (c.isEmpty) return code;
+      return city == null ? '${c.first.flag} ${c.first.code}' : '${c.first.flag} ${Cities.label(city, lang)}';
     }
 
-    return '${part(f.from)} → ${part(f.to)}';
+    return '${part(f.from, f.fromCity)} → ${part(f.to, f.toCity)}';
   }
 
   @override
@@ -647,8 +670,10 @@ class _RouteSearch extends ConsumerWidget {
 
     Widget countryButton({required bool isFrom}) {
       final code = isFrom ? filter.from : filter.to;
+      final city = isFrom ? filter.fromCity : filter.toCity;
       return Expanded(
         child: InkWell(
+          key: ValueKey(isFrom ? 'route-from' : 'route-to'),
           borderRadius: BorderRadius.circular(12),
           onTap: () => _pick(context, ref, isFrom: isFrom),
           child: Container(
@@ -666,7 +691,7 @@ class _RouteSearch extends ConsumerWidget {
                 Text(strings.t(isFrom ? 'route_from' : 'route_to'),
                     style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                 Text(
-                  _label(code, lang, strings.t('route_any_country')),
+                  _label(code, city, lang, strings.t('route_any_country')),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text),
@@ -706,8 +731,7 @@ class _RouteSearch extends ConsumerWidget {
                   countryButton(isFrom: true),
                   IconButton(
                     tooltip: strings.t('route_swap'),
-                    onPressed: () => ref.read(routeFilterProvider.notifier).state =
-                        RouteFilter(from: filter.to, to: filter.from),
+                    onPressed: () => ref.read(routeFilterProvider.notifier).state = filter.swapped,
                     icon: Icon(Icons.swap_horiz, color: AppColors.accent),
                   ),
                   countryButton(isFrom: false),
@@ -737,7 +761,7 @@ class _RouteSearch extends ConsumerWidget {
                   children: [
                     for (final k in saved)
                       InputChip(
-                        label: Text(_short(k)),
+                        label: Text(_short(k, lang)),
                         selected: k == filter.key,
                         selectedColor: AppColors.accent.withValues(alpha: 0.2),
                         onPressed: () {

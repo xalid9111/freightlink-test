@@ -1146,5 +1146,7 @@
   "cargo_activate_date": "Yükleme tarihini seçin",
   "cargo_activated": "Yük yeniden aktif",
   "cargo_deactivated": "Yük pasif edildi — başkalarına görünmüyor",
-  "text_size_title": "Yazı boyutu"
+  "text_size_title": "Yazı boyutu",
+  "route_whole_country": "Tüm ülke",
+  "route_city_search": "Şehir veya ilçe ara"
 }
