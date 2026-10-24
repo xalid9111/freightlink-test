@@ -7,6 +7,8 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/admin_repository.dart';
 import 'admin_providers.dart';
 import 'admin_widgets.dart';
+import '../../cargo/domain/cargo_vip.dart';
+import '../../cargo/presentation/providers/cargo_media_providers.dart';
 
 // =====================================================================
 // Shared helpers
@@ -298,6 +300,9 @@ class _AdminCargoPageState extends ConsumerState<AdminCargoPage> {
       return _Page(
         title: 'Yüklər (${list.length})',
         header: [
+          // Prices users pay for "VIP et" on their loads (owner, 24.10.2026, 0062).
+          const CargoVipPricesCard(),
+          const SizedBox(height: 8),
           FilterBar(
             options: {'all': 'Hamısı', for (final s in cargoStatuses) s: statusLabel(s), 'hidden': 'Gizli', 'vip': 'VIP'},
             selected: _filter,
@@ -1354,4 +1359,85 @@ bool _vipActive(JsonRow c) {
   if (c['is_featured'] != true) return false;
   final until = DateTime.tryParse('${c['featured_until'] ?? ''}');
   return c['featured_until'] == null || (until != null && until.isAfter(DateTime.now()));
+}
+
+/// Load VIP prices users pay for "VIP et" (0062: 7 / 14 / 30 days, the same
+/// start prices as TIR Bazarı). Changed only through
+/// admin_cargo_set_vip_plan (checked + logged on the server).
+class CargoVipPricesCard extends ConsumerStatefulWidget {
+  const CargoVipPricesCard({super.key});
+
+  @override
+  ConsumerState<CargoVipPricesCard> createState() => _CargoVipPricesCardState();
+}
+
+class _CargoVipPricesCardState extends ConsumerState<CargoVipPricesCard> {
+  final _price = <int, TextEditingController>{};
+
+  @override
+  void dispose() {
+    for (final c in _price.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save(CargoVipPlan p, {bool? active}) async {
+    final v = double.tryParse((_price[p.days]?.text ?? '').replaceAll(',', '.').trim());
+    if (v == null || v <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiyməti düzgün yazın (0-dan böyük).')));
+      return;
+    }
+    final ok = await runAdmin(
+        context, () => ref.read(cargoMediaRepositoryProvider).adminSetVipPlan(p.days, v, active: active ?? p.isActive));
+    if (ok) ref.invalidate(cargoVipPlansProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(cargoVipPlansProvider(false));
+    return Card(
+      key: const ValueKey('admin-cargo-vip-prices'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Row(children: [
+            Icon(Icons.workspace_premium, color: AppColors.vipGold),
+            SizedBox(width: 8),
+            Expanded(child: Text('Yük VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+          ]),
+          const SizedBox(height: 4),
+          Text('İstifadəçi öz yükündə "VIP et" basanda bu qiymətlərlə kartla ödəyir; ödənişdən sonra yük avtomatik VIP olur.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          const SizedBox(height: 8),
+          async.when(
+            loading: () => const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Text('Yüklənmədi (0062_cargo_vip_buy.sql işə salınıbmı?)', style: TextStyle(color: AppColors.danger)),
+            data: (plans) => Column(children: [
+              for (final p in plans)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w700))),
+                    SizedBox(
+                      width: 110,
+                      child: TextField(
+                        key: ValueKey('cargo-vip-price-${p.days}'),
+                        controller: _price.putIfAbsent(
+                            p.days, () => TextEditingController(text: p.price.toStringAsFixed(p.price % 1 == 0 ? 0 : 2))),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(isDense: true, suffixText: p.currency),
+                      ),
+                    ),
+                    FilledButton(onPressed: () => _save(p), child: const Text('Saxla')),
+                    Switch(value: p.isActive, onChanged: (v) => _save(p, active: v)),
+                    Text(p.isActive ? 'Aktiv' : 'Bağlı', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                  ]),
+                ),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
 }

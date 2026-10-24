@@ -9,6 +9,7 @@ import '../../../models/cargo_model.dart';
 import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import 'widgets/cargo_card.dart';
+import 'widgets/cargo_vip_sheet.dart';
 import '../../../core/router/safe_navigation.dart';
 
 /// "My loads" (Profile → My loads): every load the signed-in owner has
@@ -84,6 +85,14 @@ class MyCargoScreen extends ConsumerWidget {
                               onPressed: () => _deactivate(context, ref, c),
                               icon: const Icon(Icons.pause_circle_outline, size: 18),
                               label: Text(strings.t('cargo_deactivate')),
+                            ),
+                          // "VIP et" on my listed load (owner, 24.10.2026, 0062).
+                          if (open && listed)
+                            TextButton.icon(
+                              key: ValueKey('my-cargo-vip-${c.id}'),
+                              onPressed: () => showCargoVipSheet(context, strings, c),
+                              icon: const Icon(Icons.workspace_premium, size: 18, color: AppColors.vipGold),
+                              label: Text(c.isVipAt(now) ? strings.t('mk_vip_extend') : strings.t('cargo_vip_btn')),
                             ),
                           if (open && !listed)
                             TextButton.icon(

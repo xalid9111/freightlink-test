@@ -1154,5 +1154,11 @@
   "mk_popular": "热门",
   "mk_all_brands": "全部品牌",
   "mk_all_models": "全部型号",
-  "mk_search_for": "搜索“{q}”"
+  "mk_search_for": "搜索“{q}”",
+  "cargo_vip_btn": "设为VIP",
+  "cargo_vip_title": "将货源设为VIP",
+  "cargo_vip_body": "VIP货源在货源页面以金色VIP边框显示，并轮流排在前面。付款后自动成为VIP。",
+  "cargo_vip_pay_soon": "银行卡支付即将开放。届时可在此付款，立即将货源设为VIP。",
+  "cargo_vip_failed": "无法创建订单。货源必须处于有效状态；请重试。",
+  "cargo_vip_not_ready": "货源VIP尚未就绪，请稍后再试。"
 }

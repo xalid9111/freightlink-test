@@ -1154,5 +1154,11 @@
   "mk_popular": "Popular",
   "mk_all_brands": "All brands",
   "mk_all_models": "All models",
-  "mk_search_for": "Search for “{q}”"
+  "mk_search_for": "Search for “{q}”",
+  "cargo_vip_btn": "Make VIP",
+  "cargo_vip_title": "Make the load VIP",
+  "cargo_vip_body": "A VIP load is shown on the Loads page in the gold VIP frame and comes to the front in turn. It becomes VIP automatically after payment.",
+  "cargo_vip_pay_soon": "Card payment opens soon. Then you can pay here and make your load VIP at once.",
+  "cargo_vip_failed": "The order could not be created. The load must be active; please try again.",
+  "cargo_vip_not_ready": "Load VIP is not ready yet. Please check again a bit later."
 }
