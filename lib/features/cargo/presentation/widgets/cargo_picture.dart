@@ -33,7 +33,11 @@ class CargoPicture extends StatelessWidget {
           ? Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textSoft)
           : FractionallySizedBox(
               widthFactor: 0.6,
-              child: Image.asset(categoryIconAsset(cat, night: !AppColors.isDay), fit: BoxFit.contain),
+              // An icon that cannot load (e.g. during a site update) shows
+              // the plain box icon instead of an error per card.
+              child: Image.asset(categoryIconAsset(cat, night: !AppColors.isDay),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textSoft)),
             ),
     );
     final url = imageUrl;

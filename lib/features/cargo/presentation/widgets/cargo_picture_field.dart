@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/autofix/autofix.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/mouse_drag_scroll.dart';
@@ -68,7 +69,8 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
         next.add(url);
         widget.onChanged([...next]);
       }
-    } catch (_) {
+    } catch (e, st) {
+      AutoFix.instance.capture(e, st, source: 'cargo.picture_upload');
       _say('cargo_pic_upload_failed');
     } finally {
       if (mounted) setState(() => _uploading = false);

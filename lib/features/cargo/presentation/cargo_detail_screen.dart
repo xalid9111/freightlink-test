@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/autofix/autofix.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -1435,7 +1436,8 @@ Future<void> _addPicture(BuildContext context, WidgetRef ref, CargoModel cargo, 
     await media.setCargoPictures(cargo.id, picked);
     ref.invalidate(cargoDetailProvider(cargo.id));
     ref.invalidate(marketplaceProvider);
-  } catch (_) {
+  } catch (e, st) {
+    AutoFix.instance.capture(e, st, source: 'cargo.pictures');
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('cargo_pic_upload_failed'))));
     }

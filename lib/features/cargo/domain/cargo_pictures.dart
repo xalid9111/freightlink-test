@@ -32,6 +32,18 @@ String cargoPhotoPath({required String userId, required String ext, String? temp
   return templateCategory == null ? '$userId/$stamp.$e' : 'templates/$templateCategory/$stamp.$e';
 }
 
+/// The public address of an uploaded picture with any doubled "/" in its
+/// path removed. A server address saved with a trailing "/" gives
+/// ".../co//storage/v1/...", which the database check (0058 / 0060:
+/// "https://<host>/storage/v1/object/public/cargo-photos/...") refuses —
+/// the load then could not keep its picture.
+String cleanStorageUrl(String url) {
+  final i = url.indexOf('://');
+  if (i < 0) return url;
+  final head = url.substring(0, i + 3);
+  return head + url.substring(i + 3).replaceAll(RegExp(r'/{2,}'), '/');
+}
+
 /// Only an own-folder picture is deleted from storage when a load drops
 /// it; templates are shared by many loads and stay.
 bool isOwnCargoPhoto(String url, String userId) => url.contains('/$kCargoPhotoBucket/$userId/');
