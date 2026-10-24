@@ -34,6 +34,7 @@ import '../domain/truck_types.dart';
 import '../../../core/utils/phone_utils.dart';
 import 'widgets/cargo_picture.dart';
 import 'widgets/cargo_picture_field.dart';
+import 'widgets/cargo_vip_sheet.dart';
 import '../domain/cargo_pictures.dart';
 import '../data/cargo_media_repository.dart';
 import 'widgets/cargo_route_map.dart';
@@ -442,6 +443,17 @@ class _DetailBody extends ConsumerWidget {
       if (isOwner) ...[
         _OwnerActions(cargo: cargo, strings: strings),
         const SizedBox(height: 12),
+        // "VIP et" on my own open load (owner, 24.10.2026, 0062).
+        if (cargo.status == 'new' && !cargo.isHidden) ...[
+          OutlinedButton.icon(
+            key: const ValueKey('cargo-vip-buy'),
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.vipGold)),
+            onPressed: () => showCargoVipSheet(context, strings, cargo),
+            icon: const Icon(Icons.workspace_premium, color: AppColors.vipGold),
+            label: Text(cargo.isVipAt(DateTime.now()) ? strings.t('mk_vip_extend') : strings.t('cargo_vip_btn')),
+          ),
+          const SizedBox(height: 12),
+        ],
         // No picture yet: add pictures straight from here (owner, 23.10.2026).
         if (pictures.isEmpty) ...[
           OutlinedButton.icon(

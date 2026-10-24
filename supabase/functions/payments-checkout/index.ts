@@ -1,10 +1,11 @@
 // Supabase Edge Function: payments-checkout — starts a card / Apple Pay /
-// Google Pay checkout for one of the caller's ad orders or TIR Bazarı VIP
-// orders.
+// Google Pay checkout for one of the caller's ad orders, TIR Bazarı VIP
+// orders or load VIP orders.
 //
-// POST { action: 'create', order_id | vip_order_id, method, idempotency_key }
-//   → payment_create (ad order) or market_vip_payment_create (VIP order,
-//     0044) runs WITH THE CALLER'S JWT, so the database checks the owner,
+// POST { action: 'create', order_id | vip_order_id | cargo_vip_order_id, method, idempotency_key }
+//   → payment_create (ad order), market_vip_payment_create (VIP order,
+//     0044) or cargo_vip_payment_create (load VIP order, 0062) runs WITH
+//     THE CALLER'S JWT, so the database checks the owner,
 //     the order state, the amount (from the order) and the "one open
 //     payment per order" rule. Same key twice = same payment.
 //   → TEST mode: the built-in test provider (no money moves).
@@ -71,12 +72,17 @@ export async function handle(req: Request): Promise<Response> {
   const action = body?.action;
 
   if (action === 'create') {
-    const orderId = body?.order_id, vipOrderId = body?.vip_order_id, method = body?.method, key = body?.idempotency_key;
-    // Exactly one order: an ad order or a VIP order.
-    if (isUuid(orderId) === isUuid(vipOrderId) || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
+    const orderId = body?.order_id, vipOrderId = body?.vip_order_id, cargoVipOrderId = body?.cargo_vip_order_id;
+    const method = body?.method, key = body?.idempotency_key;
+    // Exactly one order: an ad order, a TIR Bazarı VIP order or a load VIP order.
+    const targets = [orderId, vipOrderId, cargoVipOrderId].filter(isUuid).length;
+    const unknown = [orderId, vipOrderId, cargoVipOrderId].some((v) => v !== undefined && v !== null && !isUuid(v));
+    if (targets !== 1 || unknown || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
       return json({ error: 'invalid_request' }, 400);
     }
-    const res = isUuid(vipOrderId)
+    const res = isUuid(cargoVipOrderId)
+      ? await rest(url, 'rpc/cargo_vip_payment_create', anonKey, auth, { body: { p_vip_order: cargoVipOrderId, p_method: method, p_key: key } })
+      : isUuid(vipOrderId)
       ? await rest(url, 'rpc/market_vip_payment_create', anonKey, auth, { body: { p_vip_order: vipOrderId, p_method: method, p_key: key } })
       : await rest(url, 'rpc/payment_create', anonKey, auth, { body: { p_order: orderId, p_method: method, p_key: key } });
     if (!res.ok) {

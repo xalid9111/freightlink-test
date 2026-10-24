@@ -1154,5 +1154,11 @@
   "mk_popular": "Popüler",
   "mk_all_brands": "Tüm markalar",
   "mk_all_models": "Tüm modeller",
-  "mk_search_for": "«{q}» ara"
+  "mk_search_for": "«{q}» ara",
+  "cargo_vip_btn": "VIP yap",
+  "cargo_vip_title": "Yükü VIP yap",
+  "cargo_vip_body": "VIP yük, Yükler sayfasında altın VIP çerçevede ve sırayla öne çıkarak gösterilir. Ödemeden sonra otomatik VIP olur.",
+  "cargo_vip_pay_soon": "Kartla ödeme yakında açılacak. Açılınca buradan ödeyip yükünüzü hemen VIP yapabileceksiniz.",
+  "cargo_vip_failed": "Sipariş oluşturulamadı. Yük aktif olmalıdır; tekrar deneyin.",
+  "cargo_vip_not_ready": "Yük VIP henüz hazırlanıyor. Biraz sonra tekrar deneyin."
 }

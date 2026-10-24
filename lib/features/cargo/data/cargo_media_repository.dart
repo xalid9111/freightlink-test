@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../models/cargo_model.dart';
 import '../domain/cargo_pictures.dart';
+import '../domain/cargo_vip.dart';
 
 const _timeout = Duration(seconds: 20);
 
@@ -159,6 +160,25 @@ class CargoMediaRepository {
       await _c.from('cargo').update(row).eq('id', cargo.id).timeout(_timeout);
     }
   }
+
+  // ---- VIP bought by the owner (0062) -------------------------------------
+
+  Future<List<CargoVipPlan>> vipPlans({bool activeOnly = true}) async {
+    var q = _c.from('cargo_vip_plans').select();
+    if (activeOnly) q = q.eq('is_active', true);
+    final rows = await q.order('days').timeout(_timeout);
+    return [for (final r in rows as List) CargoVipPlan.fromJson(Map<String, dynamic>.from(r as Map))];
+  }
+
+  /// "VIP et": an order for my open load; the price is set by the server.
+  Future<CargoVipOrder> createVipOrder(String cargoId, int days) async {
+    final res = await _c.rpc('cargo_vip_order_create', params: {'p_cargo': cargoId, 'p_days': days}).timeout(_timeout);
+    return CargoVipOrder.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
+  /// Admin: price / on-off of one plan (checked + logged on the server).
+  Future<void> adminSetVipPlan(int days, double price, {bool active = true}) =>
+      _c.rpc('admin_cargo_set_vip_plan', params: {'p_days': days, 'p_price': price, 'p_active': active}).timeout(_timeout);
 
   // ---- favourites ("Seçilmiş yüklər") -------------------------------------
 
