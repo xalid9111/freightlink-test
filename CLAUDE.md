@@ -109,6 +109,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
   few minutes so each VIP comes to the front (gold medal, orange frame);
   same logic on the computer.
+- Text size (owner, 24.10.2026): 5 steps 1—2—3—4—5 in Profil and in
+  Settings (90 / 100 / 108 / 115 / 125 %), kept on the device; 2 = normal
+  (the default look). Load page text is larger (info rows 15/17).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".
