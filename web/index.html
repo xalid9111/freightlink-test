@@ -20,7 +20,14 @@
        link below are required IN ADDITION TO the manifest, not instead
        of it. -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- NOT "black-translucent" (owner, 24.10.2026, iPhone 11 Pro, app on
+       the Home Screen): the page then lies under the status bar, but
+       Flutter replaces the viewport tag without viewport-fit=cover, so
+       taps landed about one status-bar height off — a button only
+       opened when touched slightly above it. With a solid bar the page
+       starts below it and taps hit exactly. Day mode: light bar (set
+       below, before the first paint). -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="FreightLink">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
@@ -80,6 +87,7 @@
       if (localStorage.getItem('flutter.app_theme_mode') === '"day"') {
         document.documentElement.classList.add('day');
         document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FFFFFF');
+        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute('content', 'default');
       }
     } catch (e) {}
   </script>

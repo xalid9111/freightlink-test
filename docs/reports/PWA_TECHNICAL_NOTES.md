@@ -23,6 +23,7 @@ philosophy (additive, never editing an already-applied migration).
   required sizes, including maskable variants with proper safe-zone
   padding and a dedicated Apple touch icon — not placeholders.
 - `viewport-fit=cover` + iOS meta tags for safe-area / standalone
+- iOS status bar style is `black` (day mode: `default`), not `black-translucent`: Flutter replaces the viewport tag without `viewport-fit=cover`, and a translucent bar made taps land one status-bar height off in the Home Screen app (24.10.2026). `pwa_guard.js` also resets a page left scrolled after the keyboard closes.
   display support.
 - Offline caching relies on Flutter's own build-time-generated
   `flutter_service_worker.js` (standard Flutter web behavior) — no

@@ -76,4 +76,27 @@
     })).then(function () { window.location.reload(); }, function () { window.location.reload(); });
     return true;
   };
+
+  // 5) iPhone Home Screen app: after the on-screen keyboard closes iOS can
+  //    leave the page scrolled by a few pixels; the picture then no longer
+  //    matches where taps land (a button reacts only above it). Put the
+  //    page back to 0 — Flutter itself never scrolls the document.
+  //    Only when no text field is focused (keyboard closed): while typing
+  //    iOS may scroll on purpose to keep the field above the keyboard.
+  function typing() {
+    var a = document.activeElement;
+    return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+  }
+  function unshift() {
+    try {
+      if (typing()) return;
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    } catch (e) {}
+  }
+  document.addEventListener('focusout', function () { setTimeout(unshift, 120); setTimeout(unshift, 500); }, true);
+  window.addEventListener('orientationchange', function () { setTimeout(unshift, 400); });
+  window.addEventListener('pageshow', unshift);
+  try {
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { setTimeout(unshift, 150); });
+  } catch (e) {}
 })();
