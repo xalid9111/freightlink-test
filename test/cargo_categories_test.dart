@@ -26,14 +26,18 @@ CargoModel load({String? truck, String? size, bool groupage = false}) => CargoMo
 
 void main() {
   group('category filter', () {
-    test('a tile selects, a second tap clears; one tile at a time', () {
+    test('a tile selects, a second tap keeps it (owner 25.10.2026); one tile at a time', () {
       var f = const CargoCategoryFilter();
+      f = f.tapTruck('tent');
+      expect(f.truckType, 'tent');
       f = f.tapTruck('tent');
       expect(f.truckType, 'tent');
       f = f.tapGroupage();
       expect((f.truckType, f.groupage), (null, true));
       f = f.tapGroupage();
-      expect(f.isActive, isFalse);
+      expect((f.truckType, f.groupage), (null, true));
+      f = f.tapTruck('van');
+      expect((f.truckType, f.groupage), ('van', false));
     });
 
     test('size works together with a tile', () {
@@ -75,8 +79,9 @@ void main() {
       }
     });
 
-    test('Loads page: seven choices, icon + name only, Açıq and Sistern too', () {
-      expect(kCategoryChoices, ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker']);
+    test('Loads page: the seven choices first (never moved), then the six of 0063', () {
+      expect(kCategoryChoices.take(7), ['tent', 'ref', 'container', 'dump', 'groupage', 'open', 'tanker']);
+      expect(kCategoryChoices.skip(7), ['gazelle', 'manipulator', 'tow_truck', 'van', 'lowbed', 'car_carrier']);
       for (final c in kCategoryChoices) {
         for (final night in [false, true]) {
           expect(File(categoryIconAsset(c, night: night)).existsSync(), isTrue, reason: '$c $night');

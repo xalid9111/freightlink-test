@@ -16,6 +16,7 @@ import 'core/layout/desktop_preview.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
+import 'features/cargo/presentation/providers/category_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,8 @@ Future<void> main() async {
   await loadSavedUiScale();
   // Desktop preview (test only, off unless chosen in Settings).
   await loadSavedDesktopPreview();
+  // The load type last chosen on the Loads page (per account).
+  await loadCargoCategoryPrefs();
 
   // Firebase.initializeApp() and Mapbox.setAccessToken() are added
   // in Phase 10 / Phase 12 once those features are implemented —

@@ -17,12 +17,12 @@ const kMaxCargoTemplates = 10;
 const kCargoPhotoBucket = 'cargo-photos';
 
 /// Template group of a load: QRUPAJ first (a load category on its own),
-/// otherwise its truck type when it is one of the 7 choices; null = no
-/// templates (a typed "Digər" truck type) — own photo only.
+/// otherwise its truck type when it is one of the choices (also a known
+/// other spelling, [truckCategoryOf]); null = no templates (another
+/// typed "Digər" truck type) — own photo only.
 String? cargoPictureCategory({String? truckType, bool groupage = false}) {
   if (groupage) return 'groupage';
-  final t = (truckType ?? '').trim().toLowerCase();
-  return kCategoryChoices.contains(t) ? t : null;
+  return truckCategoryOf(truckType);
 }
 
 /// Storage path of a new picture: own folder = user id (checked by the

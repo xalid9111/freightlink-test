@@ -23,6 +23,12 @@ const _kTypeNames = {
   'groupage': 'Qrupaj',
   'open': 'Açıq',
   'tanker': 'Sistern',
+  'gazelle': 'Qazel',
+  'manipulator': 'Manipulyator',
+  'tow_truck': 'Evakuator',
+  'van': 'Furqon',
+  'lowbed': 'Lowbed',
+  'car_carrier': 'Avtodaşıyıcı',
 };
 
 class AdminCargoPicturesPage extends ConsumerStatefulWidget {
