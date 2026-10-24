@@ -1,5 +1,6 @@
 -- TIR BAZARI CATALOGUE — 0064: medium / light trucks, body type, search by
 -- every spelling of a brand / model. Rolled back.
+\set admin  '''a0000000-0000-4000-8000-000000000001'''
 \set seller '''a0000000-0000-4000-8000-000000000012'''
 \set buyer  '''a0000000-0000-4000-8000-000000000021'''
 \set m1 '''aa640000-0000-4000-8000-000000000001'''
@@ -49,6 +50,21 @@ select tests.check((select count(*) >= 4 from public.market_search(null, null, n
   'C10 the old 13-parameter call (app already on phones) still works');
 select tests.check((select brand = 'Mercedes' and model = 'Actros' from public.market_listings where id = :m3),
   'C11 the stored spelling is not changed');
+select tests.check((select count(*) = 1 from public.market_search(
+                      p_category => null, p_q => null, p_brand => 'Volvo', p_model => null, p_city => null,
+                      p_min_price => null, p_max_price => null, p_year_from => null, p_year_to => null,
+                      p_max_mileage => null, p_vip_only => false, p_limit => 20, p_offset => 0)),
+  'C10b the old app call by name (13 parameters, as PostgREST sends it) still works');
+select tests.check((select count(*) = 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                     where n.nspname = 'public' and p.proname = 'market_search'),
+  'C13 exactly one market_search (no overload conflict)');
+select tests.login(:admin);
+select public.admin_market_set_vip(:m2, true, 7);
+select tests.login(:buyer);
+select tests.check((select array_agg(id) = array[:m2]::uuid[] from public.market_search(p_vip_only => true)),
+  'C14 VIP-only search (the VIP places) works as before');
+select tests.check((select id = :m2 from public.market_search() limit 1),
+  'C15 VIP ad still first in the feed');
 reset role;
 set role anon;
 select tests.check(tests.err($$ select * from public.market_search() $$) like '%permission denied%', 'C12 still not for anon');

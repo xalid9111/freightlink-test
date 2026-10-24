@@ -226,6 +226,10 @@ void main() {
     }
     expect(RegExp(r'drop constraint (\w+)').allMatches(sql).map((m) => m.group(1)).toSet(), {'market_listings_category_check'});
     expect(RegExp(r'drop function if exists public\.(\w+)').allMatches(sql).map((m) => m.group(1)).toSet(), {'market_search'});
+    // One transaction with a final check: all or nothing.
+    expect(sql.contains('\nbegin;\n'), isTrue);
+    expect(sql.trimRight().endsWith('commit;'), isTrue);
+    expect(sql.contains('0064: final check failed'), isTrue);
     final run = File('supabase/tests/local/run_local.sh').readAsStringSync();
     expect(run, contains('0064_market_catalog_body_type.sql'));
     expect(run, contains('101_market_catalog.sql'));

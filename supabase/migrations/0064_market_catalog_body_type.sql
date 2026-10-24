@@ -19,7 +19,12 @@
 -- is exactly the 0040 rule; every other constraint stays untouched.
 -- market_search is re-created with the longer parameter list (a
 -- function, no data); its grants are set again below.
+--
+-- One transaction: everything below is applied together or not at all
+-- (a check at the end stops it if anything is not as expected).
 -- =====================================================================
+
+begin;
 
 -- 1. Body type (optional) ----------------------------------------------
 alter table public.market_listings add column if not exists body_type text;
@@ -127,5 +132,22 @@ grant execute on function public.market_search(text, text, text, text, text, num
 revoke all on function public.market_name_key(text) from public, anon;
 grant execute on function public.market_name_key(text) to authenticated;
 
--- PostgREST reads the new parameter list at once.
+-- 5. Final check: one market_search (the new one), both rules in place.
+do $$
+begin
+  if (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'market_search') <> 1
+     or to_regprocedure('public.market_search(text, text, text, text, text, numeric, numeric, integer, integer, integer, boolean, integer, integer, text, text[], text[])') is null
+     or not exists (select 1 from pg_constraint where conrelid = 'public.market_listings'::regclass
+                     and conname = 'market_listings_body_type_check')
+     or not exists (select 1 from pg_constraint where conrelid = 'public.market_listings'::regclass
+                     and conname = 'market_listings_category_check'
+                     and pg_get_constraintdef(oid) like '%''light_truck''%') then
+    raise exception '0064: final check failed — nothing changed';
+  end if;
+end $$;
+
+-- PostgREST reads the new parameter list at once (sent at commit).
 notify pgrst, 'reload schema';
+
+commit;
