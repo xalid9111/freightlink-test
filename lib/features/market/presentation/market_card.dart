@@ -5,6 +5,7 @@ import '../../../core/constants/cities.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/vip_frame.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/market_models.dart';
 import 'market_providers.dart';
@@ -103,7 +104,7 @@ class MarketCard extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: vip ? kVipGold.withValues(alpha: 0.6) : AppColors.line),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -113,8 +114,8 @@ class MarketCard extends ConsumerWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    MarketPhoto(url: l.cover),
-                    if (vip) const Positioned(left: 8, top: 8, child: VipBadge()),
+                    // VIP: gold frame on the picture (owner, 24.10.2026).
+                    if (vip) VipPictureFrame(radius: 0, child: MarketPhoto(url: l.cover)) else MarketPhoto(url: l.cover),
                     Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                     if (l.photos.length > 1 && !compact)
                       Positioned(
@@ -211,7 +212,11 @@ class MarketFeedCard extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  MarketPhoto(url: l.cover),
+                  // VIP: gold frame on the picture (owner, 24.10.2026).
+                  if (vip)
+                    VipPictureFrame(key: const ValueKey('feed-vip'), child: MarketPhoto(url: l.cover))
+                  else
+                    MarketPhoto(url: l.cover),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                   if (l.status == MarketStatus.sold)
                     Container(
@@ -239,7 +244,6 @@ class MarketFeedCard extends ConsumerWidget {
               child: Text([if (city.isNotEmpty) city, when].join(', '),
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             ),
-            if (vip) const Icon(Icons.workspace_premium, key: ValueKey('feed-vip'), size: 18, color: kVipGold),
           ]),
         ],
       ),
