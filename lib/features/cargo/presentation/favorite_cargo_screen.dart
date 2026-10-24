@@ -45,7 +45,8 @@ class FavoriteCargoScreen extends ConsumerWidget {
                     cargo: list[i],
                     strings: s,
                     compact: true,
-                    onTap: () => context.pushOnce('/cargo/${list[i].id}'),
+                    // /load/: this page is above the tabs; /cargo/:id opened behind it.
+                    onTap: () => context.pushOnce('/load/${list[i].id}'),
                   ),
                 ),
         ),

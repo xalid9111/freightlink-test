@@ -47,3 +47,17 @@ String cleanStorageUrl(String url) {
 /// Only an own-folder picture is deleted from storage when a load drops
 /// it; templates are shared by many loads and stay.
 bool isOwnCargoPhoto(String url, String userId) => url.contains('/$kCargoPhotoBucket/$userId/');
+
+/// The admin template a load without its own picture shows (owner,
+/// 24.10.2026, choice "a"): picked by the load's id, so loads of the same
+/// type look different and one load always shows the same picture.
+/// null = no template for its type (the type icon is shown).
+String? templateFor(List<String> templates, String seed) {
+  if (templates.isEmpty) return null;
+  // Small numbers only: the same result in the browser and in tests.
+  var h = 7;
+  for (final u in seed.codeUnits) {
+    h = (h * 31 + u) % 1000003;
+  }
+  return templates[h % templates.length];
+}

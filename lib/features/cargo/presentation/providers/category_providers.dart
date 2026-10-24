@@ -16,6 +16,9 @@ final categoryFeedProvider = FutureProvider<List<CargoModel>>((ref) async {
   final f = ref.watch(cargoCategoryFilterProvider);
   if (!f.isActive) return ref.watch(marketplaceProvider.future);
   ref.watch(currentUserIdProvider);
+  // Refreshed together with the marketplace (a load posted, edited,
+  // deleted or switched off) — the chosen tile showed an old list.
+  ref.watch(marketplaceProvider);
   try {
     return await ref
         .watch(cargoRepositoryProvider)

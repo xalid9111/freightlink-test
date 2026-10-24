@@ -424,7 +424,7 @@ class CargoTile extends ConsumerWidget {
             AspectRatio(
               aspectRatio: 1,
               child: Stack(fit: StackFit.expand, children: [
-                CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage),
+                CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
                 Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 19, onPhoto: true)),
                 if (vip) const Positioned(key: ValueKey('tile-vip'), top: 4, left: 4, child: VipMedal(size: 50)),
               ]),

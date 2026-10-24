@@ -1137,5 +1137,13 @@
   "cargo_pics_bad_type": "მხოლოდ JPG, PNG ან WEBP",
   "detail_cargo_kind": "ტვირთის ტიპი",
   "detail_gallery_count": "{i} / {n}",
-  "cargo_pic_add": "სურათის დამატება"
+  "cargo_pic_add": "სურათის დამატება",
+  "cargo_state_active": "აქტიური",
+  "cargo_state_paused": "არააქტიური",
+  "cargo_state_expired": "ვადა გავიდა",
+  "cargo_activate": "გააქტიურება",
+  "cargo_deactivate": "დეაქტივაცია",
+  "cargo_activate_date": "აირჩიეთ დატვირთვის თარიღი",
+  "cargo_activated": "ტვირთი კვლავ აქტიურია",
+  "cargo_deactivated": "ტვირთი დეაქტივირებულია — სხვები ვეღარ ხედავენ"
 }

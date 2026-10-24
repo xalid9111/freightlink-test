@@ -117,11 +117,17 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     super.dispose();
   }
 
+  /// 1850 → "1850", 1850.5 → "1850.5", 1.25 → "1.25".
+  static String _plain(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '');
+
   void _prefill(CargoModel c) {
     _original = c;
     _from = PickedPlace.fromStored(c.pickupCity, c.pickupCountry);
     _to = PickedPlace.fromStored(c.destinationCity, c.destinationCountry);
-    _priceCtrl.text = c.offeredPrice.toStringAsFixed(0);
+    // Kept exactly: editing must not round a price or weight the owner
+    // did not touch (1850.5 became 1851, 1.25 t became 1.3 t).
+    _priceCtrl.text = _plain(c.offeredPrice);
     _currency = cargoCurrencyOrDefault(c.currency);
     _noteCtrl.text = c.description ?? '';
     _cargoTypeCtrl.text = c.cargoType ?? '';
@@ -131,7 +137,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       _tons = t;
     } else {
       _customTons = true;
-      _customTonsCtrl.text = t == t.roundToDouble() ? t.toStringAsFixed(0) : t.toStringAsFixed(1);
+      _customTonsCtrl.text = _plain(t);
     }
     final tt = (c.truckType ?? '').trim();
     if (kTruckTypes.contains(tt)) {
@@ -203,10 +209,14 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final current = _pickupDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _pickupDate ?? now,
-      firstDate: DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1)),
+      // A load whose date has passed (edit) starts at today: a past
+      // loading date would take it off the Loads page at once.
+      initialDate: current == null || current.isBefore(today) ? today : current,
+      firstDate: today,
       lastDate: now.add(const Duration(days: 365)),
     );
     if (picked != null) setState(() => _pickupDate = picked);
@@ -296,13 +306,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       );
 
       final repo = ref.read(cargoRepositoryProvider);
+      // Taken before the awaits: the page may be closed meanwhile, and
+      // "ref" of a closed page throws (the lists then stayed stale).
+      final container = ProviderScope.containerOf(context, listen: false);
       String id;
       if (o == null) {
         id = (await repo.create(cargo)).id;
       } else {
         await repo.update(cargo);
         id = o.id;
-        ref.invalidate(cargoDetailProvider(id));
+        container.invalidate(cargoDetailProvider(id));
         // The owner's previous own photos that are not used any more.
         for (final old in o.pictures) {
           if (!_images.contains(old) && !_uploaded.contains(old)) _media.removeOwn(old);
@@ -322,14 +335,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
           }
         }
       }
-      ref.invalidate(marketplaceProvider);
-      ref.invalidate(myCargoProvider);
+      container.invalidate(marketplaceProvider);
+      container.invalidate(myCargoProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.t(o == null ? 'create_success' : 'quick_saved'))),
       );
       if (o == null) {
-        context.pushReplacement('/cargo/$id');
+        // go, not pushReplacement: opened from "Yüklərim" (a page above
+        // the tabs) the new load would open hidden behind it.
+        context.go('/cargo/$id');
       } else if (context.canPop()) {
         context.pop();
       } else {
@@ -338,7 +353,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         context.go('/cargo/$id');
       }
     } on AppException catch (e) {
-      setState(() => _error = strings.error(e.code));
+      if (mounted) setState(() => _error = strings.error(e.code));
     } catch (e, st) {
       AutoFix.instance.capture(e, st, source: 'cargo.save');
       if (!mounted) return;
@@ -471,7 +486,10 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
     final tomorrow = today.add(const Duration(days: 1));
     bool sameDay(DateTime? a, DateTime b) => a != null && a.year == b.year && a.month == b.month && a.day == b.day;
 
-    return Scaffold(
+    // No leaving while a save runs: its new photos would be deleted.
+    return PopScope(
+      canPop: !_submitting,
+      child: Scaffold(
       appBar: AppBar(title: Text(strings.t(_isEdit ? 'quick_edit_title' : 'create_title'))),
       body: SafeArea(
         child: Form(
@@ -719,7 +737,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

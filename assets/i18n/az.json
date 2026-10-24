@@ -1137,5 +1137,13 @@
   "cargo_pics_bad_type": "Yalnız JPG, PNG və ya WEBP şəkil",
   "detail_cargo_kind": "Yük növü",
   "detail_gallery_count": "{i} / {n}",
-  "cargo_pic_add": "Şəkil əlavə et"
+  "cargo_pic_add": "Şəkil əlavə et",
+  "cargo_state_active": "Aktiv",
+  "cargo_state_paused": "Deaktiv",
+  "cargo_state_expired": "Vaxtı keçib",
+  "cargo_activate": "Aktiv et",
+  "cargo_deactivate": "Deaktiv et",
+  "cargo_activate_date": "Yükləmə tarixini seçin",
+  "cargo_activated": "Yük yenidən aktivdir",
+  "cargo_deactivated": "Yük deaktiv edildi — başqalarına görünmür"
 }

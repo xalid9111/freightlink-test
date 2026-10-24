@@ -30,7 +30,9 @@ class CargoRepositoryImpl implements CargoRepository {
       final rows = await query.order('created_at', ascending: false);
       // Loads hidden by an admin are filtered by RLS (0012) for everyone
       // else; this also keeps the owner's own hidden loads out of the feed.
-      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => !c.isHidden).toList();
+      // Switched off by the owner or past the loading date: not listed.
+      final now = DateTime.now();
+      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => c.isListedOn(now)).toList();
     } on PostgrestException catch (e) {
       throw AppException(e.message, code: e.code);
     }
@@ -44,7 +46,8 @@ class CargoRepositoryImpl implements CargoRepository {
       if (groupage) query = query.eq('groupage', true);
       if (loadSize != null) query = query.eq('load_size', loadSize);
       final rows = await query.order('created_at', ascending: false);
-      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => !c.isHidden).toList();
+      final now = DateTime.now();
+      return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => c.isListedOn(now)).toList();
     } on PostgrestException catch (e) {
       throw AppException(e.message, code: e.code);
     }
@@ -143,7 +146,8 @@ class CargoRepositoryImpl implements CargoRepository {
         .eq('status', 'new')
         .eq('pickup_country', fromCountry)
         .order('pickup_date', ascending: true);
-    return (rows as List).map((r) => CargoModel.fromJson(r)).toList();
+    final now = DateTime.now();
+    return (rows as List).map((r) => CargoModel.fromJson(r)).where((c) => c.isListedOn(now)).toList();
   }
 }
 

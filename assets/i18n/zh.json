@@ -1137,5 +1137,13 @@
   "cargo_pics_bad_type": "仅支持 JPG、PNG 或 WEBP",
   "detail_cargo_kind": "货物类型",
   "detail_gallery_count": "{i} / {n}",
-  "cargo_pic_add": "添加图片"
+  "cargo_pic_add": "添加图片",
+  "cargo_state_active": "已上架",
+  "cargo_state_paused": "已下架",
+  "cargo_state_expired": "已过期",
+  "cargo_activate": "上架",
+  "cargo_deactivate": "下架",
+  "cargo_activate_date": "选择装货日期",
+  "cargo_activated": "货源已重新上架",
+  "cargo_deactivated": "货源已下架——其他人看不到"
 }

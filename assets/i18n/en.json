@@ -1137,5 +1137,13 @@
   "cargo_pics_bad_type": "Only JPG, PNG or WEBP pictures",
   "detail_cargo_kind": "Load type",
   "detail_gallery_count": "{i} / {n}",
-  "cargo_pic_add": "Add a picture"
+  "cargo_pic_add": "Add a picture",
+  "cargo_state_active": "Active",
+  "cargo_state_paused": "Inactive",
+  "cargo_state_expired": "Expired",
+  "cargo_activate": "Activate",
+  "cargo_deactivate": "Deactivate",
+  "cargo_activate_date": "Choose the loading date",
+  "cargo_activated": "The load is active again",
+  "cargo_deactivated": "Load deactivated — others no longer see it"
 }

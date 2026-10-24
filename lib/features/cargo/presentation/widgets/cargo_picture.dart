@@ -10,20 +10,26 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/cargo_categories.dart';
+import '../../data/cargo_media_repository.dart';
 import '../../domain/cargo_pictures.dart';
 import '../providers/cargo_media_providers.dart';
 
-/// A load's card picture (0058). No picture (or one that does not load)
-/// → the load type icon on a plain tile — never a guessed photo.
-class CargoPicture extends StatelessWidget {
+/// A load's card picture (0058). A load without its own picture shows an
+/// admin template of its type (owner, 24.10.2026), picked by [seed] (the
+/// load id) so loads of one type differ. No template (or a picture that
+/// does not load) → the load type icon on a plain tile.
+class CargoPicture extends ConsumerWidget {
   final String? imageUrl;
   final String? truckType;
   final bool groupage;
   final BoxFit fit;
-  const CargoPicture({super.key, this.imageUrl, this.truckType, this.groupage = false, this.fit = BoxFit.cover});
+  /// The load id; null = never use a template (e.g. the form preview).
+  final String? seed;
+  const CargoPicture(
+      {super.key, this.imageUrl, this.truckType, this.groupage = false, this.fit = BoxFit.cover, this.seed});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cat = cargoPictureCategory(truckType: truckType, groupage: groupage);
     final placeholder = Container(
       color: AppColors.tileBg,
@@ -40,7 +46,11 @@ class CargoPicture extends StatelessWidget {
                   errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textSoft)),
             ),
     );
-    final url = imageUrl;
+    var url = imageUrl;
+    if ((url == null || url.isEmpty) && cat != null && seed != null) {
+      final templates = ref.watch(cargoTemplatesProvider(cat)).valueOrNull ?? const <CargoTemplate>[];
+      url = templateFor([for (final t in templates) t.imageUrl], seed!);
+    }
     if (url == null || url.isEmpty) return placeholder;
     return Image.network(
       url,
