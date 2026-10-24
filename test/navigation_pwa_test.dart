@@ -57,6 +57,16 @@ void main() {
       expect(guard, greaterThan(0));
       expect(index.indexOf('src="flutter_bootstrap.js"'), greaterThan(guard));
     });
+    // Owner, 24.10.2026 (iPhone 11 Pro, Home Screen app): taps landed
+    // about one status-bar height off. Solid status bar + page reset.
+    test('Home Screen app: solid status bar, taps hit the button', () {
+      final index = _read('web/index.html');
+      expect(index.contains('content="black-translucent"'), isFalse);
+      expect(index.contains('<meta name="apple-mobile-web-app-status-bar-style" content="black">'), isTrue);
+      final guard = _read('web/pwa_guard.js');
+      expect(guard.contains('function unshift()'), isTrue);
+      expect(guard.contains('if (typing()) return;'), isTrue);
+    });
     test('old service workers are removed, user storage untouched', () {
       final guard = _read('web/pwa_guard.js');
       expect(guard.contains('unregister'), isTrue);
