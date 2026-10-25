@@ -45,6 +45,9 @@ void main() {
   test('wired: the search box opens the page; one tap on a brand picks it', () {
     final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
     expect(home, contains('readOnly: true'));
+    // Owner, 25.10.2026: after a pick the brand is not left selected.
+    expect(home, contains('canRequestFocus: false'));
+    expect(home, contains('enableInteractiveSelection: false'));
     expect(home, contains('onOpen: () => _openSearch(context, s, filter)'));
     final page = File('lib/features/market/presentation/market_brand_picker.dart').readAsStringSync();
     // Owner, 25.10.2026: no extra "«…» üzrə axtar" row and no second step.
