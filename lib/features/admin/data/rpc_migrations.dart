@@ -105,6 +105,8 @@ const kRpcMigration = <String, String>{
   'market_premium_latest': '0066_market_promotions.sql',
   'market_promo_order_create': '0066_market_promotions.sql',
   'admin_market_set_promo_plan': '0066_market_promotions.sql',
+  'cargo_promo_order_create': '0067_cargo_promotions.sql',
+  'admin_cargo_set_promo_plan': '0067_cargo_promotions.sql',
   'admin_market_set_hero': '0044_market_hero_vip.sql',
   'admin_market_set_vip_plan': '0044_market_hero_vip.sql',
   'admin_cargo_set_vip_plan': '0062_cargo_vip_buy.sql',

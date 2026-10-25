@@ -9,6 +9,8 @@ import 'admin_providers.dart';
 import 'admin_widgets.dart';
 import '../../cargo/domain/cargo_vip.dart';
 import '../../cargo/presentation/providers/cargo_media_providers.dart';
+import '../../market/domain/market_models.dart';
+import '../../market/presentation/market_promo.dart';
 
 // =====================================================================
 // Shared helpers
@@ -302,6 +304,11 @@ class _AdminCargoPageState extends ConsumerState<AdminCargoPage> {
         header: [
           // Prices users pay for "VIP et" on their loads (owner, 24.10.2026, 0062).
           const CargoVipPricesCard(),
+          const SizedBox(height: 8),
+          // İrəli çək / Premium prices for loads (owner, 25.10.2026, 0067).
+          const CargoPromoPricesCard(MarketPromoKind.bump),
+          const SizedBox(height: 8),
+          const CargoPromoPricesCard(MarketPromoKind.premium),
           const SizedBox(height: 8),
           FilterBar(
             options: {'all': 'Hamısı', for (final s in cargoStatuses) s: statusLabel(s), 'hidden': 'Gizli', 'vip': 'VIP'},
@@ -1407,7 +1414,7 @@ class _CargoVipPricesCardState extends ConsumerState<CargoVipPricesCard> {
             Expanded(child: Text('Yük VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
           ]),
           const SizedBox(height: 4),
-          Text('İstifadəçi öz yükündə "VIP et" basanda bu qiymətlərlə kartla ödəyir; ödənişdən sonra yük avtomatik VIP olur.',
+          Text('İstifadəçi öz yükündə "Önə çıxar → VIP" seçəndə bu qiymətlərlə kartla ödəyir; ödənişdən sonra yük avtomatik VIP olur.',
               style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
           const SizedBox(height: 8),
           async.when(
@@ -1435,6 +1442,96 @@ class _CargoVipPricesCardState extends ConsumerState<CargoVipPricesCard> {
                   ]),
                 ),
             ]),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Load İrəli çək / Premium prices (0067, as TIR Bazarı 0066). Changed only
+/// through admin_cargo_set_promo_plan (checked + logged on the server).
+class CargoPromoPricesCard extends ConsumerStatefulWidget {
+  final MarketPromoKind kind;
+  const CargoPromoPricesCard(this.kind, {super.key});
+
+  @override
+  ConsumerState<CargoPromoPricesCard> createState() => _CargoPromoPricesCardState();
+}
+
+class _CargoPromoPricesCardState extends ConsumerState<CargoPromoPricesCard> {
+  final _price = <int, TextEditingController>{};
+
+  @override
+  void dispose() {
+    for (final c in _price.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save(MarketPromoPlan p, {bool? active}) async {
+    final v = double.tryParse((_price[p.qty]?.text ?? '').replaceAll(',', '.').trim());
+    if (v == null || v <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiyməti düzgün yazın (0-dan böyük).')));
+      return;
+    }
+    final ok = await runAdmin(context,
+        () => ref.read(cargoMediaRepositoryProvider).adminSetPromoPlan(widget.kind, p.qty, v, active: active ?? p.isActive));
+    if (ok) ref.invalidate(cargoPromoPlansProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = widget.kind;
+    final bump = k == MarketPromoKind.bump;
+    final async = ref.watch(cargoPromoPlansProvider((k, false)));
+    return Card(
+      key: ValueKey('admin-cargo-promo-${k.name}'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            MarketPromoIcon(k, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(bump ? 'Yük: İrəli çək qiymətləri' : 'Yük: Premium qiymətləri',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+              bump
+                  ? 'Yük dərhal, sonra hər 24 saatda bir Yüklər səhifəsinin başına qalxır — paketdəki dəfə qədər.'
+                  : 'Yük Yüklər səhifəsinin ən başında durur, hər gün önə qalxır və həmin günlər VIP olur.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          const SizedBox(height: 8),
+          async.when(
+            loading: () => const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Text('Yüklənmədi: $e', style: TextStyle(color: AppColors.danger)),
+            data: (plans) => plans.isEmpty
+                ? Text('Qiymət yoxdur (0067_cargo_promotions.sql işə salınıbmı?)', style: TextStyle(color: AppColors.danger))
+                : Column(children: [
+                    for (final p in plans)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                          SizedBox(width: 62, child: Text(bump ? '${p.qty} dəfə' : '${p.qty} gün')),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              key: ValueKey('cargo-promo-price-${k.name}-${p.qty}'),
+                              controller: _price.putIfAbsent(
+                                  p.qty, () => TextEditingController(text: p.price.toStringAsFixed(p.price % 1 == 0 ? 0 : 2))),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(isDense: true, suffixText: p.currency),
+                            ),
+                          ),
+                          FilledButton(onPressed: () => _save(p), child: const Text('Saxla')),
+                          Switch(value: p.isActive, onChanged: (v) => _save(p, active: v)),
+                          Text(p.isActive ? 'Aktiv' : 'Bağlı', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                        ]),
+                      ),
+                  ]),
           ),
         ]),
       ),

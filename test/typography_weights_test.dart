@@ -12,7 +12,6 @@ const _heavyAllowed = {
   'lib/features/market/presentation/market_card.dart', // VIP badge
   'lib/features/cargo/presentation/widgets/cargo_card.dart', // VIP medal letter
   'lib/features/services/presentation/service_widgets.dart', // PRO badge
-  'lib/features/cargo/presentation/widgets/cargo_vip_sheet.dart', // gold VIP line
   'lib/features/market/presentation/market_brand_picker.dart', // letters in place of a logo
   'lib/features/ads/presentation/ad_creative_view.dart', // advertiser's banner design (1200×400)
 };

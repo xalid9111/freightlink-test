@@ -34,7 +34,9 @@ import '../domain/truck_types.dart';
 import '../../../core/utils/phone_utils.dart';
 import 'widgets/cargo_picture.dart';
 import 'widgets/cargo_picture_field.dart';
-import 'widgets/cargo_vip_sheet.dart';
+import '../../market/domain/market_models.dart';
+import '../../market/presentation/market_promo.dart';
+import 'widgets/cargo_promo.dart';
 import '../domain/cargo_pictures.dart';
 import '../data/cargo_media_repository.dart';
 import 'widgets/cargo_route_map.dart';
@@ -443,14 +445,18 @@ class _DetailBody extends ConsumerWidget {
       if (isOwner) ...[
         _OwnerActions(cargo: cargo, strings: strings),
         const SizedBox(height: 12),
-        // "VIP et" on my own open load (owner, 24.10.2026, 0062).
+        // "Önə çıxar" on my own open load (owner, 25.10.2026, 0067): İrəli
+        // çək · VIP · Premium, the same as TIR Bazarı.
         if (cargo.status == 'new' && !cargo.isHidden) ...[
           OutlinedButton.icon(
-            key: const ValueKey('cargo-vip-buy'),
-            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.vipGold)),
-            onPressed: () => showCargoVipSheet(context, strings, cargo),
-            icon: const Icon(Icons.workspace_premium, color: AppColors.vipGold),
-            label: Text(cargo.isVipAt(DateTime.now()) ? strings.t('mk_vip_extend') : strings.t('cargo_vip_btn')),
+            key: const ValueKey('cargo-promo-open'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.promoVip,
+              side: BorderSide(color: AppColors.promoVip.withValues(alpha: 0.7)),
+            ),
+            onPressed: () => showPromoChooser(context, strings, CargoPromoTarget(cargo)),
+            icon: const MarketPromoIcon(MarketPromoKind.bump, size: 22),
+            label: Text(strings.t('mk_promo_title')),
           ),
           const SizedBox(height: 12),
         ],

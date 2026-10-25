@@ -37,10 +37,20 @@ class MarketPromoMarks extends StatelessWidget {
   const MarketPromoMarks(this.l, {super.key, this.size = 18});
 
   @override
+  Widget build(BuildContext context) => PromoMarks(premium: l.premiumActive(), vip: l.vipActive(), size: size);
+}
+
+/// The same marks for anything with Premium / VIP (a load too, 0067).
+class PromoMarks extends StatelessWidget {
+  final bool premium, vip;
+  final double size;
+  const PromoMarks({super.key, required this.premium, required this.vip, this.size = 18});
+
+  @override
   Widget build(BuildContext context) {
     final marks = [
-      if (l.premiumActive()) MarketPromoKind.premium,
-      if (l.vipActive()) MarketPromoKind.vip,
+      if (premium) MarketPromoKind.premium,
+      if (vip) MarketPromoKind.vip,
     ];
     if (marks.isEmpty) return const SizedBox.shrink();
     return Row(mainAxisSize: MainAxisSize.min, children: [
@@ -52,15 +62,76 @@ class MarketPromoMarks extends StatelessWidget {
   }
 }
 
+/// What "Önə çıxar" works on: a TIR Bazarı ad (0066) or a load (0067).
+/// Same sheets and checkout; each side has its own prices and orders.
+abstract class PromoTarget {
+  const PromoTarget();
+
+  /// The packs of one way to the front (active ones).
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>> plans(MarketPromoKind kind);
+
+  /// The date a running VIP / Premium is paid to (null = none running).
+  DateTime? paidUntil(MarketPromoKind kind);
+
+  /// An order on the server (it sets the price) → what the checkout pays.
+  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty);
+
+  /// After the checkout: show the new state.
+  void refresh(ProviderContainer c);
+
+  /// Text key when the order cannot be made.
+  String get failedKey;
+
+  /// What the way gives, in words (a load's Premium names the Loads page).
+  String bodyKey(MarketPromoKind kind) => 'mk_promo_${kind.name}_body';
+}
+
+/// A TIR Bazarı ad (0066).
+class MarketPromoTarget extends PromoTarget {
+  final MarketListing l;
+  const MarketPromoTarget(this.l);
+
+  @override
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>> plans(MarketPromoKind kind) => marketPromoPlansProvider((kind, true));
+
+  @override
+  DateTime? paidUntil(MarketPromoKind kind) => switch (kind) {
+        MarketPromoKind.vip => l.vipActive() ? l.vipUntil : null,
+        MarketPromoKind.premium => l.premiumActive() ? l.premiumUntil : null,
+        MarketPromoKind.bump => null,
+      };
+
+  @override
+  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty) async {
+    final repo = ref.read(marketRepositoryProvider);
+    if (kind == MarketPromoKind.vip) {
+      final o = await repo.createVipOrder(l.id, qty);
+      return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency);
+    }
+    final o = await repo.createPromoOrder(l.id, kind, qty);
+    return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, promo: true);
+  }
+
+  @override
+  void refresh(ProviderContainer c) {
+    c.invalidate(marketListingProvider(l.id));
+    c.invalidate(myMarketListingsProvider);
+    c.invalidate(marketFeedProvider);
+  }
+
+  @override
+  String get failedKey => 'mk_vip_failed';
+}
+
 /// "Önə çıxar" on my own active ad: İrəli çək · VIP · Premium, each with
 /// its lowest price ("3 AZN-dən"), as in the owner's picture.
 class MarketPromoOptions extends ConsumerWidget {
   final AppStrings s;
-  final MarketListing l;
+  final PromoTarget target;
 
   /// Instead of opening the sheet at once (the chooser closes first).
   final void Function(MarketPromoKind kind)? onPick;
-  const MarketPromoOptions({super.key, required this.s, required this.l, this.onPick});
+  const MarketPromoOptions({super.key, required this.s, required this.target, this.onPick});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,8 +140,8 @@ class MarketPromoOptions extends ConsumerWidget {
         _PromoCard(
           kind: k,
           s: s,
-          from: marketPromoFrom(ref.watch(marketPromoPlansProvider((k, true))).valueOrNull ?? const []),
-          onTap: () => onPick != null ? onPick!(k) : showMarketPromoSheet(context, s, l, k),
+          from: marketPromoFrom(ref.watch(target.plans(k)).valueOrNull ?? const []),
+          onTap: () => onPick != null ? onPick!(k) : showPromoSheet(context, s, target, k),
         ),
     ];
     return Column(key: const ValueKey('mk-promo-options'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -141,7 +212,11 @@ class _PromoCard extends StatelessWidget {
 }
 
 /// "Önə çıxar" from the ad page: the three ways, then the chosen one's sheet.
-Future<void> showMarketPromoChooser(BuildContext context, AppStrings s, MarketListing l) {
+Future<void> showMarketPromoChooser(BuildContext context, AppStrings s, MarketListing l) =>
+    showPromoChooser(context, s, MarketPromoTarget(l));
+
+/// The same chooser for any [PromoTarget] (a load: 0067).
+Future<void> showPromoChooser(BuildContext context, AppStrings s, PromoTarget target) {
   final outer = context;
   return showModalBottomSheet<void>(
     context: context,
@@ -152,10 +227,10 @@ Future<void> showMarketPromoChooser(BuildContext context, AppStrings s, MarketLi
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: MarketPromoOptions(
         s: s,
-        l: l,
+        target: target,
         onPick: (k) {
           Navigator.of(sheet).pop();
-          showMarketPromoSheet(outer, s, l, k);
+          showPromoSheet(outer, s, target, k);
         },
       ),
     ),
@@ -165,21 +240,24 @@ Future<void> showMarketPromoChooser(BuildContext context, AppStrings s, MarketLi
 /// The sheet of one way to the front: what it gives, the packs, the date it
 /// runs to, and the card payment (same checkout as VIP; the server sets
 /// the price and applies it only after a verified payment).
-Future<void> showMarketPromoSheet(BuildContext context, AppStrings s, MarketListing l, MarketPromoKind kind) {
+Future<void> showMarketPromoSheet(BuildContext context, AppStrings s, MarketListing l, MarketPromoKind kind) =>
+    showPromoSheet(context, s, MarketPromoTarget(l), kind);
+
+Future<void> showPromoSheet(BuildContext context, AppStrings s, PromoTarget target, MarketPromoKind kind) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (_) => _PromoSheet(s: s, l: l, kind: kind),
+    builder: (_) => _PromoSheet(s: s, target: target, kind: kind),
   );
 }
 
 class _PromoSheet extends ConsumerStatefulWidget {
   final AppStrings s;
-  final MarketListing l;
+  final PromoTarget target;
   final MarketPromoKind kind;
-  const _PromoSheet({required this.s, required this.l, required this.kind});
+  const _PromoSheet({required this.s, required this.target, required this.kind});
 
   @override
   ConsumerState<_PromoSheet> createState() => _PromoSheetState();
@@ -200,15 +278,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
       _error = null;
     });
     try {
-      final repo = ref.read(marketRepositoryProvider);
-      final VipCheckoutTarget target;
-      if (kind == MarketPromoKind.vip) {
-        final o = await repo.createVipOrder(widget.l.id, plan.qty);
-        target = VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency);
-      } else {
-        final o = await repo.createPromoOrder(widget.l.id, kind, plan.qty);
-        target = VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, promo: true);
-      }
+      final target = await widget.target.order(ref, kind, plan.qty);
       if (!mounted) return;
       // This sheet closes; the checkout opens in its place.
       final nav = Navigator.of(context);
@@ -220,14 +290,12 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
         isDismissible: false,
         builder: (_) => CheckoutSheet(vip: target, s: s, availability: av, methods: methods),
       );
-      container.invalidate(marketListingProvider(widget.l.id));
-      container.invalidate(myMarketListingsProvider);
-      container.invalidate(marketFeedProvider);
+      widget.target.refresh(container);
     } catch (_) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = 'mk_vip_failed';
+          _error = widget.target.failedKey;
         });
       }
     }
@@ -237,11 +305,10 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final plans = ref.watch(marketPromoPlansProvider((kind, true)));
+    final plans = ref.watch(widget.target.plans(kind));
     final av = ref.watch(checkoutAvailabilityProvider).valueOrNull;
     final methods = av == null ? const <PayMethod>[] : methodsForDevice(currentDeviceKind(), av.methods);
     final canPay = av != null && av.available && methods.isNotEmpty;
-    final l = widget.l;
     final c = marketPromoColor(kind);
     // What each one includes, as in the owner's pictures.
     final icons = switch (kind) {
@@ -249,11 +316,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
       MarketPromoKind.vip => [MarketPromoKind.bump, MarketPromoKind.vip],
       MarketPromoKind.premium => [MarketPromoKind.bump, MarketPromoKind.vip, MarketPromoKind.premium],
     };
-    final until = switch (kind) {
-      MarketPromoKind.vip => l.vipActive() ? l.vipUntil : null,
-      MarketPromoKind.premium => l.premiumActive() ? l.premiumUntil : null,
-      MarketPromoKind.bump => null,
-    };
+    final until = widget.target.paidUntil(kind);
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(18, 0, 18, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
@@ -281,7 +344,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
               ],
             ]),
             const SizedBox(height: 12),
-            Text(s.t('mk_promo_${kind.name}_body'),
+            Text(s.t(widget.target.bodyKey(kind)),
                 style: TextStyle(color: AppColors.text, fontSize: 15.5, height: 1.35)),
             const SizedBox(height: 10),
             Align(

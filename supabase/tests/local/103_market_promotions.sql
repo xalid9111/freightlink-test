@@ -93,7 +93,7 @@ create temp table t_pay3 as select * from public.ad_payments where idempotency_k
 grant select on t_pay, t_pay2, t_pay3 to service_role;
 select tests.check(tests.err($$ insert into public.ad_payments (market_vip_order_id, market_promo_order_id, user_id, amount, currency, method, provider, mode, idempotency_key)
   select v.id, (select id from t_b), v.user_id, 1, 'AZN', 'card', 'test', 'test', 'promo66-x-0001' from public.market_vip_orders v limit 1 $$)
-  like '%ad_payments_one_target4%' or not exists (select 1 from public.market_vip_orders), 'O7 a payment belongs to exactly one thing');
+  like '%ad_payments_one_target%' or not exists (select 1 from public.market_vip_orders), 'O7 a payment belongs to exactly one thing');
 
 set role service_role;
 select pg_temp.as_service();

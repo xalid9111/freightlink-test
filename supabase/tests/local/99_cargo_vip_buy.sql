@@ -6,6 +6,10 @@
 \set c2 '''c6200000-0000-4000-8000-000000000002'''
 
 begin;
+-- 0067 changed the VIP packs (1 / 5 / 15 / 30 days); this suite checks
+-- 0062's rules with 0062's own packs (rolled back with everything else).
+delete from public.cargo_vip_plans where days not in (7, 14, 30);
+update public.cargo_vip_plans set is_active = true, price = case days when 7 then 5 when 14 then 9 else 15 end;
 create or replace function pg_temp.as_service() returns void language sql as $$
   select set_config('request.jwt.claims', '{"role":"service_role"}', false), set_config('request.jwt.claim.sub', '', false);
 $$;

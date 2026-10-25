@@ -111,9 +111,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   owner's picture + 15 %, 24.10.2026), readable text, two in a row, 3 mm apart, no panel behind; one flow
   in pairs (only the last card may stand alone). Chessboard order: load–VIP,
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
-  few minutes so each VIP comes to the front; VIP picture in the gold VIP
-  frame (owner, 24.10.2026 — replaces medal + orange frame, also TIR Bazarı);
-  same logic on the computer.
+  few minutes so each VIP comes to the front; same logic on the computer.
+- Promotions "Önə çıxar" (owner, 25.10.2026, Turbo.az-like; TIR Bazarı
+  0066, Loads 0067): İrəli çək (1/3/5/10 lifts = 3/6/9/15 AZN, first at
+  once then every 24 h), VIP (1/5/15/30 days = 5/15/25/40 AZN, daily
+  lift), Premium (1/5/15/30 days = 7/20/45/60 AZN, top of the feed, daily
+  lift, VIP for the same days). The owner's icons (green arrow, V diamond,
+  crown) sit next to the price / city line instead of any frame or seal.
+  Paid by the existing card checkout; admin edits prices.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
@@ -126,9 +131,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   (the default look). Load page text is larger (info rows 15/17).
 - TIR Bazarı phone page (owner, 24.10.2026): no VIP row under the banner;
   VIP ads stand among the ads in the same chessboard order as the Loads
-  page (ad–VIP, VIP–ad …, VIP order moves on every few minutes). On this
-  feed a VIP picture shows only the round VIP seal, no gold frame (owner,
-  25.10.2026); rows grow with the text size so cards never overlap.
+  page (ad–VIP, VIP–ad …, VIP order moves on every few minutes). No gold
+  frame or seal on the picture (Premium / VIP marks instead, 0066); rows
+  grow with the text size so cards never overlap.
 - TIR Bazarı catalogue (owner, 25.10.2026, 0064): ~130 brands; categories
   TIR · Orta yük · Kiçik yük · Qoşqu · Yarımqoşqu · Tikinti · Digər; brand,
   model, category and body type (optional chips in the form) are separate.

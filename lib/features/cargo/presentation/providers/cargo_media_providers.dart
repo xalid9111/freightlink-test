@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/cargo_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/cargo_media_repository.dart';
+import '../../../market/domain/market_models.dart';
 import '../../domain/cargo_vip.dart';
 
 final cargoMediaRepositoryProvider = Provider<CargoMediaRepository>((ref) => CargoMediaRepository());
@@ -48,6 +49,13 @@ final cargoFavoriteIdsProvider = StateNotifierProvider<CargoFavoritesController,
 final cargoFavoritesListProvider = FutureProvider.autoDispose<List<CargoModel>>((ref) {
   ref.watch(cargoFavoriteIdsProvider); // refresh when a heart changes
   return ref.watch(cargoMediaRepositoryProvider).favorites();
+});
+
+/// Load İrəli çək / VIP / Premium packs (0067); [activeOnly] false = the
+/// admin list.
+final cargoPromoPlansProvider =
+    FutureProvider.autoDispose.family<List<MarketPromoPlan>, (MarketPromoKind, bool)>((ref, k) {
+  return ref.watch(cargoMediaRepositoryProvider).promoPlans(k.$1, activeOnly: k.$2);
 });
 
 /// Load VIP prices (0062); [activeOnly] false = the admin list.

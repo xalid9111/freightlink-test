@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../models/cargo_model.dart';
 import '../domain/cargo_pictures.dart';
+import '../../market/domain/market_models.dart';
 import '../domain/cargo_vip.dart';
 
 const _timeout = Duration(seconds: 20);
@@ -175,6 +176,41 @@ class CargoMediaRepository {
     final res = await _c.rpc('cargo_vip_order_create', params: {'p_cargo': cargoId, 'p_days': days}).timeout(_timeout);
     return CargoVipOrder.fromJson(Map<String, dynamic>.from(res as Map));
   }
+
+  // ---- İrəli çək / Premium (0067, as TIR Bazarı 0066) -------------------
+
+  /// Packs of one way to the front; VIP from cargo_vip_plans. Before 0067
+  /// is run İrəli çək / Premium have none ("Tezliklə").
+  Future<List<MarketPromoPlan>> promoPlans(MarketPromoKind kind, {bool activeOnly = true}) async {
+    if (kind == MarketPromoKind.vip) {
+      return [
+        for (final p in await vipPlans(activeOnly: activeOnly))
+          MarketPromoPlan(kind: MarketPromoKind.vip, qty: p.days, price: p.price, currency: p.currency, isActive: p.isActive),
+      ];
+    }
+    try {
+      var q = _c.from('cargo_promo_plans').select().eq('kind', kind.wire);
+      if (activeOnly) q = q.eq('is_active', true);
+      final rows = await q.order('qty').timeout(_timeout);
+      return [for (final r in rows as List) MarketPromoPlan.fromJson(Map<String, dynamic>.from(r as Map))];
+    } on PostgrestException catch (e) {
+      if (e.code == '42P01' || e.code == 'PGRST205') return const [];
+      rethrow;
+    }
+  }
+
+  /// "İrəli çək" / "Premium": an order for my open load; the server sets
+  /// the price.
+  Future<CargoPromoOrder> createPromoOrder(String cargoId, MarketPromoKind kind, int qty) async {
+    final res = await _c
+        .rpc('cargo_promo_order_create', params: {'p_cargo': cargoId, 'p_kind': kind.wire, 'p_qty': qty}).timeout(_timeout);
+    return CargoPromoOrder.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
+  /// Admin: İrəli çək / Premium price (checked + logged on the server).
+  Future<void> adminSetPromoPlan(MarketPromoKind kind, int qty, double price, {bool active = true}) => _c.rpc(
+      'admin_cargo_set_promo_plan',
+      params: {'p_kind': kind.wire, 'p_qty': qty, 'p_price': price, 'p_active': active}).timeout(_timeout);
 
   /// Admin: price / on-off of one plan (checked + logged on the server).
   Future<void> adminSetVipPlan(int days, double price, {bool active = true}) =>
