@@ -35,9 +35,19 @@ class MarketRepository {
     try {
       return _list(await _c.rpc('market_search', params: params).timeout(_timeout));
     } on PostgrestException catch (e) {
+      if (!(e.code == 'PGRST202' || e.code == '42883')) rethrow;
+      // 0065 not run yet: every ad is in stock, and no ad has a wheel
+      // formula, equipment or a damage mark yet.
+      if (const ['p_availability', 'p_axle_formula', 'p_equipment', 'p_damaged'].any(params.containsKey)) {
+        if (params['p_availability'] == 'on_order' ||
+            const ['p_axle_formula', 'p_equipment', 'p_damaged'].any(params.containsKey)) {
+          return const [];
+        }
+        return search(f.copyWith(availability: () => null), offset: offset, limit: limit);
+      }
       // 0064 not run yet: the search without body type / other spellings.
       const added = ['p_body_type', 'p_brands', 'p_models'];
-      if (!added.any(params.containsKey) || !(e.code == 'PGRST202' || e.code == '42883')) rethrow;
+      if (!added.any(params.containsKey)) rethrow;
       return _list(await _c
           .rpc('market_search', params: {...params}..removeWhere((k, _) => added.contains(k)))
           .timeout(_timeout));
@@ -93,22 +103,19 @@ class MarketRepository {
     Future<Map<String, dynamic>> write(Map<String, dynamic> d) async => id == null
         ? await _c.from('market_listings').insert({...d, 'owner_id': _me}).select().single().timeout(_timeout)
         : await _c.from('market_listings').update(d).eq('id', id).select().single().timeout(_timeout);
-    try {
-      return MarketListing.fromJson(await write(data));
-    } on PostgrestException catch (e) {
-      // 0053 / 0064 not run yet: save without the "exact place" mark or
-      // the body type (both optional).
-      if (!(e.code == 'PGRST204' || e.code == '42703')) rethrow;
-      final missing = ['location_exact', 'body_type'].where(e.message.contains).toList();
-      if (missing.isEmpty) rethrow;
-      final rest = {...data}..removeWhere((k, _) => missing.contains(k));
+    // 0053 / 0064 / 0065 not run yet: save without the "exact place"
+    // mark, the body type or the 0065 choices (all optional). The
+    // database names one missing column at a time.
+    const optional = ['location_exact', 'body_type', 'availability', 'axle_formula', 'equipment', 'damaged'];
+    var rest = data;
+    while (true) {
       try {
         return MarketListing.fromJson(await write(rest));
-      } on PostgrestException catch (e2) {
-        // Both columns missing: the second one is named only now.
-        final more = ['location_exact', 'body_type'].where((k) => e2.message.contains(k) && rest.containsKey(k));
-        if (!(e2.code == 'PGRST204' || e2.code == '42703') || more.isEmpty) rethrow;
-        return MarketListing.fromJson(await write({...rest}..removeWhere((k, _) => more.contains(k))));
+      } on PostgrestException catch (e) {
+        if (!(e.code == 'PGRST204' || e.code == '42703')) rethrow;
+        final missing = optional.where((k) => e.message.contains(k) && rest.containsKey(k)).toList();
+        if (missing.isEmpty) rethrow;
+        rest = {...rest}..removeWhere((k, _) => missing.contains(k));
       }
     }
   }

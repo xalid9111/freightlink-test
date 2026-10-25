@@ -460,6 +460,17 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                           onSelected: (on) => setState(() => _d.bodyType = on ? b : null),
                         ),
                     ]),
+                    // In stock (default) or brought on order (owner, 25.10.2026).
+                    _label(s.t('mk_availability')),
+                    Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 6, runSpacing: 6, children: [
+                      for (final a in kMarketAvailability)
+                        ChoiceChip(
+                          key: ValueKey('mk-avail-$a'),
+                          label: Text(s.t('mk_avail_$a')),
+                          selected: _d.onOrder == (a == 'on_order'),
+                          onSelected: (_) => setState(() => _d.onOrder = a == 'on_order'),
+                        ),
+                    ])),
                   ])),
                   _Section(n: 3, title: s.t('mk_s_tech'), child: Column(children: [
                     Row(children: [
@@ -487,6 +498,40 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                       items: {for (final g in kMarketGearboxes) g: s.t('mk_gear_$g')},
                       onChanged: (v) => setState(() => _d.gearbox = v),
                     ),
+                    // Wheel formula, equipment, damage (owner, 25.10.2026):
+                    // not required; a second tap on a chosen one clears it.
+                    if (marketHasAxleFormula(_d.category)) ...[
+                      _label(s.t('mk_axle_formula')),
+                      Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 6, runSpacing: 6, children: [
+                        for (final a in kMarketAxleFormulas)
+                          ChoiceChip(
+                            key: ValueKey('mk-axle-$a'),
+                            label: Text(a),
+                            selected: _d.axleFormula == a,
+                            onSelected: (on) => setState(() => _d.axleFormula = on ? a : null),
+                          ),
+                      ])),
+                    ],
+                    _label(s.t('mk_equipment')),
+                    Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 6, runSpacing: 6, children: [
+                      for (final e in kMarketEquipment)
+                        FilterChip(
+                          key: ValueKey('mk-eq-$e'),
+                          label: Text(s.t('mk_eq_$e')),
+                          selected: _d.equipment.contains(e),
+                          onSelected: (on) => setState(() => on ? _d.equipment.add(e) : _d.equipment.remove(e)),
+                        ),
+                    ])),
+                    _label(s.t('mk_condition')),
+                    Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 6, runSpacing: 6, children: [
+                      for (final d in const [false, true])
+                        ChoiceChip(
+                          key: ValueKey('mk-damage-$d'),
+                          label: Text(s.t(d ? 'mk_damage_yes' : 'mk_damage_no')),
+                          selected: _d.damaged == d,
+                          onSelected: (on) => setState(() => _d.damaged = on ? d : null),
+                        ),
+                    ])),
                   ])),
                   _Section(n: 4, title: s.t('mk_s_price'), child: Row(children: [
                     Expanded(flex: 3, child: _num(_price, s.t('mk_price'))),
@@ -613,6 +658,15 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       ),
     );
   }
+
+  /// Small heading over a row of chips.
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 6),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        ),
+      );
 
   Widget _num(TextEditingController c, String label, {bool decimal = false}) => TextField(
         controller: c,

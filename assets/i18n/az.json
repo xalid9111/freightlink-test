@@ -1192,5 +1192,18 @@
   "cargo_vip_body": "VIP yük Yüklər səhifəsində qızılı VIP çərçivədə, növbə ilə önə çıxaraq göstərilir. Ödənişdən sonra avtomatik VIP olur.",
   "cargo_vip_pay_soon": "Kartla ödəniş tezliklə açılacaq. Açılan kimi buradan ödəyib yükünüzü dərhal VIP edə biləcəksiniz.",
   "cargo_vip_failed": "Sifariş yaradılmadı. Yük aktiv olmalıdır; yenidən cəhd edin.",
-  "cargo_vip_not_ready": "Yük VIP hələ hazırlanır. Bir az sonra yenidən yoxlayın."
+  "cargo_vip_not_ready": "Yük VIP hələ hazırlanır. Bir az sonra yenidən yoxlayın.",
+  "mk_availability": "Status",
+  "mk_avail_in_stock": "Satışdadır",
+  "mk_avail_on_order": "Sifarişlə",
+  "mk_popular_brands": "Populyar markalar",
+  "mk_axle_formula": "Təkər düsturu",
+  "mk_equipment": "Təchizat",
+  "mk_eq_retarder": "Retarder",
+  "mk_eq_adr": "ADR",
+  "mk_eq_air_conditioning": "Kondisioner",
+  "mk_eq_sleeper": "Yataq",
+  "mk_condition": "Vəziyyəti",
+  "mk_damage_no": "Vuruğu yoxdur",
+  "mk_damage_yes": "Vuruğu var"
 }

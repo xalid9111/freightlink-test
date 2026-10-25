@@ -411,6 +411,10 @@ class _SearchPanelState extends State<_SearchPanel> {
   late final _pMin = TextEditingController(text: widget.filter.minPrice?.round().toString() ?? '');
   late final _pMax = TextEditingController(text: widget.filter.maxPrice?.round().toString() ?? '');
   late final _city = TextEditingController(text: widget.filter.city ?? '');
+  late String? _avail = widget.filter.availability;
+  late String? _axle = widget.filter.axleFormula;
+  late final _equip = {...widget.filter.equipment};
+  late bool? _damaged = widget.filter.damaged;
 
   @override
   void didUpdateWidget(covariant _SearchPanel old) {
@@ -420,6 +424,16 @@ class _SearchPanelState extends State<_SearchPanel> {
       _cat = widget.filter.category;
       _brand = widget.filter.brand;
       _model = widget.filter.model;
+    }
+    final f = widget.filter, o = old.filter;
+    if (f.availability != o.availability || f.axleFormula != o.axleFormula ||
+        f.equipment.join(',') != o.equipment.join(',') || f.damaged != o.damaged) {
+      _avail = f.availability;
+      _axle = f.axleFormula;
+      _equip
+        ..clear()
+        ..addAll(f.equipment);
+      _damaged = f.damaged;
     }
   }
 
@@ -443,6 +457,10 @@ class _SearchPanelState extends State<_SearchPanel> {
         minPrice: () => _num(_pMin),
         maxPrice: () => _num(_pMax),
         city: () => _city.text.trim().isEmpty ? null : _city.text.trim(),
+        availability: () => _avail,
+        axleFormula: () => marketHasAxleFormula(_cat) ? _axle : null,
+        equipment: () => [for (final e in kMarketEquipment) if (_equip.contains(e)) e],
+        damaged: () => _damaged,
       ));
 
   @override
@@ -563,6 +581,43 @@ class _SearchPanelState extends State<_SearchPanel> {
             ),
           ]);
         }),
+        // Same choices as the phone's filter (owner, 25.10.2026, 0065): a
+        // second click on a chosen one clears it; applied with "Axtar".
+        const SizedBox(height: 12),
+        Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          for (final a in kMarketAvailability)
+            ChoiceChip(
+              key: ValueKey('desk-mk-avail-$a'),
+              label: Text(s.t('mk_avail_$a')),
+              selected: _avail == a,
+              onSelected: (on) => setState(() => _avail = on ? a : null),
+            ),
+          const SizedBox(width: 10),
+          if (marketHasAxleFormula(_cat))
+            for (final a in kMarketAxleFormulas)
+              ChoiceChip(
+                key: ValueKey('desk-mk-axle-$a'),
+                label: Text(a),
+                selected: _axle == a,
+                onSelected: (on) => setState(() => _axle = on ? a : null),
+              ),
+          const SizedBox(width: 10),
+          for (final e in kMarketEquipment)
+            FilterChip(
+              key: ValueKey('desk-mk-eq-$e'),
+              label: Text(s.t('mk_eq_$e')),
+              selected: _equip.contains(e),
+              onSelected: (on) => setState(() => on ? _equip.add(e) : _equip.remove(e)),
+            ),
+          const SizedBox(width: 10),
+          for (final d in const [false, true])
+            ChoiceChip(
+              key: ValueKey('desk-mk-damage-$d'),
+              label: Text(s.t(d ? 'mk_damage_yes' : 'mk_damage_no')),
+              selected: _damaged == d,
+              onSelected: (on) => setState(() => _damaged = on ? d : null),
+            ),
+        ]),
       ]),
     );
   }

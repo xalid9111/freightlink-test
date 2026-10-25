@@ -16,9 +16,9 @@ select tests.check((select count(*) = 1 from pg_constraint
                      where conrelid = 'public.market_listings'::regclass and contype = 'c'
                        and pg_get_constraintdef(oid) like '%''semitrailer''%'),
   'C1b one category check (replaced, not doubled)');
-select tests.check((select count(*) = 20 from pg_constraint
+select tests.check((select count(*) = 23 from pg_constraint
                      where conrelid = 'public.market_listings'::regclass and contype = 'c'),
-  'C1c the 19 checks of 0040 are all still there, + body type = 20');
+  'C1c the 19 checks of 0040 are all still there, + body type + 3 of 0065 = 23');
 
 set role authenticated;
 select tests.login(:seller);

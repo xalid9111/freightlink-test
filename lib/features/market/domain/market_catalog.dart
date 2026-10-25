@@ -371,6 +371,13 @@ int? marketBrandMatch(String brand, String query) {
 }
 
 /// Brands of a category (alphabetical).
+/// Popular brands on top of the filter, with their logos (owner,
+/// 25.10.2026): tractors first, then semitrailers.
+const kMarketPopularBrands = [
+  'Mercedes-Benz', 'DAF', 'Scania', 'Volvo', 'MAN', 'Renault', 'Iveco', 'KAMAZ', //
+  'Schmitz Cargobull', 'Krone', 'Kögel', 'MAZ',
+];
+
 List<String> marketBrands(MarketCategory c) => (kMarketCatalog[c]?.keys.toList() ?? <String>[])..sort();
 
 /// Models of a brand in a category.

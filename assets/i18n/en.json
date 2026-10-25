@@ -1192,5 +1192,18 @@
   "cargo_vip_body": "A VIP load is shown on the Loads page in the gold VIP frame and comes to the front in turn. It becomes VIP automatically after payment.",
   "cargo_vip_pay_soon": "Card payment opens soon. Then you can pay here and make your load VIP at once.",
   "cargo_vip_failed": "The order could not be created. The load must be active; please try again.",
-  "cargo_vip_not_ready": "Load VIP is not ready yet. Please check again a bit later."
+  "cargo_vip_not_ready": "Load VIP is not ready yet. Please check again a bit later.",
+  "mk_availability": "Availability",
+  "mk_avail_in_stock": "In stock",
+  "mk_avail_on_order": "On order",
+  "mk_popular_brands": "Popular brands",
+  "mk_axle_formula": "Wheel formula",
+  "mk_equipment": "Equipment",
+  "mk_eq_retarder": "Retarder",
+  "mk_eq_adr": "ADR",
+  "mk_eq_air_conditioning": "Air conditioning",
+  "mk_eq_sleeper": "Sleeper bunk",
+  "mk_condition": "Condition",
+  "mk_damage_no": "No damage",
+  "mk_damage_yes": "Damaged"
 }

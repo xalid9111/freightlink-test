@@ -1192,5 +1192,18 @@
   "cargo_vip_body": "VIP yük, Yükler sayfasında altın VIP çerçevede ve sırayla öne çıkarak gösterilir. Ödemeden sonra otomatik VIP olur.",
   "cargo_vip_pay_soon": "Kartla ödeme yakında açılacak. Açılınca buradan ödeyip yükünüzü hemen VIP yapabileceksiniz.",
   "cargo_vip_failed": "Sipariş oluşturulamadı. Yük aktif olmalıdır; tekrar deneyin.",
-  "cargo_vip_not_ready": "Yük VIP henüz hazırlanıyor. Biraz sonra tekrar deneyin."
+  "cargo_vip_not_ready": "Yük VIP henüz hazırlanıyor. Biraz sonra tekrar deneyin.",
+  "mk_availability": "Durum",
+  "mk_avail_in_stock": "Satışta",
+  "mk_avail_on_order": "Siparişle",
+  "mk_popular_brands": "Popüler markalar",
+  "mk_axle_formula": "Aks formülü",
+  "mk_equipment": "Donanım",
+  "mk_eq_retarder": "Retarder",
+  "mk_eq_adr": "ADR",
+  "mk_eq_air_conditioning": "Klima",
+  "mk_eq_sleeper": "Yatak",
+  "mk_condition": "Durumu",
+  "mk_damage_no": "Hasarsız",
+  "mk_damage_yes": "Hasarlı"
 }

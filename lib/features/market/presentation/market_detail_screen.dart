@@ -725,9 +725,31 @@ class _Specs extends StatelessWidget {
               ),
             ]),
           ),
+        // 0065, only what the seller gave; in stock is the usual case.
+        if (l.onOrder) _extra('mk-detail-on-order', Icons.schedule_outlined, s.t('mk_availability'), s.t('mk_avail_on_order')),
+        if (l.axleFormula != null)
+          _extra('mk-detail-axle', Icons.tire_repair_outlined, s.t('mk_axle_formula'), l.axleFormula!),
+        if (l.equipment.isNotEmpty)
+          _extra('mk-detail-equipment', Icons.build_outlined, s.t('mk_equipment'),
+              l.equipment.map((e) => s.t('mk_eq_$e')).join(', ')),
+        if (l.damaged != null)
+          _extra('mk-detail-damage', Icons.car_crash_outlined, s.t('mk_condition'),
+              s.t(l.damaged! ? 'mk_damage_yes' : 'mk_damage_no')),
       ]),
     );
   }
+
+  /// One more line under the specs: "Label: value".
+  Widget _extra(String key, IconData icon, String label, String value) => Padding(
+        key: ValueKey(key),
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, color: AppColors.accent, size: 20),
+          const SizedBox(width: 8),
+          Text('$label: ', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+          Flexible(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14))),
+        ]),
+      );
 }
 
 /// Seller: real profile data only (name, photo, online, verified).

@@ -182,7 +182,7 @@ void main() {
       expect(const MarketFilter(bodyType: 'x').toParams().containsKey('p_body_type'), isFalse);
       final repo = File('lib/features/market/data/market_repository.dart').readAsStringSync();
       expect(repo.contains("e.code == 'PGRST202'"), isTrue);
-      expect(repo.contains("['location_exact', 'body_type']"), isTrue);
+      expect(repo.contains("['location_exact', 'body_type',"), isTrue);
     });
 
     test('six languages: the two categories and every body type', () {
