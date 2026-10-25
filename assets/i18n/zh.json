@@ -907,6 +907,7 @@
   "mk_empty": "没有符合条件的信息。",
   "mk_filters": "筛选",
   "mk_brand": "品牌",
+  "mk_brand_not_found": "未找到品牌",
   "mk_model": "型号",
   "mk_city": "城市",
   "mk_price_from": "最低价格",

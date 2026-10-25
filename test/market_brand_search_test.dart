@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/market/domain/market_brand_index.dart';
+import 'package:freightlink/features/market/domain/market_catalog.dart';
 
 void main() {
   final rows = [
@@ -41,15 +42,44 @@ void main() {
     expect(brandInitials('Volvo'), 'VO');
   });
 
-  test('wired: the search box opens the page; free text still searchable', () {
+  test('wired: the search box opens the page; one tap on a brand picks it', () {
     final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
     expect(home, contains('readOnly: true'));
     expect(home, contains('onOpen: () => _openSearch(context, s, filter)'));
     final page = File('lib/features/market/presentation/market_brand_picker.dart').readAsStringSync();
-    expect(page, contains("ValueKey('mk-pick-text')"));
+    // Owner, 25.10.2026: no extra "«…» üzrə axtar" row and no second step.
+    expect(page, isNot(contains("ValueKey('mk-pick-text')")));
+    expect(page, isNot(contains('_ModelPage')));
+    expect(page, contains('Navigator.of(context).pop(MarketSearchPick(brand: brand))'));
+    expect(page, contains("s.t('mk_brand_not_found')"));
     expect(page, contains("s.t('mk_popular')"));
-    expect(page, contains("s.t('mk_all_models')"));
     final repo = File('lib/features/market/data/market_repository.dart').readAsStringSync();
     expect(repo, contains(".select('brand, model').eq('status', 'active')"));
+  });
+
+  group('typing filters at once (owner, 25.10.2026)', () {
+    test('first letters, any case, other spellings and languages', () {
+      expect(marketBrandMatch('Mercedes-Benz', 'mer'), 0);
+      expect(marketBrandMatch('Mercedes-Benz', 'MERCE'), 0);
+      expect(marketBrandMatch('Mercedes-Benz', 'мерс'), 0);
+      expect(marketBrandMatch('Mercedes-Benz', 'benz'), 1);
+      expect(marketBrandMatch('KAMAZ', 'кам'), 0);
+      expect(marketBrandMatch('GAZ', 'qazel'), 0);
+      expect(marketBrandMatch('Kögel', 'kog'), 0);
+      expect(marketBrandMatch('Kögel', 'KÖG'), 0);
+      expect(marketBrandMatch('Tırsan', 'tir'), 0);
+      expect(marketBrandMatch('Tırsan', 'TIRSAN'), 0);
+      expect(marketBrandMatch('Citroën', 'citroen'), 0);
+      expect(marketBrandMatch('Schmitz Cargobull', 'schmitzcargo'), 0);
+      expect(marketBrandMatch('Mercedes-Benz', 'xyz'), isNull);
+      expect(marketBrandMatch('DAF', ''), 0);
+    });
+
+    test('folding: Azerbaijani / Turkish letters, case, spaces', () {
+      expect(marketSearchKey('İSUZU'), 'isuzu');
+      expect(marketSearchKey('Tırsan'), 'tirsan');
+      expect(marketSearchKey('Ərsan Şüçğö'), 'ersansucgo');
+      expect(marketSearchKey('Gray & Adams'), 'grayadams');
+    });
   });
 }

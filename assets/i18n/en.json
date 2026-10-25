@@ -907,6 +907,7 @@
   "mk_empty": "No ads match this selection.",
   "mk_filters": "Filters",
   "mk_brand": "Brand",
+  "mk_brand_not_found": "No brand found",
   "mk_model": "Model",
   "mk_city": "City",
   "mk_price_from": "Price from",
