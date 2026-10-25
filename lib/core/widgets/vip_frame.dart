@@ -16,14 +16,18 @@ class VipPictureFrame extends StatelessWidget {
   final Widget child;
   /// Corner radius of the picture (matches the card).
   final double radius;
-  const VipPictureFrame({super.key, required this.child, this.radius = 14});
+  /// False: only the round VIP seal, no gold band, ribbon or sparkles
+  /// (TIR Bazarı feed, owner 25.10.2026).
+  final bool frame;
+  const VipPictureFrame({super.key, required this.child, this.radius = 14, this.frame = true});
 
   @override
   Widget build(BuildContext context) {
     return Stack(fit: StackFit.expand, children: [
       ClipRRect(borderRadius: BorderRadius.circular(radius), child: child),
       IgnorePointer(
-        child: CustomPaint(key: const ValueKey('vip-frame'), painter: VipFramePainter(radius: radius)),
+        child: CustomPaint(
+            key: ValueKey(frame ? 'vip-frame' : 'vip-seal'), painter: VipFramePainter(radius: radius, frame: frame)),
       ),
     ]);
   }
@@ -31,7 +35,8 @@ class VipPictureFrame extends StatelessWidget {
 
 class VipFramePainter extends CustomPainter {
   final double radius;
-  const VipFramePainter({this.radius = 14});
+  final bool frame;
+  const VipFramePainter({this.radius = 14, this.frame = true});
 
   static const _gold = AppColors.vipGold;
   static const _dark = AppColors.vipGoldDark;
@@ -51,6 +56,12 @@ class VipFramePainter extends CustomPainter {
     final s = math.min(size.width, size.height);
     final t = (s * 0.04).clamp(3.0, 9.0); // band width
     final rect = Offset.zero & size;
+    final c = Offset(s * 0.2, s * 0.2); // seal centre
+    final rr = s * 0.155; // seal radius
+    if (!frame) {
+      _seal(canvas, c, rr);
+      return;
+    }
 
     // 1) The gold band, a dark line inside it and a light edge outside.
     final band = RRect.fromRectAndRadius(rect.deflate(t / 2), Radius.circular(math.max(0, radius - t / 2)));
@@ -72,8 +83,6 @@ class VipFramePainter extends CustomPainter {
           ..color = _light.withValues(alpha: 0.9));
 
     // 2) Ribbon across the top-left corner, under the seal.
-    final c = Offset(s * 0.2, s * 0.2); // seal centre
-    final rr = s * 0.155; // seal radius
     final w = s * 0.075; // ribbon width
     final ribbon = Path()
       ..moveTo(0, s * 0.42 - w)
@@ -90,7 +99,34 @@ class VipFramePainter extends CustomPainter {
       ..color = _dark);
     canvas.restore();
 
-    // 3) The seal: gold ring, black disc, crown and "VIP".
+    // 3) The seal.
+    _seal(canvas, c, rr);
+
+    // 4) Small sparkles on the band (not near the heart, top right).
+    void sparkle(Offset p, double r) {
+      canvas.drawCircle(p, r * 0.9, Paint()
+        ..color = _light.withValues(alpha: 0.75)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.7));
+      final star = Path()
+        ..moveTo(p.dx, p.dy - r * 1.6)
+        ..quadraticBezierTo(p.dx, p.dy, p.dx + r * 1.6, p.dy)
+        ..quadraticBezierTo(p.dx, p.dy, p.dx, p.dy + r * 1.6)
+        ..quadraticBezierTo(p.dx, p.dy, p.dx - r * 1.6, p.dy)
+        ..quadraticBezierTo(p.dx, p.dy, p.dx, p.dy - r * 1.6)
+        ..close();
+      canvas.drawPath(star, Paint()..color = _spark);
+    }
+
+    final r = (s * 0.022).clamp(2.0, 6.0);
+    sparkle(Offset(size.width * 0.34, t / 2), r);
+    sparkle(Offset(size.width - t / 2, size.height * 0.36), r * 0.9);
+    sparkle(Offset(t / 2, size.height * 0.58), r);
+    sparkle(Offset(size.width * 0.5, size.height - t / 2), r);
+    sparkle(Offset(size.width - t * 0.9, size.height - t * 0.9), r * 0.9);
+  }
+
+  /// The seal: gold ring, black disc, crown and "VIP".
+  void _seal(Canvas canvas, Offset c, double rr) {
     canvas.drawCircle(c + Offset(0, rr * 0.06), rr * 1.04, Paint()
       ..color = _ink.withValues(alpha: 0.45)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5));
@@ -128,30 +164,8 @@ class VipFramePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, Offset(c.dx - tp.width / 2, c.dy - tp.height / 2 + rr * 0.16));
-
-    // 4) Small sparkles on the band (not near the heart, top right).
-    void sparkle(Offset p, double r) {
-      canvas.drawCircle(p, r * 0.9, Paint()
-        ..color = _light.withValues(alpha: 0.75)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.7));
-      final star = Path()
-        ..moveTo(p.dx, p.dy - r * 1.6)
-        ..quadraticBezierTo(p.dx, p.dy, p.dx + r * 1.6, p.dy)
-        ..quadraticBezierTo(p.dx, p.dy, p.dx, p.dy + r * 1.6)
-        ..quadraticBezierTo(p.dx, p.dy, p.dx - r * 1.6, p.dy)
-        ..quadraticBezierTo(p.dx, p.dy, p.dx, p.dy - r * 1.6)
-        ..close();
-      canvas.drawPath(star, Paint()..color = _spark);
-    }
-
-    final r = (s * 0.022).clamp(2.0, 6.0);
-    sparkle(Offset(size.width * 0.34, t / 2), r);
-    sparkle(Offset(size.width - t / 2, size.height * 0.36), r * 0.9);
-    sparkle(Offset(t / 2, size.height * 0.58), r);
-    sparkle(Offset(size.width * 0.5, size.height - t / 2), r);
-    sparkle(Offset(size.width - t * 0.9, size.height - t * 0.9), r * 0.9);
   }
 
   @override
-  bool shouldRepaint(covariant VipFramePainter old) => old.radius != radius;
+  bool shouldRepaint(covariant VipFramePainter old) => old.radius != radius || old.frame != frame;
 }

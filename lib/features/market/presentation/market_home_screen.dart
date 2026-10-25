@@ -246,11 +246,13 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      // Rows as tall as the card at the chosen text size, a
+                      // little more room between them (owner, 25.10.2026).
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                         maxCrossAxisExtent: 260,
-                        mainAxisSpacing: 12,
+                        mainAxisSpacing: 18,
                         crossAxisSpacing: 12,
-                        mainAxisExtent: MarketFeedCard.extent,
+                        mainAxisExtent: MarketFeedCard.extentFor(context),
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, i) => MarketFeedCard(

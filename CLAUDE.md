@@ -126,7 +126,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   (the default look). Load page text is larger (info rows 15/17).
 - TIR Bazarı phone page (owner, 24.10.2026): no VIP row under the banner;
   VIP ads stand among the ads in the same chessboard order as the Loads
-  page (ad–VIP, VIP–ad …, VIP order moves on every few minutes).
+  page (ad–VIP, VIP–ad …, VIP order moves on every few minutes). On this
+  feed a VIP picture shows only the round VIP seal, no gold frame (owner,
+  25.10.2026); rows grow with the text size so cards never overlap.
 - TIR Bazarı catalogue (owner, 25.10.2026, 0064): ~130 brands; categories
   TIR · Orta yük · Kiçik yük · Qoşqu · Yarımqoşqu · Tikinti · Digər; brand,
   model, category and body type (optional chips in the form) are separate.
