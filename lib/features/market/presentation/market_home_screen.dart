@@ -389,6 +389,11 @@ class _SearchBox extends StatelessWidget {
         key: const ValueKey('mk-search-box'),
         controller: controller,
         readOnly: true,
+        // Only opens the Marka page: never focused, no cursor and no text
+        // selection when the page comes back (owner, 25.10.2026).
+        canRequestFocus: false,
+        showCursor: false,
+        enableInteractiveSelection: false,
         onTap: onOpen,
         decoration: InputDecoration(
           hintText: hint,
