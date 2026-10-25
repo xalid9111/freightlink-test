@@ -85,7 +85,10 @@ void main() {
     expect(File('lib/features/market/presentation/market_card.dart').readAsStringSync(),
         contains('if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s))'));
     final detail = File('lib/features/market/presentation/market_detail_screen.dart').readAsStringSync();
-    for (final k in ['mk-detail-on-order', 'mk-detail-axle', 'mk-detail-equipment', 'mk-detail-damage']) {
+    // One under the other with big icons (owner, 25.10.2026).
+    expect(detail, contains("key: ValueKey('mk-detail-\$key')"));
+    expect(detail, contains('child: Icon(icon, color: AppColors.accent, size: 26)'));
+    for (final k in ["('on-order',", "('axle',", "('equipment',", "('damage',", "('body',", "('mileage',"]) {
       expect(detail, contains(k));
     }
     final desk = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
