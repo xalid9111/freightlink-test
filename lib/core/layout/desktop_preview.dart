@@ -132,7 +132,7 @@ class _DesktopPreviewFrameState extends ConsumerState<_DesktopPreviewFrame> {
                     const Icon(Icons.smartphone, color: Colors.white, size: 18),
                     const SizedBox(width: 6),
                     Text(ref.watch(stringsProvider).t('desk_preview_exit'),
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),

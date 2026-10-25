@@ -110,7 +110,7 @@ class _ActivityButton extends StatelessWidget {
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.5, height: 1.1, fontWeight: FontWeight.w700, color: fg),
+                  style: TextStyle(fontSize: 11.5, height: 1.1, fontWeight: FontWeight.w500, color: fg),
                 ),
               ],
             ),

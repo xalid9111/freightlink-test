@@ -257,7 +257,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
                       child: Text(strings.t('chat_people').toUpperCase(),
-                          style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                          style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w500)),
                     ),
                     people.when(
                       loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
@@ -323,7 +323,7 @@ class _Deletable extends StatelessWidget {
           children: [
             const Icon(Icons.delete_outline, color: Colors.white),
             const SizedBox(width: 6),
-            Text(strings.t('chat_delete'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            Text(strings.t('chat_delete'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -352,7 +352,7 @@ class _UnreadBadge extends StatelessWidget {
       decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(12)),
       child: Text(
         count > 99 ? '99+' : '$count',
-        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -388,7 +388,7 @@ class _GroupTile extends StatelessWidget {
                     Text(group.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
                     const SizedBox(height: 3),
                     Text(label, style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
                   ],
@@ -459,7 +459,7 @@ class _ConversationTile extends ConsumerWidget {
                                 name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text),
                               ),
                             ),
                             if (profile?.isVerified == true) ...[

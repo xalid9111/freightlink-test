@@ -377,7 +377,7 @@ class _DeskHero extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
                       shape: const StadiumBorder(),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                     ),
                     icon: const Icon(Icons.add, size: 26),
                     label: Text(strings.t('nav_add_cargo')),
@@ -424,7 +424,7 @@ class _DeskStat extends StatelessWidget {
               children: [
                 Icon(icon, size: 22, color: color),
                 const SizedBox(width: 10),
-                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
               ],
             ),
           ),
@@ -578,7 +578,7 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
                     child: Text(first,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.text)),
                   ),
                 ],
                 const SizedBox(width: 6),
@@ -664,7 +664,7 @@ class _DeskRouteSearch extends ConsumerWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(strings.t('route_search_title'),
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
                   ),
                   if (filter.isActive) ...[
                     TextButton.icon(
@@ -706,7 +706,7 @@ class _DeskRouteSearch extends ConsumerWidget {
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 66),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                       ),
                       icon: const Icon(Icons.search, size: 26),
                       label: Text(strings.t('desk_find_loads'), maxLines: 1, overflow: TextOverflow.ellipsis),

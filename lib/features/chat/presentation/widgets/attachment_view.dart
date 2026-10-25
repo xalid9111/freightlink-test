@@ -88,7 +88,7 @@ class _FileRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(message.attachmentName ?? 'file',
-                      maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+                      maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: color, fontWeight: FontWeight.w400)),
                   Text(_size(message.attachmentSize), style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11)),
                 ],
               ),

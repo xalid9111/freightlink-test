@@ -370,7 +370,7 @@ class _EnRouteButton extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(strings.t('enroute_title'), style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.text)),
+                  Text(strings.t('enroute_title'), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
                   Text(strings.t('enroute_sub'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                 ]),
               ),
@@ -482,7 +482,7 @@ class _AddLoadButton extends StatelessWidget {
                   child: Text(label,
                       maxLines: 1,
                       softWrap: false,
-                      style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w800)),
+                      style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w400)),
                 ),
               ),
             ),
@@ -539,7 +539,7 @@ class _StatCard extends StatelessWidget {
                 Icon(icon, size: 10, color: color),
                 const SizedBox(width: 3),
                 Text(value,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.text, height: 1)),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: AppColors.text, height: 1)),
               ],
             ),
           ),
@@ -694,7 +694,7 @@ class _RouteSearch extends ConsumerWidget {
                   _label(code, city, lang, strings.t('route_any_country')),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w400, color: AppColors.text),
                 ),
               ],
             ),
@@ -716,7 +716,7 @@ class _RouteSearch extends ConsumerWidget {
                   Icon(Icons.search, size: 18, color: AppColors.accent),
                   const SizedBox(width: 6),
                   Text(strings.t('route_search_title'),
-                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.text)),
+                      style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
                   const Spacer(),
                   if (filter.isActive)
                     TextButton(

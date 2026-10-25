@@ -183,7 +183,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
                         children: [
                           Expanded(
                             child: Text('${_name(users, a.advertiserId)}${(a.title ?? '').isEmpty ? '' : ' · ${a.title}'}',
-                                style: const TextStyle(fontWeight: FontWeight.w700)),
+                                style: const TextStyle(fontWeight: FontWeight.w400)),
                           ),
                           if (ordered.contains(a)) ...[
                             AdminChip('Sıra ${ordered.indexOf(a) + 1}', color: AppColors.accent),
@@ -379,7 +379,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text('⚠ Marşrut tanınmır — reklam heç bir yükdə görünməyəcək. "Redaktə et" ilə düzəldin.',
-                    style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w400)),
               ),
             if ((o.routeFrom ?? '').isNotEmpty || (o.routeTo ?? '').isNotEmpty)
               KV('Hədəf marşrut', '${o.routeFrom ?? '—'} → ${o.routeTo ?? '—'}'),

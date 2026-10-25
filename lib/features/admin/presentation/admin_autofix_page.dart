@@ -137,7 +137,7 @@ class AdminAutoFixPage extends ConsumerWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Expanded(child: Text('Problemlər', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+              const Expanded(child: Text('Problemlər', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
               ChoiceChip(
                 label: const Text('Açıq'),
                 selected: !showAll,
@@ -309,10 +309,10 @@ class _ErrorCardState extends State<_ErrorCard> {
               style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
           if (_open) ...[
             const SizedBox(height: 8),
-            const Text('Addımlar (son hərəkətlər):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+            const Text('Addımlar (son hərəkətlər):', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 12.5)),
             SelectableText(txt(r['breadcrumbs']), style: const TextStyle(fontSize: 12, height: 1.35)),
             const SizedBox(height: 8),
-            const Text('Stack / log:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+            const Text('Stack / log:', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 12.5)),
             SelectableText(txt(r['stack']), style: AppFonts.mono(size: 11, weight: FontWeight.w400)),
             const SizedBox(height: 6),
             Text('Versiya: ${txt(r['app_version'])}\nBrauzer: ${txt(r['user_agent'])}',
@@ -428,7 +428,7 @@ class _CiCard extends StatelessWidget {
               Icon(Icons.fact_check_outlined, color: AppColors.accent),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('GitHub yoxlaması (analyze + testlər)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                child: Text('GitHub yoxlaması (analyze + testlər)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               ),
               TextButton(onPressed: () => _setToken(context), child: const Text('Açar')),
             ],

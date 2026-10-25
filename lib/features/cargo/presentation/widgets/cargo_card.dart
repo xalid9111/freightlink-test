@@ -63,7 +63,7 @@ class CargoCard extends ConsumerWidget {
                       '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)}  →  ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'.trim(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                      style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w400, color: AppColors.text),
                     ),
                     const SizedBox(height: 3),
                     Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -163,7 +163,7 @@ class CargoCard extends ConsumerWidget {
                           owner.fullName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.text),
+                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w400, color: AppColors.text),
                         ),
                       ),
                       if (owner.isVerified) ...[
@@ -211,10 +211,10 @@ class CargoCard extends ConsumerWidget {
               Row(
                 children: [
                   Text('${strings.t('card_pickup')} ', style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-                  Text(dateFmt.format(cargo.pickupDate), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text(dateFmt.format(cargo.pickupDate), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
                   const Spacer(),
                   if (cargo.distanceKm != null)
-                    Text('≈ ${_num(cargo.distanceKm!)} km', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('≈ ${_num(cargo.distanceKm!)} km', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
                 ],
               ),
               const SizedBox(height: 10),
@@ -228,7 +228,7 @@ class CargoCard extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(s.$1, style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
-                          Text(s.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          Text(s.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
                         ],
                       ),
                     ),
@@ -310,7 +310,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: fg)),
+      child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: fg)),
     );
   }
 }
@@ -447,7 +447,7 @@ class CargoTile extends ConsumerWidget {
                       .trim(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.text, height: 1.2),
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.2),
                 ),
                 line(Icons.scale_outlined, weight),
                 if (type != null) line(Icons.local_shipping_outlined, type),

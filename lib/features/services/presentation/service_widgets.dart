@@ -239,7 +239,7 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
     final phone = (p.phone ?? '').trim();
     final canMessage = p.ownerId != null && p.ownerId != me;
     final pad = widget.dense ? const EdgeInsets.symmetric(horizontal: 6, vertical: 8) : const EdgeInsets.symmetric(horizontal: 10, vertical: 12);
-    final style = TextStyle(fontSize: widget.dense ? 12 : 13.5, fontWeight: FontWeight.w600);
+    final style = TextStyle(fontSize: widget.dense ? 12 : 13.5, fontWeight: FontWeight.w400);
 
     Widget btn({required IconData icon, required String label, VoidCallback? onTap, bool primary = false}) {
       final child = Row(

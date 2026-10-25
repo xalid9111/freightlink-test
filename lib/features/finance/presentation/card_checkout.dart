@@ -148,7 +148,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(children: [
-            Expanded(child: Text(s.t('pay_sheet_title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+            Expanded(child: Text(s.t('pay_sheet_title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
             IconButton(onPressed: _busy ? null : _close, icon: const Icon(Icons.close)),
           ]),
           if (isTest) ...[
@@ -160,10 +160,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             const SizedBox(height: 10),
           ],
           Text(s.t('pay_amount'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-          Text(money(_amount, _currency), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+          Text(money(_amount, _currency), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           if (p == null) ...[
-            Text(s.t('pay_choose_method'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(s.t('pay_choose_method'), style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             for (final m in widget.methods)
               ListTile(
@@ -188,7 +188,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.line)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Row(children: [Icon(_icon(_method)), const SizedBox(width: 8), Expanded(child: Text(s.t('pay_test_page'), style: const TextStyle(fontWeight: FontWeight.w700)))]),
+                Row(children: [Icon(_icon(_method)), const SizedBox(width: 8), Expanded(child: Text(s.t('pay_test_page'), style: const TextStyle(fontWeight: FontWeight.w400)))]),
                 const SizedBox(height: 10),
                 FilledButton(
                   onPressed: _busy || _locked ? null : () => _run(() => repo.completeTestPayment(p.id, success: true)),

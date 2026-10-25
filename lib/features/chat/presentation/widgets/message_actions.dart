@@ -202,7 +202,7 @@ class ChatDateChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(color: ChatColors.dateChip, borderRadius: BorderRadius.circular(8)),
-          child: Text(label, style: TextStyle(color: ChatColors.meta, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          child: Text(label, style: TextStyle(color: ChatColors.meta, fontSize: 12.5, fontWeight: FontWeight.w400)),
         ),
       ),
     );

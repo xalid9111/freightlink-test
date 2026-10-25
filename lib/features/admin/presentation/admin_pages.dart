@@ -179,7 +179,7 @@ class AdminDashboardPage extends ConsumerWidget {
               child: Text(c,
                   style: TextStyle(
                     color: header ? AppColors.textSoft : AppColors.text,
-                    fontWeight: header ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: header ? FontWeight.w600 : FontWeight.w400,
                     fontSize: 13,
                   )),
             ),
@@ -1404,7 +1404,7 @@ class _CargoVipPricesCardState extends ConsumerState<CargoVipPricesCard> {
           const Row(children: [
             Icon(Icons.workspace_premium, color: AppColors.vipGold),
             SizedBox(width: 8),
-            Expanded(child: Text('Yük VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+            Expanded(child: Text('Yük VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
           ]),
           const SizedBox(height: 4),
           Text('İstifadəçi öz yükündə "VIP et" basanda bu qiymətlərlə kartla ödəyir; ödənişdən sonra yük avtomatik VIP olur.',
@@ -1418,7 +1418,7 @@ class _CargoVipPricesCardState extends ConsumerState<CargoVipPricesCard> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w700))),
+                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w400))),
                     SizedBox(
                       width: 110,
                       child: TextField(

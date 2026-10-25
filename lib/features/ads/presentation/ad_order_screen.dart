@@ -252,7 +252,7 @@ class _Line extends StatelessWidget {
           SizedBox(width: 120, child: Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 13))),
           Expanded(
             child: Text(value,
-                style: TextStyle(fontSize: strong ? 17 : 13.5, fontWeight: strong ? FontWeight.w800 : FontWeight.w500)),
+                style: TextStyle(fontSize: strong ? 17 : 13.5, fontWeight: strong ? FontWeight.w600 : FontWeight.w400)),
           ),
         ],
       ),
@@ -311,7 +311,7 @@ class _PaymentCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(s.t('adv_amount'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-                    Text(adMoney(order.price, order.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                    Text(adMoney(order.price, order.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -439,7 +439,7 @@ class _Timeline extends StatelessWidget {
                     s.t(key),
                     style: TextStyle(
                       fontSize: 13.5,
-                      fontWeight: i == current ? FontWeight.w800 : FontWeight.w500,
+                      fontWeight: i == current ? FontWeight.w500 : FontWeight.w400,
                       color: i <= current ? AppColors.text : AppColors.textSoft,
                     ),
                   ),

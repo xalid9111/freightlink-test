@@ -59,7 +59,7 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(strings.t('profile_title'),
-                          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
+                          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
                     Material(
                       color: AppColors.card,
@@ -145,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                         Icon(Icons.format_size, size: 20, color: AppColors.accent),
                         const SizedBox(width: 10),
                         Text(strings.t('text_size_title'),
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text)),
                       ]),
                       const SizedBox(height: 8),
                       const TextSizePicker(),
@@ -417,7 +417,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                           child: Text(name,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
                         IconButton(
                           tooltip: strings.t('profile_name_edit'),
@@ -527,7 +527,7 @@ class _Badge extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w400)),
         ],
       ),
     );
@@ -591,7 +591,7 @@ class _MenuRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: titleColor ?? AppColors.text)),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: titleColor ?? AppColors.text)),
                   if ((subtitle ?? '').isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(subtitle!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),

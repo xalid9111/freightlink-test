@@ -701,7 +701,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 14, left: 4),
                           child: Text(strings.t('cargo_pallet_unit'),
-                              style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                              style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w400)),
                         ),
                         suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                       ),
@@ -725,7 +725,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                  textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                 ),
                 onPressed: _submitting ? null : _submit,
                 icon: _submitting ? const SizedBox.shrink() : Icon(_isEdit ? Icons.check_circle_outline : Icons.add_circle, size: 24),
@@ -748,7 +748,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        child: Text(text, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
       );
 }
 
@@ -776,7 +776,7 @@ class _FormCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text)),
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
               if (subtitle != null) ...[
                 const SizedBox(height: 3),
                 Text(subtitle!, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
@@ -836,7 +836,7 @@ class _PaymentTerms extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onToggle(id, !ticked),
                     child: Text(strings.t(key),
-                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w400, color: AppColors.text)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -856,7 +856,7 @@ class _PaymentTerms extends StatelessWidget {
                       // Always visible (suffixText hides while the box is empty).
                       suffixIcon: Padding(
                         padding: const EdgeInsets.only(right: 12, left: 4),
-                        child: Text(currency, style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                        child: Text(currency, style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w400)),
                       ),
                       suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                       isDense: true,
@@ -903,7 +903,7 @@ class _PaymentTerms extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(strings.t(key),
-                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w400, color: AppColors.text)),
                 ),
               ]),
             ),
@@ -1040,18 +1040,18 @@ class _RouteEndButton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: cross,
           children: [
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
             const SizedBox(height: 4),
             if (p == null)
               Text(strings.t('city_pick'),
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.accent))
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: AppColors.accent))
             else ...[
               Text(
                 '${p.flag.isEmpty ? '' : '${p.flag} '}${p.cityLabel(lang)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.text),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: AppColors.text),
               ),
               Text(
                 p.countryLabel(lang),

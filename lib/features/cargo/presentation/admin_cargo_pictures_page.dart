@@ -116,7 +116,7 @@ class _AdminCargoPicturesPageState extends ConsumerState<AdminCargoPicturesPage>
         Row(children: [
           Expanded(
             child: Text('${_kTypeNames[_cat] ?? _cat} · ${list.length} / $kMaxCargoTemplates',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           FilledButton.icon(
             key: const ValueKey('adm-pic-add'),
@@ -144,7 +144,7 @@ class _AdminCargoPicturesPageState extends ConsumerState<AdminCargoPicturesPage>
                       errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft)),
                 ),
                 const SizedBox(width: 12),
-                Text('${i + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                Text('${i + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
                 const Spacer(),
                 IconButton(
                   tooltip: 'Yuxarı',

@@ -80,7 +80,7 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
-        const Text('Satış elanları (TIR Bazarı)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        const Text('Satış elanları (TIR Bazarı)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         const _VipPricesCard(),
         const SizedBox(height: 12),
@@ -111,7 +111,7 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
                               Expanded(
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Text('#${l.listingNo} · ${l.title}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                                      style: const TextStyle(fontWeight: FontWeight.w400)),
                                   Text('${marketPrice(l.price, l.currency)} · ${l.city ?? '—'} · ${l.photos.length} şəkil · ${l.views} baxış',
                                       style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                                   Text('Status: ${_labels[l.status]}${l.vipActive() ? ' · VIP${l.vipUntil == null ? '' : ' (${l.vipUntil!.day}.${l.vipUntil!.month})'}' : ''}',
@@ -217,7 +217,7 @@ class _VipPricesCardState extends ConsumerState<_VipPricesCard> {
           const Row(children: [
             Icon(Icons.workspace_premium, color: kVipGold),
             SizedBox(width: 8),
-            Expanded(child: Text('VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+            Expanded(child: Text('VIP qiymətləri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
           ]),
           const SizedBox(height: 4),
           Text('İstifadəçi "VIP et" basanda bu qiymətlərlə kartla ödəyir; ödənişdən sonra elan avtomatik VIP olur.',
@@ -232,7 +232,7 @@ class _VipPricesCardState extends ConsumerState<_VipPricesCard> {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   // Wrap: fits a narrow phone too.
                   child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w700))),
+                    SizedBox(width: 62, child: Text('${p.days} gün', style: const TextStyle(fontWeight: FontWeight.w400))),
                     SizedBox(
                       width: 110,
                       child: TextField(

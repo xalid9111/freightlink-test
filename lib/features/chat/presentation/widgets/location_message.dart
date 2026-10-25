@@ -146,7 +146,7 @@ class LocationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(strings.t('chat_location'), style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
+                  Text(strings.t('chat_location'), style: TextStyle(color: fg, fontWeight: FontWeight.w400)),
                   Text(
                     location.hasCoords
                         ? '${location.lat!.toStringAsFixed(5)}, ${location.lng!.toStringAsFixed(5)}'
@@ -159,7 +159,7 @@ class LocationCard extends StatelessWidget {
                       Icon(Icons.navigation, size: 14, color: fg),
                       const SizedBox(width: 4),
                       Text(strings.t('chat_location_navigate'),
-                          style: TextStyle(color: fg, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                          style: TextStyle(color: fg, fontSize: 12.5, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ],

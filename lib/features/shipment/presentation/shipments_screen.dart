@@ -161,7 +161,7 @@ class _ShipmentTileState extends ConsumerState<_ShipmentTile> {
             onTap: cargo == null ? null : () => context.pushOnce('/cargo/${cargo.id}'),
             title: cargo == null
                 ? Text(shipment.id)
-                : Text('${Countries.label(cargo.pickupCountry, localeCode)} → ${Countries.label(cargo.destinationCountry, localeCode)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                : Text('${Countries.label(cargo.pickupCountry, localeCode)} → ${Countries.label(cargo.destinationCountry, localeCode)}', style: const TextStyle(fontWeight: FontWeight.w400)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

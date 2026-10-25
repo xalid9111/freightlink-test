@@ -93,7 +93,7 @@ class _PhoneCountryFieldState extends ConsumerState<PhoneCountryField> {
                 children: [
                   Text(_country.flag, style: const TextStyle(fontSize: 20)),
                   const SizedBox(width: 6),
-                  Text('+${_country.dial}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text('+${_country.dial}', style: const TextStyle(fontWeight: FontWeight.w600)),
                   const Icon(Icons.arrow_drop_down, size: 20),
                 ],
               ),
@@ -202,7 +202,7 @@ class _CountrySheetState extends ConsumerState<_CountrySheet> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('+${c.dial}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                Text('+${c.dial}', style: const TextStyle(fontWeight: FontWeight.w400)),
                                 if (sel) ...[
                                   const SizedBox(width: 6),
                                   Icon(Icons.check, color: AppColors.accent, size: 18),

@@ -89,7 +89,7 @@ class _VipSheetState extends ConsumerState<_VipSheet> {
         Row(children: [
           const Icon(Icons.workspace_premium, color: kVipGold, size: 26),
           const SizedBox(width: 8),
-          Expanded(child: Text(s.t('mk_vip_title'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))),
+          Expanded(child: Text(s.t('mk_vip_title'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600))),
           IconButton(onPressed: _busy ? null : () => Navigator.pop(context), icon: const Icon(Icons.close)),
         ]),
         Text(s.t('mk_vip_body'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
@@ -114,8 +114,8 @@ class _VipSheetState extends ConsumerState<_VipSheet> {
                   onTap: () => setState(() => _days = p.days),
                   leading: Icon(p.days == chosen.days ? Icons.radio_button_checked : Icons.radio_button_off,
                       color: p.days == chosen.days ? AppColors.accent : AppColors.textSoft),
-                  title: Text(s.t('mk_vip_days', {'days': '${p.days}'}), style: const TextStyle(fontWeight: FontWeight.w700)),
-                  trailing: Text(money(p.price, p.currency), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  title: Text(s.t('mk_vip_days', {'days': '${p.days}'}), style: const TextStyle(fontWeight: FontWeight.w400)),
+                  trailing: Text(money(p.price, p.currency), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 ),
               const SizedBox(height: 10),
               if (canPay)

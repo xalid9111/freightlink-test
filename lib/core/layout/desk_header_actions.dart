@@ -82,7 +82,7 @@ class DeskHeaderActions extends ConsumerWidget {
                     child: Text(first,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
                   ),
                 ],
                 const SizedBox(width: 6),

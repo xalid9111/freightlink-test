@@ -153,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                   child: Column(
                     children: [
-                      Text(s.t('text_size_title'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(s.t('text_size_title'), style: TextStyle(color: AppColors.textSoft, fontSize: 13, fontWeight: FontWeight.w400)),
                       const SizedBox(height: 8),
                       // 1—2—3—4—5 (owner, 24.10.2026); same picker as in Profil.
                       const TextSizePicker(),
@@ -219,7 +219,7 @@ class _Section extends StatelessWidget {
           children: [
             Icon(icon, color: iconColor ?? AppColors.text, size: 24),
             const SizedBox(width: 14),
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
+            Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600))),
           ],
         ),
       ),

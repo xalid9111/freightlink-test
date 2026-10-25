@@ -52,7 +52,7 @@ class CallOptionsSheet extends StatelessWidget {
               child: FittedBox(
                 key: const ValueKey('call-number'),
                 fit: BoxFit.scaleDown,
-                child: SelectableText(shown, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text)),
+                child: SelectableText(shown, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
               ),
             ),
             const SizedBox(width: 8),

@@ -92,7 +92,7 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
                     Text(group?.name ?? strings.t('chat_group'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
                     Text(strings.t('chat_group_member_count', {'n': '${members.length}'}),
                         style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ],
@@ -192,7 +192,7 @@ class _SenderName extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.pushOnce('/user/$userId'),
       child: Text(p?.fullName ?? '…',
-          style: TextStyle(color: AppColors.accent, fontSize: 12.5, fontWeight: FontWeight.w700)),
+          style: TextStyle(color: AppColors.accent, fontSize: 12.5, fontWeight: FontWeight.w400)),
     );
   }
 }

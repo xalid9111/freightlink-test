@@ -295,7 +295,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                 child: Text(otherName ?? strings.t('nav_messages'),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
                               ),
                               if (otherProfile?.isVerified == true) ...[
                                 const SizedBox(width: 4),
@@ -311,7 +311,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                     : strings.t('chat_offline')),
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w400,
                               color: otherOnline ? AppColors.online : AppColors.textSoft,
                             ),
                           ),
@@ -422,7 +422,7 @@ class _TopicMarker extends StatelessWidget {
                   child: Text(label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSoft, fontWeight: FontWeight.w400)),
                 ),
               ],
             ),

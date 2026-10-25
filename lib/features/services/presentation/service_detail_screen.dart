@@ -455,7 +455,7 @@ class _AdvertiseCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(s.t('svc_advertise_title'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text(s.t('svc_advertise_title'), style: const TextStyle(fontWeight: FontWeight.w400)),
                   Text(s.t('svc_advertise_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                 ],
               ),
@@ -489,7 +489,7 @@ class _ProBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(s.t('svc_pro_banner'),
-                style: const TextStyle(color: kProGold, fontWeight: FontWeight.w800, fontSize: 13.5, letterSpacing: 0.3)),
+                style: const TextStyle(color: kProGold, fontWeight: FontWeight.w500, fontSize: 13.5, letterSpacing: 0.3)),
           ),
         ],
       ),
@@ -572,7 +572,7 @@ class _Reviews extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(s.t('svc_reviews').toUpperCase(),
-                  style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w500)),
             ),
             if (!isOwner)
               TextButton.icon(

@@ -254,7 +254,7 @@ class _BottomBar extends StatelessWidget {
                     softWrap: false,
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                       color: color,
                     ),
                   ),
@@ -366,7 +366,7 @@ class _SideNav extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(lang.toUpperCase(),
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.text)),
                       ),
                       Icon(Icons.expand_more, color: AppColors.textSoft),
                     ],
@@ -406,7 +406,7 @@ class _SideNav extends ConsumerWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(it.label,
-                      style: TextStyle(fontSize: 16.5, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: color)),
+                      style: TextStyle(fontSize: 16.5, fontWeight: selected ? FontWeight.w500 : FontWeight.w400, color: color)),
                 ),
                 if (it.badge > 0)
                   Container(
@@ -415,7 +415,7 @@ class _SideNav extends ConsumerWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(11)),
                     child: Text(it.badge > 99 ? '99+' : '${it.badge}',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                   ),
               ],
             ),
