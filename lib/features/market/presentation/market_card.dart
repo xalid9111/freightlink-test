@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/cities.dart';
 import '../../../core/constants/countries.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/vip_frame.dart';
@@ -117,6 +118,7 @@ class MarketCard extends ConsumerWidget {
                     // VIP: gold frame on the picture (owner, 24.10.2026).
                     if (vip) VipPictureFrame(radius: 0, child: MarketPhoto(url: l.cover)) else MarketPhoto(url: l.cover),
                     Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
+                    if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                     if (l.photos.length > 1 && !compact)
                       Positioned(
                         right: 8,
@@ -181,6 +183,21 @@ String marketCardDetails(MarketListing l) => [
 /// on top with only the heart on it, the texts under it — price, name,
 /// details, place + time, a small crown for VIP. The computer page and the
 /// other lists keep [MarketCard].
+/// "Sifarişlə" on the picture of an ad brought on order (0065).
+class MarketOnOrderTag extends StatelessWidget {
+  final AppStrings s;
+  const MarketOnOrderTag({super.key, required this.s});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('mk-on-order'),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(10)),
+        child: Text(s.t('mk_avail_on_order'),
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+      );
+}
+
 class MarketFeedCard extends ConsumerWidget {
   final MarketListing l;
   const MarketFeedCard({super.key, required this.l});
@@ -218,6 +235,7 @@ class MarketFeedCard extends ConsumerWidget {
                   else
                     MarketPhoto(url: l.cover),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
+                  if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                   if (l.status == MarketStatus.sold)
                     Container(
                       color: Colors.black.withValues(alpha: 0.55),

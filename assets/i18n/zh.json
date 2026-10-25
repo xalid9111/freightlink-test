@@ -1192,5 +1192,18 @@
   "cargo_vip_body": "VIP货源在货源页面以金色VIP边框显示，并轮流排在前面。付款后自动成为VIP。",
   "cargo_vip_pay_soon": "银行卡支付即将开放。届时可在此付款，立即将货源设为VIP。",
   "cargo_vip_failed": "无法创建订单。货源必须处于有效状态；请重试。",
-  "cargo_vip_not_ready": "货源VIP尚未就绪，请稍后再试。"
+  "cargo_vip_not_ready": "货源VIP尚未就绪，请稍后再试。",
+  "mk_availability": "供货状态",
+  "mk_avail_in_stock": "现货",
+  "mk_avail_on_order": "订购",
+  "mk_popular_brands": "热门品牌",
+  "mk_axle_formula": "驱动形式",
+  "mk_equipment": "配置",
+  "mk_eq_retarder": "缓速器",
+  "mk_eq_adr": "ADR",
+  "mk_eq_air_conditioning": "空调",
+  "mk_eq_sleeper": "卧铺",
+  "mk_condition": "车况",
+  "mk_damage_no": "无事故",
+  "mk_damage_yes": "有事故"
 }

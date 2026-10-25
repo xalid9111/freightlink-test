@@ -132,11 +132,12 @@ grant execute on function public.market_search(text, text, text, text, text, num
 revoke all on function public.market_name_key(text) from public, anon;
 grant execute on function public.market_name_key(text) to authenticated;
 
--- 5. Final check: one market_search (the new one), both rules in place.
+-- 5. Final check: the old 13-parameter market_search is gone, the new
+-- one and both rules are in place. (0065 adds a newer market_search with
+-- one more parameter and, run after this, removes this one again.)
 do $$
 begin
-  if (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-       where n.nspname = 'public' and p.proname = 'market_search') <> 1
+  if to_regprocedure('public.market_search(text, text, text, text, text, numeric, numeric, integer, integer, integer, boolean, integer, integer)') is not null
      or to_regprocedure('public.market_search(text, text, text, text, text, numeric, numeric, integer, integer, integer, boolean, integer, integer, text, text[], text[])') is null
      or not exists (select 1 from pg_constraint where conrelid = 'public.market_listings'::regclass
                      and conname = 'market_listings_body_type_check')

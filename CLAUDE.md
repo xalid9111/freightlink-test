@@ -132,6 +132,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   letter square; 48 brand logos (Simple Icons, car-logos-dataset, 3 from the
   owner — Mərhələ 3, 25.10.2026),
   on a white plate in day and night, also in the computer's brand list.
+- TIR Bazarı filter (owner, 25.10.2026, 0065): 12 popular brands with logos
+  on top (Mercedes-Benz · DAF · Scania · Volvo · MAN · Renault · Iveco ·
+  KAMAZ · Schmitz Cargobull · Krone · Kögel · MAZ). Optional per ad:
+  Satışdadır / Sifarişlə (empty = in stock), wheel formula (not for
+  trailers), equipment (Retarder · ADR · Kondisioner · Yataq), Vuruğu
+  yoxdur / var — in the form, the filter, the ad page and on the computer.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".

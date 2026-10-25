@@ -27,6 +27,26 @@ const kMarketBodyTypes = [
 
 String? marketBodyType(String? s) => kMarketBodyTypes.contains(s) ? s : null;
 
+/// In stock (default, also every older ad) or brought on order (owner,
+/// 25.10.2026, 0065).
+const kMarketAvailability = ['in_stock', 'on_order'];
+
+String? marketAvailability(String? s) => kMarketAvailability.contains(s) ? s : null;
+
+/// Wheel formula of a truck (owner, 25.10.2026, 0065) — not for trailers.
+const kMarketAxleFormulas = ['4x2', '4x4', '6x2', '6x4', '6x6', '8x4'];
+
+String? marketAxleFormula(String? s) => kMarketAxleFormulas.contains(s) ? s : null;
+
+/// Whether [c] has a wheel formula (trailers do not).
+bool marketHasAxleFormula(MarketCategory? c) => c != MarketCategory.trailer && c != MarketCategory.semitrailer;
+
+/// Truck equipment (owner, 25.10.2026, 0065); any of them, not required.
+const kMarketEquipment = ['retarder', 'adr', 'air_conditioning', 'sleeper'];
+
+List<String> marketEquipment(Object? v) =>
+    [for (final e in kMarketEquipment) if (v is List && v.contains(e)) e];
+
 const kMarketGearboxes = ['manual', 'automatic', 'semi'];
 const kMarketFuels = ['diesel', 'petrol', 'gas', 'electric', 'hybrid'];
 const kMarketMaxPhotos = 20;
@@ -47,6 +67,12 @@ class MarketListing {
   final String? brand, model;
   /// [kMarketBodyTypes] code or null (not said / before 0064).
   final String? bodyType;
+  /// Brought on order (0065); false = in stock, as every older ad.
+  final bool onOrder;
+  /// Wheel formula, equipment, damage (0065); null / empty = not given.
+  final String? axleFormula;
+  final List<String> equipment;
+  final bool? damaged;
   final int? year, mileageKm, powerHp;
   final double? engineL, price;
   final String? gearbox, fuel;
@@ -74,6 +100,10 @@ class MarketListing {
     this.brand,
     this.model,
     this.bodyType,
+    this.onOrder = false,
+    this.axleFormula,
+    this.equipment = const [],
+    this.damaged,
     this.year,
     this.mileageKm,
     this.powerHp,
@@ -123,6 +153,10 @@ class MarketListing {
         brand: j['brand'] as String?,
         model: j['model'] as String?,
         bodyType: marketBodyType(j['body_type'] as String?),
+        onOrder: j['availability'] == 'on_order',
+        axleFormula: marketAxleFormula(j['axle_formula'] as String?),
+        equipment: marketEquipment(j['equipment']),
+        damaged: j['damaged'] is bool ? j['damaged'] as bool : null,
         year: _i(j['year']),
         mileageKm: _i(j['mileage_km']),
         powerHp: _i(j['power_hp']),
@@ -154,6 +188,10 @@ class MarketDraft {
   MarketCategory category;
   String? brand, model, gearbox, fuel, country, city, phone, description;
   String? bodyType;
+  bool onOrder;
+  String? axleFormula;
+  List<String> equipment;
+  bool? damaged;
   int? year, mileageKm, powerHp;
   double? engineL, price, lat, lng;
   /// The seller marked the place on the map (0053).
@@ -166,6 +204,10 @@ class MarketDraft {
     this.brand,
     this.model,
     this.bodyType,
+    this.onOrder = false,
+    this.axleFormula,
+    List<String>? equipment,
+    this.damaged,
     this.gearbox,
     this.fuel,
     this.country,
@@ -182,13 +224,18 @@ class MarketDraft {
     this.locationExact = false,
     this.currency = 'USD',
     List<String>? photos,
-  }) : photos = photos ?? [];
+  })  : photos = photos ?? [],
+        equipment = equipment ?? [];
 
   factory MarketDraft.from(MarketListing l) => MarketDraft(
         category: l.category,
         brand: l.brand,
         model: l.model,
         bodyType: l.bodyType,
+        onOrder: l.onOrder,
+        axleFormula: l.axleFormula,
+        equipment: [...l.equipment],
+        damaged: l.damaged,
         gearbox: l.gearbox,
         fuel: l.fuel,
         country: l.country,
@@ -215,6 +262,11 @@ class MarketDraft {
         'model': _n(model),
         // Left out by the repository while 0064 is not run.
         'body_type': marketBodyType(bodyType),
+        // Left out by the repository while 0065 is not run.
+        'availability': onOrder ? 'on_order' : 'in_stock',
+        'axle_formula': marketHasAxleFormula(category) ? marketAxleFormula(axleFormula) : null,
+        'equipment': marketEquipment(equipment),
+        'damaged': damaged,
         'year': year,
         'mileage_km': mileageKm,
         'engine_l': engineL,
@@ -251,6 +303,12 @@ class MarketFilter {
   final String? q, brand, model, city;
   /// [kMarketBodyTypes] code (0064).
   final String? bodyType;
+  /// [kMarketAvailability] code (0065); null = all.
+  final String? availability;
+  /// Wheel formula, equipment (the ad has all of them), damage (0065).
+  final String? axleFormula;
+  final List<String> equipment;
+  final bool? damaged;
   final double? minPrice, maxPrice;
   final int? yearFrom, yearTo, maxMileage;
 
@@ -261,6 +319,10 @@ class MarketFilter {
     this.model,
     this.city,
     this.bodyType,
+    this.availability,
+    this.axleFormula,
+    this.equipment = const [],
+    this.damaged,
     this.minPrice,
     this.maxPrice,
     this.yearFrom,
@@ -268,7 +330,8 @@ class MarketFilter {
     this.maxMileage,
   });
 
-  bool get hasDetails => brand != null || model != null || city != null || bodyType != null || minPrice != null ||
+  bool get hasDetails => brand != null || model != null || city != null || bodyType != null || availability != null ||
+      axleFormula != null || equipment.isNotEmpty || damaged != null || minPrice != null ||
       maxPrice != null || yearFrom != null || yearTo != null || maxMileage != null;
 
   MarketFilter copyWith({
@@ -278,6 +341,10 @@ class MarketFilter {
     String? Function()? model,
     String? Function()? city,
     String? Function()? bodyType,
+    String? Function()? availability,
+    String? Function()? axleFormula,
+    List<String> Function()? equipment,
+    bool? Function()? damaged,
     double? Function()? minPrice,
     double? Function()? maxPrice,
     int? Function()? yearFrom,
@@ -291,6 +358,10 @@ class MarketFilter {
         model: model != null ? model() : this.model,
         city: city != null ? city() : this.city,
         bodyType: bodyType != null ? bodyType() : this.bodyType,
+        availability: availability != null ? availability() : this.availability,
+        axleFormula: axleFormula != null ? axleFormula() : this.axleFormula,
+        equipment: equipment != null ? equipment() : this.equipment,
+        damaged: damaged != null ? damaged() : this.damaged,
         minPrice: minPrice != null ? minPrice() : this.minPrice,
         maxPrice: maxPrice != null ? maxPrice() : this.maxPrice,
         yearFrom: yearFrom != null ? yearFrom() : this.yearFrom,
@@ -299,8 +370,9 @@ class MarketFilter {
       );
 
   /// Parameters of market_search(). The 0064 ones (body type, every
-  /// spelling of the brand / model) are added only when used, so the
-  /// search keeps working before 0064 is run.
+  /// spelling of the brand / model) and the 0065 ones (in stock / on order,
+  /// wheel formula, equipment, damage) are added only when used, so the search keeps working before they
+  /// are run.
   Map<String, dynamic> toParams({int limit = 20, int offset = 0}) {
     String? n(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
     final b = n(brand), m = n(model);
@@ -320,6 +392,10 @@ class MarketFilter {
       'p_limit': limit,
       'p_offset': offset,
       if (marketBodyType(bodyType) != null) 'p_body_type': bodyType,
+      if (marketAvailability(availability) != null) 'p_availability': availability,
+      if (marketAxleFormula(axleFormula) != null) 'p_axle_formula': axleFormula,
+      if (marketEquipment(equipment).isNotEmpty) 'p_equipment': marketEquipment(equipment),
+      if (damaged != null) 'p_damaged': damaged,
       if (brands.length > 1) 'p_brands': brands,
       if (models.length > 1) 'p_models': models,
     };
@@ -334,6 +410,10 @@ class MarketFilter {
       other.model == model &&
       other.city == city &&
       other.bodyType == bodyType &&
+      other.availability == availability &&
+      other.axleFormula == axleFormula &&
+      other.equipment.join(',') == equipment.join(',') &&
+      other.damaged == damaged &&
       other.minPrice == minPrice &&
       other.maxPrice == maxPrice &&
       other.yearFrom == yearFrom &&
@@ -342,7 +422,7 @@ class MarketFilter {
 
   @override
   int get hashCode =>
-      Object.hash(category, q, brand, model, city, bodyType, minPrice, maxPrice, yearFrom, yearTo, maxMileage);
+      Object.hash(category, q, brand, model, city, bodyType, availability, axleFormula, Object.hashAll(equipment), damaged, minPrice, maxPrice, yearFrom, yearTo, maxMileage);
 }
 
 /// "32 500 €" / "67 000 USD"

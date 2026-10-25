@@ -672,62 +672,75 @@ class _Specs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <(IconData, String, String)>[
-      (Icons.add_road, s.t('mk_mileage_short'), marketKm(l.mileageKm)),
-      (Icons.settings_suggest_outlined, s.t('mk_engine_short'), l.engineL == null ? '—' : '${l.engineL} L'),
-      (Icons.bolt, s.t('mk_power_short'), l.powerHp == null ? '—' : '${l.powerHp} ${s.t('mk_hp')}'),
-      (Icons.settings_outlined, s.t('mk_gearbox_short'), l.gearbox == null ? '—' : s.t('mk_gear_${l.gearbox}')),
-      (Icons.local_gas_station_outlined, s.t('mk_fuel_short'), l.fuel == null ? '—' : s.t('mk_fuel_${l.fuel}')),
-      (Icons.calendar_month_outlined, s.t('mk_year'), l.year?.toString() ?? '—'),
-    ];
+    String? v(String x) => x == '—' ? null : x;
+    // One under the other with big icons (owner, 25.10.2026); only what the
+    // seller gave. Status only when on order — in stock is the usual case.
+    final items = <(String, IconData, String, String?)>[
+      ('mileage', Icons.add_road, s.t('mk_mileage_short'), v(marketKm(l.mileageKm))),
+      ('engine', Icons.settings_suggest_outlined, s.t('mk_engine_short'), l.engineL == null ? null : '${l.engineL} L'),
+      ('power', Icons.bolt, s.t('mk_power_short'), l.powerHp == null ? null : '${l.powerHp} ${s.t('mk_hp')}'),
+      ('gearbox', Icons.settings_outlined, s.t('mk_gearbox_short'), l.gearbox == null ? null : s.t('mk_gear_${l.gearbox}')),
+      ('fuel', Icons.local_gas_station_outlined, s.t('mk_fuel_short'), l.fuel == null ? null : s.t('mk_fuel_${l.fuel}')),
+      ('year', Icons.calendar_month_outlined, s.t('mk_year'), l.year?.toString()),
+      // Body type only when the seller chose one (0064).
+      if (l.bodyType != null) ('body', Icons.local_shipping_outlined, s.t('mk_body_type'), s.t('mk_body_${l.bodyType}')),
+      // 0065.
+      if (l.onOrder) ('on-order', Icons.schedule_outlined, s.t('mk_availability'), s.t('mk_avail_on_order')),
+      if (l.axleFormula != null) ('axle', Icons.tire_repair_outlined, s.t('mk_axle_formula'), l.axleFormula),
+      if (l.equipment.isNotEmpty)
+        ('equipment', Icons.build_outlined, s.t('mk_equipment'), l.equipment.map((e) => s.t('mk_eq_$e')).join(', ')),
+      if (l.damaged != null)
+        ('damage', Icons.car_crash_outlined, s.t('mk_condition'), s.t(l.damaged! ? 'mk_damage_yes' : 'mk_damage_no')),
+    ].where((e) => e.$4 != null).toList();
+    if (items.isEmpty) return const SizedBox.shrink();
+    final rows = [for (final (key, icon, label, value) in items) _row(key, icon, label, value!)];
+    // A computer has room for two lists side by side.
+    final twoLists = columns > 3 && rows.length > 3;
+    Widget list(List<Widget> r) => Column(mainAxisSize: MainAxisSize.min, children: [
+          for (var i = 0; i < r.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: AppColors.line),
+            r[i],
+          ],
+        ]);
+    final half = (rows.length + 1) ~/ 2;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
           color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        GridView.count(
-        crossAxisCount: columns,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        // Cells grow taller with the chosen text size (1.35 at normal).
-        childAspectRatio: 1.35 / MediaQuery.textScalerOf(context).scale(1),
-        children: [
-          for (final (icon, label, value) in items)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(icon, color: AppColors.accent, size: 22),
-                const SizedBox(height: 4),
-                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
-                const SizedBox(height: 2),
-                // Long values (e.g. "1 250 000 km") shrink instead of being cut.
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(value, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                ),
-              ]),
-            ),
-        ],
-      ),
-        // Body type only when the seller chose one (0064); the grid of six
-        // stays as it was.
-        if (l.bodyType != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
-            child: Row(children: [
-              Icon(Icons.local_shipping_outlined, color: AppColors.accent, size: 20),
-              const SizedBox(width: 8),
-              Text('${s.t('mk_body_type')}: ', style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
-              Flexible(
-                child: Text(s.t('mk_body_${l.bodyType}'),
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              ),
-            ]),
-          ),
-      ]),
+      child: twoLists
+          ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: list(rows.sublist(0, half))),
+              const SizedBox(width: 28),
+              Expanded(child: list(rows.sublist(half))),
+            ])
+          : list(rows),
     );
   }
+
+  /// One line: icon in a tinted square, the label, the value on the right.
+  Widget _row(String key, IconData icon, String label, String value) => Padding(
+        key: ValueKey('mk-detail-$key'),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.accentFill.withValues(alpha: AppColors.isDay ? 0.10 : 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.accent, size: 26),
+          ),
+          const SizedBox(width: 14),
+          Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 15)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800, fontSize: 16)),
+          ),
+        ]),
+      );
 }
 
 /// Seller: real profile data only (name, photo, online, verified).

@@ -438,6 +438,10 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
   late final _yearTo = TextEditingController(text: widget.filter.yearTo?.toString() ?? '');
   late final _maxKm = TextEditingController(text: widget.filter.maxMileage?.toString() ?? '');
   late String? _body = widget.filter.bodyType;
+  late String? _avail = widget.filter.availability;
+  late String? _axle = widget.filter.axleFormula;
+  late final _equip = {...widget.filter.equipment};
+  late bool? _damaged = widget.filter.damaged;
 
   @override
   void dispose() {
@@ -456,6 +460,19 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
     final brands = widget.filter.category == null
         ? ({for (final c in MarketCategory.values) ...marketBrands(c)}.toList()..sort())
         : marketBrands(widget.filter.category!);
+    // Popular brands with logos (owner, 25.10.2026); only those of the
+    // chosen type. One tap picks, a second tap clears.
+    final cat = widget.filter.category;
+    final popular = [for (final b in kMarketPopularBrands) if (cat == null || marketBrands(cat).contains(b)) b];
+    final picked = _t(_brand) == null ? null : canonicalMarketBrand(_t(_brand)!);
+    void pick(String b) => setState(() {
+          _brand.text = picked == b ? '' : b;
+          _model.clear();
+        });
+    Widget label(String key) => Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(s.t(key), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        );
     Widget field(TextEditingController c, String label, {bool number = false}) => TextField(
           controller: c,
           keyboardType: number ? TextInputType.number : TextInputType.text,
@@ -470,15 +487,36 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
           children: [
             Text(s.t('mk_filters'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 12),
+            if (popular.isNotEmpty) ...[
+              label('mk_popular_brands'),
+              GridView.count(
+                key: const ValueKey('mk-filter-popular'),
+                crossAxisCount: 4,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
+                childAspectRatio: 0.95,
+                children: [
+                  for (final b in popular) _PopularBrand(brand: b, selected: picked == b, onTap: () => pick(b)),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             TextField(
               controller: _brand,
+              // Typed brand → the popular tile above shows it.
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: s.t('mk_brand'),
                 isDense: true,
                 // Pick from the list or type any brand.
                 suffixIcon: PopupMenuButton<String>(
                   icon: const Icon(Icons.arrow_drop_down),
-                  onSelected: (v) => setState(() => _brand.text = v),
+                  onSelected: (v) => setState(() {
+                    _brand.text = v;
+                    _model.clear();
+                  }),
                   itemBuilder: (_) => [for (final b in brands) PopupMenuItem(value: b, child: Text(b))],
                 ),
               ),
@@ -497,6 +535,67 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
               ],
               onChanged: (v) => setState(() => _body = v),
             ),
+            // In stock / on order (owner, 25.10.2026, 0065); none = all.
+            const SizedBox(height: 12),
+            label('mk_availability'),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              ChoiceChip(
+                key: const ValueKey('mk-filter-avail-all'),
+                label: Text(s.t('svc_all')),
+                selected: _avail == null,
+                onSelected: (_) => setState(() => _avail = null),
+              ),
+              for (final a in kMarketAvailability)
+                ChoiceChip(
+                  key: ValueKey('mk-filter-avail-$a'),
+                  label: Text(s.t('mk_avail_$a')),
+                  selected: _avail == a,
+                  onSelected: (_) => setState(() => _avail = a),
+                ),
+            ]),
+            // Wheel formula (not for trailers), equipment (the ad has all
+            // chosen), damage — owner, 25.10.2026, 0065.
+            if (marketHasAxleFormula(cat)) ...[
+              const SizedBox(height: 12),
+              label('mk_axle_formula'),
+              Wrap(spacing: 6, runSpacing: 6, children: [
+                for (final a in kMarketAxleFormulas)
+                  ChoiceChip(
+                    key: ValueKey('mk-filter-axle-$a'),
+                    label: Text(a),
+                    selected: _axle == a,
+                    onSelected: (on) => setState(() => _axle = on ? a : null),
+                  ),
+              ]),
+            ],
+            const SizedBox(height: 12),
+            label('mk_equipment'),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final e in kMarketEquipment)
+                FilterChip(
+                  key: ValueKey('mk-filter-eq-$e'),
+                  label: Text(s.t('mk_eq_$e')),
+                  selected: _equip.contains(e),
+                  onSelected: (on) => setState(() => on ? _equip.add(e) : _equip.remove(e)),
+                ),
+            ]),
+            const SizedBox(height: 12),
+            label('mk_condition'),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              ChoiceChip(
+                key: const ValueKey('mk-filter-damage-all'),
+                label: Text(s.t('svc_all')),
+                selected: _damaged == null,
+                onSelected: (_) => setState(() => _damaged = null),
+              ),
+              for (final d in const [false, true])
+                ChoiceChip(
+                  key: ValueKey('mk-filter-damage-$d'),
+                  label: Text(s.t(d ? 'mk_damage_yes' : 'mk_damage_no')),
+                  selected: _damaged == d,
+                  onSelected: (_) => setState(() => _damaged = d),
+                ),
+            ]),
             const SizedBox(height: 10),
             field(_city, s.t('mk_city')),
             const SizedBox(height: 10),
@@ -531,6 +630,10 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
                       brand: () => _t(_brand),
                       model: () => _t(_model),
                       bodyType: () => _body,
+                      availability: () => _avail,
+                      axleFormula: () => marketHasAxleFormula(cat) ? _axle : null,
+                      equipment: () => [for (final e in kMarketEquipment) if (_equip.contains(e)) e],
+                      damaged: () => _damaged,
                       city: () => _t(_city),
                       minPrice: () => _i(_minPrice)?.toDouble(),
                       maxPrice: () => _i(_maxPrice)?.toDouble(),
@@ -544,6 +647,46 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
               ),
             ]),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A popular brand in the filter: its logo (or letters) and its name.
+class _PopularBrand extends StatelessWidget {
+  final String brand;
+  final bool selected;
+  final VoidCallback onTap;
+  const _PopularBrand({required this.brand, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.accentFill.withValues(alpha: AppColors.isDay ? 0.12 : 0.16) : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: selected ? AppColors.accentFill : Colors.transparent),
+      ),
+      child: InkWell(
+        key: ValueKey('mk-pop-brand-$brand'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            BrandBadge(brand, size: 44),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(brand,
+                  maxLines: 1,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: selected ? AppColors.accent : AppColors.text)),
+            ),
+          ]),
         ),
       ),
     );
