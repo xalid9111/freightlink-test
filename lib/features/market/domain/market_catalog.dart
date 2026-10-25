@@ -343,6 +343,33 @@ List<String> marketModelSpellings(String brand, String model) {
 /// Search words of a brand for the "Marka" page (name + aliases).
 List<String> marketBrandSearchNames(String brand) => [brand, ...?kMarketBrandAliases[brand]];
 
+/// Typed text folded for the "Marka" search (owner, 25.10.2026): no
+/// letter case, spaces or punctuation, and Azerbaijani / Turkish letters
+/// read as plain Latin ("Kögel" = "kogel", "Tırsan" = "tirsan").
+String marketSearchKey(String s) {
+  const map = {'ə': 'e', 'ı': 'i', 'ö': 'o', 'ü': 'u', 'ş': 's', 'ç': 'c', 'ğ': 'g', 'ä': 'a', 'é': 'e', 'ë': 'e', 'ò': 'o'};
+  final lower = s.replaceAll('İ', 'i').replaceAll('I', 'i').toLowerCase();
+  final b = StringBuffer();
+  for (final ch in lower.split('')) {
+    b.write(map[ch] ?? ch);
+  }
+  return b.toString().replaceAll(RegExp(r'[\s\-./_&+]+'), '');
+}
+
+/// 0 = a name or other spelling starts with [query], 1 = contains it,
+/// null = no match. Empty query matches everything.
+int? marketBrandMatch(String brand, String query) {
+  final q = marketSearchKey(query);
+  if (q.isEmpty) return 0;
+  var best = -1;
+  for (final n in marketBrandSearchNames(brand)) {
+    final k = marketSearchKey(n);
+    if (k.startsWith(q)) return 0;
+    if (k.contains(q)) best = 1;
+  }
+  return best < 0 ? null : best;
+}
+
 /// Brands of a category (alphabetical).
 List<String> marketBrands(MarketCategory c) => (kMarketCatalog[c]?.keys.toList() ?? <String>[])..sort();
 

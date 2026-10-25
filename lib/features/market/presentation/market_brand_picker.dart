@@ -20,7 +20,8 @@ class MarketSearchPick {
 }
 
 /// Opens the full-screen "Marka" page (owner, 24.10.2026, like the brand
-/// list of big car markets), then "Model" for the chosen brand.
+/// list of big car markets). One tap on a brand picks it and goes back
+/// (owner, 25.10.2026).
 Future<MarketSearchPick?> openMarketSearch(BuildContext context, {required AppStrings s, required MarketFilter filter}) =>
     Navigator.of(context, rootNavigator: true).push<MarketSearchPick>(MaterialPageRoute(
       fullscreenDialog: true,
@@ -30,10 +31,6 @@ Future<MarketSearchPick?> openMarketSearch(BuildContext context, {required AppSt
 List<String> _catalogueBrands(MarketCategory? c) => c == null
     ? ({for (final x in MarketCategory.values) ...marketBrands(x)}.toList()..sort())
     : marketBrands(c);
-
-List<String> _catalogueModels(MarketCategory? c, String brand) => c == null
-    ? {for (final x in MarketCategory.values) ...marketModels(x, brand)}.toList()
-    : marketModels(c, brand);
 
 /// Square on the left of a brand: its checked logo on a white plate (day
 /// and night alike, owner 25.10.2026), otherwise the brand's letters.
@@ -188,26 +185,23 @@ class _BrandPage extends ConsumerStatefulWidget {
 class _BrandPageState extends ConsumerState<_BrandPage> {
   String _q = '';
 
-  Future<void> _pickBrand(String brand) async {
-    final nav = Navigator.of(context);
-    final model = await nav.push<String>(MaterialPageRoute(
-      builder: (_) => _ModelPage(s: widget.s, filter: widget.filter, brand: brand),
-    ));
-    if (!mounted || model == null) return; // back from Model: stay here
-    nav.pop(MarketSearchPick(brand: brand, model: model.isEmpty ? null : model));
-  }
+  /// One tap picks the brand and goes back (owner, 25.10.2026).
+  void _pickBrand(String brand) => Navigator.of(context).pop(MarketSearchPick(brand: brand));
 
   @override
   Widget build(BuildContext context) {
     final s = widget.s;
     final f = widget.filter;
     final index = ref.watch(marketBrandIndexProvider(f.category)).valueOrNull ?? MarketBrandIndex.empty;
-    final q = _q.trim().toLowerCase();
-    // Also other spellings: "мерседес" finds Mercedes-Benz, "qazel" GAZ.
-    bool hit(BrandCount b) =>
-        q.isEmpty || marketBrandSearchNames(b.name).any((n) => n.toLowerCase().contains(q));
-    final popular = q.isEmpty ? index.popular() : const <BrandCount>[];
-    final all = index.all(_catalogueBrands(f.category)).where(hit).toList();
+    final typing = _q.trim().isNotEmpty;
+    // Filtered with every letter typed; other spellings too ("мерседес"
+    // finds Mercedes-Benz, "qazel" GAZ, "kogel" Kögel). Names that start
+    // with the text come first, then the ones that contain it (A–Z).
+    final popular = typing ? const <BrandCount>[] : index.popular();
+    final all = [
+      for (final b in index.all(_catalogueBrands(f.category)))
+        if (marketBrandMatch(b.name, _q) case final rank?) (rank, b),
+    ]..sort((a, b) => a.$1.compareTo(b.$1));
     final current = f.brand?.toLowerCase();
 
     Widget row(BrandCount b, String keyPrefix) => _PickRow(
@@ -225,22 +219,6 @@ class _BrandPageState extends ConsumerState<_BrandPage> {
       fieldKey: const ValueKey('mk-pick-brand-field'),
       onQuery: (v) => setState(() => _q = v),
       children: [
-        // Any text can still be searched (brand, model, city …), as before.
-        if (_q.trim().isNotEmpty)
-          _PickRow(
-            key: const ValueKey('mk-pick-text'),
-            leading: Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.search, color: Colors.white),
-            ),
-            name: s.t('mk_search_for', {'q': _q.trim()}),
-            count: 0,
-            selected: false,
-            onTap: () => Navigator.of(context).pop(MarketSearchPick(text: _q.trim())),
-          ),
         if (f.brand != null || f.model != null || (f.q ?? '').isNotEmpty)
           _PickRow(
             key: const ValueKey('mk-pick-clear'),
@@ -260,63 +238,16 @@ class _BrandPageState extends ConsumerState<_BrandPage> {
           _section(s.t('mk_popular')),
           for (final b in popular) row(b, 'mk-pop'),
         ],
-        _section(s.t('mk_all_brands')),
-        for (final b in all) row(b, 'mk-brand'),
-      ],
-    );
-  }
-}
-
-class _ModelPage extends ConsumerStatefulWidget {
-  final AppStrings s;
-  final MarketFilter filter;
-  final String brand;
-  const _ModelPage({required this.s, required this.filter, required this.brand});
-
-  @override
-  ConsumerState<_ModelPage> createState() => _ModelPageState();
-}
-
-class _ModelPageState extends ConsumerState<_ModelPage> {
-  String _q = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.s;
-    final f = widget.filter;
-    final index = ref.watch(marketBrandIndexProvider(f.category)).valueOrNull ?? MarketBrandIndex.empty;
-    final q = _q.trim().toLowerCase();
-    final models = index
-        .models(widget.brand, _catalogueModels(f.category, widget.brand))
-        .where((m) => q.isEmpty || m.name.toLowerCase().contains(q))
-        .toList();
-    final sameBrand = f.brand?.toLowerCase() == widget.brand.toLowerCase();
-    final current = sameBrand ? f.model?.toLowerCase() : null;
-
-    return _PickFrame(
-      title: widget.brand,
-      hint: s.t('mk_pick_model_search'),
-      fieldKey: const ValueKey('mk-pick-model-field'),
-      onQuery: (v) => setState(() => _q = v),
-      children: [
-        _PickRow(
-          key: const ValueKey('mk-model-all'),
-          leading: BrandBadge(widget.brand),
-          name: s.t('mk_all_models'),
-          count: index.countOf(widget.brand),
-          selected: sameBrand && current == null,
-          onTap: () => Navigator.of(context).pop(''),
-        ),
-        _section(s.t('mk_model')),
-        for (final m in models)
-          _PickRow(
-            key: ValueKey('mk-model-${m.name}'),
-            leading: const SizedBox(width: 44),
-            name: m.name,
-            count: m.count,
-            selected: current == m.name.toLowerCase(),
-            onTap: () => Navigator.of(context).pop(m.name),
-          ),
+        if (all.isEmpty)
+          Padding(
+            key: const ValueKey('mk-brand-none'),
+            padding: const EdgeInsets.only(top: 24),
+            child: Center(child: Text(s.t('mk_brand_not_found'), style: TextStyle(fontSize: 16, color: AppColors.textSoft))),
+          )
+        else ...[
+          _section(s.t('mk_all_brands')),
+          for (final (_, b) in all) row(b, 'mk-brand'),
+        ],
       ],
     );
   }

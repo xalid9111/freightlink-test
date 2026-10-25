@@ -907,6 +907,7 @@
   "mk_empty": "Нет объявлений по этому выбору.",
   "mk_filters": "Фильтры",
   "mk_brand": "Марка",
+  "mk_brand_not_found": "Марка не найдена",
   "mk_model": "Модель",
   "mk_city": "Город",
   "mk_price_from": "Цена от",

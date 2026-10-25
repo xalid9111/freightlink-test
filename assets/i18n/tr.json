@@ -907,6 +907,7 @@
   "mk_empty": "Bu seçime uygun ilan yok.",
   "mk_filters": "Filtreler",
   "mk_brand": "Marka",
+  "mk_brand_not_found": "Marka bulunamadı",
   "mk_model": "Model",
   "mk_city": "Şehir",
   "mk_price_from": "Fiyat (min)",
