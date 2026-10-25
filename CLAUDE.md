@@ -100,6 +100,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   Colours only via `AppColors` / `ChatColors` (palette getters, see
   `app_theme.dart`), never hard-coded. App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.
+  Font weights (owner, 25.10.2026, Turbo.az-like): text, names, routes,
+  cities, dates, technical data, filters w400; buttons / active choices
+  w500; prices and main headings w600; w700+ only for VIP / PRO badges and
+  the ad banner (guarded by test/typography_weights_test.dart).
 - Ad banner layout 1200×400 coordinates never change.
   The wide ad banner is no longer shown on the Loads page (owner,
   23.10.2026); ad templates are not deleted (history is kept).
