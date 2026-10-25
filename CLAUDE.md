@@ -123,6 +123,13 @@ files to the owner separately (they are run by hand in the SQL editor).
 - TIR Bazarı phone page (owner, 24.10.2026): no VIP row under the banner;
   VIP ads stand among the ads in the same chessboard order as the Loads
   page (ad–VIP, VIP–ad …, VIP order moves on every few minutes).
+- TIR Bazarı catalogue (owner, 25.10.2026, 0064): ~130 brands; categories
+  TIR · Orta yük · Kiçik yük · Qoşqu · Yarımqoşqu · Tikinti · Digər; brand,
+  model, category and body type (optional chips in the form) are separate.
+  Other spellings ("Mercedes", "КАМАЗ", "FH-16") are joined by
+  `canonicalMarketBrand` / `market_name_key` — stored ads never rewritten.
+  Logos only when source and terms are checked (docs/brand_logos.md),
+  otherwise the letter square.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".

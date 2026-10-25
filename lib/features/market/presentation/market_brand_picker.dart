@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/market_brand_index.dart';
+import '../domain/market_brand_logos.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import 'market_providers.dart';
@@ -34,27 +35,47 @@ List<String> _catalogueModels(MarketCategory? c, String brand) => c == null
     ? {for (final x in MarketCategory.values) ...marketModels(x, brand)}.toList()
     : marketModels(c, brand);
 
-/// Square with the brand's letters (brand logos are not ours to show).
+/// Square on the left of a brand: its checked logo on a white plate (day
+/// and night alike, owner 25.10.2026), otherwise the brand's letters.
 class BrandBadge extends StatelessWidget {
   final String brand;
   const BrandBadge(this.brand, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    final t = brandInitials(brand);
+    final logo = marketBrandLogoAsset(brand);
+    if (logo == null) return _letters();
     return Container(
       width: 44,
       height: 44,
-      alignment: Alignment.center,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.tileBg,
+        color: AppColors.logoPlate,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.tileLine),
       ),
-      child: Text(t,
-          style: TextStyle(fontSize: t.length > 2 ? 12.5 : 15, fontWeight: FontWeight.w900, color: AppColors.tileFg)),
+      child: Image.asset(logo, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _lettersText(AppColors.logoPlateText)),
     );
   }
+
+  Widget _lettersText(Color color) {
+    final t = brandInitials(brand);
+    return Center(
+      child: Text(t, style: TextStyle(fontSize: t.length > 2 ? 12.5 : 15, fontWeight: FontWeight.w900, color: color)),
+    );
+  }
+
+  Widget _letters() => Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.tileBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.tileLine),
+        ),
+        child: _lettersText(AppColors.tileFg),
+      );
 }
 
 /// One row: badge, name, (count), selection circle.
@@ -176,7 +197,9 @@ class _BrandPageState extends ConsumerState<_BrandPage> {
     final f = widget.filter;
     final index = ref.watch(marketBrandIndexProvider(f.category)).valueOrNull ?? MarketBrandIndex.empty;
     final q = _q.trim().toLowerCase();
-    bool hit(BrandCount b) => q.isEmpty || b.name.toLowerCase().contains(q);
+    // Also other spellings: "мерседес" finds Mercedes-Benz, "qazel" GAZ.
+    bool hit(BrandCount b) =>
+        q.isEmpty || marketBrandSearchNames(b.name).any((n) => n.toLowerCase().contains(q));
     final popular = q.isEmpty ? index.popular() : const <BrandCount>[];
     final all = index.all(_catalogueBrands(f.category)).where(hit).toList();
     final current = f.brand?.toLowerCase();
