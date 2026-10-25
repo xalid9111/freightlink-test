@@ -142,3 +142,42 @@ files to the owner separately (they are run by hand in the SQL editor).
 - TIR Bazarı sale ads are published at once, no admin approval (owner,
   18.10.2026, 0041); the admin moderates afterwards (deactivate, VIP,
   delete). Chat from an ad opens the full-screen `/chat/:id`.
+
+## 6. Daimi inkişaf və kod təhlükəsizliyi qaydaları (owner, 25.10.2026)
+
+These rules apply to every future change, together with §1–§5 (they do
+not replace them). Main principle: *tapşırıqdan kənar işlək sistemi
+qoruyaraq, tapşırığın tamamlanması üçün zəruri bütün əlaqəli
+dəyişiklikləri sərbəst həyata keçir.*
+
+1. **Mövcud sistemi qoru.** Tapşırığa aid olmayan funksiyaları,
+   dizaynları, məlumatları və faylları dəyişmə; işlək funksiyaları
+   səbəbsiz yenidən yazma və silmə. GitHub, Supabase və tətbiq
+   arxitekturasını qoru (§1). İstifadəçi məlumatlarına və mövcud
+   elanlara zərər vurma (§3).
+2. **Zəruri əlaqəli dəyişikliklərə icazə var.** Tapşırığın düzgün
+   işləməsi üçün başqa funksiya da dəyişməlidirsə, onu da et — yalnız
+   zəruri hissəni, səbəbini yekun hesabatda yaz. Əlaqəli funksiyaları da
+   test et. Yalnız simptomu yox, əsas səbəbi düzəlt.
+3. **İşi tam yekunlaşdır.** Hər xırda addım üçün təsdiq istəmə.
+   Razılaşdırılmış tapşırığı analiz, kod və testlə birlikdə bitir; test
+   xətalarını imkan daxilində özün düzəlt. Eyni problemin təkrar
+   qayıtmasına yol vermə (regression test əlavə et, §2.4).
+4. **Dəyişikliklərin təhlükəsizliyi.**
+   - Hər tapşırıq ayrıca branch və PR-da (§2.2).
+   - Mövcud funksiyaların pozulmadığını uyğun testlərlə yoxla (§2.5–2.7).
+   - SQL miqrasiyası və verilənlər bazasında riskli dəyişiklik üçün
+     **əvvəlcədən** sahibin təsdiqini al.
+   - `main`-ə birləşdirmə və canlı yayım yalnız sahibin təsdiqi ilə.
+   - Təsdiqsiz məlumat silmə, cədvəl dəyişmə və ya təhlükəli əməliyyat yox.
+   - Sahibdən təsdiq yalnız həqiqətən vacib və riskli qərarlarda istənir.
+5. **Resurslara qənaət.** Lazımsız araşdırma və təkrar əməliyyatdan
+   yayın; mövcud kodu və komponentləri təkrar istifadə et; tapşırığı
+   mümkün qədər bir iş dövründə bitir. Məhdudiyyət varsa, konkret
+   səbəbini və ən praktik həllini bildir.
+6. **Yekun hesabat** (qısa, hər tapşırıqdan sonra, §2.8 ilə birlikdə):
+   - Nə dəyişdi?
+   - Hansı əlaqəli funksiyalar düzəldildi?
+   - Hansı testlər keçdi (burada / GitHub / yoxlanmayıb)?
+   - Hansı problemlər qaldı?
+   - PR linki.
