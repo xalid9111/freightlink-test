@@ -96,7 +96,7 @@ class _RouteCitySheetState extends State<RouteCitySheet> {
         : Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(10)),
-            child: Text('$n', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.accent)),
+            child: Text('$n', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.accent)),
           );
 
     return Padding(
@@ -111,7 +111,7 @@ class _RouteCitySheetState extends State<RouteCitySheet> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(widget.country.name(widget.languageCode),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
               ),
               IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
             ]),
@@ -137,7 +137,7 @@ class _RouteCitySheetState extends State<RouteCitySheet> {
                   return ListTile(
                     key: const ValueKey('route-city-all'),
                     leading: Icon(Icons.public, color: AppColors.accent),
-                    title: Text(s.t('route_whole_country'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                    title: Text(s.t('route_whole_country'), style: const TextStyle(fontWeight: FontWeight.w400)),
                     onTap: () => Navigator.of(context).pop(kWholeCountry),
                   );
                 }

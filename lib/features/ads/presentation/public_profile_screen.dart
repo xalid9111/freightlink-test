@@ -208,7 +208,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                           Text(p.fullName.isEmpty ? '—' : p.fullName,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
                                           const SizedBox(height: 4),
                                           Wrap(
                                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -395,7 +395,7 @@ class _TitleRow extends StatelessWidget {
           _SquareButton(icon: Icons.arrow_back, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onTap: onBack),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(title, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
+            child: Text(title, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
           ),
           if (action != null) action!,
         ],
@@ -439,7 +439,7 @@ class _Badge extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w400)),
         ],
       ),
     );
@@ -494,7 +494,7 @@ class _MenuRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
                   if ((subtitle ?? '').isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(subtitle!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
@@ -551,7 +551,7 @@ class _Section extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
+                Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600))),
                 if (trailing != null) trailing!,
               ],
             ),

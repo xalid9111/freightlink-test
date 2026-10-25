@@ -111,7 +111,7 @@ class AdminChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w600)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -169,7 +169,7 @@ class SectionTitle extends StatelessWidget {
         children: [
           Expanded(
             child: Text(text.toUpperCase(),
-                style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.2, fontWeight: FontWeight.w500)),
           ),
           if (trailing != null) trailing!,
         ],
@@ -235,7 +235,7 @@ class AdminRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14)),
+                          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontSize: 14)),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
                         Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis,

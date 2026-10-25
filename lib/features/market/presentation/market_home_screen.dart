@@ -134,7 +134,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(s.t('nav_market'),
-                              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.text)),
+                              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
                         IconButton(
                           tooltip: s.t('mk_favorites'),
@@ -198,7 +198,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       children: [
                         Expanded(
                             child: Text(s.t('mk_ads_title'),
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800))),
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600))),
                         TextButton(
                           onPressed: () => context.pushOnce('/market/mine'),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -326,13 +326,13 @@ class _SellBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: Text(s.t('mk_buy_sell'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+          Expanded(child: Text(s.t('mk_buy_sell'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
           FilledButton.icon(
             key: const ValueKey('mk-new-ad'),
             onPressed: onTap,
             style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
             icon: const Icon(Icons.add_circle_outline, size: 20),
-            label: Text(s.t('mk_new_ad'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            label: Text(s.t('mk_new_ad'), style: const TextStyle(fontWeight: FontWeight.w500)),
           ),
           const SizedBox(width: 6),
           Icon(Icons.local_shipping_outlined, color: AppColors.accent),
@@ -367,7 +367,7 @@ class _CategoryChip extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 18, color: fg),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w400)),
           ]),
         ),
       ),
@@ -486,7 +486,7 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
         });
     Widget label(String key) => Padding(
           padding: const EdgeInsets.only(bottom: 6),
-          child: Text(s.t(key), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+          child: Text(s.t(key), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
         );
     Widget field(TextEditingController c, String label, {bool number = false}) => TextField(
           controller: c,
@@ -501,7 +501,7 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(s.t('mk_filters'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(s.t('mk_filters'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             if (popular.isNotEmpty) ...[
               label('mk_popular_brands'),
@@ -722,7 +722,7 @@ class _PopularBrand extends StatelessWidget {
                   maxLines: 1,
                   style: TextStyle(
                       fontSize: 12,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                       color: selected ? AppColors.accent : AppColors.text)),
             ),
           ]),

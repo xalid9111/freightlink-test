@@ -404,7 +404,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
                   ),
                   const SizedBox(width: 6),
                   Text(widget.liveLabel,
-                      style: const TextStyle(color: _green, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                      style: const TextStyle(color: _green, fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 1.2)),
                 ],
               ),
             ),

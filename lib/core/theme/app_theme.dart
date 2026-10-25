@@ -209,10 +209,10 @@ class AppFonts {
   /// Characters Arial does not have: country flags (see flag_font.dart).
   static const fallback = [kFlagFontFamily];
 
-  static TextStyle display({double size = 22, Color? color, FontWeight weight = FontWeight.w800, double? height}) =>
+  static TextStyle display({double size = 22, Color? color, FontWeight weight = FontWeight.w600, double? height}) =>
       TextStyle(fontFamily: family, fontFamilyFallback: fallback, fontSize: size, color: color, fontWeight: weight, height: height, letterSpacing: 0.2);
 
-  static TextStyle mono({double size = 11, Color? color, FontWeight weight = FontWeight.w700, double letterSpacing = 0.6}) =>
+  static TextStyle mono({double size = 11, Color? color, FontWeight weight = FontWeight.w500, double letterSpacing = 0.6}) =>
       TextStyle(fontFamily: family, fontFamilyFallback: fallback, fontSize: size, color: color, fontWeight: weight, letterSpacing: letterSpacing);
 }
 
@@ -285,7 +285,7 @@ class AppTheme {
             )),
         labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
               fontSize: 10.5,
-              fontWeight: FontWeight.w600,
+              fontWeight: states.contains(WidgetState.selected) ? FontWeight.w500 : FontWeight.w400,
               color: states.contains(WidgetState.selected) ? AppColors.accent : AppColors.textSoft,
             )),
       ),
@@ -304,7 +304,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -313,7 +313,7 @@ class AppTheme {
           side: BorderSide(color: AppColors.line),
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -327,7 +327,7 @@ class AppTheme {
         backgroundColor: AppColors.cardAlt,
         side: BorderSide(color: AppColors.line),
         // Chips do not take the text theme's font list → flags fallback here too.
-        labelStyle: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontFamilyFallback: AppFonts.fallback),
+        labelStyle: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontFamilyFallback: AppFonts.fallback),
       ),
       dividerTheme: DividerThemeData(color: AppColors.line),
       bottomSheetTheme: BottomSheetThemeData(backgroundColor: AppColors.card, surfaceTintColor: Colors.transparent),

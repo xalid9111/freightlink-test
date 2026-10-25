@@ -346,7 +346,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
               key: const ValueKey('mk-save-draft'),
               onPressed: _busy || _uploading || !_loaded || _missing ? null : () => _save(s, publish: false),
               icon: Icon(Icons.save_outlined, color: AppColors.accent),
-              label: Text(s.t('mk_save'), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+              label: Text(s.t('mk_save'), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w500)),
             ),
           ],
         ),
@@ -448,7 +448,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(s.t('mk_body_type_optional'),
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
                     ),
                     const SizedBox(height: 6),
                     Wrap(spacing: 6, runSpacing: 6, children: [
@@ -588,7 +588,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(8)),
-                                child: Text(s.t('mk_cover'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                child: Text(s.t('mk_cover'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)),
                               ),
                             ),
                           Positioned(
@@ -649,7 +649,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
                     icon: _busy
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.send),
-                    label: Text(s.t('mk_publish'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                    label: Text(s.t('mk_publish'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
                   ),
                   const SizedBox(height: 8),
                   Text(s.t(_orig?.status == MarketStatus.inactive ? 'mk_review_note' : 'mk_publish_note'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
@@ -664,7 +664,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
         padding: const EdgeInsets.only(top: 12, bottom: 6),
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+          child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
         ),
       );
 
@@ -698,10 +698,10 @@ class _Section extends StatelessWidget {
           CircleAvatar(
             radius: 13,
             backgroundColor: AppColors.accentFill,
-            child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+            child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
           ),
           const SizedBox(width: 10),
-          Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
+          Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
           if (trailing != null) trailing!,
         ]),
         const SizedBox(height: 12),
@@ -738,7 +738,7 @@ class _CatTile extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(icon, color: fg, size: 26),
               const SizedBox(height: 4),
-              Text(label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 12.5)),
+              Text(label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(color: fg, fontWeight: FontWeight.w500, fontSize: 12.5)),
             ]),
           ),
         ),

@@ -593,7 +593,7 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 14, bottom: 8),
         child: Text(text.toUpperCase(),
-            style: TextStyle(color: AppColors.textSoft, fontSize: 11.5, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.textSoft, fontSize: 11.5, letterSpacing: 1.0, fontWeight: FontWeight.w500)),
       );
 }
 
@@ -691,7 +691,7 @@ class _JoinCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         leading: Icon(icon, color: AppColors.accent, size: 30),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
         subtitle: Text(sub),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,

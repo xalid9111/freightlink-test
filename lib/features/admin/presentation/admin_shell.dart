@@ -366,7 +366,7 @@ class _AdminBadge extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name.isEmpty ? 'Admin' : name, style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13)),
+            Text(name.isEmpty ? 'Admin' : name, style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontSize: 13)),
             Text('Administrator', style: TextStyle(color: AppColors.textSoft, fontSize: 11)),
           ],
         ),

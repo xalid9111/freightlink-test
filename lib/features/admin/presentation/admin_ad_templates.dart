@@ -97,7 +97,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
                 Text(v ? onText : offText, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
               ],
             ),
@@ -130,7 +130,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                        Text(label, style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13.5)),
                         Text(hint, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                       ],
                     ),
@@ -141,7 +141,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                   ),
                   SizedBox(
                     width: 34,
-                    child: Text('$value', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                    child: Text('$value', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   ),
                   IconButton(
                     onPressed: value + step > max ? null : () => setD(() => onSet(value + step)),
@@ -178,7 +178,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                     contentPadding: EdgeInsets.zero,
                     value: repeat,
                     onChanged: (v) => setD(() => repeat = v),
-                    title: const Text('Eyni reklam təkrar göstərilsin', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    title: const Text('Eyni reklam təkrar göstərilsin', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 13.5)),
                     subtitle: Text(
                       repeat
                           ? 'Reklam az olanda eyni reklam bir neçə yerdə çıxır.'
@@ -190,7 +190,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                       'Az yük olanda birinci reklam son yükdən sonra çıxır.',
                       style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
                   const SizedBox(height: 10),
-                  Text('Önizləmə', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+                  Text('Önizləmə', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
                   const SizedBox(height: 6),
                   ...rows,
                 ],
@@ -219,7 +219,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
           border: Border.all(color: ad ? AppColors.accent : AppColors.line),
         ),
         child: Text(text,
-            style: TextStyle(fontSize: 11.5, fontWeight: ad ? FontWeight.w800 : FontWeight.w500, color: ad ? AppColors.accent : AppColors.textSoft)),
+            style: TextStyle(fontSize: 11.5, fontWeight: ad ? FontWeight.w600 : FontWeight.w400, color: ad ? AppColors.accent : AppColors.textSoft)),
       );
 
   String _layoutText(AdFeedLayout l) =>
@@ -265,7 +265,7 @@ class _HomeAdsSwitchCardState extends ConsumerState<HomeAdsSwitchCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Reklamın yeri və müddəti', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const Text('Reklamın yeri və müddəti', style: TextStyle(fontWeight: FontWeight.w600)),
                     Text(_layoutText(layout), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                   ],
                 ),
@@ -361,7 +361,7 @@ class AdminTemplatesPanel extends ConsumerWidget {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text('${i + 1}. ${list[i].name}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  child: Text('${i + 1}. ${list[i].name}', style: const TextStyle(fontWeight: FontWeight.w400)),
                                 ),
                                 AdminChip(switch (list[i].audience) {
                                   'service' => 'Servis',

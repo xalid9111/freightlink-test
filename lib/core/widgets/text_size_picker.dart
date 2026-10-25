@@ -16,7 +16,7 @@ class TextSizePicker extends ConsumerWidget {
     // The picker itself keeps one size, so it never jumps while choosing.
     return MediaQuery.withNoTextScaling(
       child: Row(key: const ValueKey('ui-scale'), children: [
-        Text('A', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        Text('A', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSoft)),
         const SizedBox(width: 10),
         Expanded(
           child: Row(children: [
@@ -27,7 +27,7 @@ class TextSizePicker extends ConsumerWidget {
           ]),
         ),
         const SizedBox(width: 10),
-        Text('A', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textSoft)),
+        Text('A', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.textSoft)),
       ]),
     );
   }
@@ -66,7 +66,7 @@ class _Step extends ConsumerWidget {
               child: Text('${scale.level}',
                   style: TextStyle(
                       fontSize: selected ? 16 : 14,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w500,
                       color: selected ? Colors.white : AppColors.text)),
             ),
           ),

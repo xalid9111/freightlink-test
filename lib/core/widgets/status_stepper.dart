@@ -68,7 +68,7 @@ class StatusStepper extends StatelessWidget {
               maxLines: 2,
               style: TextStyle(
                 fontSize: 10.5,
-                fontWeight: (done || now) ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: (done || now) ? FontWeight.w500 : FontWeight.w400,
                 color: (done || now) ? AppColors.text : AppColors.textSoft,
               ),
             ),

@@ -143,7 +143,7 @@ class _PickFrame extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(title, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.text)),
+            Text(title, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
             const SizedBox(height: 16),
             TextField(
               key: fieldKey,

@@ -648,7 +648,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 6),
                                 child: Text(s.t('adv_own_image_add'), textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
                               ),
                             ],
                           ),
@@ -673,7 +673,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                             AdCreativeView(creative: x.sample(), radius: BorderRadius.circular(8)),
                             const SizedBox(height: 4),
                             Text(x.isOwn ? s.t('adv_own_image') : x.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
                           ],
                         ),
                       ),
@@ -747,7 +747,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                   children: [
                     for (final f in AdStandardLayout.fonts)
                       ChoiceChip(
-                        label: Text('Əa Şş', style: adFontStyle(f, const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+                        label: Text('Əa Şş', style: adFontStyle(f, const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
                         tooltip: f,
                         selected: st.font == f,
                         onSelected: (_) => setState(() => _style[_styleLine] = st.copyWith(font: f)),
@@ -951,7 +951,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
                           Text(s.t('adv_total'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                           Text(
                             pkg != null ? adMoney(pkg.price, pkg.currency) : '—',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                           ),
                           if (pkg != null)
                             Text(s.t('adv_starts_after_approval_short', {'days': '${pkg.days}'}),

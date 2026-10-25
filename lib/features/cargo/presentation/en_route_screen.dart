@@ -182,7 +182,7 @@ class _EnRouteScreenState extends ConsumerState<EnRouteScreen> {
           if (found != null) ...[
             const SizedBox(height: 16),
             Text(found.isEmpty ? s.t('enroute_none') : s.t('enroute_found', {'n': '${found.length}'}),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
             if (_skipped > 0) ...[
               const SizedBox(height: 4),
               Text(s.t('enroute_skipped', {'n': '$_skipped'}), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
@@ -199,7 +199,7 @@ class _EnRouteScreenState extends ConsumerState<EnRouteScreen> {
                 padding: const EdgeInsets.fromLTRB(6, 4, 6, 12),
                 child: Text(
                   s.t('enroute_off', {'a': m.pickupOffKm.round().toString(), 'b': m.dropOffKm.round().toString()}),
-                  style: TextStyle(fontSize: 12, color: AppColors.route, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 12, color: AppColors.route, fontWeight: FontWeight.w400),
                 ),
               ),
             ],
@@ -228,7 +228,7 @@ class _EnRouteScreenState extends ConsumerState<EnRouteScreen> {
           Text(p == null ? s.t('enroute_pick_city') : '${p.flag} ${p.cityLabel(lang)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.text)),
+              style: TextStyle(fontWeight: FontWeight.w400, color: AppColors.text)),
         ]),
       ),
     );

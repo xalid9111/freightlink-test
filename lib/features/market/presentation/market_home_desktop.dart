@@ -93,7 +93,7 @@ class _MarketHomeDesktopState extends ConsumerState<MarketHomeDesktop> {
                   child: Row(children: [
                     Expanded(
                       child: Text(s.t('mk_ads_title'),
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text)),
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
                     TextButton.icon(
                       onPressed: () => context.pushOnce('/market/favorites'),
@@ -366,7 +366,7 @@ class _BrandChips extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(label,
                       style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700, color: on ? AppColors.accent : AppColors.text)),
+                          fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? AppColors.accent : AppColors.text)),
                 ]),
               ),
             ),
@@ -491,7 +491,7 @@ class _SearchPanelState extends State<_SearchPanel> {
         Row(children: [
           Icon(Icons.search, color: AppColors.accent, size: 26),
           const SizedBox(width: 10),
-          Text(s.t('mk_find_title'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppColors.text)),
+          Text(s.t('mk_find_title'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
         ]),
         const SizedBox(height: 14),
         LayoutBuilder(builder: (context, c) {
@@ -576,7 +576,7 @@ class _SearchPanelState extends State<_SearchPanel> {
                 ),
                 onPressed: _go,
                 icon: const Icon(Icons.search),
-                label: Text(s.t('search_apply'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                label: Text(s.t('search_apply'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               ),
             ),
           ]);
@@ -690,7 +690,7 @@ class _VipColumn extends StatelessWidget {
         Row(children: [
           const Icon(Icons.workspace_premium, color: kVipGold, size: 20),
           const SizedBox(width: 6),
-          Text(s.t('mk_vip_ads'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
+          Text(s.t('mk_vip_ads'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.text)),
         ]),
         const SizedBox(height: 10),
         for (final l in items) ...[
@@ -742,10 +742,10 @@ class _VipPlace extends StatelessWidget {
                     Text([l.brand, l.model].whereType<String>().join(' '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 15)),
                     if (l.year != null) Text('${l.year}', style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
                     Text(marketPrice(l.price, l.currency),
-                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 18)),
+                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 18)),
                   ],
                 ),
               ),
@@ -780,7 +780,7 @@ class _FreeVipPlace extends StatelessWidget {
             const SizedBox(height: 8),
             Text(s.t('mk_vip_free_title'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.text)),
             const SizedBox(height: 4),
             Text(s.t('mk_vip_free_body'),
                 textAlign: TextAlign.center,

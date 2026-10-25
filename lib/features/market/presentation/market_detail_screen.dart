@@ -352,7 +352,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                       const Icon(Icons.photo_outlined, size: 16, color: Colors.white),
                       const SizedBox(width: 6),
                       Text('${_page + 1} / ${l.photos.length}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
                     ])),
                   ),
                 if (l.photos.length > 1) ...[
@@ -401,14 +401,14 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       [
             if (isOwner && l.status != MarketStatus.active) _StatusBanner(s: s, l: l),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: Text(l.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
+              Expanded(child: Text(l.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600))),
               if (l.vipActive()) const VipBadge(),
             ]),
             const SizedBox(height: 4),
             Row(children: [
               Expanded(
                 child: Text(marketPrice(l.price, l.currency),
-                    style: TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.w900)),
+                    style: TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.w600)),
               ),
               InkWell(
                 onTap: () {
@@ -438,7 +438,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
               Row(children: [
                 Expanded(
                     child: Text(s.t('mk_s_description'),
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600))),
                 IconButton(
                   icon: Icon(_descOpen ? Icons.expand_less : Icons.expand_more),
                   onPressed: () => setState(() => _descOpen = !_descOpen),
@@ -450,7 +450,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                   style: TextStyle(color: AppColors.textSoft, fontSize: 15, height: 1.4)),
             ],
             const SizedBox(height: 16),
-            Text(s.t('mk_location'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(s.t('mk_location'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
@@ -463,7 +463,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(placeText, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    Text(placeText, style: const TextStyle(fontWeight: FontWeight.w400)),
                     // Honest: say whether the pin is the seller's mark or only the city.
                     Text(s.t(l.locationExact ? 'mk_location_exact' : 'mk_location_city_only'),
                         style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
@@ -588,7 +588,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       return bar([
         Expanded(
             child:
-                Text(s.t('mk_sold'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800)))
+                Text(s.t('mk_sold'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600)))
       ]);
     }
     final phone = (l.phone ?? '').trim();
@@ -737,7 +737,7 @@ class _Specs extends StatelessWidget {
           Expanded(
             child: Text(value,
                 textAlign: TextAlign.right,
-                style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800, fontSize: 16)),
+                style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontSize: 16)),
           ),
         ]),
       );
@@ -768,7 +768,7 @@ class _SellerCard extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(name.isEmpty ? '—' : name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                Text(name.isEmpty ? '—' : name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
                 const SizedBox(height: 2),
                 Wrap(spacing: 10, children: [
                   if (online)
@@ -810,7 +810,7 @@ class _Similar extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(children: [
-            Expanded(child: Text(s.t('mk_similar'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
+            Expanded(child: Text(s.t('mk_similar'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600))),
             TextButton(
               onPressed: () {
                 ref.read(marketFilterProvider.notifier).state = MarketFilter(category: l.category, brand: l.brand);

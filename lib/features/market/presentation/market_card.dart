@@ -129,7 +129,7 @@ class MarketCard extends ConsumerWidget {
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             const Icon(Icons.photo_outlined, size: 14, color: Colors.white),
                             const SizedBox(width: 4),
-                            Text('${l.photos.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                            Text('${l.photos.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                           ]),
                         ),
                       ),
@@ -137,7 +137,7 @@ class MarketCard extends ConsumerWidget {
                       Container(
                         color: Colors.black.withValues(alpha: 0.55),
                         alignment: Alignment.center,
-                        child: Text(s.t('mk_sold'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                        child: Text(s.t('mk_sold'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 18)),
                       ),
                   ],
                 ),
@@ -148,12 +148,12 @@ class MarketCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(compact ? [l.brand, l.model].whereType<String>().join(' ') : l.title,
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14.5)),
                     if (compact && l.year != null)
                       Text('${l.year}', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                     const SizedBox(height: 2),
                     Text(marketPrice(l.price, l.currency),
-                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 17)),
+                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 17)),
                     const SizedBox(height: 2),
                     Text(
                       [if (l.mileageKm != null) marketKm(l.mileageKm), if (place.isNotEmpty) place].join(' · '),
@@ -194,7 +194,7 @@ class MarketOnOrderTag extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(10)),
         child: Text(s.t('mk_avail_on_order'),
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
       );
 }
 
@@ -240,7 +240,7 @@ class MarketFeedCard extends ConsumerWidget {
                     Container(
                       color: Colors.black.withValues(alpha: 0.55),
                       alignment: Alignment.center,
-                      child: Text(s.t('mk_sold'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                      child: Text(s.t('mk_sold'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 18)),
                     ),
                 ],
               ),
@@ -249,11 +249,11 @@ class MarketFeedCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(marketPrice(l.price, l.currency),
               maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 17)),
+              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 17)),
           const SizedBox(height: 2),
           Text([l.brand, l.model].whereType<String>().join(' '),
               maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14.5)),
+              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontSize: 14.5)),
           if (details.isNotEmpty)
             Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.text, fontSize: 13)),
           const SizedBox(height: 2),

@@ -432,7 +432,7 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
   Widget _picture({required bool day}) {
     final url = day ? _day : _night;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text(s.t(day ? 'hero_pic_day' : 'hero_pic_night'), style: const TextStyle(fontWeight: FontWeight.w700)),
+      Text(s.t(day ? 'hero_pic_day' : 'hero_pic_night'), style: const TextStyle(fontWeight: FontWeight.w400)),
       const SizedBox(height: 6),
       // Banner-shaped frame: drag the picture (or tap a spot) to choose
       // the part that stays in view.
@@ -544,7 +544,7 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
               contentPadding: EdgeInsets.zero,
               value: _showText,
               onChanged: _busy ? null : (v) => setState(() => _showText = v),
-              title: Text(s.t('hero_show_text'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              title: Text(s.t('hero_show_text'), style: const TextStyle(fontWeight: FontWeight.w400)),
               subtitle: Text(s.t(_showText ? 'hero_show_text_on' : 'hero_show_text_off'),
                   style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             ),

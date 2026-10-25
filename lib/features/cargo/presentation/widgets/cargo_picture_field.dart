@@ -140,7 +140,7 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
         const SizedBox(width: 8),
         Text('${value.length} / $_max',
             key: const ValueKey('cargo-pic-count'),
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: full ? AppColors.accent : AppColors.textSoft)),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: full ? AppColors.accent : AppColors.textSoft)),
       ]),
       // The chosen pictures, main first.
       if (value.isNotEmpty) ...[
@@ -162,7 +162,7 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(8)),
                       child: Text(s.t('cargo_pics_main'),
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white)),
                     ),
                   ),
               ]),
@@ -211,7 +211,7 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
                         child: Text(s.t('cargo_pic_upload'),
                             maxLines: 2,
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.text)),
+                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: AppColors.text)),
                       ),
                     ]),
             ),

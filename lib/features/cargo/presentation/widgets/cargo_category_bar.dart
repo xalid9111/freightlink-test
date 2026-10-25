@@ -121,7 +121,7 @@ class CargoTypeChoice extends StatelessWidget {
           const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(label, maxLines: 1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+            child: Text(label, maxLines: 1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color)),
           ),
           const SizedBox(height: 3),
           AnimatedContainer(
@@ -174,7 +174,7 @@ class CargoTypeTile extends StatelessWidget {
                   maxLines: 1,
                   style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w500,
                       color: selected ? AppColors.accent : AppColors.tileFg)),
             ),
           ]),

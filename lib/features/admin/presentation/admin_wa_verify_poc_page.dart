@@ -129,7 +129,7 @@ class _AdminWaVerifyPocPageState extends State<AdminWaVerifyPocPage> {
           child: Text(
             'TEST / PROOF OF CONCEPT. Qeydiyyata, girişə və profilə toxunmur. '
             'Nəticə profilə yazılmır. Məqsəd: Meta webhook-u göndərənin real nömrəsini verirmi?',
-            style: TextStyle(color: AppColors.urgentFg, fontSize: 13, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.urgentFg, fontSize: 13, fontWeight: FontWeight.w400),
           ),
         ),
         const SizedBox(height: 16),
@@ -209,7 +209,7 @@ class _ResultCard extends StatelessWidget {
             Row(children: [
               Icon(icon, color: color),
               const SizedBox(width: 10),
-              Expanded(child: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w700))),
+              Expanded(child: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w400))),
             ]),
             const SizedBox(height: 10),
             Text('Nömrə: ${r?['phone_e164'] ?? '—'}', style: TextStyle(color: AppColors.textSoft)),

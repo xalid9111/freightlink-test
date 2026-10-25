@@ -258,7 +258,7 @@ class _DashboardTab extends ConsumerWidget {
                         ]),
                         const SizedBox(height: 6),
                         FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
-                            child: Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))),
+                            child: Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600))),
                         if (hint != null) Text(hint, style: TextStyle(fontSize: 11, color: AppColors.textSoft)),
                       ]),
                     ),
@@ -288,7 +288,7 @@ class _DashboardTab extends ConsumerWidget {
             }),
           ),
           const SizedBox(height: 20),
-          const Text('Son ödənişlər', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text('Son ödənişlər', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           recent.when(
             loading: () => const SizedBox.shrink(),
@@ -314,7 +314,7 @@ class _PaymentTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(methodIcon(p.method), color: AppColors.textSoft),
         title: Row(children: [
-          Expanded(child: Text(money(p.amount, p.currency), style: const TextStyle(fontWeight: FontWeight.w800))),
+          Expanded(child: Text(money(p.amount, p.currency), style: const TextStyle(fontWeight: FontWeight.w600))),
           AdminChip(statusLabelAz(p.status), color: statusColorOf(p.status)),
         ]),
         subtitle: Text('Sifariş ${p.orderLabel}${p.orderTitle == null ? '' : ' · ${p.orderTitle}'}\n${p.customer ?? ''} · ${fmt.format(p.createdAt)}',
@@ -342,7 +342,7 @@ void _showPayment(BuildContext context, FinancePayment p) {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(money(p.amount, p.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          Text(money(p.amount, p.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           line('Status', statusLabelAz(p.status)),
           line('Sifariş', '${p.orderLabel}${p.orderTitle == null ? '' : ' · ${p.orderTitle}'}'),
@@ -516,7 +516,7 @@ class _AccountTile extends ConsumerWidget {
             Row(children: [
               Icon(a.isCard ? Icons.credit_card : Icons.business, color: AppColors.accent),
               const SizedBox(width: 10),
-              Expanded(child: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w700))),
+              Expanded(child: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w400))),
               if (a.isPrimary) ...[AdminChip('Əsas', color: AppColors.accent), const SizedBox(width: 6)],
               status,
             ]),
@@ -627,7 +627,7 @@ class _AddAccountSheetState extends ConsumerState<_AddAccountSheet> {
         padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Text('Bank kartı / biznes hesabı', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Bank kartı / biznes hesabı', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             SegmentedButton<String>(
               segments: const [
@@ -725,7 +725,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
           children: [
-            const Text('Ödəniş rejimi', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Ödəniş rejimi', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             SegmentedButton<String>(
               segments: const [
@@ -743,7 +743,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
               style: TextStyle(fontSize: 12, color: AppColors.textSoft),
             ),
             const SizedBox(height: 16),
-            const Text('Provayder', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Provayder', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -758,7 +758,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
               decoration: const InputDecoration(labelText: 'Komissiya, %', helperText: '0–50'),
             ),
             const SizedBox(height: 12),
-            const Text('Ödəniş üsulları', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Ödəniş üsulları', style: TextStyle(fontWeight: FontWeight.w600)),
             for (final m in PayMethod.values)
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
@@ -799,7 +799,7 @@ class _ProviderRequirements extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.line)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Real provayder qoşmaq üçün lazım olanlar', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text('Real provayder qoşmaq üçün lazım olanlar', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text(
             '• Provayderlə müqavilə (Apple Pay, Google Pay, Visa/Mastercard dəstəyi ilə)\n'
@@ -854,7 +854,7 @@ class _AuditTab extends ConsumerWidget {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(Icons.history, size: 18, color: AppColors.textSoft),
-                        title: Text(auditActionAz('${r['action']}'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        title: Text(auditActionAz('${r['action']}'), style: const TextStyle(fontWeight: FontWeight.w400)),
                         subtitle: Text(
                           '${DateTime.tryParse('${r['created_at']}') == null ? '' : fmt.format(DateTime.parse('${r['created_at']}').toLocal())}'
                           ' · ${r['entity']} ${r['entity_id'] ?? ''}',

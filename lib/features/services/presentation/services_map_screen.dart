@@ -261,7 +261,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 5)],
               ),
               alignment: Alignment.center,
-              child: Text('${group.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+              child: Text('${group.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
             ),
           ),
         ));
@@ -624,7 +624,7 @@ class _CatChip extends StatelessWidget {
               children: [
                 Icon(icon, size: 15, color: selected ? Colors.white : AppColors.textSoft),
                 const SizedBox(width: 5),
-                Text(label, style: TextStyle(fontSize: 12.5, color: selected ? Colors.white : AppColors.text, fontWeight: FontWeight.w600)),
+                Text(label, style: TextStyle(fontSize: 12.5, color: selected ? Colors.white : AppColors.text, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -738,7 +738,7 @@ class _ResultsSheet extends ConsumerWidget {
                           results.isLoading && items.isEmpty
                               ? s.t('svc_searching')
                               : s.t('svc_found', {'n': '${items.length}', 'km': query.radiusKm.round().toString()}),
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                          style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14.5),
                         ),
                       ),
                       TextButton.icon(
@@ -759,7 +759,7 @@ class _ResultsSheet extends ConsumerWidget {
                       child: ListTile(
                         dense: true,
                         leading: Icon(Icons.storefront, color: AppColors.route),
-                        title: Text(s.t('svc_finish_profile_title'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                        title: Text(s.t('svc_finish_profile_title'), style: const TextStyle(fontWeight: FontWeight.w400)),
                         subtitle: Text(s.t('svc_finish_profile_body')),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.pushOnce('/service-edit?kind=$pendingKind'),
@@ -913,7 +913,7 @@ class ServiceListCard extends StatelessWidget {
                               child: Text(p.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                                  style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 15)),
                             ),
                             const SizedBox(width: 5),
                             ServiceTrustBadge(p: p, s: s, compact: true),
@@ -1041,7 +1041,7 @@ class _SearchSuggestions extends ConsumerWidget {
     Widget header(String key) => Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
           child: Text(s.t(key).toUpperCase(),
-              style: TextStyle(fontSize: 11, color: AppColors.textSoft, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+              style: TextStyle(fontSize: 11, color: AppColors.textSoft, letterSpacing: 1.0, fontWeight: FontWeight.w500)),
         );
 
     final children = <Widget>[
@@ -1061,7 +1061,7 @@ class _SearchSuggestions extends ConsumerWidget {
           ListTile(
             dense: true,
             leading: Icon(serviceMarkerIcon(p.markerType), color: serviceMarkerColor(p.markerType)),
-            title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+            title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w400)),
             // City and kind of service tell services with the same name apart.
             subtitle: Text(
               [
@@ -1173,7 +1173,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     final s = widget.s;
     Widget title(String k) => Padding(
           padding: const EdgeInsets.only(top: 14, bottom: 6),
-          child: Text(s.t(k), style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSoft, fontSize: 12.5)),
+          child: Text(s.t(k), style: TextStyle(fontWeight: FontWeight.w400, color: AppColors.textSoft, fontSize: 12.5)),
         );
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),

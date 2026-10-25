@@ -66,7 +66,7 @@ class _AdvertiseScreenState extends ConsumerState<AdvertiseScreen> {
               onPressed: () => showAdTemplatePicker(context, ref),
               style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
               icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(s.t('adv_create'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              label: Text(s.t('adv_create'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
             const SizedBox(height: 10),
             _HowItWorks(s: s),
@@ -198,7 +198,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
                                   child: Row(
                                     children: [
                                       Expanded(
-                                        child: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                        child: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w400)),
                                       ),
                                       if (t.logo != null)
                                         Padding(
@@ -206,7 +206,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
                                           child: Icon(Icons.image_outlined, size: 16, color: AppColors.textSoft),
                                         ),
                                       Text(s.t('adv_pick_this'),
-                                          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+                                          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w400)),
                                     ],
                                   ),
                                 ),
@@ -224,7 +224,7 @@ class _TemplatePickerState extends ConsumerState<_TemplatePicker> {
   }
 }
 
-final adSectionHeader = TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w700);
+final adSectionHeader = TextStyle(color: AppColors.textSoft, fontSize: 12, letterSpacing: 1.1, fontWeight: FontWeight.w500);
 
 String adMoney(double v, String c) => '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} $c';
 
@@ -263,7 +263,7 @@ class AdStageChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: c.withValues(alpha: 0.4)),
       ),
-      child: Text(s.t(adStageKey(stage)), style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w700)),
+      child: Text(s.t(adStageKey(stage)), style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -305,7 +305,7 @@ class AdOrderTile extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('${s.t('adv_order')} ${o.number}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                          Text('${s.t('adv_order')} ${o.number}', style: const TextStyle(fontWeight: FontWeight.w400)),
                           const SizedBox(height: 2),
                           Text('${adMoney(o.price, o.currency)} · ${s.t('ad_days', {'n': '${o.days}'})} · $date',
                               style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
@@ -350,7 +350,7 @@ class _HowItWorks extends StatelessWidget {
                     height: 20,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle),
-                    child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                    child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white)),
                   ),
                   const SizedBox(width: 8),
                   Expanded(child: Text(s.t(steps[i]), style: const TextStyle(fontSize: 13, height: 1.35))),

@@ -383,7 +383,7 @@ class _ClaimsTabState extends ConsumerState<_ClaimsTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(names[c.providerId] ?? c.providerId, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text(names[c.providerId] ?? c.providerId, style: const TextStyle(fontWeight: FontWeight.w400)),
                         const SizedBox(height: 4),
                         KV('İstifadəçi', c.userId),
                         KV('Telefon', c.phone),

@@ -197,7 +197,7 @@ class _GalleryState extends State<_Gallery> {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(12)),
                 child: Text(widget.strings.t('detail_gallery_count', {'i': '${_page + 1}', 'n': '${p.length}'}),
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
               ),
             ),
           Positioned(
@@ -271,7 +271,7 @@ class _FullScreenPicturesState extends State<_FullScreenPictures> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(widget.strings.t('detail_gallery_count', {'i': '${_page + 1}', 'n': '${p.length}'}),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
               ),
             ),
           ),
@@ -389,7 +389,7 @@ class _DetailBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(strings.t('cargo_terms_title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(strings.t('cargo_terms_title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 for (final (key, amount) in cargo.paymentTerms)
                   // Only the advance has an amount; the others are just ticked.
@@ -410,7 +410,7 @@ class _DetailBody extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(strings.t('detail_description_label'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(strings.t('detail_description_label'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               Text(cargo.description!.trim(), style: TextStyle(fontSize: 17, color: AppColors.text, height: 1.35)),
             ]),
@@ -561,7 +561,7 @@ class _InfoRow extends StatelessWidget {
               )),
           Expanded(
               child: Text(value,
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.3))),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.3))),
         ],
       ),
     );
@@ -698,7 +698,7 @@ class _OwnerContactSection extends ConsumerWidget {
                                         child: Text(name,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                                       ),
                                       if (profile?.isVerified == true) ...[
                                         const SizedBox(width: 4),
@@ -1210,7 +1210,7 @@ class _OffersReceivedSectionState extends ConsumerState<_OffersReceivedSection> 
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('${o.offeredPrice.toStringAsFixed(0)} ${o.currency}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text('${o.offeredPrice.toStringAsFixed(0)} ${o.currency}', style: const TextStyle(fontWeight: FontWeight.w600)),
                                 Text(widget.strings.t('offer_status_${o.status}'), style: Theme.of(context).textTheme.bodySmall),
                                 if (o.message != null) Text(o.message!, style: Theme.of(context).textTheme.bodySmall),
                               ],
@@ -1467,7 +1467,7 @@ Future<void> _addPicture(BuildContext context, WidgetRef ref, CargoModel cargo, 
       builder: (ctx, setState) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(strings.t('cargo_pics_label'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.text)),
+          Text(strings.t('cargo_pics_label'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
           const SizedBox(height: 12),
           CargoPictureField(
             strings: strings,

@@ -60,8 +60,8 @@ class MyMarketListingsScreen extends ConsumerWidget {
                             Expanded(
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text(l.title.isEmpty ? s.t('mk_untitled') : l.title,
-                                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                                Text(marketPrice(l.price, l.currency), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800)),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w400)),
+                                Text(marketPrice(l.price, l.currency), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 4),
                                 Row(children: [
                                   _StatusChip(status: l.status, label: s.t('mk_state_${l.status.name}')),
@@ -110,7 +110,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w500)),
     );
   }
 }

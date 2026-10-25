@@ -38,7 +38,7 @@ Widget _pin(Color color, String letter) => Container(
         boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
       ),
       alignment: Alignment.center,
-      child: Text(letter, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+      child: Text(letter, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
     );
 
 /// Route card on cargo detail (replaces the stage stepper): a small map
@@ -113,7 +113,7 @@ class CargoRouteMap extends ConsumerWidget {
                         ? '${strings.t('map_road_distance')}: ${_fmtKm(route.distanceKm)} km'
                             '${route.durationMin != null ? ' · ${_fmtDuration(route.durationMin!, strings)}' : ''}'
                         : '${strings.t('map_straight_distance')}: ${_fmtKm(route.distanceKm)} km',
-                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text),
+                    style: TextStyle(fontWeight: FontWeight.w400, color: AppColors.text),
                   ),
                 if (approx)
                   Padding(

@@ -138,7 +138,7 @@ class AdPlaceholder extends StatelessWidget {
                 Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSoft),
                 const SizedBox(width: 8),
                 Text(strings.t('ad_place_here'),
-                    style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppColors.textSoft, fontWeight: FontWeight.w400)),
               ],
             ),
           ),

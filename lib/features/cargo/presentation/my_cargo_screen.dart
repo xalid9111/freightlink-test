@@ -78,7 +78,7 @@ class MyCargoScreen extends ConsumerWidget {
                           if (state != null)
                             Text('· ${strings.t(state.$1)}',
                                 key: ValueKey('my-cargo-state-${c.id}'),
-                                style: TextStyle(color: state.$2, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                                style: TextStyle(color: state.$2, fontSize: 12.5, fontWeight: FontWeight.w500)),
                           if (open && listed)
                             TextButton.icon(
                               key: ValueKey('my-cargo-off-${c.id}'),
