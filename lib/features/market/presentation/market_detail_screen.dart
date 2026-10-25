@@ -726,10 +726,11 @@ class _Specs extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.accentFill.withValues(alpha: AppColors.isDay ? 0.10 : 0.16),
+              // Icon in the same colour as its label (owner, 25.10.2026).
+              color: AppColors.textSoft.withValues(alpha: AppColors.isDay ? 0.10 : 0.14),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.accent, size: 26),
+            child: Icon(icon, color: AppColors.textSoft, size: 26),
           ),
           const SizedBox(width: 14),
           Text(label, style: TextStyle(color: AppColors.textSoft, fontSize: 15)),
