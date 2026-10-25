@@ -8,12 +8,12 @@ import '../../../../core/constants/cities.dart';
 import '../../../../core/constants/countries.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
-import '../../../../core/widgets/vip_frame.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../models/cargo_model.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
+import '../../../market/presentation/market_promo.dart';
 import '../../domain/truck_types.dart';
 import 'cargo_picture.dart';
 
@@ -419,22 +419,15 @@ class CargoTile extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            // VIP: the gold frame on the picture (owner, 24.10.2026) instead
-            // of the orange card frame — one VIP mark, not two.
             border: Border.all(color: AppColors.tileLine, width: 1),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             AspectRatio(
               aspectRatio: 1,
               child: Stack(fit: StackFit.expand, children: [
-                if (vip)
-                  VipPictureFrame(
-                    key: const ValueKey('tile-vip'),
-                    radius: 13,
-                    child: CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
-                  )
-                else
-                  CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
+                // No frame on the picture (owner, 25.10.2026, 0067 — as TIR
+                // Bazarı): Premium / VIP marks sit next to the price.
+                CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
                 Positioned(top: 6, right: 6, child: CargoFavoriteHeart(cargoId: cargo.id, size: 19, onPhoto: true)),
               ]),
             ),
@@ -453,16 +446,26 @@ class CargoTile extends ConsumerWidget {
                 if (type != null) line(Icons.local_shipping_outlined, type),
                 line(Icons.calendar_today_outlined, date),
                 const SizedBox(height: 6),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text.rich(
-                    TextSpan(children: [
-                      TextSpan(text: _num(cargo.offeredPrice), style: AppFonts.display(size: 20, color: AppColors.text, height: 1)),
-                      TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-                    ]),
+                Row(children: [
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text.rich(
+                        TextSpan(children: [
+                          TextSpan(
+                              text: _num(cargo.offeredPrice), style: AppFonts.display(size: 20, color: AppColors.text, height: 1)),
+                          TextSpan(text: ' ${cargo.currency}', style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                        ]),
+                      ),
+                    ),
                   ),
-                ),
+                  PromoMarks(
+                    key: const ValueKey('tile-marks'),
+                    premium: cargo.isPremiumAt(DateTime.now()),
+                    vip: vip || cargo.isVipAt(DateTime.now()),
+                  ),
+                ]),
               ]),
             ),
           ]),

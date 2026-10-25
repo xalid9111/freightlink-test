@@ -32,3 +32,29 @@ class CargoVipOrder {
         status: (j['status'] as String?) ?? 'pending_payment',
       );
 }
+
+/// An İrəli çək / Premium order for a load (0067); the price is the
+/// server's.
+class CargoPromoOrder {
+  final String id, cargoId, kind, currency, status;
+  final int qty;
+  final double amount;
+  const CargoPromoOrder(
+      {required this.id,
+      required this.cargoId,
+      required this.kind,
+      required this.qty,
+      required this.amount,
+      required this.currency,
+      required this.status});
+
+  factory CargoPromoOrder.fromJson(Map<String, dynamic> j) => CargoPromoOrder(
+        id: '${j['id']}',
+        cargoId: '${j['cargo_id']}',
+        kind: (j['kind'] as String?) ?? 'bump',
+        qty: (j['qty'] as num).toInt(),
+        amount: (j['amount'] as num).toDouble(),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        status: (j['status'] as String?) ?? 'pending_payment',
+      );
+}

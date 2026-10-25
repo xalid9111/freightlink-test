@@ -85,6 +85,17 @@ class CargoModel {
   /// Read only: never sent when a load is saved.
   final bool isFeatured;
   final DateTime? featuredUntil;
+  /// Ways to the front (owner, 25.10.2026, 0067 — like TIR Bazarı). Read
+  /// only, set by the server after a verified payment; null before 0067.
+  /// [featuredSince]: when the load last became VIP (daily VIP lift);
+  /// [premiumUntil] / [premiumSince]: Premium; [bumpStart] / [bumpTotal]:
+  /// an İrəli çək pack (first lift at once, then one every 24 h).
+  final DateTime? createdAt;
+  final DateTime? featuredSince;
+  final DateTime? premiumUntil;
+  final DateTime? premiumSince;
+  final DateTime? bumpStart;
+  final int? bumpTotal;
 
   const CargoModel({
     required this.id,
@@ -128,6 +139,12 @@ class CargoModel {
     this.imageUrls = const [],
     this.isFeatured = false,
     this.featuredUntil,
+    this.createdAt,
+    this.featuredSince,
+    this.premiumUntil,
+    this.premiumSince,
+    this.bumpStart,
+    this.bumpTotal,
   });
 
   /// The loading day is over (owner, 24.10.2026): the load leaves the
@@ -139,6 +156,33 @@ class CargoModel {
   bool isListedOn(DateTime now) => status == 'new' && !isHidden && !isPaused && !isExpiredOn(now);
 
   bool isVipAt(DateTime now) => isFeatured && (featuredUntil == null || featuredUntil!.isAfter(now));
+
+  bool isPremiumAt(DateTime now) => premiumUntil != null && premiumUntil!.isAfter(now);
+
+  /// When the load last came to the front: posted, or its latest lift —
+  /// the same rule as cargo_lifted_at() in 0067 (a VIP from before 0067
+  /// lifts daily from the time it was posted).
+  DateTime liftedAt(DateTime now) {
+    DateTime? daily(DateTime? since) {
+      if (since == null || since.isAfter(now)) return null;
+      return since.add(Duration(days: now.difference(since).inSeconds ~/ 86400));
+    }
+
+    var t = createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    void take(DateTime? x) {
+      if (x != null && x.isAfter(t)) t = x;
+    }
+
+    final total = bumpTotal ?? 0;
+    final start = bumpStart;
+    if (total > 0 && start != null && !start.isAfter(now)) {
+      final n = now.difference(start).inSeconds ~/ 86400;
+      take(start.add(Duration(days: n < total - 1 ? n : total - 1)));
+    }
+    if (isVipAt(now)) take(daily(featuredSince ?? createdAt));
+    if (isPremiumAt(now)) take(daily(premiumSince));
+    return t;
+  }
 
   factory CargoModel.fromJson(Map<String, dynamic> j) => CargoModel(
         id: j['id'] as String,
@@ -184,7 +228,15 @@ class CargoModel {
         imageUrls: [for (final u in (j['image_urls'] as List? ?? const [])) if (u is String && u.isNotEmpty) u],
         isFeatured: j['is_featured'] == true,
         featuredUntil: j['featured_until'] == null ? null : DateTime.tryParse('${j['featured_until']}'),
+        createdAt: _time(j['created_at']),
+        featuredSince: _time(j['featured_since']),
+        premiumUntil: _time(j['premium_until']),
+        premiumSince: _time(j['premium_since']),
+        bumpStart: _time(j['bump_start']),
+        bumpTotal: (j['bump_total'] as num?)?.toInt(),
       );
+
+  static DateTime? _time(Object? v) => v == null ? null : DateTime.tryParse('$v');
 
   /// Columns added by migration 0046 (left out if the database does not
   /// have them yet, see CargoRepositoryImpl).

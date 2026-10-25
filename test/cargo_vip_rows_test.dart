@@ -98,11 +98,13 @@ void main() {
       expect(m.contains('const kTileWidth = 169.0;'), isTrue);
     });
 
-    test("owner's design: gold VIP frame on the picture (no orange frame / medal twice), normal price, no panel", () {
+    test("owner's design: Premium / VIP marks by the price, no frame (no orange frame / medal), no panel", () {
       final card = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
-      // Owner, 24.10.2026: the picture in the gold VIP frame replaces the
-      // orange card frame and the medal — one VIP mark only.
-      expect(card.contains('VipPictureFrame('), isTrue);
+      // Owner, 25.10.2026 (0067, as TIR Bazarı): crown / V marks next to
+      // the price replace the gold frame on the picture.
+      expect(card.contains('VipPictureFrame('), isFalse);
+      expect(card, contains("key: const ValueKey('tile-marks')"));
+      expect(card, contains('premium: cargo.isPremiumAt(DateTime.now())'));
       expect(card.contains('color: vip ? AppColors.accent : AppColors.tileLine'), isFalse);
       expect(card.contains('child: VipMedal(size: 50)'), isFalse);
       expect(card.contains('vipGoldText'), isFalse);

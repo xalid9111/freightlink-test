@@ -13,7 +13,11 @@ import '../../../models/cargo_model.dart';
 /// * The VIP order moves on by one place every [kVipRotateMinutes]
 ///   minutes ([rotation]), so every VIP comes to the front in turn —
 ///   none always stays at the back.
-/// * Normal loads keep their order (newest first).
+/// * Normal loads: the latest lift first (posted, or İrəli çək / VIP /
+///   Premium lift — CargoModel.liftedAt, 0067), like TIR Bazarı.
+/// * Premium loads (0067) stand at the very top, before the chessboard
+///   (they are VIP too, shown once); their order moves on like the VIPs,
+///   as on TIR Bazarı (marketFeedWithPremium).
 /// * Rows of [columns] (2 on a phone): always pairs; only the very last
 ///   card may stand alone, at the bottom. The computer uses the same
 ///   chessboard with wider rows.
@@ -33,19 +37,32 @@ int vipRotation(DateTime now) => now.millisecondsSinceEpoch ~/ (kVipRotateMinute
 List<LoadCell> buildLoadFlow(List<CargoModel> loads, {int columns = 2, DateTime? now, int? rotation}) {
   final t = now ?? DateTime.now();
   final cols = columns < 1 ? 1 : columns;
+  final premium = <int>[];
   final vip = <int>[];
   final normal = <int>[];
   for (var i = 0; i < loads.length; i++) {
-    (loads[i].isVipAt(t) ? vip : normal).add(i);
+    (loads[i].isPremiumAt(t) ? premium : (loads[i].isVipAt(t) ? vip : normal)).add(i);
   }
-  if (vip.length > 1) {
-    final r = (rotation ?? vipRotation(t)) % vip.length;
-    vip.setAll(0, [...vip.sublist(r), ...vip.sublist(0, r)]);
+  final epoch = DateTime.fromMillisecondsSinceEpoch(0);
+  // Newest first; equal times keep the order they came in.
+  void newestFirst(List<int> l, DateTime Function(CargoModel c) at) => l.sort((a, b) {
+        final d = at(loads[b]).compareTo(at(loads[a]));
+        return d != 0 ? d : a.compareTo(b);
+      });
+  newestFirst(premium, (c) => c.premiumSince ?? epoch);
+  newestFirst(normal, (c) => c.liftedAt(t));
+  final turn = rotation ?? vipRotation(t);
+  for (final l in [vip, premium]) {
+    if (l.length > 1) {
+      final r = turn % l.length;
+      l.setAll(0, [...l.sublist(r), ...l.sublist(0, r)]);
+    }
   }
-  final out = <LoadCell>[];
+  final out = <LoadCell>[for (final i in premium) (index: i, vip: true)];
   var v = 0, n = 0;
   while (v < vip.length || n < normal.length) {
-    final pos = out.length;
+    // The chessboard starts after the Premium loads.
+    final pos = out.length - premium.length;
     // Row r, place k: VIP where (r + k) is odd — load–VIP, then VIP–load …
     final wantVip = ((pos ~/ cols) + (pos % cols)).isOdd;
     final takeVip = wantVip ? v < vip.length : n >= normal.length;

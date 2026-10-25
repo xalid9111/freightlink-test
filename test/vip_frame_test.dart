@@ -25,10 +25,11 @@ void main() {
     });
   }
 
-  test('Loads keeps the frame; TIR Bazarı shows marks instead (0066)', () {
+  test('Loads (0067) and TIR Bazarı (0066) show marks instead of the frame', () {
     String src(String p) => File(p).readAsStringSync();
     final tile = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
-    expect(tile, contains('VipPictureFrame('));
+    expect(tile.contains('VipPictureFrame('), isFalse);
+    expect(tile, contains('PromoMarks('));
     final card = src('lib/features/market/presentation/market_card.dart');
     // TIR Bazarı (owner, 25.10.2026): no frame, Premium / VIP marks instead.
     expect(card.contains('VipPictureFrame('), isFalse);
