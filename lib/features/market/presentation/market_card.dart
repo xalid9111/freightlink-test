@@ -202,8 +202,26 @@ class MarketFeedCard extends ConsumerWidget {
   final MarketListing l;
   const MarketFeedCard({super.key, required this.l});
 
-  /// Grid row height for this card.
+  /// Smallest grid row height for this card.
   static const double extent = 236;
+
+  /// Grid row height that fits the picture and the four text lines at the
+  /// chosen text size (owner, 25.10.2026: the cards must not run into each
+  /// other with a larger text size).
+  static double extentFor(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    // The same style the card's texts get (font, flag fallback, height).
+    final base = DefaultTextStyle.of(context).style;
+    double line(double size) => (TextPainter(
+          text: TextSpan(text: 'Ağ', style: base.merge(TextStyle(fontSize: size))),
+          textScaler: scaler,
+          textDirection: TextDirection.ltr,
+          maxLines: 1,
+        )..layout())
+            .height;
+    final h = 140 + 8 + line(17) + 2 + line(14.5) + line(13) + 2 + line(12) + 6;
+    return h > extent ? h : extent;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -229,9 +247,10 @@ class MarketFeedCard extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // VIP: gold frame on the picture (owner, 24.10.2026).
+                  // VIP: the VIP seal on the picture, no gold frame (owner,
+                  // 25.10.2026).
                   if (vip)
-                    VipPictureFrame(key: const ValueKey('feed-vip'), child: MarketPhoto(url: l.cover))
+                    VipPictureFrame(key: const ValueKey('feed-vip'), frame: false, child: MarketPhoto(url: l.cover))
                   else
                     MarketPhoto(url: l.cover),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
