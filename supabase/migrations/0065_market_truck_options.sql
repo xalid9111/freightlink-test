@@ -15,7 +15,7 @@
 --
 -- Safe: forward-only, re-runnable. No row is changed or deleted; no
 -- table, column, constraint, policy or grant is removed. market_search
--- is re-created with one more parameter (a function, no data); its
+-- is re-created with four more parameters (a function, no data); its
 -- grants are set again below.
 --
 -- One transaction: everything below is applied together or not at all
