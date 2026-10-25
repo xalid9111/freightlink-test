@@ -223,6 +223,43 @@ class MarketRepository {
     return MarketVipOrder.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
+  /// Premium ads for the top of the feed (0066); none before 0066 is run.
+  Future<List<MarketListing>> premiumLatest({MarketCategory? category, int limit = 12}) async {
+    try {
+      final res = await _c.rpc('market_premium_latest', params: {'p_category': category?.wire, 'p_limit': limit}).timeout(_timeout);
+      return _list(res);
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || e.code == '42883') return const [];
+      rethrow;
+    }
+  }
+
+  /// Prices of İrəli çək / Premium (0066); VIP from market_vip_plans.
+  Future<List<MarketPromoPlan>> promoPlans(MarketPromoKind kind, {bool activeOnly = true}) async {
+    if (kind == MarketPromoKind.vip) {
+      return [for (final p in await vipPlans(activeOnly: activeOnly)) MarketPromoPlan.vip(p)];
+    }
+    try {
+      var q = _c.from('market_promo_plans').select().eq('kind', kind.wire);
+      if (activeOnly) q = q.eq('is_active', true);
+      final rows = await q.order('qty').timeout(_timeout);
+      return [for (final r in rows as List) MarketPromoPlan.fromJson(Map<String, dynamic>.from(r as Map))];
+    } on PostgrestException catch (e) {
+      // 0066 not run yet: no prices, nothing to buy.
+      if (e.code == '42P01' || e.code == 'PGRST205') return const [];
+      rethrow;
+    }
+  }
+
+  /// "İrəli çək" / "Premium et": an order for my active ad; the server sets
+  /// the price.
+  Future<MarketPromoOrder> createPromoOrder(String listingId, MarketPromoKind kind, int qty) async {
+    final res = await _c
+        .rpc('market_promo_order_create', params: {'p_listing': listingId, 'p_kind': kind.wire, 'p_qty': qty})
+        .timeout(_timeout);
+    return MarketPromoOrder.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
   // ---- admin (server checks is_admin) --------------------------------------
 
   Future<void> adminSetHero({String? imageUrl, String? title, String? titleAccent, String? subtitle}) async {
@@ -232,6 +269,13 @@ class MarketRepository {
       'p_title_accent': titleAccent,
       'p_subtitle': subtitle,
     }).timeout(_timeout);
+  }
+
+  Future<void> adminSetPromoPlan(MarketPromoKind kind, int qty, double price, {bool active = true}) async {
+    if (kind == MarketPromoKind.vip) return adminSetVipPlan(qty, price, active: active);
+    await _c
+        .rpc('admin_market_set_promo_plan', params: {'p_kind': kind.wire, 'p_qty': qty, 'p_price': price, 'p_active': active})
+        .timeout(_timeout);
   }
 
   Future<void> adminSetVipPlan(int days, double price, {bool active = true}) async {

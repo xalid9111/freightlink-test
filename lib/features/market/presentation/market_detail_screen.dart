@@ -21,7 +21,7 @@ import '../../chat/presentation/widgets/location_message.dart';
 import '../data/market_repository.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
-import 'market_vip_sheet.dart';
+import 'market_promo.dart';
 import 'market_providers.dart';
 
 /// Elanın ətraflı səhifəsi (Şəkil 4) + bənzər elanlar (Şəkil 5).
@@ -523,20 +523,20 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     _pager.animateToPage(next, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
-  /// "VIP et" (0044) on its own row under the owner's buttons, so they keep
-  /// their width.
+  /// "Önə çıxar" (owner, 25.10.2026, 0066): İrəli çək · VIP · Premium, on
+  /// its own row under the owner's buttons, so they keep their width.
   Widget _vipButton(AppStrings s, MarketListing l) => SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          key: const ValueKey('mk-vip-make'),
+          key: const ValueKey('mk-promo-open'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: kVipGold,
-            side: BorderSide(color: kVipGold.withValues(alpha: 0.7)),
+            foregroundColor: AppColors.promoVip,
+            side: BorderSide(color: AppColors.promoVip.withValues(alpha: 0.7)),
             padding: const EdgeInsets.symmetric(vertical: 12),
           ),
-          onPressed: () => showMarketVipSheet(context, s, l),
-          icon: const Icon(Icons.workspace_premium),
-          label: Text(s.t(l.vipActive() ? 'mk_vip_extend' : 'mk_vip_title')),
+          onPressed: () => showMarketPromoChooser(context, s, l),
+          icon: const MarketPromoIcon(MarketPromoKind.bump, size: 22),
+          label: Text(s.t('mk_promo_title')),
         ),
       );
 

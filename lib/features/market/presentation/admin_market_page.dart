@@ -7,6 +7,7 @@ import '../../admin/presentation/admin_widgets.dart';
 import '../data/market_repository.dart';
 import '../domain/market_models.dart';
 import 'market_card.dart';
+import 'market_promo.dart';
 import 'market_providers.dart';
 
 final _adminMarketProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketStatus?>((ref, st) {
@@ -83,6 +84,10 @@ class _AdminMarketPageState extends ConsumerState<AdminMarketPage> {
         const Text('Satış elanları (TIR Bazarı)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         const _VipPricesCard(),
+        const SizedBox(height: 12),
+        const _PromoPricesCard(MarketPromoKind.bump),
+        const SizedBox(height: 12),
+        const _PromoPricesCard(MarketPromoKind.premium),
         const SizedBox(height: 12),
         Wrap(spacing: 6, runSpacing: 6, children: [
           for (final e in _labels.entries)
@@ -248,6 +253,97 @@ class _VipPricesCardState extends ConsumerState<_VipPricesCard> {
                   ]),
                 ),
             ]),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// İrəli çək (1 / 3 / 5 / 10 lifts) and Premium (1 / 5 / 15 / 30 days)
+/// prices (0066). Changed only through admin_market_set_promo_plan
+/// (checked + logged on the server).
+class _PromoPricesCard extends ConsumerStatefulWidget {
+  final MarketPromoKind kind;
+  const _PromoPricesCard(this.kind);
+
+  @override
+  ConsumerState<_PromoPricesCard> createState() => _PromoPricesCardState();
+}
+
+class _PromoPricesCardState extends ConsumerState<_PromoPricesCard> {
+  final _price = <int, TextEditingController>{};
+
+  @override
+  void dispose() {
+    for (final c in _price.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save(MarketPromoPlan p, {bool? active}) async {
+    final v = double.tryParse((_price[p.qty]?.text ?? '').replaceAll(',', '.').trim());
+    if (v == null || v <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiyməti düzgün yazın (0-dan böyük).')));
+      return;
+    }
+    final ok = await runAdmin(context,
+        () => ref.read(marketRepositoryProvider).adminSetPromoPlan(widget.kind, p.qty, v, active: active ?? p.isActive));
+    if (ok) ref.invalidate(marketPromoPlansProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = widget.kind;
+    final bump = k == MarketPromoKind.bump;
+    final async = ref.watch(marketPromoPlansProvider((k, false)));
+    return Card(
+      key: ValueKey('admin-promo-${k.name}'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            MarketPromoIcon(k, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(bump ? 'İrəli çək qiymətləri' : 'Premium qiymətləri',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+              bump
+                  ? 'Elan dərhal, sonra hər 24 saatda bir siyahının başına qalxır — paketdəki dəfə qədər.'
+                  : 'Elan lentin ən başında durur, hər gün önə qalxır və həmin günlər VIP olur.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+          const SizedBox(height: 8),
+          async.when(
+            loading: () => const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Text('Yüklənmədi: $e', style: TextStyle(color: AppColors.danger)),
+            data: (plans) => plans.isEmpty
+                ? Text('Qiymət yoxdur (0066_market_promotions.sql işə salınıbmı?)', style: TextStyle(color: AppColors.danger))
+                : Column(children: [
+                    for (final p in plans)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                          SizedBox(width: 62, child: Text(bump ? '${p.qty} dəfə' : '${p.qty} gün')),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              key: ValueKey('promo-price-${k.name}-${p.qty}'),
+                              controller: _price.putIfAbsent(
+                                  p.qty, () => TextEditingController(text: p.price.toStringAsFixed(p.price % 1 == 0 ? 0 : 2))),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(isDense: true, suffixText: p.currency),
+                            ),
+                          ),
+                          FilledButton(onPressed: () => _save(p), child: const Text('Saxla')),
+                          Switch(value: p.isActive, onChanged: (v) => _save(p, active: v)),
+                          Text(p.isActive ? 'Aktiv' : 'Bağlı', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
+                        ]),
+                      ),
+                  ]),
           ),
         ]),
       ),

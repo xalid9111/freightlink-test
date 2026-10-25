@@ -8,6 +8,10 @@
 \set l3 '''aa440000-0000-4000-8000-000000000003'''
 
 begin;
+-- 0066 changed the VIP packs (1 / 5 / 15 / 30 days); this suite checks
+-- 0044's rules with 0044's own packs (rolled back with everything else).
+delete from public.market_vip_plans where days not in (7, 14, 30);
+update public.market_vip_plans set is_active = true, price = case days when 7 then 5 when 14 then 9 else 15 end;
 create or replace function pg_temp.as_service() returns void language sql as $$
   select set_config('request.jwt.claims', '{"role":"service_role"}', false), set_config('request.jwt.claim.sub', '', false);
 $$;

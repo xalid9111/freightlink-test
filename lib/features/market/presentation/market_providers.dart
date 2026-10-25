@@ -110,6 +110,20 @@ final marketVipQueueProvider = FutureProvider.autoDispose.family<List<MarketList
   return ref.watch(marketRepositoryProvider).vipLatest(category: c, limit: 24);
 });
 
+/// Premium ads for the top of the phone feed (0066).
+final marketPremiumQueueProvider = FutureProvider.autoDispose.family<List<MarketListing>, MarketCategory?>((ref, c) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).premiumLatest(category: c);
+});
+
+/// Prices of one way to the front (İrəli çək / VIP / Premium, 0066);
+/// [activeOnly] false = the admin list.
+final marketPromoPlansProvider =
+    FutureProvider.autoDispose.family<List<MarketPromoPlan>, (MarketPromoKind, bool)>((ref, k) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(marketRepositoryProvider).promoPlans(k.$1, activeOnly: k.$2);
+});
+
 /// VIP prices (7 / 14 / 30 days); [activeOnly] false = the admin list.
 final marketVipPlansProvider = FutureProvider.autoDispose.family<List<MarketVipPlan>, bool>((ref, activeOnly) {
   ref.watch(currentUserIdProvider);

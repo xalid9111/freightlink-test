@@ -8,15 +8,16 @@ import '../../../core/layout/desk_header_actions.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
-import '../../../core/widgets/vip_frame.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../cargo/domain/vip_rows.dart' show vipRotation;
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import 'market_brand_picker.dart' show BrandBadge;
 import 'market_card.dart';
+import 'market_promo.dart';
 import 'market_home_screen.dart' show marketCategoryIcon, openNewMarketAd;
 import 'market_providers.dart';
 
@@ -50,8 +51,21 @@ class _MarketHomeDesktopState extends ConsumerState<MarketHomeDesktop> {
     final s = ref.watch(stringsProvider);
     final filter = ref.watch(marketFilterProvider);
     final feed = ref.watch(marketFeedProvider);
-    final vip = ref.watch(marketVipLatestProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    // Premium ads first in the grid (0066); they are VIP too, so they are
+    // left out of the VIP places beside it.
+    final premium = ref.watch(marketPremiumQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    final premiumIds = {for (final p in premium) p.id};
+    final vip = [
+      for (final v in ref.watch(marketVipLatestProvider(filter.category)).valueOrNull ?? const <MarketListing>[])
+        if (!premiumIds.contains(v.id)) v,
+    ];
     final (left, right) = marketVipColumns(vip);
+    final rot = premium.isEmpty ? 0 : vipRotation(DateTime.now()) % premium.length;
+    final items = [
+      ...premium.sublist(rot),
+      ...premium.sublist(0, rot),
+      for (final l in feed.items) if (!premiumIds.contains(l.id)) l,
+    ];
     return Scaffold(
       body: NotificationListener<ScrollNotification>(
         onNotification: (n) {
@@ -135,7 +149,9 @@ class _MarketHomeDesktopState extends ConsumerState<MarketHomeDesktop> {
                     children: [
                       SizedBox(width: side, child: _VipColumn(s: s, items: left, side: 'left')),
                       const SizedBox(width: gap),
-                      Expanded(child: _Grid(s: s, feed: feed, cols: cols, onReset: () => _setFilter(const MarketFilter()))),
+                      Expanded(
+                          child: _Grid(
+                              s: s, feed: feed, items: items, cols: cols, onReset: () => _setFilter(const MarketFilter()))),
                       const SizedBox(width: gap),
                       SizedBox(width: side, child: _VipColumn(s: s, items: right, side: 'right')),
                     ],
@@ -628,16 +644,18 @@ class _SearchPanelState extends State<_SearchPanel> {
 class _Grid extends StatelessWidget {
   final AppStrings s;
   final MarketFeedState feed;
+  /// Premium first, then the feed (0066).
+  final List<MarketListing> items;
   final int cols;
   final VoidCallback onReset;
-  const _Grid({required this.s, required this.feed, required this.cols, required this.onReset});
+  const _Grid({required this.s, required this.feed, required this.items, required this.cols, required this.onReset});
 
   @override
   Widget build(BuildContext context) {
-    if (feed.items.isEmpty && feed.loading) {
+    if (items.isEmpty && feed.loading) {
       return const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()));
     }
-    if (feed.items.isEmpty) {
+    if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 40, 16, 40),
         child: Column(children: [
@@ -650,8 +668,8 @@ class _Grid extends StatelessWidget {
     }
     const gap = 16.0;
     final rows = <Widget>[];
-    for (var i = 0; i < feed.items.length; i += cols) {
-      final chunk = feed.items.sublist(i, math.min(i + cols, feed.items.length));
+    for (var i = 0; i < items.length; i += cols) {
+      final chunk = items.sublist(i, math.min(i + cols, items.length));
       rows.add(Padding(
         padding: const EdgeInsets.only(bottom: gap),
         child: IntrinsicHeight(
@@ -714,7 +732,6 @@ class _VipPlace extends StatelessWidget {
       color: AppColors.card,
       child: InkWell(
         onTap: () => context.pushOnce('/market/l/${l.id}'),
-        // Gold VIP frame over the whole picture (owner, 24.10.2026).
         child: SizedBox.expand(
           child: Stack(
             fit: StackFit.expand,
@@ -730,7 +747,8 @@ class _VipPlace extends StatelessWidget {
                   ),
                 ),
               ),
-              const IgnorePointer(child: CustomPaint(painter: VipFramePainter(radius: 16))),
+              // VIP mark instead of the gold frame (owner, 25.10.2026, 0066).
+              const Positioned(left: 8, top: 8, child: MarketPromoIcon(MarketPromoKind.vip, size: 30)),
               Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
               Positioned(
                 left: 12,

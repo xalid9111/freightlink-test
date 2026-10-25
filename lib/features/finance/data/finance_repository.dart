@@ -59,6 +59,15 @@ class FinanceRepository {
     return CheckoutPayment.fromJson(j['payment'] as Map);
   }
 
+  /// Checkout for a TIR Bazarı İrəli çək / Premium order (0066): same rules,
+  /// the amount comes from the order on the server.
+  Future<CheckoutPayment> startPromoCheckout(
+      {required String promoOrderId, required PayMethod method, required String idempotencyKey}) async {
+    final j = await _checkout(
+        {'action': 'create', 'promo_order_id': promoOrderId, 'method': method.wire, 'idempotency_key': idempotencyKey});
+    return CheckoutPayment.fromJson(j['payment'] as Map);
+  }
+
   /// TEST mode only: the built-in test provider sends a signed result to
   /// the webhook; the server decides.
   Future<CheckoutPayment> completeTestPayment(String paymentId, {required bool success}) async {

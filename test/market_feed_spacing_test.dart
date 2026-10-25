@@ -46,9 +46,9 @@ void main() {
 
   test('wired: feed card has no frame, grid uses the measured height and more room', () {
     final card = File('lib/features/market/presentation/market_card.dart').readAsStringSync();
-    expect(card, contains("VipPictureFrame(key: const ValueKey('feed-vip'), frame: false,"));
-    // The grid card (other lists) keeps its frame.
-    expect(card, contains('if (vip) VipPictureFrame(radius: 0, child: MarketPhoto(url: l.cover))'));
+    // 0066: no frame or seal at all — the marks sit on the city line.
+    expect(card.contains('VipPictureFrame('), isFalse);
+    expect(card, contains("MarketPromoMarks(l, key: const ValueKey('feed-marks'))"));
     final home = File('lib/features/market/presentation/market_home_screen.dart').readAsStringSync();
     expect(home, contains('mainAxisExtent: MarketFeedCard.extentFor(context),'));
     expect(home, contains('mainAxisSpacing: 18,'));

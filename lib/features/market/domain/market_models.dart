@@ -87,6 +87,8 @@ class MarketListing {
   final int views;
   final bool isVip;
   final DateTime? vipUntil;
+  /// Premium (0066): top of the feed, a daily lift and VIP while it lasts.
+  final DateTime? premiumUntil;
   final String? adminNote;
   final DateTime createdAt;
   final DateTime? publishedAt, soldAt;
@@ -123,6 +125,7 @@ class MarketListing {
     this.views = 0,
     this.isVip = false,
     this.vipUntil,
+    this.premiumUntil,
     this.adminNote,
     required this.createdAt,
     this.publishedAt,
@@ -131,6 +134,9 @@ class MarketListing {
 
   /// VIP badge only while it is on and not expired.
   bool vipActive([DateTime? now]) => isVip && (vipUntil == null || vipUntil!.isAfter(now ?? DateTime.now()));
+
+  /// Premium while it has not ended (0066).
+  bool premiumActive([DateTime? now]) => premiumUntil != null && premiumUntil!.isAfter(now ?? DateTime.now());
 
   /// "DAF XF 106 — 2017"
   String get title {
@@ -176,6 +182,7 @@ class MarketListing {
         views: _i(j['views']) ?? 0,
         isVip: j['is_vip'] == true,
         vipUntil: _t(j['vip_until']),
+        premiumUntil: _t(j['premium_until']),
         adminNote: j['admin_note'] as String?,
         createdAt: _t(j['created_at']) ?? DateTime.now(),
         publishedAt: _t(j['published_at']),
@@ -513,6 +520,87 @@ class MarketVipPlan {
         price: (j['price'] as num).toDouble(),
         currency: (j['currency'] as String?) ?? 'AZN',
         isActive: j['is_active'] != false,
+      );
+}
+
+/// Ways to bring an ad to the front (owner, 25.10.2026, 0066, like
+/// Turbo.az): İrəli çək (lifts), VIP (days, 0044), Premium (days).
+enum MarketPromoKind { bump, vip, premium }
+
+extension MarketPromoKindX on MarketPromoKind {
+  String get wire => name;
+  /// The pack counts lifts for İrəli çək, days for VIP / Premium.
+  bool get countsDays => this != MarketPromoKind.bump;
+  String get asset => 'assets/images/promo/promo_$name.png';
+}
+
+/// A price of İrəli çək / Premium (market_promo_plans, 0066); VIP uses
+/// [MarketVipPlan] as before.
+class MarketPromoPlan {
+  final MarketPromoKind kind;
+  final int qty;
+  final double price;
+  final String currency;
+  final bool isActive;
+  const MarketPromoPlan({required this.kind, required this.qty, required this.price, this.currency = 'AZN', this.isActive = true});
+
+  factory MarketPromoPlan.fromJson(Map<String, dynamic> j) => MarketPromoPlan(
+        kind: j['kind'] == 'premium' ? MarketPromoKind.premium : MarketPromoKind.bump,
+        qty: (j['qty'] as num).toInt(),
+        price: (j['price'] as num).toDouble(),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        isActive: j['is_active'] != false,
+      );
+
+  /// A VIP pack in the same shape (the sheet shows all three alike).
+  factory MarketPromoPlan.vip(MarketVipPlan p) =>
+      MarketPromoPlan(kind: MarketPromoKind.vip, qty: p.days, price: p.price, currency: p.currency, isActive: p.isActive);
+}
+
+/// The lowest active price ("3 AZN-dən"), null when there is none.
+MarketPromoPlan? marketPromoFrom(List<MarketPromoPlan> plans) {
+  MarketPromoPlan? best;
+  for (final p in plans) {
+    if (p.isActive && (best == null || p.price < best.price)) best = p;
+  }
+  return best;
+}
+
+/// The phone feed with Premium on top (0066): Premium ads first (their
+/// order moves on like the VIP ones), then the ads and VIP ads in the
+/// chessboard order; a Premium ad is never shown twice.
+List<(T, bool)> marketFeedWithPremium<T>(List<T> premium, List<(T, bool)> rest, {required String Function(T) id, int rotation = 0}) {
+  if (premium.isEmpty) return rest;
+  final r = rotation % premium.length;
+  final top = [...premium.sublist(r), ...premium.sublist(0, r)];
+  final ids = {for (final p in top) id(p)};
+  return [for (final p in top) (p, true), for (final e in rest) if (!ids.contains(id(e.$1))) e];
+}
+
+/// An İrəli çək / Premium order for one of my ads; the price is the server's.
+class MarketPromoOrder {
+  final String id, listingId, currency, status;
+  final MarketPromoKind kind;
+  final int qty;
+  final double amount;
+  const MarketPromoOrder({
+    required this.id,
+    required this.listingId,
+    required this.kind,
+    required this.qty,
+    required this.amount,
+    required this.currency,
+    required this.status,
+  });
+
+  factory MarketPromoOrder.fromJson(Map<String, dynamic> j) => MarketPromoOrder(
+        id: '${j['id']}',
+        listingId: '${j['listing_id']}',
+        kind: j['kind'] == 'premium' ? MarketPromoKind.premium : MarketPromoKind.bump,
+        qty: (j['qty'] as num).toInt(),
+        amount: (j['amount'] as num).toDouble(),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        status: (j['status'] as String?) ?? 'pending_payment',
       );
 }
 

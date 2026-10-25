@@ -89,6 +89,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
   Future<void> _refresh() async {
     ref.invalidate(marketFeedProvider);
     ref.invalidate(marketVipQueueProvider);
+    ref.invalidate(marketPremiumQueueProvider);
   }
 
   @override
@@ -98,14 +99,25 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
     final s = ref.watch(stringsProvider);
     final filter = ref.watch(marketFilterProvider);
     final feed = ref.watch(marketFeedProvider);
-    final vip = ref.watch(marketVipQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    // Premium ads at the very top (owner, 25.10.2026, 0066); a Premium ad
+    // is also VIP, so it is left out of the VIP places below.
+    final premium = ref.watch(marketPremiumQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[];
+    final premiumIds = {for (final p in premium) p.id};
+    final vip = [
+      for (final v in ref.watch(marketVipQueueProvider(filter.category)).valueOrNull ?? const <MarketListing>[])
+        if (!premiumIds.contains(v.id)) v,
+    ];
     // VIP ads among the ads, as on the Loads page (owner, 24.10.2026): no
     // VIP row under the banner any more; ad–VIP, VIP–ad … and the VIP
     // order moves on every few minutes so each VIP comes to the front.
     // Columns exactly as the grid below lays them out (2 on a phone).
     final columns = ((MediaQuery.sizeOf(context).width - 32) / (260 + 12)).ceil().clamp(1, 8);
-    final entries = vipChessboard([for (final l in feed.items) if (!l.vipActive()) l], vip,
-        columns: columns, rotation: vipRotation(DateTime.now()));
+    final entries = marketFeedWithPremium(
+        premium,
+        vipChessboard([for (final l in feed.items) if (!l.vipActive() && !premiumIds.contains(l.id)) l], vip,
+            columns: columns, rotation: vipRotation(DateTime.now())),
+        id: (l) => l.id,
+        rotation: vipRotation(DateTime.now()));
     // Filter changed elsewhere ("Hamısına bax", reset): show its text.
     ref.listen<MarketFilter>(marketFilterProvider, (_, next) {
       final label = _searchLabel(next);
