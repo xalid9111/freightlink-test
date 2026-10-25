@@ -212,9 +212,15 @@ void main() {
         expect(File('docs/brand_logos.md').readAsStringSync().contains(file), isTrue, reason: 'source of $file');
       });
       expect(marketBrandLogoAsset('Brand without logo'), isNull);
-      // Mərhələ 3: 20 logos, 128 x 128 with transparency, each with its source.
-      expect(kMarketBrandLogos.length, 20);
-      expect(kMarketBrandLogos.containsKey('Volvo'), isFalse, reason: 'Simple Icons mark is Volvo Cars');
+      // Mərhələ 3: 48 logos, 128 x 128 with transparency, each with its source.
+      expect(kMarketBrandLogos.length, 48);
+      for (final b in ['Mercedes-Benz', 'Volvo', 'KAMAZ', 'GAZ', 'Scania', 'DAF', 'MAN', 'Krone', 'Kögel', 'Schmitz Cargobull']) {
+        expect(kMarketBrandLogos.containsKey(b), isTrue, reason: b);
+      }
+      // Not found in a checked source: letters stay (no drawn or guessed logo).
+      for (final b in ['Howo', 'Ford Trucks', 'Wielton', 'Komatsu']) {
+        expect(marketBrandLogoAsset(b), isNull, reason: b);
+      }
       for (final file in kMarketBrandLogos.values) {
         final b = File('assets/images/brands/$file').readAsBytesSync();
         final w = (b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19];
@@ -223,7 +229,7 @@ void main() {
         final png = String.fromCharCodes(b.take(1200));
         expect(b[25] == 6 || png.contains('tRNS'), isTrue, reason: '$file transparent');
       }
-      expect(marketBrandLogoAsset('mercedes'), isNull);
+      expect(marketBrandLogoAsset('mercedes'), 'assets/images/brands/mercedes_benz.png');
       expect(marketBrandLogoAsset('Renault Trucks'), 'assets/images/brands/renault.png');
       expect(File('pubspec.yaml').readAsStringSync(), contains('- assets/images/brands/'));
       expect(File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync(),

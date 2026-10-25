@@ -129,7 +129,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   Other spellings ("Mercedes", "КАМАЗ", "FH-16") are joined by
   `canonicalMarketBrand` / `market_name_key` — stored ads never rewritten.
   Logos only with a recorded source (docs/brand_logos.md), otherwise the
-  letter square; 20 brand logos from Simple Icons (Mərhələ 3, 25.10.2026),
+  letter square; 48 brand logos (Simple Icons, car-logos-dataset, 3 from the
+  owner — Mərhələ 3, 25.10.2026),
   on a white plate in day and night, also in the computer's brand list.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
