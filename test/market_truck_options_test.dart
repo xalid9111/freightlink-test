@@ -87,7 +87,7 @@ void main() {
     final detail = File('lib/features/market/presentation/market_detail_screen.dart').readAsStringSync();
     // One under the other with big icons (owner, 25.10.2026).
     expect(detail, contains("key: ValueKey('mk-detail-\$key')"));
-    expect(detail, contains('child: Icon(icon, color: AppColors.accent, size: 26)'));
+    expect(detail, contains('child: Icon(icon, color: AppColors.textSoft, size: 26)'));
     for (final k in ["('on-order',", "('axle',", "('equipment',", "('damage',", "('body',", "('mileage',"]) {
       expect(detail, contains(k));
     }
