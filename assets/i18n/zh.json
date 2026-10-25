@@ -1205,5 +1205,6 @@
   "mk_eq_sleeper": "卧铺",
   "mk_condition": "车况",
   "mk_damage_no": "无事故",
-  "mk_damage_yes": "有事故"
+  "mk_damage_yes": "有事故",
+  "mk_model_not_found": "未找到车型"
 }

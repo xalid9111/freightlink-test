@@ -1205,5 +1205,6 @@
   "mk_eq_sleeper": "საწოლი",
   "mk_condition": "მდგომარეობა",
   "mk_damage_no": "დაუზიანებელი",
-  "mk_damage_yes": "დაზიანებული"
+  "mk_damage_yes": "დაზიანებული",
+  "mk_model_not_found": "მოდელი ვერ მოიძებნა"
 }

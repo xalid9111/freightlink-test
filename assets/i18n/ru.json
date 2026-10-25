@@ -1205,5 +1205,6 @@
   "mk_eq_sleeper": "Спальное место",
   "mk_condition": "Состояние",
   "mk_damage_no": "Не битый",
-  "mk_damage_yes": "Битый"
+  "mk_damage_yes": "Битый",
+  "mk_model_not_found": "Модель не найдена"
 }

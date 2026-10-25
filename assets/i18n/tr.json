@@ -1205,5 +1205,6 @@
   "mk_eq_sleeper": "Yatak",
   "mk_condition": "Durumu",
   "mk_damage_no": "Hasarsız",
-  "mk_damage_yes": "Hasarlı"
+  "mk_damage_yes": "Hasarlı",
+  "mk_model_not_found": "Model bulunamadı"
 }

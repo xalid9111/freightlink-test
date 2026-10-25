@@ -1205,5 +1205,6 @@
   "mk_eq_sleeper": "Yataq",
   "mk_condition": "Vəziyyəti",
   "mk_damage_no": "Vuruğu yoxdur",
-  "mk_damage_yes": "Vuruğu var"
+  "mk_damage_yes": "Vuruğu var",
+  "mk_model_not_found": "Model tapılmadı"
 }
