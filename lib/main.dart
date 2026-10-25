@@ -16,6 +16,7 @@ import 'core/layout/desktop_preview.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
+import 'core/site/site_access.dart';
 import 'features/cargo/presentation/providers/category_providers.dart';
 
 Future<void> main() async {
@@ -98,7 +99,9 @@ class FreightLinkApp extends ConsumerWidget {
       darkTheme: themeForUiScale(AppTheme.current, uiScale),
       themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark,
       routerConfig: router,
-      builder: (context, child) => applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)),
+      // Site closed (0068): only admins see the app, others the notice.
+      builder: (context, child) =>
+          SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child))),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

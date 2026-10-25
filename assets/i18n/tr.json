@@ -1225,5 +1225,10 @@
   "mk_promo_paid_until": "{date} tarihine kadar ödendi",
   "mk_promo_days": "{n} gün",
   "mk_promo_times": "{n} kez",
-  "mk_promo_from": "{price}'den başlayan"
+  "mk_promo_from": "{price}'den başlayan",
+  "site_closed_title": "Site geçici olarak kapalı",
+  "site_closed_default": "Sitede bakım çalışması yapılıyor. Lütfen biraz sonra tekrar deneyin.",
+  "site_closed_retry": "Tekrar dene",
+  "site_closed_admin_login": "Yönetici girişi",
+  "site_closed_sign_out": "Çıkış"
 }

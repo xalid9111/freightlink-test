@@ -1225,5 +1225,10 @@
   "mk_promo_paid_until": "{date} tarixinə kimi ödənilib",
   "mk_promo_days": "{n} gün",
   "mk_promo_times": "{n} dəfə",
-  "mk_promo_from": "{price}-dən"
+  "mk_promo_from": "{price}-dən",
+  "site_closed_title": "Sayt müvəqqəti bağlıdır",
+  "site_closed_default": "Saytda texniki işlər aparılır. Bir az sonra yenidən yoxlayın.",
+  "site_closed_retry": "Yenidən yoxla",
+  "site_closed_admin_login": "Admin girişi",
+  "site_closed_sign_out": "Çıxış"
 }

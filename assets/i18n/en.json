@@ -1225,5 +1225,10 @@
   "mk_promo_paid_until": "Paid until {date}",
   "mk_promo_days": "{n} days",
   "mk_promo_times": "{n} times",
-  "mk_promo_from": "from {price}"
+  "mk_promo_from": "from {price}",
+  "site_closed_title": "The site is temporarily closed",
+  "site_closed_default": "Maintenance is in progress. Please try again a little later.",
+  "site_closed_retry": "Try again",
+  "site_closed_admin_login": "Admin sign-in",
+  "site_closed_sign_out": "Sign out"
 }
