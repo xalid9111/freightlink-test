@@ -212,6 +212,22 @@ void main() {
         expect(File('docs/brand_logos.md').readAsStringSync().contains(file), isTrue, reason: 'source of $file');
       });
       expect(marketBrandLogoAsset('Brand without logo'), isNull);
+      // Mərhələ 3: 20 logos, 128 x 128 with transparency, each with its source.
+      expect(kMarketBrandLogos.length, 20);
+      expect(kMarketBrandLogos.containsKey('Volvo'), isFalse, reason: 'Simple Icons mark is Volvo Cars');
+      for (final file in kMarketBrandLogos.values) {
+        final b = File('assets/images/brands/$file').readAsBytesSync();
+        final w = (b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19];
+        final h = (b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23];
+        expect((w, h), (128, 128), reason: file);
+        final png = String.fromCharCodes(b.take(1200));
+        expect(b[25] == 6 || png.contains('tRNS'), isTrue, reason: '$file transparent');
+      }
+      expect(marketBrandLogoAsset('mercedes'), isNull);
+      expect(marketBrandLogoAsset('Renault Trucks'), 'assets/images/brands/renault.png');
+      expect(File('pubspec.yaml').readAsStringSync(), contains('- assets/images/brands/'));
+      expect(File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync(),
+          contains('BrandBadge(b, size: 24)'));
       expect(brandInitials('Mercedes-Benz'), 'MB');
       final picker = File('lib/features/market/presentation/market_brand_picker.dart').readAsStringSync();
       expect(picker.contains('marketBrandLogoAsset(brand)'), isTrue);

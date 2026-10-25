@@ -39,19 +39,21 @@ List<String> _catalogueModels(MarketCategory? c, String brand) => c == null
 /// and night alike, owner 25.10.2026), otherwise the brand's letters.
 class BrandBadge extends StatelessWidget {
   final String brand;
-  const BrandBadge(this.brand, {super.key});
+  /// 44 on the "Marka" page; smaller in the computer's brand list.
+  final double size;
+  const BrandBadge(this.brand, {super.key, this.size = 44});
 
   @override
   Widget build(BuildContext context) {
     final logo = marketBrandLogoAsset(brand);
     if (logo == null) return _letters();
     return Container(
-      width: 44,
-      height: 44,
-      padding: const EdgeInsets.all(4),
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size / 11),
       decoration: BoxDecoration(
         color: AppColors.logoPlate,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(size * 0.18),
         border: Border.all(color: AppColors.tileLine),
       ),
       child: Image.asset(logo, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _lettersText(AppColors.logoPlateText)),
@@ -60,18 +62,22 @@ class BrandBadge extends StatelessWidget {
 
   Widget _lettersText(Color color) {
     final t = brandInitials(brand);
+    final k = size / 44;
     return Center(
-      child: Text(t, style: TextStyle(fontSize: t.length > 2 ? 12.5 : 15, fontWeight: FontWeight.w900, color: color)),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(t, style: TextStyle(fontSize: (t.length > 2 ? 12.5 : 15) * k, fontWeight: FontWeight.w900, color: color)),
+      ),
     );
   }
 
   Widget _letters() => Container(
-        width: 44,
-        height: 44,
+        width: size,
+        height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: AppColors.tileBg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(size * 0.18),
           border: Border.all(color: AppColors.tileLine),
         ),
         child: _lettersText(AppColors.tileFg),

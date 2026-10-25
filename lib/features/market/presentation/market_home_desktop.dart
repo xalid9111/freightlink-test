@@ -15,6 +15,7 @@ import '../../../core/widgets/page_hero.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
+import 'market_brand_picker.dart' show BrandBadge;
 import 'market_card.dart';
 import 'market_home_screen.dart' show marketCategoryIcon, openNewMarketAd;
 import 'market_providers.dart';
@@ -511,7 +512,13 @@ class _SearchPanelState extends State<_SearchPanel> {
               decoration: deco('mk_brand'),
               items: [
                 DropdownMenuItem(value: null, child: Text(s.t('svc_all'))),
-                for (final b in brands) DropdownMenuItem(value: b, child: Text(b, overflow: TextOverflow.ellipsis)),
+                // Logo (or letters) left of the name (owner, 25.10.2026).
+                for (final b in brands)
+                  DropdownMenuItem(value: b, child: Row(children: [
+                    BrandBadge(b, size: 24),
+                    const SizedBox(width: 8),
+                    Flexible(child: Text(b, overflow: TextOverflow.ellipsis)),
+                  ])),
               ],
               onChanged: (v) => setState(() {
                 _brand = v;
