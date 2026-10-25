@@ -62,7 +62,7 @@ insert into public.ad_orders (id, advertiser_id, package_name, days, price, curr
 values ('e0620000-0000-4000-8000-000000000001', :owner, '5 gün', 5, 20.00, 'AZN', 'TEST AD 62');
 select tests.check(tests.err($$ insert into public.ad_payments (order_id, cargo_vip_order_id, user_id, amount, currency, method, provider, mode, idempotency_key)
   select 'e0620000-0000-4000-8000-000000000001', id, 'a0000000-0000-4000-8000-000000000012', amount, currency, 'card', 'test', 'test', 'cvip62-two-001' from t_o2 $$)
-  like '%one_target3%', 'O7 a payment belongs to exactly one thing');
+  like '%ad_payments_one_target%', 'O7 a payment belongs to exactly one thing');
 
 set role service_role;
 select pg_temp.as_service();

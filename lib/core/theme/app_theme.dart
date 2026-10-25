@@ -117,6 +117,11 @@ class AppColors {
   /// WhatsApp brand green (call sheet).
   static const Color whatsapp = Color(0xFF25D366);
   /// VIP gold (TIR Bazarı and VIP loads, owner 23.10.2026).
+  /// İrəli çək / VIP / Premium (owner's icons, 25.10.2026): green, orange,
+  /// gold — a little deeper by day so the text stays readable.
+  static Color get promoBump => isDay ? const Color(0xFF16A34A) : const Color(0xFF34D46A);
+  static Color get promoVip => isDay ? const Color(0xFFE2620A) : const Color(0xFFFF9124);
+  static Color get promoPremium => isDay ? const Color(0xFFB98600) : const Color(0xFFFFC83D);
   static const Color vipGold = Color(0xFFFFC83D);
   /// VIP medal: gold rim shade and the dark centre / ribbons.
   static const Color vipGoldDark = Color(0xFF7A5200);

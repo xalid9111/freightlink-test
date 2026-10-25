@@ -25,16 +25,19 @@ void main() {
     });
   }
 
-  test('used on every VIP picture; the older double marks are gone', () {
+  test('Loads keeps the frame; TIR Bazarı shows marks instead (0066)', () {
     String src(String p) => File(p).readAsStringSync();
     final tile = src('lib/features/cargo/presentation/widgets/cargo_card.dart');
     expect(tile, contains('VipPictureFrame('));
     final card = src('lib/features/market/presentation/market_card.dart');
-    expect('VipPictureFrame('.allMatches(card).length, 2); // phone feed + grid card
+    // TIR Bazarı (owner, 25.10.2026): no frame, Premium / VIP marks instead.
+    expect(card.contains('VipPictureFrame('), isFalse);
+    expect(card, contains('MarketPromoMarks(l'));
     expect(card.contains('Icons.workspace_premium, key: ValueKey(\'feed-vip\')'), isFalse);
     expect(card.contains('if (vip) const Positioned(left: 8, top: 8, child: VipBadge())'), isFalse);
     final desk = src('lib/features/market/presentation/market_home_desktop.dart');
-    expect(desk, contains('VipFramePainter(radius: 16)'));
+    expect(desk.contains('VipFramePainter('), isFalse);
+    expect(desk, contains('MarketPromoIcon(MarketPromoKind.vip, size: 30)'));
     // Colours only from AppColors.
     expect(src('lib/core/widgets/vip_frame.dart').contains('Color(0x'), isFalse);
   });

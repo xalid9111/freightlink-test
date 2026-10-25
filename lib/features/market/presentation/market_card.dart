@@ -6,9 +6,9 @@ import '../../../core/constants/countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
-import '../../../core/widgets/vip_frame.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/market_models.dart';
+import 'market_promo.dart';
 import 'market_providers.dart';
 
 const kVipGold = Color(0xFFFFC83D);
@@ -89,7 +89,6 @@ class MarketCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
-    final vip = l.vipActive();
     final lang = ref.watch(currentLocaleProvider).languageCode;
     // Stored like loads (English catalogue names), shown in the app language.
     final place = [
@@ -115,8 +114,9 @@ class MarketCard extends ConsumerWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // VIP: gold frame on the picture (owner, 24.10.2026).
-                    if (vip) VipPictureFrame(radius: 0, child: MarketPhoto(url: l.cover)) else MarketPhoto(url: l.cover),
+                    // No frame on the picture: Premium / VIP marks sit by
+                    // the price (owner, 25.10.2026, 0066).
+                    MarketPhoto(url: l.cover),
                     Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                     if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                     if (l.photos.length > 1 && !compact)
@@ -152,8 +152,15 @@ class MarketCard extends ConsumerWidget {
                     if (compact && l.year != null)
                       Text('${l.year}', style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
                     const SizedBox(height: 2),
-                    Text(marketPrice(l.price, l.currency),
-                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 17)),
+                    Row(children: [
+                      Expanded(
+                        child: Text(marketPrice(l.price, l.currency),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 17)),
+                      ),
+                      MarketPromoMarks(l),
+                    ]),
                     const SizedBox(height: 2),
                     Text(
                       [if (l.mileageKm != null) marketKm(l.mileageKm), if (place.isNotEmpty) place].join(' · '),
@@ -219,14 +226,15 @@ class MarketFeedCard extends ConsumerWidget {
           maxLines: 1,
         )..layout())
             .height;
-    final h = 140 + 8 + line(17) + 2 + line(14.5) + line(13) + 2 + line(12) + 6;
+    // The last line also holds the Premium / VIP marks (18 high).
+    final last = line(12) > 18 ? line(12) : 18.0;
+    final h = 140 + 8 + line(17) + 2 + line(14.5) + line(13) + 2 + last + 6;
     return h > extent ? h : extent;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
-    final vip = l.vipActive();
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final city = (l.city ?? '').trim().isNotEmpty
         ? Cities.label(l.city!, lang)
@@ -247,12 +255,9 @@ class MarketFeedCard extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // VIP: the VIP seal on the picture, no gold frame (owner,
-                  // 25.10.2026).
-                  if (vip)
-                    VipPictureFrame(key: const ValueKey('feed-vip'), frame: false, child: MarketPhoto(url: l.cover))
-                  else
-                    MarketPhoto(url: l.cover),
+                  // No frame or seal on the picture: Premium / VIP marks sit
+                  // at the end of the city line (owner, 25.10.2026, 0066).
+                  MarketPhoto(url: l.cover),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                   if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                   if (l.status == MarketStatus.sold)
@@ -281,6 +286,7 @@ class MarketFeedCard extends ConsumerWidget {
               child: Text([if (city.isNotEmpty) city, when].join(', '),
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12)),
             ),
+            MarketPromoMarks(l, key: const ValueKey('feed-marks')),
           ]),
         ],
       ),

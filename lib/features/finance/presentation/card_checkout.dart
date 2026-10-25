@@ -54,7 +54,10 @@ class VipCheckoutTarget {
   final String currency;
   /// A load VIP order (0062) instead of a TIR Bazarı one.
   final bool cargo;
-  const VipCheckoutTarget({required this.vipOrderId, required this.amount, required this.currency, this.cargo = false});
+  /// A TIR Bazarı İrəli çək / Premium order (0066) instead of a VIP one.
+  final bool promo;
+  const VipCheckoutTarget(
+      {required this.vipOrderId, required this.amount, required this.currency, this.cargo = false, this.promo = false});
 }
 
 class CheckoutSheet extends ConsumerStatefulWidget {
@@ -90,7 +93,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   Future<CheckoutPayment> _start(FinanceRepository repo) {
     final vip = widget.vip;
     return vip != null
-        ? (vip.cargo
+        ? (vip.promo
+            ? repo.startPromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
+            : vip.cargo
             ? repo.startCargoVipCheckout(vipOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
             : repo.startVipCheckout(vipOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key))
         : repo.startCheckout(orderId: widget.order!.id, method: _method, idempotencyKey: _key);

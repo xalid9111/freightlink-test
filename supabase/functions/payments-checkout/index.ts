@@ -2,9 +2,10 @@
 // Google Pay checkout for one of the caller's ad orders, TIR Bazarı VIP
 // orders or load VIP orders.
 //
-// POST { action: 'create', order_id | vip_order_id | cargo_vip_order_id, method, idempotency_key }
+// POST { action: 'create', order_id | vip_order_id | cargo_vip_order_id | promo_order_id, method, idempotency_key }
 //   → payment_create (ad order), market_vip_payment_create (VIP order,
-//     0044) or cargo_vip_payment_create (load VIP order, 0062) runs WITH
+//     0044), cargo_vip_payment_create (load VIP order, 0062) or
+//     market_promo_payment_create (İrəli çək / Premium, 0066) runs WITH
 //     THE CALLER'S JWT, so the database checks the owner,
 //     the order state, the amount (from the order) and the "one open
 //     payment per order" rule. Same key twice = same payment.
@@ -73,14 +74,19 @@ export async function handle(req: Request): Promise<Response> {
 
   if (action === 'create') {
     const orderId = body?.order_id, vipOrderId = body?.vip_order_id, cargoVipOrderId = body?.cargo_vip_order_id;
+    const promoOrderId = body?.promo_order_id; // TIR Bazarı İrəli çək / Premium (0066)
     const method = body?.method, key = body?.idempotency_key;
-    // Exactly one order: an ad order, a TIR Bazarı VIP order or a load VIP order.
-    const targets = [orderId, vipOrderId, cargoVipOrderId].filter(isUuid).length;
-    const unknown = [orderId, vipOrderId, cargoVipOrderId].some((v) => v !== undefined && v !== null && !isUuid(v));
+    // Exactly one order: an ad order, a TIR Bazarı VIP order, a load VIP
+    // order or a TIR Bazarı İrəli çək / Premium order.
+    const all = [orderId, vipOrderId, cargoVipOrderId, promoOrderId];
+    const targets = all.filter(isUuid).length;
+    const unknown = all.some((v) => v !== undefined && v !== null && !isUuid(v));
     if (targets !== 1 || unknown || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
       return json({ error: 'invalid_request' }, 400);
     }
-    const res = isUuid(cargoVipOrderId)
+    const res = isUuid(promoOrderId)
+      ? await rest(url, 'rpc/market_promo_payment_create', anonKey, auth, { body: { p_promo_order: promoOrderId, p_method: method, p_key: key } })
+      : isUuid(cargoVipOrderId)
       ? await rest(url, 'rpc/cargo_vip_payment_create', anonKey, auth, { body: { p_vip_order: cargoVipOrderId, p_method: method, p_key: key } })
       : isUuid(vipOrderId)
       ? await rest(url, 'rpc/market_vip_payment_create', anonKey, auth, { body: { p_vip_order: vipOrderId, p_method: method, p_key: key } })
