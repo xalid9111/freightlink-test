@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/features/market/domain/market_brand_index.dart';
 import 'package:freightlink/features/market/domain/market_catalog.dart';
+import 'package:freightlink/features/market/domain/market_models.dart';
 
 void main() {
   final rows = [
@@ -52,12 +53,30 @@ void main() {
     final page = File('lib/features/market/presentation/market_brand_picker.dart').readAsStringSync();
     // Owner, 25.10.2026: no extra "«…» üzrə axtar" row and no second step.
     expect(page, isNot(contains("ValueKey('mk-pick-text')")));
-    expect(page, isNot(contains('_ModelPage')));
-    expect(page, contains('Navigator.of(context).pop(MarketSearchPick(brand: brand))'));
+    // Owner, 25.10.2026 (later): after a brand its models open at once;
+    // a brand without models is picked straight away.
+    expect(page, contains('builder: (_) => _ModelPage(s: widget.s, filter: widget.filter, brand: brand)'));
+    expect(page, contains('nav.pop(MarketSearchPick(brand: brand, model: model.isEmpty ? null : model))'));
+    expect(page, contains('nav.pop(MarketSearchPick(brand: brand));'));
+    expect(page, contains("ValueKey('mk-model-all')"));
+    // The filter shows the brand's models as choices.
+    expect(home, contains('final models = marketFilterModels(cat, _t(_brand));'));
+    expect(home, contains("ValueKey('mk-filter-model-\$m')"));
+    // A swipe down closes the filters (owner, 25.10.2026).
+    expect(home, contains('showDragHandle: true,'));
+    expect(home, contains('builder: (_, scroll) => MarketFilterSheet(filter: f, s: s, scrollController: scroll),'));
+    expect(home, contains('controller: widget.scrollController,'));
     expect(page, contains("s.t('mk_brand_not_found')"));
     expect(page, contains("s.t('mk_popular')"));
     final repo = File('lib/features/market/data/market_repository.dart').readAsStringSync();
     expect(repo, contains(".select('brand, model').eq('status', 'active')"));
+  });
+
+  test('models of the chosen brand for the filter (any spelling, any type)', () {
+    expect(marketFilterModels(MarketCategory.truck, 'Mercedes'), containsAll(['Actros', 'Arocs']));
+    expect(marketFilterModels(null, 'mercedes-benz'), containsAll(['Actros', 'Atego']));
+    expect(marketFilterModels(null, ''), isEmpty);
+    expect(marketFilterModels(null, 'Nobrand XYZ'), isEmpty);
   });
 
   group('typing filters at once (owner, 25.10.2026)', () {

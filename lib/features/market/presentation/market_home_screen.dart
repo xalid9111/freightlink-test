@@ -295,7 +295,16 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => MarketFilterSheet(filter: f, s: s),
+      // Swiping down closes the filters (owner, 25.10.2026): from the
+      // handle, or from anywhere once the list is at its top.
+      showDragHandle: true,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.92,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        builder: (_, scroll) => MarketFilterSheet(filter: f, s: s, scrollController: scroll),
+      ),
     );
     if (res != null) _setFilter(res);
   }
@@ -422,7 +431,9 @@ class _SearchBox extends StatelessWidget {
 class MarketFilterSheet extends StatefulWidget {
   final MarketFilter filter;
   final AppStrings s;
-  const MarketFilterSheet({super.key, required this.filter, required this.s});
+  /// From the draggable sheet, so a swipe down at the top closes it.
+  final ScrollController? scrollController;
+  const MarketFilterSheet({super.key, required this.filter, required this.s, this.scrollController});
 
   @override
   State<MarketFilterSheet> createState() => _MarketFilterSheetState();
@@ -465,6 +476,10 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
     final cat = widget.filter.category;
     final popular = [for (final b in kMarketPopularBrands) if (cat == null || marketBrands(cat).contains(b)) b];
     final picked = _t(_brand) == null ? null : canonicalMarketBrand(_t(_brand)!);
+    // Models of the chosen brand appear at once as choices (owner,
+    // 25.10.2026); a brand without catalogue models keeps the text field.
+    final models = marketFilterModels(cat, _t(_brand));
+    final typedModel = _t(_model);
     void pick(String b) => setState(() {
           _brand.text = picked == b ? '' : b;
           _model.clear();
@@ -479,8 +494,9 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
           decoration: InputDecoration(labelText: label, isDense: true),
         );
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
+        controller: widget.scrollController,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -522,7 +538,30 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
               ),
             ),
             const SizedBox(height: 10),
-            field(_model, s.t('mk_model')),
+            if (models.isEmpty)
+              field(_model, s.t('mk_model'))
+            else ...[
+              label('mk_model'),
+              Wrap(key: const ValueKey('mk-filter-models'), spacing: 6, runSpacing: 6, children: [
+                ChoiceChip(
+                  key: const ValueKey('mk-filter-model-all'),
+                  label: Text(s.t('svc_all')),
+                  selected: typedModel == null,
+                  onSelected: (_) => setState(_model.clear),
+                ),
+                // A model typed earlier that is not in the list stays visible.
+                for (final m in [
+                  if (typedModel != null && !models.contains(typedModel)) typedModel,
+                  ...models,
+                ])
+                  ChoiceChip(
+                    key: ValueKey('mk-filter-model-$m'),
+                    label: Text(m),
+                    selected: typedModel == m,
+                    onSelected: (on) => setState(() => _model.text = on ? m : ''),
+                  ),
+              ]),
+            ],
             const SizedBox(height: 10),
             DropdownButtonFormField<String?>(
               key: const ValueKey('mk-filter-body'),

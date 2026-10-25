@@ -382,3 +382,12 @@ List<String> marketBrands(MarketCategory c) => (kMarketCatalog[c]?.keys.toList()
 
 /// Models of a brand in a category.
 List<String> marketModels(MarketCategory c, String? brand) => [...?kMarketCatalog[c]?[brand]];
+
+/// Catalogue models of [brand] (any spelling) for the filter: of [c], or
+/// of every type when no type is chosen (owner, 25.10.2026).
+List<String> marketFilterModels(MarketCategory? c, String? brand) {
+  final b = (brand ?? '').trim();
+  if (b.isEmpty) return const [];
+  final key = canonicalMarketBrand(b);
+  return c != null ? marketModels(c, key) : {for (final x in MarketCategory.values) ...marketModels(x, key)}.toList();
+}

@@ -185,8 +185,21 @@ class _BrandPage extends ConsumerStatefulWidget {
 class _BrandPageState extends ConsumerState<_BrandPage> {
   String _q = '';
 
-  /// One tap picks the brand and goes back (owner, 25.10.2026).
-  void _pickBrand(String brand) => Navigator.of(context).pop(MarketSearchPick(brand: brand));
+  /// One tap on a brand opens its models at once (owner, 25.10.2026);
+  /// a brand without models is picked and the page goes back.
+  Future<void> _pickBrand(String brand) async {
+    final nav = Navigator.of(context);
+    final index = ref.read(marketBrandIndexProvider(widget.filter.category)).valueOrNull ?? MarketBrandIndex.empty;
+    if (index.models(brand, marketFilterModels(widget.filter.category, brand)).isEmpty) {
+      nav.pop(MarketSearchPick(brand: brand));
+      return;
+    }
+    final model = await nav.push<String>(MaterialPageRoute(
+      builder: (_) => _ModelPage(s: widget.s, filter: widget.filter, brand: brand),
+    ));
+    if (!mounted || model == null) return; // back from Model: stay on Marka
+    nav.pop(MarketSearchPick(brand: brand, model: model.isEmpty ? null : model));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +261,70 @@ class _BrandPageState extends ConsumerState<_BrandPage> {
           _section(s.t('mk_all_brands')),
           for (final (_, b) in all) row(b, 'mk-brand'),
         ],
+      ],
+    );
+  }
+}
+
+/// Models of the chosen brand: catalogue + models that have ads, with
+/// their counts; "Bütün modellər" first. Filtered while typing.
+class _ModelPage extends ConsumerStatefulWidget {
+  final AppStrings s;
+  final MarketFilter filter;
+  final String brand;
+  const _ModelPage({required this.s, required this.filter, required this.brand});
+
+  @override
+  ConsumerState<_ModelPage> createState() => _ModelPageState();
+}
+
+class _ModelPageState extends ConsumerState<_ModelPage> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s;
+    final f = widget.filter;
+    final index = ref.watch(marketBrandIndexProvider(f.category)).valueOrNull ?? MarketBrandIndex.empty;
+    final q = marketSearchKey(_q.trim());
+    final models = index
+        .models(widget.brand, marketFilterModels(f.category, widget.brand))
+        .where((m) => q.isEmpty || marketSearchKey(m.name).contains(q))
+        .toList();
+    final sameBrand = f.brand != null && canonicalMarketBrand(f.brand!) == canonicalMarketBrand(widget.brand);
+    final current = sameBrand ? f.model?.toLowerCase() : null;
+
+    return _PickFrame(
+      title: widget.brand,
+      hint: s.t('mk_pick_model_search'),
+      fieldKey: const ValueKey('mk-pick-model-field'),
+      onQuery: (v) => setState(() => _q = v),
+      children: [
+        if (q.isEmpty)
+          _PickRow(
+            key: const ValueKey('mk-model-all'),
+            leading: BrandBadge(widget.brand),
+            name: s.t('mk_all_models'),
+            count: index.countOf(widget.brand),
+            selected: sameBrand && current == null,
+            onTap: () => Navigator.of(context).pop(''),
+          ),
+        _section(s.t('mk_model')),
+        for (final m in models)
+          _PickRow(
+            key: ValueKey('mk-model-${m.name}'),
+            leading: const SizedBox(width: 44),
+            name: m.name,
+            count: m.count,
+            selected: current == m.name.toLowerCase(),
+            onTap: () => Navigator.of(context).pop(m.name),
+          ),
+        if (models.isEmpty)
+          Padding(
+            key: const ValueKey('mk-model-none'),
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(s.t('mk_model_not_found'), style: TextStyle(fontSize: 16, color: AppColors.textSoft)),
+          ),
       ],
     );
   }
