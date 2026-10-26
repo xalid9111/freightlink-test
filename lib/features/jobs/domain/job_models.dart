@@ -33,7 +33,7 @@ class JobCatalogItem {
       JobCatalogItem('${j['code']}', '${j['name'] ?? j['code']}', j['kind'] as String?);
 }
 
-/// The catalogues as seeded by 0069 (used until / unless the server list
+/// The catalogues as seeded by 0069 (+ ADR, route_mix, night in 0070) (used until / unless the server list
 /// loads; an admin can add more on the server later).
 const kJobSpecialties = [
   JobCatalogItem('tent', 'Tent'),
@@ -56,14 +56,20 @@ const kJobSkills = [
   JobCatalogItem('lic_d', 'D', 'license'),
   JobCatalogItem('tachograph', 'Taxoqraf kartı', 'document'),
   JobCatalogItem('cpc', 'Peşə sertifikatı', 'document'),
+  JobCatalogItem('adr', 'ADR sertifikatı', 'document'),
   JobCatalogItem('intl_exp', 'Beynəlxalq daşıma təcrübəsi', 'skill'),
   JobCatalogItem('tech', 'Nəqliyyatın texniki quruluşundan anlayış', 'skill'),
   JobCatalogItem('discipline', 'Nizam-intizam', 'skill'),
   JobCatalogItem('responsibility', 'Məsuliyyətli yanaşma', 'skill'),
+  JobCatalogItem('route_mix', 'Yük qısa/uzun marşrut', 'skill'),
+  JobCatalogItem('night', 'Gecə sürüşü', 'skill'),
 ];
 
 const kJobSkillKinds = ['license', 'document', 'skill'];
-const kJobSchedules = ['full_time', 'part_time', 'rotation', 'flexible'];
+const kJobSchedules = ['full_time', 'part_time', 'rotation', 'flexible', 'project'];
+
+/// İş növü of a vacancy (0070): 'tir' | 'other' (null = older vacancy).
+const kJobTypes = ['tir', 'other'];
 const kJobCurrencies = ['AZN', 'USD', 'EUR', 'RUB', 'TRY', 'GEL', 'KZT'];
 
 List<String> _strings(Object? v) => [for (final x in (v as List? ?? const [])) if (x is String && x.isNotEmpty) x];
@@ -199,6 +205,7 @@ class JobVacancy {
   final String? avatarUrl;
   final String companyName;
   final String? country, city;
+  final String? jobType;
   final List<String> specialties;
   final Map<String, ReqLevel> requirements;
   final Set<String> canHelp;
@@ -224,6 +231,7 @@ class JobVacancy {
     required this.companyName,
     this.country,
     this.city,
+    this.jobType,
     this.specialties = const [],
     this.requirements = const {},
     this.canHelp = const {},
@@ -253,6 +261,7 @@ class JobVacancy {
         companyName: '${j['company_name'] ?? ''}'.trim(),
         country: _text(j['country']),
         city: _text(j['city']),
+        jobType: kJobTypes.contains(j['job_type']) ? j['job_type'] as String : null,
         specialties: _strings(j['specialties']),
         requirements: {
           for (final e in ((j['requirements'] as Map?) ?? const {}).entries)
@@ -276,11 +285,14 @@ class JobVacancy {
       );
 
   /// What the owner saves (owner / is_hidden are kept by the server).
+  /// job_type only when chosen, so an older database (before 0070) still
+  /// saves the rest.
   Map<String, dynamic> toRow() => {
         'owner_id': ownerId,
         'company_name': companyName.trim(),
         'country': country,
         'city': city,
+        if (jobType != null) 'job_type': jobType,
         'specialties': specialties,
         'requirements': {for (final e in requirements.entries) e.key: e.value.name},
         'can_help': [
@@ -300,4 +312,37 @@ class JobVacancy {
         'whatsapp': whatsapp,
         'status': status,
       };
+}
+
+/// The vacancy wizard's tick boxes / chips (owner, 26.10.2026): ticking
+/// adds [level] ("Mütləq" for documents and licence categories,
+/// "Arzuolunan" for skills) unless the code already has a level; unticking
+/// removes it (and its "I can help" mark).
+({Map<String, ReqLevel> req, Set<String> help}) toggleRequirement(
+    Map<String, ReqLevel> req, Set<String> help, String code, bool on, ReqLevel level) {
+  final r = {...req};
+  final h = {...help};
+  if (on) {
+    r.putIfAbsent(code, () => level);
+  } else {
+    r.remove(code);
+    h.remove(code);
+  }
+  return (req: r, help: h);
+}
+
+/// Codes in the order the owner's picture shows them; anything else the
+/// catalogue has (added later on the server) follows in catalogue order.
+List<JobCatalogItem> orderedCatalog(List<JobCatalogItem> items, List<String> order) {
+  int rank(JobCatalogItem i) {
+    final k = order.indexOf(i.code);
+    return k < 0 ? order.length : k;
+  }
+
+  final indexed = [for (var i = 0; i < items.length; i++) (i, items[i])];
+  indexed.sort((a, b) {
+    final c = rank(a.$2).compareTo(rank(b.$2));
+    return c != 0 ? c : a.$1.compareTo(b.$1);
+  });
+  return [for (final e in indexed) e.$2];
 }

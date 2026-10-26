@@ -66,10 +66,17 @@ class JobsRepository {
       });
 
   Future<JobVacancy> saveVacancy(JobVacancy v) => _guard(() async {
-        final row = v.id.isEmpty
-            ? await _c.from('job_vacancies').insert(v.toRow()).select().single().timeout(_timeout)
-            : await _c.from('job_vacancies').update(v.toRow()).eq('id', v.id).select().single().timeout(_timeout);
-        return JobVacancy.fromJson(row);
+        Future<Map<String, dynamic>> save(Map<String, dynamic> data) => v.id.isEmpty
+            ? _c.from('job_vacancies').insert(data).select().single().timeout(_timeout)
+            : _c.from('job_vacancies').update(data).eq('id', v.id).select().single().timeout(_timeout);
+        final data = v.toRow();
+        try {
+          return JobVacancy.fromJson(await save(data));
+        } on PostgrestException catch (e) {
+          // 0070 not run yet: no job_type column — save everything else.
+          if (e.code != 'PGRST204' || !data.containsKey('job_type')) rethrow;
+          return JobVacancy.fromJson(await save({...data}..remove('job_type')));
+        }
       });
 
   /// "Vakansiya aktivdir" / "Vakansiya bağlanıb".
