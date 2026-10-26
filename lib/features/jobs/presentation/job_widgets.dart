@@ -28,29 +28,32 @@ class JobCenterIcon extends StatelessWidget {
       );
 }
 
-/// Loads page header, top right: the icon with "İş Mərkəzi" under it.
-class JobCenterHeaderButton extends StatelessWidget {
+/// Loads page (owner, 27.10.2026): on the live map, under the "CANLI"
+/// badge — the icon with "İş Mərkəzi" under it on a glass card.
+class JobCenterMapButton extends StatelessWidget {
   final AppStrings strings;
-  final double iconHeight;
-  const JobCenterHeaderButton({super.key, required this.strings, this.iconHeight = 24});
+  const JobCenterMapButton({super.key, required this.strings});
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
       label: strings.t('job_center'),
-      child: InkWell(
-        key: const ValueKey('hdr-job-center'),
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.pushOnce('/jobs'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            JobCenterIcon(height: iconHeight),
-            const SizedBox(height: 2),
-            Text(strings.t('job_center'),
-                maxLines: 1, style: TextStyle(fontSize: 10.5, color: AppColors.text, height: 1.1)),
-          ]),
+      child: Material(
+        color: AppColors.isDay ? AppColors.tileBg.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.72),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: AppColors.tileLine)),
+        child: InkWell(
+          key: const ValueKey('map-job-center'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => context.pushOnce('/jobs'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const JobCenterIcon(height: 26),
+              const SizedBox(height: 2),
+              Text(strings.t('job_center'), style: TextStyle(fontSize: 13, color: AppColors.text)),
+            ]),
+          ),
         ),
       ),
     );

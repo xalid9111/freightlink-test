@@ -244,62 +244,51 @@ class _Hero extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
-                const SizedBox(width: 4),
-                // Full size; only on a very narrow phone (320) it shrinks a
-                // little so the İş Mərkəzi button still fits (0069).
+                // Logo with the slogan under it in one small line (owner,
+                // 27.10.2026 — the big headline over the map is gone).
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text.rich(TextSpan(children: [
-                        TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
-                        TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
-                      ])),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                    Row(children: [
+                      Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text.rich(TextSpan(children: [
+                            TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
+                            TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
+                          ])),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 2),
+                    Text.rich(
+                      key: const ValueKey('home-slogan'),
+                      TextSpan(children: [
+                        TextSpan(text: '${strings.t('home_hero_1')} '),
+                        TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
+                        TextSpan(text: ' ${strings.t('home_hero_3')}'),
+                      ]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2).copyWith(shadows: _readableOnMap()),
                     ),
-                  ),
+                  ]),
                 ),
-                // İş Mərkəzi (owner, 26.10.2026): the approved icon with its
-                // name under it, before the two round buttons.
-                JobCenterHeaderButton(strings: strings),
-                const SizedBox(width: 8),
-                // Heart (Seçilmiş yüklər) + profile picture (Profil), two
-                // round buttons like on the computer (owner, 22.10.2026).
                 HeaderCircles(strings: strings),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
-                  const SizedBox(width: 7),
-                  Text(strings.t('home_live_map'),
-                      style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2).copyWith(shadows: _readableOnMap())),
-                ]),
-                const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(children: [
-                    TextSpan(text: '${strings.t('home_hero_1')} '),
-                    TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
-                    TextSpan(text: ' ${strings.t('home_hero_3')}'),
-                  ]),
-                  style: AppFonts.display(size: 20, color: AppColors.text, height: 1.1).copyWith(shadows: _readableOnMap()),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
             ]),
             ),
           ),
           // Full width, edge to edge; edges fade into the page colour.
-          LiveMap(liveLabel: strings.t('map_live_badge')),
+          // İş Mərkəzi on the map, under the "CANLI" badge (owner, 27.10.2026).
+          Stack(children: [
+            LiveMap(liveLabel: strings.t('map_live_badge')),
+            Positioned(top: 40, right: 14, child: JobCenterMapButton(strings: strings)),
+          ]),
           _CloudScene(
             asset: '${scene}_bottom.jpg',
             alignment: Alignment.topCenter,
