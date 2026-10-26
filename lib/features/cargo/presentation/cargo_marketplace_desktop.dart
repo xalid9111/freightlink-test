@@ -524,6 +524,26 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
           ),
         ),
         const SizedBox(width: 14),
+        // İş Mərkəzi (owner, 26.10.2026): the approved icon in a pill.
+        Tooltip(
+          message: s.t('job_center'),
+          child: InkWell(
+            key: const ValueKey('desk-job-center'),
+            borderRadius: BorderRadius.circular(28),
+            onTap: () => context.pushOnce('/jobs'),
+            child: Container(
+              height: 54,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: pill(),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const JobCenterIcon(height: 28),
+                const SizedBox(width: 8),
+                Text(s.t('job_center'), style: TextStyle(color: AppColors.text, fontSize: 14.5)),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
         // "Seçilmiş yüklər" (owner, 22.10.2026): heart next to the bell.
         HeaderCircle(
           key: const ValueKey('desk-favorites'),

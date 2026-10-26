@@ -119,6 +119,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   lift, VIP for the same days). The owner's icons (green arrow, V diamond,
   crown) sit next to the price / city line instead of any frame or seal.
   Paid by the existing card checkout; admin edits prices.
+- İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
+  (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
+  at the top right of the Loads page (also on the computer) and a row in
+  Profil. Two independent sides of one account: "İş axtarıram — Sürücü"
+  (orange) and "İşçi axtarıram — Sahibkar" (blue). Documents / skills
+  ✓ / ✗ / not given (never mixed); requirements Mütləq / Arzuolunan; the
+  match percentage only informs — nobody is hidden for a missing
+  requirement ("Bütün …" lists everybody). Phone hidden by default (server
+  decides), lists only for signed-in users, published at once, an admin
+  can hide / show. Chat = the existing Mesajlar.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
