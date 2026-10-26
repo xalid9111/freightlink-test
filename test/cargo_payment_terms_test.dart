@@ -162,7 +162,8 @@ void main() {
     test('map: "Yük hovuzu" button opens the form; texts over the map have a shadow', () {
       final m = read('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
       expect(m.contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue);
-      expect(RegExp(r'shadows: _readableOnMap\(\)').allMatches(m + read('lib/features/cargo/presentation/cargo_marketplace_desktop.dart')).length, 4);
+      // Phone: the slogan under the logo (owner, 27.10.2026); computer: label + headline.
+      expect(RegExp(r'shadows: _readableOnMap\(\)').allMatches(m + read('lib/features/cargo/presentation/cargo_marketplace_desktop.dart')).length, 3);
       for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
         expect(read('assets/i18n/$l.json').contains('"nav_home"'), isTrue);
       }

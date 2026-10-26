@@ -202,7 +202,11 @@ void main() {
   });
 
   test('wired: Loads header, computer header, Profil, routes; existing chat reused', () {
-    expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart'), contains('JobCenterHeaderButton(strings: strings),'));
+    final loads = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
+    // Owner, 27.10.2026: on the map under "CANLI", slogan under the logo.
+    expect(loads, contains('Positioned(top: 40, right: 14, child: JobCenterMapButton(strings: strings)),'));
+    expect(loads, contains("key: const ValueKey('home-slogan'),"));
+    expect(loads.contains("strings.t('home_live_map')"), isFalse);
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("ValueKey('desk-job-center')"));
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains("onTap: () => context.pushOnce('/jobs'),"));
     final router = src('lib/core/router/app_router.dart');

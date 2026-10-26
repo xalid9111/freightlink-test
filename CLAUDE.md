@@ -121,8 +121,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   Paid by the existing card checkout; admin edits prices.
 - İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
   (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
-  at the top right of the Loads page (also on the computer) and a row in
-  Profil. Two independent sides of one account: "İş axtarıram — Sürücü"
+  on the Loads map, right under the "CANLI" badge (owner, 27.10.2026; the
+  computer has it in the top bar) and a row in Profil. Two independent sides of one account: "İş axtarıram — Sürücü"
   (orange) and "İşçi axtarıram — Sahibkar" (blue). Documents / skills
   ✓ / ✗ / not given (never mixed); requirements Mütləq / Arzuolunan; the
   match percentage only informs — nobody is hidden for a missing
@@ -160,7 +160,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   trailers), equipment (Retarder · ADR · Kondisioner · Yataq), Vuruğu
   yoxdur / var — in the form, the filter, the ad page and on the computer.
 - Messages tab lists only chats the user is part of (even for admins).
-- Loads page header is compact; "CANLI XƏRİTƏ" label stays size 11.
+- Loads page header is compact (owner, 27.10.2026): the logo with the
+  slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
+  big headline / "CANLI XƏRİTƏ" label over the map on the phone (the
+  computer keeps its hero text). The "CANLI" badge stays on the map.
 - WhatsApp OTP / Meta work is paused until the owner says "Meta davam".
 - One account for everyone: no role step at signup. In Profil the user
   turns on any combination of Daşıyıcı · Yük verən · Usta / Servis · Satış
