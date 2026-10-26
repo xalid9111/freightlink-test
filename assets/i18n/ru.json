@@ -1388,5 +1388,9 @@
   "job_skill_night": "Ночная езда",
   "job_chip_intl_exp": "Международные перевозки",
   "job_chip_responsibility": "Ответственный",
-  "job_chip_tech": "Технические знания"
+  "job_chip_tech": "Технические знания",
+  "job_vacancy_delete": "Удалить",
+  "job_vacancy_delete_q": "Удалить вакансию?",
+  "job_vacancy_delete_body": "Вакансия будет удалена из профиля и списков. Это нельзя отменить.",
+  "job_vacancy_deleted": "Вакансия удалена"
 }

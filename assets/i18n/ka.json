@@ -1388,5 +1388,9 @@
   "job_skill_night": "ღამის მართვა",
   "job_chip_intl_exp": "საერთაშორისო გადაზიდვა",
   "job_chip_responsibility": "პასუხისმგებლიანი",
-  "job_chip_tech": "ტექნიკური ცოდნა"
+  "job_chip_tech": "ტექნიკური ცოდნა",
+  "job_vacancy_delete": "წაშლა",
+  "job_vacancy_delete_q": "წაიშალოს ვაკანსია?",
+  "job_vacancy_delete_body": "ვაკანსია წაიშლება თქვენი პროფილიდან და სიებიდან. ამის გაუქმება შეუძლებელია.",
+  "job_vacancy_deleted": "ვაკანსია წაიშალა"
 }

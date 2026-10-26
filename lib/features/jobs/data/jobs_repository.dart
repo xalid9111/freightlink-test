@@ -62,7 +62,10 @@ class JobsRepository {
         final me = _me;
         if (me == null) return const [];
         final rows = await _c.from('job_vacancies').select().eq('owner_id', me).order('created_at', ascending: false).timeout(_timeout);
-        return [for (final r in rows as List) JobVacancy.fromJson(Map<String, dynamic>.from(r as Map))];
+        return [
+          for (final r in rows as List)
+            if ((r as Map)['status'] != 'deleted') JobVacancy.fromJson(Map<String, dynamic>.from(r))
+        ];
       });
 
   Future<JobVacancy> saveVacancy(JobVacancy v) => _guard(() async {
@@ -82,6 +85,18 @@ class JobsRepository {
   /// "Vakansiya aktivdir" / "Vakansiya bağlanıb".
   Future<void> setVacancyActive(String id, bool on) => _guard(() async {
         await _c.from('job_vacancies').update({'status': on ? 'active' : 'closed'}).eq('id', id).timeout(_timeout);
+      });
+
+  /// "Sil" from the profile (0071): the vacancy is marked deleted — no row
+  /// is removed, the drivers' applications to it are kept.
+  Future<void> deleteVacancy(String id) => _guard(() async {
+        try {
+          await _c.from('job_vacancies').update({'status': 'deleted'}).eq('id', id).timeout(_timeout);
+        } on PostgrestException catch (e) {
+          // 0071 not run yet: 'deleted' is not an allowed status.
+          if (e.code == '23514') throw const JobsNotReady();
+          rethrow;
+        }
       });
 
   /// Everyone looking for work (safe columns only).

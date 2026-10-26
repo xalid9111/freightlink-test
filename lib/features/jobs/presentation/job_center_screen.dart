@@ -181,6 +181,37 @@ class _EmployerCard extends ConsumerWidget {
     ref.invalidate(myVacanciesProvider);
   }
 
+  Future<void> _delete(BuildContext context, WidgetRef ref, JobVacancy v) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.t('job_vacancy_delete_q')),
+        content: Text(s.t('job_vacancy_delete_body')),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(s.t('common_cancel'))),
+          TextButton(
+            key: const ValueKey('job-vacancy-delete-ok'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(s.t('job_vacancy_delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(jobsRepositoryProvider).deleteVacancy(v.id);
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_vacancy_deleted'))));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e is JobsNotReady ? s.t('job_not_ready') : s.t('job_save_failed'))));
+      }
+    }
+    ref.invalidate(myVacanciesProvider);
+    ref.invalidate(jobVacanciesProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = jobEmployerColor;
@@ -246,6 +277,13 @@ class _EmployerCard extends ConsumerWidget {
                         onPressed: () => context.pushOnce('/jobs/drivers?vacancy=${v.id}'),
                         icon: const Icon(Icons.people_alt_outlined, size: 18),
                         label: Text(s.t('job_see_drivers')),
+                      ),
+                      TextButton.icon(
+                        key: ValueKey('job-vacancy-delete-${v.id}'),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                        onPressed: () => _delete(context, ref, v),
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: Text(s.t('job_vacancy_delete')),
                       ),
                     ]),
                   ]),
