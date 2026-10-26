@@ -1388,5 +1388,9 @@
   "job_skill_night": "Gece sürüşü",
   "job_chip_intl_exp": "Uluslararası taşıma",
   "job_chip_responsibility": "Sorumluluk sahibi",
-  "job_chip_tech": "Teknik bilgi"
+  "job_chip_tech": "Teknik bilgi",
+  "job_vacancy_delete": "Sil",
+  "job_vacancy_delete_q": "İlan silinsin mi?",
+  "job_vacancy_delete_body": "İlan profilinizden ve listelerden silinecek. Bu geri alınamaz.",
+  "job_vacancy_deleted": "İlan silindi"
 }

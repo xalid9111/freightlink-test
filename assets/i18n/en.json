@@ -1388,5 +1388,9 @@
   "job_skill_night": "Night driving",
   "job_chip_intl_exp": "International haulage",
   "job_chip_responsibility": "Responsible",
-  "job_chip_tech": "Technical knowledge"
+  "job_chip_tech": "Technical knowledge",
+  "job_vacancy_delete": "Delete",
+  "job_vacancy_delete_q": "Delete this vacancy?",
+  "job_vacancy_delete_body": "The vacancy will be removed from your profile and the lists. This cannot be undone.",
+  "job_vacancy_deleted": "Vacancy deleted"
 }

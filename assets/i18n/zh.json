@@ -1388,5 +1388,9 @@
   "job_skill_night": "夜间驾驶",
   "job_chip_intl_exp": "国际运输",
   "job_chip_responsibility": "有责任心",
-  "job_chip_tech": "技术知识"
+  "job_chip_tech": "技术知识",
+  "job_vacancy_delete": "删除",
+  "job_vacancy_delete_q": "删除此职位？",
+  "job_vacancy_delete_body": "该职位将从您的个人资料和列表中删除，且无法恢复。",
+  "job_vacancy_deleted": "职位已删除"
 }
