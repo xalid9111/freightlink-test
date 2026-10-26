@@ -1225,5 +1225,10 @@
   "mk_promo_paid_until": "გადახდილია {date}-მდე",
   "mk_promo_days": "{n} დღე",
   "mk_promo_times": "{n}-ჯერ",
-  "mk_promo_from": "{price}-დან"
+  "mk_promo_from": "{price}-დან",
+  "site_closed_title": "საიტი დროებით დახურულია",
+  "site_closed_default": "საიტზე ტექნიკური სამუშაოები მიმდინარეობს. სცადეთ ცოტა მოგვიანებით.",
+  "site_closed_retry": "თავიდან ცდა",
+  "site_closed_admin_login": "ადმინის შესვლა",
+  "site_closed_sign_out": "გასვლა"
 }

@@ -1225,5 +1225,10 @@
   "mk_promo_paid_until": "Оплачено до {date}",
   "mk_promo_days": "{n} дн.",
   "mk_promo_times": "{n} раз",
-  "mk_promo_from": "от {price}"
+  "mk_promo_from": "от {price}",
+  "site_closed_title": "Сайт временно закрыт",
+  "site_closed_default": "На сайте ведутся технические работы. Попробуйте чуть позже.",
+  "site_closed_retry": "Проверить снова",
+  "site_closed_admin_login": "Вход для администратора",
+  "site_closed_sign_out": "Выйти"
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/site/site_access.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/admin_repository.dart';
@@ -114,6 +115,9 @@ class AdminDashboardPage extends ConsumerWidget {
     return _Page(
       title: 'İdarə paneli',
       header: [
+        // Site open / closed (owner, 25.10.2026, 0068).
+        const SiteAccessCard(),
+        const SizedBox(height: 10),
         if (stats.hasError)
           Container(
             padding: const EdgeInsets.all(12),
@@ -1533,6 +1537,85 @@ class _CargoPromoPricesCardState extends ConsumerState<CargoPromoPricesCard> {
                       ),
                   ]),
           ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// "Sayt açıq / bağlı" (owner, 25.10.2026, 0068). Closing asks for the
+/// notice people see instead of the app; only administrators keep using
+/// it. Checked + logged on the server (admin_set_site_status).
+class SiteAccessCard extends ConsumerStatefulWidget {
+  const SiteAccessCard({super.key});
+
+  @override
+  ConsumerState<SiteAccessCard> createState() => _SiteAccessCardState();
+}
+
+class _SiteAccessCardState extends ConsumerState<SiteAccessCard> {
+  bool _busy = false;
+
+  Future<void> _set(SiteStatus now, bool close) async {
+    String? message;
+    if (close) {
+      message = await askText(context, 'Saytı bağla — girməyə çalışanlar bu qeydi görəcək',
+          hint: 'Məs.: Saytda texniki işlər aparılır. Saat 18:00-da açılacaq.', initial: now.message ?? '');
+      if (message == null || !mounted) return; // cancelled
+    } else {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Saytı açmaq?'),
+          content: const Text('Bütün istifadəçilər yenidən sayta girə biləcək.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Ləğv et')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Aç')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    setState(() => _busy = true);
+    await runAdmin(context, () => setSiteStatus(closed: close, message: message),
+        success: close ? 'Sayt bağlandı — yalnız adminlər girə bilər' : 'Sayt açıldı');
+    ref.invalidate(siteStatusProvider);
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(siteStatusProvider);
+    final st = async.valueOrNull ?? SiteStatus.open;
+    final closed = st.closed;
+    final color = closed ? AppColors.danger : AppColors.online;
+    return Card(
+      key: const ValueKey('admin-site-access'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Icon(closed ? Icons.lock_outline : Icons.lock_open_outlined, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(closed ? 'Sayt bağlıdır (yalnız adminlər)' : 'Sayt açıqdır',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
+            ),
+            if (_busy)
+              const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+            else
+              Switch(
+                key: const ValueKey('admin-site-closed-switch'),
+                value: closed,
+                onChanged: async.hasValue ? (v) => _set(st, v) : null,
+              ),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+              closed
+                  ? 'Girməyə çalışanlar bu qeydi görür: ${st.message ?? 'Saytda texniki işlər aparılır.'}'
+                  : 'Bağlayanda yalnız administratorlar girə bilər; başqalarına sizin yazdığınız qeyd göstərilir.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
         ]),
       ),
     );

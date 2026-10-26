@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freightlink/core/site/site_access.dart';
 import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/features/auth/domain/app_user.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
@@ -48,6 +49,7 @@ Widget app(String section) => ProviderScope(
       overrides: [
         authStateProvider.overrideWith((ref) => Stream.value(const AppUser(id: uid, email: 'a@b.az', fullName: 'Admin Adı', role: 'admin', isVerified: true))),
         adminStatsProvider.overrideWith((ref) async => stats),
+        siteStatusProvider.overrideWith((ref) => Stream.value(SiteStatus.open)),
         adminUsersProvider.overrideWith((ref) => Stream.value(users)),
         adminCargoProvider.overrideWith((ref) => Stream.value(cargo)),
         adminOffersProvider.overrideWith((ref) => Stream.value(const [])),
