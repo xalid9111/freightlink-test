@@ -183,7 +183,8 @@ void main() {
     for (final code in ['lic_c', 'lic_ce', 'tachograph', 'cpc', 'intl_exp', 'tech', 'discipline', 'responsibility']) {
       expect(kJobSkills.any((k) => k.code == code), isTrue, reason: code);
     }
-    final sql = src('supabase/migrations/0069_job_center.sql');
+    // 0070 adds ADR, route_mix, night.
+    final sql = src('supabase/migrations/0069_job_center.sql') + src('supabase/migrations/0070_job_vacancy_wizard.sql');
     for (final s in kJobSpecialties) {
       expect(sql, contains("('${s.code}', "), reason: s.code);
     }

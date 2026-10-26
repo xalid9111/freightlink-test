@@ -129,6 +129,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   requirement ("Bütün …" lists everybody). Phone hidden by default (server
   decides), lists only for signed-in users, published at once, an admin
   can hide / show. Chat = the existing Mesajlar.
+  "Vakansiya yerləşdir" is a 4-step wizard as in the owner's picture
+  (26.10.2026, 0070): Əsas məlumat · Tələblər · Marşrut · Dərc et; İş növü
+  TIR / Digər; a ticked document or category = Mütləq, a ticked skill =
+  Arzuolunan.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
