@@ -119,6 +119,15 @@ class ProfileScreen extends ConsumerWidget {
                     subtitle: strings.t('profile_my_page_sub'),
                     onTap: () => context.pushOnce('/user/${user.id}'),
                   ),
+                  // İş Mərkəzi — SmartMatch (owner, 26.10.2026): the same page as
+                  // the icon on the Loads page.
+                  _MenuRow(
+                    icon: Icons.handshake_outlined,
+                    iconColor: AppColors.blue,
+                    title: strings.t('job_center'),
+                    subtitle: strings.t('job_center_profile_sub'),
+                    onTap: () => context.pushOnce('/jobs'),
+                  ),
                   // Shown while the admin's "Reklam ver" switch is on, or
                   // when this user already has ad orders (to pay / follow).
                   Consumer(builder: (context, ref, _) {

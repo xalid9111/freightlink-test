@@ -1,0 +1,274 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/localization/app_strings.dart';
+import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/safe_navigation.dart';
+import '../../../core/theme/app_theme.dart';
+import '../data/jobs_repository.dart';
+import '../domain/job_models.dart';
+import 'job_widgets.dart';
+import 'jobs_providers.dart';
+
+/// İş Mərkəzi (owner, 26.10.2026): two independent sides of one account —
+/// "İş axtarıram — Sürücü" and "İşçi axtarıram — Sahibkar". No second
+/// sign-up; both can be used at the same time.
+class JobCenterScreen extends ConsumerWidget {
+  const JobCenterScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    return Scaffold(
+      appBar: AppBar(title: Text(s.t('job_center'))),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(myJobProfileProvider);
+          ref.invalidate(myVacanciesProvider);
+        },
+        child: LayoutBuilder(builder: (context, c) {
+          final wide = c.maxWidth >= 760;
+          final driver = _DriverCard(s: s);
+          final employer = _EmployerCard(s: s);
+          return ListView(
+            padding: EdgeInsets.symmetric(horizontal: wide ? (c.maxWidth - 980).clamp(16, 400) / 2 + 16 : 16, vertical: 16),
+            children: [
+              Column(children: [
+                const JobCenterIcon(height: 56),
+                const SizedBox(height: 8),
+                Text(s.t('job_center_sub'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+              ]),
+              const SizedBox(height: 16),
+              if (wide)
+                IntrinsicHeight(
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Expanded(child: driver),
+                    const SizedBox(width: 14),
+                    Expanded(child: employer),
+                  ]),
+                )
+              else ...[driver, const SizedBox(height: 14), employer],
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  final Color color;
+  final IconData icon;
+  final String title, subtitle;
+  final List<Widget> children;
+  final String cardKey;
+  const _RoleCard(
+      {required this.color,
+      required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.children,
+      required this.cardKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: ValueKey(cardKey),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.7), width: 1.4),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+              const SizedBox(height: 2),
+              Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        ...children,
+      ]),
+    );
+  }
+}
+
+Widget _notReadyOr(AppStrings s, Object e) => Text(
+      e is JobsNotReady ? s.t('job_not_ready') : s.t('home_error_loading'),
+      style: TextStyle(color: e is JobsNotReady ? AppColors.textSoft : AppColors.danger),
+    );
+
+class _DriverCard extends ConsumerWidget {
+  final AppStrings s;
+  const _DriverCard({required this.s});
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool on) async {
+    try {
+      await ref.read(jobsRepositoryProvider).setSeeking(on);
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_save_failed'))));
+    }
+    ref.invalidate(myJobProfileProvider);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = jobDriverColor;
+    final me = ref.watch(myJobProfileProvider);
+    return _RoleCard(
+      cardKey: 'job-role-driver',
+      color: c,
+      icon: Icons.local_shipping_outlined,
+      title: s.t('job_role_driver'),
+      subtitle: s.t('job_role_driver_sub'),
+      children: [
+        me.when(
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator())),
+          error: (e, _) => _notReadyOr(s, e),
+          data: (p) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (p != null)
+              SwitchListTile(
+                key: const ValueKey('job-seeking-switch'),
+                contentPadding: EdgeInsets.zero,
+                activeThumbColor: c,
+                title: Text(p.isActive ? s.t('job_seeking_on') : s.t('job_seeking_off')),
+                value: p.isActive,
+                onChanged: (v) => _toggle(context, ref, v),
+              ),
+            FilledButton.icon(
+              key: const ValueKey('job-profile-open'),
+              style: FilledButton.styleFrom(backgroundColor: c),
+              onPressed: () => context.pushOnce('/jobs/profile'),
+              icon: Icon(p == null ? Icons.person_add_alt : Icons.edit_outlined),
+              label: Text(p == null ? s.t('job_profile_fill') : s.t('job_profile_edit')),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const ValueKey('job-see-jobs'),
+              style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c.withValues(alpha: 0.6))),
+              onPressed: () => context.pushOnce('/jobs/work'),
+              icon: const Icon(Icons.work_outline),
+              label: Text(s.t('job_see_jobs')),
+            ),
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmployerCard extends ConsumerWidget {
+  final AppStrings s;
+  const _EmployerCard({required this.s});
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref, JobVacancy v, bool on) async {
+    try {
+      await ref.read(jobsRepositoryProvider).setVacancyActive(v.id, on);
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_save_failed'))));
+    }
+    ref.invalidate(myVacanciesProvider);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = jobEmployerColor;
+    final list = ref.watch(myVacanciesProvider);
+    final specs = ref.watch(jobSpecialtiesProvider).valueOrNull ?? kJobSpecialties;
+    return _RoleCard(
+      cardKey: 'job-role-employer',
+      color: c,
+      icon: Icons.business_center_outlined,
+      title: s.t('job_role_employer'),
+      subtitle: s.t('job_role_employer_sub'),
+      children: [
+        list.when(
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator())),
+          error: (e, _) => _notReadyOr(s, e),
+          data: (vs) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(s.t('job_my_vacancies'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
+            const SizedBox(height: 6),
+            if (vs.isEmpty)
+              Text(s.t('job_no_vacancies'), style: TextStyle(color: AppColors.textSoft))
+            else
+              for (final v in vs)
+                Container(
+                  key: ValueKey('my-vacancy-${v.id}'),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+                  decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(12)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Row(children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(v.companyName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
+                          if (v.specialties.isNotEmpty)
+                            Text([for (final code in v.specialties) jobCodeLabel(s, 'job_spec_', code, specs)].join(' · '),
+                                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                          if (v.isHidden)
+                            Text(s.t('job_hidden_badge'), style: TextStyle(fontSize: 12.5, color: AppColors.danger)),
+                        ]),
+                      ),
+                      Switch(
+                        key: ValueKey('job-vacancy-switch-${v.id}'),
+                        value: v.isActive,
+                        activeThumbColor: c,
+                        onChanged: (on) => _toggle(context, ref, v, on),
+                      ),
+                    ]),
+                    Text(v.isActive ? s.t('job_vacancy_active') : s.t('job_vacancy_closed'),
+                        style: TextStyle(fontSize: 12.5, color: v.isActive ? AppColors.online : AppColors.textSoft)),
+                    Wrap(spacing: 4, children: [
+                      TextButton.icon(
+                        key: ValueKey('job-vacancy-edit-${v.id}'),
+                        style: TextButton.styleFrom(foregroundColor: c),
+                        onPressed: () => context.pushOnce('/jobs/vacancy/${v.id}'),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: Text(s.t('job_vacancy_edit')),
+                      ),
+                      TextButton.icon(
+                        key: ValueKey('job-vacancy-match-${v.id}'),
+                        style: TextButton.styleFrom(foregroundColor: c),
+                        onPressed: () => context.pushOnce('/jobs/drivers?vacancy=${v.id}'),
+                        icon: const Icon(Icons.people_alt_outlined, size: 18),
+                        label: Text(s.t('job_see_drivers')),
+                      ),
+                    ]),
+                  ]),
+                ),
+            const SizedBox(height: 4),
+            FilledButton.icon(
+              key: const ValueKey('job-vacancy-new'),
+              style: FilledButton.styleFrom(backgroundColor: c),
+              onPressed: () => context.pushOnce('/jobs/vacancy/new'),
+              icon: const Icon(Icons.add),
+              label: Text(s.t('job_vacancy_new')),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const ValueKey('job-see-drivers'),
+              style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c.withValues(alpha: 0.6))),
+              onPressed: () => context.pushOnce('/jobs/drivers'),
+              icon: const Icon(Icons.people_alt_outlined),
+              label: Text(s.t('job_see_drivers')),
+            ),
+          ]),
+        ),
+      ],
+    );
+  }
+}

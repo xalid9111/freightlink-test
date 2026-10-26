@@ -34,6 +34,10 @@ import '../autofix/route_error_screen.dart';
 import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
 import 'main_shell.dart';
+import '../../features/jobs/presentation/job_center_screen.dart';
+import '../../features/jobs/presentation/job_results_screen.dart';
+import '../../features/jobs/presentation/job_seeker_form.dart';
+import '../../features/jobs/presentation/job_vacancy_form.dart';
 import 'password_recovery.dart';
 import '../../features/finance/presentation/finance_screen.dart';
 import '../widgets/deferred_page.dart';
@@ -151,6 +155,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/cargo/favorites',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: FavoriteCargoScreen()),
+      ),
+      // İş Mərkəzi — SmartMatch (owner, 26.10.2026): from the Loads header
+      // and from Profil.
+      GoRoute(
+        path: '/jobs',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobCenterScreen()),
+      ),
+      GoRoute(
+        path: '/jobs/profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobSeekerFormScreen()),
+      ),
+      GoRoute(
+        path: '/jobs/vacancy/new',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobVacancyFormScreen()),
+      ),
+      GoRoute(
+        path: '/jobs/vacancy/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeskFrame(section: 0, child: JobVacancyFormScreen(id: state.pathParameters['id'])),
+      ),
+      GoRoute(
+        path: '/jobs/work',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobResultsScreen(employer: false)),
+      ),
+      GoRoute(
+        path: '/jobs/drivers',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            DeskFrame(section: 0, child: JobResultsScreen(employer: true, vacancyId: state.uri.queryParameters['vacancy'])),
       ),
       GoRoute(
         path: '/cargo-edit/:id',

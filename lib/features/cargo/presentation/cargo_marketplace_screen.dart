@@ -30,6 +30,7 @@ import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/providers/group_providers.dart';
+import '../../jobs/presentation/job_widgets.dart';
 
 part 'cargo_marketplace_desktop.dart';
 
@@ -245,11 +246,24 @@ class _Hero extends ConsumerWidget {
               children: [
                 Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
                 const SizedBox(width: 4),
-                Text.rich(TextSpan(children: [
-                  TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
-                  TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
-                ])),
-                const Spacer(),
+                // Full size; only on a very narrow phone (320) it shrinks a
+                // little so the İş Mərkəzi button still fits (0069).
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text.rich(TextSpan(children: [
+                        TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
+                        TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
+                      ])),
+                    ),
+                  ),
+                ),
+                // İş Mərkəzi (owner, 26.10.2026): the approved icon with its
+                // name under it, before the two round buttons.
+                JobCenterHeaderButton(strings: strings),
+                const SizedBox(width: 8),
                 // Heart (Seçilmiş yüklər) + profile picture (Profil), two
                 // round buttons like on the computer (owner, 22.10.2026).
                 HeaderCircles(strings: strings),
