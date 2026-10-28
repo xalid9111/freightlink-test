@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/jobs_repository.dart';
+import '../domain/job_applications.dart';
 import '../domain/job_feed.dart';
 import '../domain/job_models.dart';
 import 'job_feed_widgets.dart';
@@ -48,6 +49,7 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
         centerTitle: true,
         title: Text(s.t('job_center'), style: const TextStyle(fontWeight: FontWeight.w600)),
         actions: [
+          _NoticeBell(s: s),
           IconButton(
             key: const ValueKey('job-filter-top'),
             tooltip: s.t('job_filter'),
@@ -62,6 +64,8 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
           ref.invalidate(myVacanciesProvider);
           ref.invalidate(jobVacanciesProvider);
           ref.invalidate(jobSeekersProvider);
+          ref.invalidate(myApplicationsProvider);
+          ref.invalidate(jobNoticesProvider);
         },
         child: LayoutBuilder(builder: (context, c) {
           final side = c.maxWidth > 820 ? (c.maxWidth - 780) / 2 : 16.0;
@@ -310,7 +314,11 @@ class _MyAds extends ConsumerWidget {
         child: Text(s.t('job_not_ready'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
       );
     }
-    if (p == null && vs.isEmpty) return const SizedBox.shrink();
+    final apps = ref.watch(myApplicationsProvider).valueOrNull ?? const <JobApplication>[];
+    if (p == null && vs.isEmpty && apps.isEmpty) return const SizedBox.shrink();
+    final me = ref.watch(currentUserIdProvider) ?? '';
+    final openApps = apps.where((a) => a.isOpen).length;
+    final newApps = apps.where((a) => a.status == 'sent' && a.incomingFor(me)).length;
     final dc = jobDriverColor, ec = jobEmployerColor;
     TextButton action(String key, Color c, IconData icon, String label, VoidCallback onTap) => TextButton.icon(
           key: ValueKey(key),
@@ -323,6 +331,24 @@ class _MyAds extends ConsumerWidget {
       padding: const EdgeInsets.only(top: 18),
       child: Column(key: const ValueKey('job-my-ads'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(s.t('job_my_ads'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 8),
+        // PR 2: applications and job offers, with the new ones counted.
+        Material(
+          color: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.line)),
+          child: ListTile(
+            key: const ValueKey('job-apps-open'),
+            leading: Icon(Icons.assignment_ind_outlined, color: AppColors.blue),
+            title: Text(s.t('job_apps_title'), style: TextStyle(color: AppColors.text)),
+            subtitle: Text(s.t('job_apps_count', {'n': '$openApps'}), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (newApps > 0)
+                Badge(key: const ValueKey('job-apps-new'), label: Text('$newApps'), backgroundColor: AppColors.danger),
+              Icon(Icons.chevron_right, color: AppColors.textSoft),
+            ]),
+            onTap: () => context.pushOnce('/jobs/applications'),
+          ),
+        ),
         const SizedBox(height: 8),
         if (p != null)
           _MyRow(
@@ -579,6 +605,31 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ]),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+/// The bell: İş Mərkəzi notices, the unread ones counted.
+class _NoticeBell extends ConsumerWidget {
+  final AppStrings s;
+  const _NoticeBell({required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = (ref.watch(jobNoticesProvider).valueOrNull ?? const <JobNotice>[]).where((n) => !n.isRead).length;
+    return IconButton(
+      key: const ValueKey('job-bell'),
+      tooltip: s.t('job_ntf_title'),
+      onPressed: () async {
+        await context.pushOnce('/jobs/notifications');
+        ref.invalidate(jobNoticesProvider);
+      },
+      icon: Badge(
+        isLabelVisible: unread > 0,
+        label: Text(unread > 99 ? '99+' : '$unread'),
+        backgroundColor: AppColors.danger,
+        child: const Icon(Icons.notifications_none),
       ),
     );
   }

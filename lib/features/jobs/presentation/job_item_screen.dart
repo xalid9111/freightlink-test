@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/jobs_repository.dart';
+import '../domain/job_applications.dart';
 import '../domain/job_feed.dart';
 import '../domain/job_match.dart';
 import '../domain/job_models.dart';
@@ -218,13 +219,15 @@ class _Body extends ConsumerWidget {
               ),
             ),
           ])
-        else
+        else ...[
+          JobApplyBlock(item: item, s: s),
           section(s.t('job_detail_contact'), key: const ValueKey('job-item-contact'), [
             JobContactActions(
                 userId: item.ownerId, phone: v?.phone ?? p?.phone, whatsapp: v?.whatsapp ?? p!.whatsapp, s: s, color: c),
             const SizedBox(height: 6),
             Text(s.t('job_detail_contact_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
           ]),
+        ],
         if (match != null && match.checks.isNotEmpty && against != null)
           section('SmartMatch', key: const ValueKey('job-item-match'), [
             for (final ch in match.checks) CheckLine(check: ch, s: s, label: checkLabel(s, ch, specs, skills, against, lang)),
@@ -243,5 +246,171 @@ class _Body extends ConsumerWidget {
           ),
       ]);
     });
+  }
+}
+
+/// PR 2 (owner, 28.10.2026): "Müraciət et" on a vacancy (a driver with a
+/// work profile) and "İş təklif et" on a driver (an employer with an active
+/// vacancy). When there already is one, its status and a way to the list.
+class JobApplyBlock extends ConsumerStatefulWidget {
+  final JobFeedItem item;
+  final AppStrings s;
+  const JobApplyBlock({super.key, required this.item, required this.s});
+
+  @override
+  ConsumerState<JobApplyBlock> createState() => _JobApplyBlockState();
+}
+
+class _JobApplyBlockState extends ConsumerState<JobApplyBlock> {
+  bool _busy = false;
+
+  Future<String?> _askMessage(String title) {
+    final c = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          key: const ValueKey('job-apply-message'),
+          controller: c,
+          maxLength: 1000,
+          minLines: 2,
+          maxLines: 5,
+          decoration: InputDecoration(hintText: widget.s.t('job_apply_message_hint')),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(widget.s.t('common_cancel'))),
+          FilledButton(
+            key: const ValueKey('job-apply-send'),
+            onPressed: () => Navigator.of(ctx).pop(c.text.trim()),
+            child: Text(widget.s.t('job_apply_send')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _send({required String vacancyId, String? seekerId, required String title}) async {
+    final s = widget.s;
+    final msg = await _askMessage(title);
+    if (msg == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(jobsRepositoryProvider).sendApplication(vacancyId, seekerId: seekerId, message: msg.isEmpty ? null : msg);
+      ref.invalidate(myApplicationsProvider);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_apply_sent'))));
+    } catch (e) {
+      final t = '$e';
+      final key = t.contains('vacancy_closed')
+          ? 'job_apply_err_closed'
+          : t.contains('seeker_not_found')
+              ? 'job_apply_err_seeker'
+              : (e is JobsNotReady ? 'job_not_ready' : 'job_save_failed');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(key))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _offer(List<JobVacancy> mine) async {
+    final s = widget.s;
+    final specs = ref.read(jobSpecialtiesProvider).valueOrNull ?? kJobSpecialties;
+    JobVacancy? v = mine.length == 1 ? mine.first : null;
+    v ??= await showModalBottomSheet<JobVacancy>(
+      context: context,
+      useSafeArea: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(shrinkWrap: true, children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(s.t('job_offer_pick'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+          ),
+          for (final x in mine)
+            ListTile(
+              key: ValueKey('job-offer-pick-${x.id}'),
+              leading: Icon(Icons.work_outline, color: AppColors.accent),
+              title: Text(jobFeedTitle(s, JobFeedItem.vacancy(x), specs)),
+              subtitle: Text(x.companyName),
+              onTap: () => Navigator.of(ctx).pop(x),
+            ),
+        ]),
+      ),
+    );
+    if (v == null || !mounted) return;
+    await _send(vacancyId: v.id, seekerId: widget.item.id, title: s.t('job_offer_btn'));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s, it = widget.item;
+    final me = ref.watch(currentUserIdProvider) ?? '';
+    final apps = ref.watch(myApplicationsProvider).valueOrNull ?? const <JobApplication>[];
+    JobApplication? existing;
+    Widget? button;
+    if (it.isVacancy) {
+      existing = jobApplicationFor(apps, vacancyId: it.id, seekerId: me);
+      final profile = ref.watch(myJobProfileProvider).valueOrNull;
+      if (existing == null || existing.isFinal) {
+        button = FilledButton.icon(
+          key: const ValueKey('job-apply'),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size.fromHeight(50)),
+          onPressed: _busy
+              ? null
+              : () {
+                  if (profile == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_need_profile'))));
+                    context.pushOnce('/jobs/profile');
+                    return;
+                  }
+                  _send(vacancyId: it.id, title: s.t('job_apply_btn'));
+                },
+          icon: const Icon(Icons.send_rounded),
+          label: Text(s.t('job_apply_btn')),
+        );
+      }
+    } else {
+      final mine = (ref.watch(myVacanciesProvider).valueOrNull ?? const <JobVacancy>[]).where((v) => v.isActive).toList();
+      final open = [for (final a in apps) if (a.seekerId == it.id && a.employerId == me && a.isOpen) a];
+      existing = open.firstOrNull;
+      final free = [for (final v in mine) if (!open.any((a) => a.vacancyId == v.id)) v];
+      if (free.isNotEmpty) {
+        button = FilledButton.icon(
+          key: const ValueKey('job-offer'),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.blue, minimumSize: const Size.fromHeight(50)),
+          onPressed: _busy ? null : () => _offer(free),
+          icon: const Icon(Icons.handshake_outlined),
+          label: Text(s.t('job_offer_btn')),
+        );
+      }
+    }
+    if (button == null && existing == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (existing != null && existing.isOpen)
+          InkWell(
+            key: const ValueKey('job-apply-status'),
+            onTap: () => context.pushOnce('/jobs/applications'),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: AppColors.blue.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(children: [
+                Icon(Icons.assignment_turned_in_outlined, color: AppColors.blue),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('${s.t('job_app_status')}: ${s.t('job_app_st_${existing.status}')}',
+                      style: TextStyle(color: AppColors.text)),
+                ),
+                Icon(Icons.chevron_right, color: AppColors.textSoft),
+              ]),
+            ),
+          ),
+        if (button != null) button,
+      ]),
+    );
   }
 }

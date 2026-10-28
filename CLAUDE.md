@@ -147,6 +147,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   təkliflər" (SmartMatch), "Mənim elanlarım" (edit, on / off, delete kept),
   "Aktiv elanlar" (vacancies + drivers in one list, Filtrlə); a tap opens
   the ad page /jobs/v/:id · /jobs/d/:id.
+  PR 2 (owner, 28.10.2026): "Müraciət et" on a vacancy, "İş təklif et" on a
+  driver, "Müraciətlər və təkliflər" (/jobs/applications: Göndərildi ·
+  Baxıldı · Danışıq gedir · İşə qəbul edildi only when BOTH confirm ·
+  Rədd edildi · Bağlandı) and the bell with job notices
+  (/jobs/notifications) — the server rules of 0069, no extra SQL.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile

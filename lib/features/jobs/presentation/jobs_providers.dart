@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/jobs_repository.dart';
+import '../domain/job_applications.dart';
 import '../domain/job_models.dart';
 
 final jobsRepositoryProvider = Provider<JobsRepository>((ref) => JobsRepository());
@@ -43,4 +44,21 @@ final jobSeekersProvider = FutureProvider.autoDispose<List<JobSeeker>>((ref) {
 final jobVacanciesProvider = FutureProvider.autoDispose<List<JobVacancy>>((ref) {
   ref.watch(currentUserIdProvider);
   return ref.watch(jobsRepositoryProvider).vacancies();
+});
+
+/// PR 2: my applications / offers.
+final myApplicationsProvider = FutureProvider.autoDispose<List<JobApplication>>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(jobsRepositoryProvider).applications();
+});
+
+/// My job notices.
+final jobNoticesProvider = FutureProvider.autoDispose<List<JobNotice>>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(jobsRepositoryProvider).notices();
+});
+
+/// Public names of the people in my applications.
+final jobPeopleProvider = FutureProvider.autoDispose.family<Map<String, ({String name, String? avatar})>, String>((ref, ids) {
+  return ref.watch(jobsRepositoryProvider).people(ids.split(',').where((x) => x.isNotEmpty));
 });

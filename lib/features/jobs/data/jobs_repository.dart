@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../domain/job_applications.dart';
 import '../domain/job_models.dart';
 
 const _timeout = Duration(seconds: 20);
@@ -124,4 +125,56 @@ class JobsRepository {
   Future<void> adminSetHidden(String kind, String id, bool hidden) => _guard(() async {
         await _c.rpc('admin_job_set_hidden', params: {'p_kind': kind, 'p_id': id, 'p_hidden': hidden}).timeout(_timeout);
       });
+
+  // ---- PR 2: applications, offers, notices (server rules: 0069) ----------
+
+  /// My applications and offers, both sides (RLS: only mine).
+  Future<List<JobApplication>> applications() => _guard(() async {
+        final rows = await _c.from('job_applications').select().order('updated_at', ascending: false).limit(300).timeout(_timeout);
+        return [for (final r in rows as List) JobApplication.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  /// "Müraciət et" ([seekerId] null) or "İş təklif et" (the employer, for
+  /// a driver).
+  Future<JobApplication> sendApplication(String vacancyId, {String? seekerId, String? message}) => _guard(() async {
+        final res = await _c.rpc('job_application_send', params: {
+          'p_vacancy': vacancyId,
+          'p_seeker': seekerId,
+          'p_message': message,
+        }).timeout(_timeout);
+        return JobApplication.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<JobApplication> setApplicationStatus(String id, String status) => _guard(() async {
+        final res = await _c.rpc('job_application_set_status', params: {'p_id': id, 'p_status': status}).timeout(_timeout);
+        return JobApplication.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  /// Public names / pictures (the user_profiles view, 0019).
+  Future<Map<String, ({String name, String? avatar})>> people(Iterable<String> ids) async {
+    final list = ids.toSet().toList();
+    if (list.isEmpty) return const {};
+    final rows = await _c.from('user_profiles').select('id,full_name,avatar_url').inFilter('id', list).timeout(_timeout);
+    return {
+      for (final r in rows as List)
+        '${r['id']}': (name: '${r['full_name'] ?? ''}'.trim(), avatar: r['avatar_url'] as String?),
+    };
+  }
+
+  /// My job notices (the existing notifications table).
+  Future<List<JobNotice>> notices() => _guard(() async {
+        final rows = await _c
+            .from('notifications')
+            .select('id,type,title,data,is_read,created_at')
+            .inFilter('type', kJobNoticeTypes)
+            .order('created_at', ascending: false)
+            .limit(100)
+            .timeout(_timeout);
+        return [for (final r in rows as List) JobNotice.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<void> markNoticesRead(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await _c.from('notifications').update({'is_read': true}).inFilter('id', ids).timeout(_timeout);
+  }
 }
