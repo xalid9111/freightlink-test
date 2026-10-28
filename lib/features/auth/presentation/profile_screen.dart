@@ -6,6 +6,7 @@ import '../../../core/constants/phone_countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/age.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../core/widgets/text_size_picker.dart';
 import '../../../repositories/profile_repository.dart';
@@ -287,6 +288,45 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     }
   }
 
+  /// Pick / change the age (saved as a birth date, 0074).
+  Future<void> _editAge(int? current) async {
+    final strings = widget.strings;
+    int? picked = current;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(strings.t('profile_age_title')),
+          content: DropdownButtonFormField<int>(
+            key: const ValueKey('profile-age-pick'),
+            initialValue: picked,
+            menuMaxHeight: 360,
+            decoration: InputDecoration(labelText: strings.t('register_age_label')),
+            items: [for (final a in kAgeChoices) DropdownMenuItem(value: a, child: Text('$a'))],
+            onChanged: (v) => setLocal(() => picked = v),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common_cancel'))),
+            FilledButton(
+              key: const ValueKey('profile-age-save'),
+              onPressed: picked == null ? null : () => Navigator.of(ctx).pop(true),
+              child: Text(strings.t('profile_phone_save')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || picked == null || picked == current) return;
+    try {
+      await ref.read(profileRepositoryProvider).updateBirthDate(birthDateForAge(picked!, DateTime.now()));
+      ref.invalidate(publicProfileProvider(widget.userId));
+      ref.invalidate(authStateProvider);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_age_saved'))));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
+    }
+  }
+
   Future<void> _editPhone() async {
     final strings = widget.strings;
     final userId = widget.userId;
@@ -373,6 +413,8 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     // Country from the phone's calling code (users have no country field).
     final country = hasPhone ? PhoneCountries.split(phone)?.country : null;
     final verified = profile?.isVerified == true;
+    final birth = profile?.birthDate;
+    final age = birth == null ? null : ageFromBirthDate(birth, DateTime.now());
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -509,6 +551,31 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                   Icon(Icons.chevron_right, color: AppColors.textSoft),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Age (owner, 28.10.2026, 0074): private, used by İş Mərkəzi.
+          InkWell(
+            key: const ValueKey('profile-age'),
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _editAge(age),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Row(children: [
+                Icon(Icons.cake_outlined, size: 22, color: AppColors.text),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    age == null ? strings.t('profile_age_add') : '${strings.t('profile_age')}: $age',
+                    style: TextStyle(fontSize: 15, color: age == null ? AppColors.accent : AppColors.text),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: AppColors.textSoft),
+              ]),
             ),
           ),
         ],

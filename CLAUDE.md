@@ -152,6 +152,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   Baxıldı · Danışıq gedir · İşə qəbul edildi only when BOTH confirm ·
   Rədd edildi · Bağlandı) and the bell with job notices
   (/jobs/notifications) — the server rules of 0069, no extra SQL.
+- Age (owner, 28.10.2026, 0074): picked at registration (required, 16–90)
+  and set / changed in Profil; stored as users.birth_date (1 January of
+  the year), private (not in user_profiles); the İş Mərkəzi driver form
+  starts with it.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile

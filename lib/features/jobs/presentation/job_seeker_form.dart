@@ -80,7 +80,9 @@ class _SeekerFormState extends ConsumerState<_SeekerForm> {
     _salary = TextEditingController(text: p?.salaryMin == null ? '' : p!.salaryMin!.round().toString());
     _note = TextEditingController(text: p?.note ?? '');
     _phone = TextEditingController(text: p?.phone ?? '');
-    _age = p?.birthDate == null ? null : ageOn(p!.birthDate!, DateTime.now());
+    // The profile's own age, else the account's (picked at registration, 0074).
+    final birth = p?.birthDate ?? user?.birthDate;
+    _age = birth == null ? null : ageOn(birth, DateTime.now());
     _experience = p?.experienceYears;
     _currency = p?.currency;
     _schedules = [...?p?.allSchedules];
@@ -124,8 +126,9 @@ class _SeekerFormState extends ConsumerState<_SeekerForm> {
     }
     final old = widget.initial;
     final now = DateTime.now();
-    final oldAge = old?.birthDate == null ? null : ageOn(old!.birthDate!, now);
-    final birth = _age == null ? null : (_age == oldAge ? old!.birthDate : birthForAge(_age!, now));
+    final known = old?.birthDate ?? ref.read(currentUserProvider)?.birthDate;
+    final oldAge = known == null ? null : ageOn(known, now);
+    final birth = _age == null ? null : (_age == oldAge ? known : birthForAge(_age!, now));
     final phone = switch (_way) {
       JobContactWay.message => old?.phone,
       JobContactWay.profile => _profilePhone,

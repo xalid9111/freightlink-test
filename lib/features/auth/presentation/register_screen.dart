@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/utils/age.dart';
 import '../../../core/widgets/phone_country_field.dart';
 import 'providers/auth_providers.dart';
 
@@ -28,6 +29,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   String? _phone; // international number (+994…), filled by PhoneCountryField; required
+  int? _age; // required (owner, 28.10.2026); saved as a birth date (0074)
   bool _obscure = true;
   bool _submitting = false;
   String? _errorText;
@@ -67,7 +69,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             fullName: _nameCtrl.text.trim(),
             role: widget.role,
             phone: _phone,
-            extraData: widget.serviceKind == null ? null : {'service_kind': widget.serviceKind},
+            extraData: {
+              'birth_date': birthDateText(birthDateForAge(_age!, DateTime.now())),
+              if (widget.serviceKind != null) 'service_kind': widget.serviceKind,
+            },
           );
 
       if (!mounted) return;
@@ -172,6 +177,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     PhoneCountryField(
                       label: strings.t('register_phone_label'),
                       onChanged: (e164) => _phone = e164,
+                    ),
+                    const SizedBox(height: 14),
+                    // Age is required (owner, 28.10.2026): İş Mərkəzi uses it.
+                    DropdownButtonFormField<int>(
+                      key: const ValueKey('register-age'),
+                      initialValue: _age,
+                      menuMaxHeight: 360,
+                      decoration: InputDecoration(
+                        labelText: strings.t('register_age_label'),
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [for (final a in kAgeChoices) DropdownMenuItem(value: a, child: Text('$a'))],
+                      onChanged: (v) => setState(() => _age = v),
+                      validator: (v) => v == null ? strings.t('register_age_required') : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(

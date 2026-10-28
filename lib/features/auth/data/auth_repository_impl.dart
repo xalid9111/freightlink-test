@@ -185,6 +185,7 @@ class AuthRepositoryImpl implements AuthRepository {
         fullName: row['full_name'] as String,
         role: row['role'] as String,
         isVerified: row['is_verified'] as bool? ?? false,
+        birthDate: row['birth_date'] is String ? DateTime.tryParse(row['birth_date'] as String) : null,
       );
 
   String _friendlyAuthMessage(AuthException e) {

@@ -1523,5 +1523,11 @@
   "job_ntf_accepted": "İşə qəbul təsdiqləndi",
   "job_ntf_rejected": "Müraciət rədd edildi",
   "job_ntf_closed": "Müraciət bağlandı",
-  "job_ntf_update": "Müraciətdə yenilik"
+  "job_ntf_update": "Müraciətdə yenilik",
+  "register_age_label": "Yaşınız",
+  "register_age_required": "Yaşınızı seçin",
+  "profile_age": "Yaş",
+  "profile_age_add": "Yaşınızı əlavə edin",
+  "profile_age_title": "Yaşınız",
+  "profile_age_saved": "Yaş yadda saxlanıldı"
 }
