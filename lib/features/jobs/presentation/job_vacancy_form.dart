@@ -61,7 +61,8 @@ class _VacancyForm extends ConsumerStatefulWidget {
 
 class _VacancyFormState extends ConsumerState<_VacancyForm> {
   late final TextEditingController _company, _salaryMin, _salaryMax, _conditions, _phone;
-  String? _currency, _schedule;
+  String? _currency;
+  late List<String> _schedules;
   int? _minExp, _ageMin, _ageMax;
   late Set<String> _specialties;
   late Map<String, ReqLevel> _req;
@@ -84,7 +85,7 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
     _conditions = TextEditingController(text: v?.conditions ?? '');
     _phone = TextEditingController(text: v?.phone ?? '');
     _currency = v?.currency;
-    _schedule = v?.schedule;
+    _schedules = [...?v?.allSchedules];
     _minExp = v?.minExperience;
     _ageMin = v?.ageMin;
     _ageMax = v?.ageMax;
@@ -156,7 +157,8 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
       salaryNegotiable: _negotiable,
       ageMin: aMin,
       ageMax: aMax,
-      schedule: _schedule,
+      schedule: _schedules.firstOrNull,
+      schedules: _schedules,
       conditions: jobText(_conditions),
       phone: phone,
       showPhone: show,
@@ -188,7 +190,7 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
     final soft = skills.where((k) => k.kind == 'skill').toList();
     final years = {..._experienceYears, if (_minExp != null && _minExp! > 0) _minExp!}.toList()..sort();
     final ages = [for (var a = 18; a <= 70; a++) a];
-    final schedules = [...kJobFormSchedules, if (_schedule != null && !kJobFormSchedules.contains(_schedule)) _schedule!];
+    final schedules = [...kJobFormSchedules, for (final k in _schedules) if (!kJobFormSchedules.contains(k)) k];
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -296,10 +298,10 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
           JobBlock(
             icon: Icons.schedule,
             label: s.t('job_work_mode'),
-            child: JobPills(
+            child: JobMultiPills(
               items: [for (final k in schedules) (k, s.t('job_sch_$k'))],
-              value: _schedule,
-              onChanged: (v) => setState(() => _schedule = v),
+              values: _schedules,
+              onChanged: (v) => setState(() => _schedules = v),
             ),
           ),
           JobBlock(

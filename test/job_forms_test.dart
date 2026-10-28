@@ -71,6 +71,24 @@ void main() {
       expect(jobUpper('Tanker', 'en'), 'TANKER');
     });
 
+    test('several İş rejimi: older single value read as a list; the first is kept in the old column; one in common fits', () {
+      final old = JobVacancy.fromJson({'id': 'v', 'owner_id': 'o', 'company_name': 'A', 'schedule': 'rotation'});
+      expect(old.allSchedules, ['rotation']);
+      const v = JobVacancy(ownerId: 'o', companyName: 'A', schedules: ['permanent', 'long_haul']);
+      expect(v.toRow()['schedule'], 'permanent');
+      expect(v.toRow()['schedules'], ['permanent', 'long_haul']);
+      expect(kJobNewColumns, contains('schedules'));
+      CheckState sch(List<String> mine) => matchJob(JobSeeker(userId: 'd', fullName: 'd', schedules: mine), v)
+          .checks.firstWhere((c) => c.kind == CheckKind.schedule).state;
+      expect(sch(['regional', 'long_haul']), CheckState.yes);
+      expect(sch(['temporary']), CheckState.no);
+      final sql = src('supabase/migrations/0073_job_schedules.sql').toLowerCase();
+      for (final bad in ['drop table', 'truncate', 'delete from', 'drop column', 'update public.']) {
+        expect(sql.contains(bad), isFalse, reason: bad);
+      }
+      expect(sql, contains("'phone', case when v.show_phone or v_admin or v.owner_id = auth.uid() then v.phone end"));
+    });
+
     test('age: the picked age is shown again and grows by itself', () {
       final now = DateTime(2026, 10, 28);
       expect(ageOn(birthForAge(28, now), now), 28);
@@ -212,6 +230,7 @@ void main() {
     await tap(tester, 'job-doc-adr');
     await tap(tester, 'job-skill-intl_exp');
     await tap(tester, 'job-sch-long_haul');
+    await tap(tester, 'job-sch-permanent');
     await tester.enterText(find.byKey(const ValueKey('job-salary-min')), '1500');
     await tester.enterText(find.byKey(const ValueKey('job-salary-max')), '2500');
     await tap(tester, 'job-negotiable');
@@ -227,6 +246,7 @@ void main() {
       'intl_exp': ReqLevel.nice,
     });
     expect([v.schedule, v.salaryMin, v.salaryMax, v.salaryNegotiable], ['long_haul', 1500, 2500, true]);
+    expect(v.schedules, ['long_haul', 'permanent'], reason: 'several İş rejimi at once (owner, 28.10.2026)');
     expect(v.showPhone, isFalse, reason: 'phone hidden by default (Yalnız mesajla)');
     expect(v.isActive, isTrue);
     expect(v.jobType, 'tir');
@@ -256,6 +276,8 @@ void main() {
     await tap(tester, 'job-doc-tachograph');
     await tap(tester, 'job-country-TR');
     await tap(tester, 'job-sch-regional');
+    await tap(tester, 'job-sch-temporary');
+    await tap(tester, 'job-sch-long_haul');
     await tester.enterText(find.byKey(const ValueKey('job-salary-min')), '1500');
     await tap(tester, 'job-save');
     final p = repo.profile!;
@@ -270,6 +292,7 @@ void main() {
     }, reason: 'answers the form does not show are kept');
     expect(p.countries, ['Türkiye']);
     expect([p.schedule, p.salaryMin], ['regional', 1500]);
+    expect(p.schedules, ['regional', 'temporary', 'long_haul']);
     expect(p.birthDate, DateTime(1990, 6, 15), reason: 'age not changed → the stored date stays');
     expect([p.city, p.country, p.routes], ['Baku', 'Azerbaijan', 'Bakı – Tbilisi'], reason: 'fields not on the form are kept');
     expect(p.isActive, isTrue, reason: '"Profilimi dərc et" publishes it');

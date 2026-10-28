@@ -164,8 +164,10 @@ JobMatch matchJob(JobSeeker s, JobVacancy v) {
   }
 
   // 7) Work schedule.
-  if (v.schedule != null && s.schedule != null) {
-    out.add(MatchCheck(CheckKind.schedule, v.schedule == s.schedule ? CheckState.yes : CheckState.no,
+  // Several on either side (0073): one in common is enough.
+  final vs = v.allSchedules, ss = s.allSchedules;
+  if (vs.isNotEmpty && ss.isNotEmpty) {
+    out.add(MatchCheck(CheckKind.schedule, vs.any(ss.contains) ? CheckState.yes : CheckState.no,
         weight: kWeightSchedule));
   }
   return JobMatch(out);

@@ -402,6 +402,38 @@ class JobPills extends StatelessWidget {
       ]);
 }
 
+/// Several choices (İş rejimi, owner 28.10.2026: 2 or 3 at once); a tap
+/// adds or removes one, the order of the taps is kept.
+class JobMultiPills extends StatelessWidget {
+  final List<(String value, String label)> items;
+  final List<String> values;
+  final ValueChanged<List<String>> onChanged;
+  final String keyPrefix;
+  const JobMultiPills({super.key, required this.items, required this.values, required this.onChanged, this.keyPrefix = 'job-sch'});
+
+  @override
+  Widget build(BuildContext context) => Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final (v, label) in items)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: ValueKey('$keyPrefix-$v'),
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => onChanged(values.contains(v) ? [for (final x in values) if (x != v) x] : [...values, v]),
+              child: Ink(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                decoration: values.contains(v) ? BoxDecoration(color: _sel, borderRadius: BorderRadius.circular(12)) : _box(false),
+                child: Text(label,
+                    style: TextStyle(
+                        fontSize: 14.5,
+                        color: values.contains(v) ? Colors.white : AppColors.text,
+                        fontWeight: values.contains(v) ? FontWeight.w500 : FontWeight.w400)),
+              ),
+            ),
+          ),
+      ]);
+}
+
 /// A compact drop-down box.
 class JobDropdown<T> extends StatelessWidget {
   final String fieldKey;

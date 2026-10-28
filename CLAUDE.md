@@ -136,7 +136,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   İttifaqı, Başqa), transport (truck pictures, several), licence
   categories B · C1 · C · CE · D1 · D · C1E · D1E · DE, experience, age
   range, documents, skills (compact), extra requirements, İş rejimi
-  Daimi · Müvəqqəti · Uzun marşrut · Regional, salary min–max or
+  Daimi · Müvəqqəti · Uzun marşrut · Regional (several at once, 0073),
+  salary min–max or
   Danışılacaq, contact (Yalnız mesajla by default) → "Tələblərimi
   yerləşdir". Driver: the same choices about himself → "Profilimi dərc
   et". A ticked document or category = Mütləq (employer) / has it

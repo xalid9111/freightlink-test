@@ -218,7 +218,7 @@ String checkLabel(AppStrings s, MatchCheck c, List<JobCatalogItem> specs, List<J
     CheckKind.city => '${s.t('job_chk_city')}: ${Cities.label(v.city ?? '', lang)}',
     CheckKind.countries => s.t('job_chk_countries'),
     CheckKind.salary => s.t('job_chk_salary'),
-    CheckKind.schedule => '${s.t('job_chk_schedule')}: ${s.t('job_sch_${v.schedule}')}',
+    CheckKind.schedule => '${s.t('job_chk_schedule')}: ${[for (final k in v.allSchedules) s.t('job_sch_$k')].join(', ')}',
   };
 }
 
@@ -379,7 +379,7 @@ class _SeekerCard extends ConsumerWidget {
       facts: [
         if (p.experienceYears != null) '${s.t('job_chk_experience')}: ${s.t('job_years', {'n': '${p.experienceYears}'})}',
         if (p.salaryMin != null) '${s.t('job_chk_salary')}: ${_money(p.salaryMin!)} ${p.currency ?? 'AZN'}',
-        if (p.schedule != null) s.t('job_sch_${p.schedule}'),
+        if (p.allSchedules.isNotEmpty) [for (final k in p.allSchedules) s.t('job_sch_$k')].join(', '),
       ],
       extra: [
         if (match == null && has.isNotEmpty)
@@ -437,7 +437,7 @@ class _VacancyCard extends ConsumerWidget {
       chips: [for (final c in v.specialties) jobCodeLabel(s, 'job_spec_', c, specs)],
       facts: [
         if (salary != null) '${s.t('job_chk_salary')}: $salary',
-        if (v.schedule != null) s.t('job_sch_${v.schedule}'),
+        if (v.allSchedules.isNotEmpty) [for (final k in v.allSchedules) s.t('job_sch_$k')].join(', '),
         if (v.minExperience != null && v.minExperience! > 0)
           '${s.t('job_chk_experience')}: ${s.t('job_years', {'n': '${v.minExperience}+'})}',
       ],
