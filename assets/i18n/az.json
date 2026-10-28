@@ -1531,5 +1531,15 @@
   "profile_age_title": "Yaşınız",
   "profile_age_saved": "Yaş yadda saxlanıldı",
   "profile_age_edit": "Dəyiş",
-  "profile_age_not_ready": "Yaşı saxlamaq hələ mümkün deyil. Bir az sonra yenidən cəhd edin."
+  "profile_age_not_ready": "Yaşı saxlamaq hələ mümkün deyil. Bir az sonra yenidən cəhd edin.",
+  "register_birth_label": "Doğum tarixi",
+  "register_birth_required": "Doğum tarixinizi seçin",
+  "birth_day": "Gün",
+  "birth_month": "Ay",
+  "birth_year": "İl",
+  "birth_too_young": "16 yaşdan kiçik ola bilməz",
+  "profile_birth": "Doğum tarixi",
+  "profile_birth_add": "Doğum tarixinizi əlavə edin",
+  "profile_birth_title": "Doğum tarixiniz",
+  "profile_birth_saved": "Doğum tarixi yadda saxlanıldı"
 }

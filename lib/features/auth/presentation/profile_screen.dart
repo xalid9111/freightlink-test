@@ -7,6 +7,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/age.dart';
+import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../core/widgets/text_size_picker.dart';
 import '../../../repositories/profile_repository.dart';
@@ -289,40 +290,46 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     }
   }
 
-  /// Pick / change the age (saved as a birth date, 0074).
-  Future<void> _editAge(int? current) async {
+  /// Pick / change the birth date Gün · Ay · İl (owner, 28.10.2026; 0074).
+  Future<void> _editBirth(DateTime? current, String lang) async {
     final strings = widget.strings;
-    int? picked = current;
+    DateTime? picked = current;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(strings.t('profile_age_title')),
-          content: DropdownButtonFormField<int>(
-            key: const ValueKey('profile-age-pick'),
-            initialValue: picked,
-            menuMaxHeight: 360,
-            decoration: InputDecoration(labelText: strings.t('register_age_label')),
-            items: [for (final a in kAgeChoices) DropdownMenuItem(value: a, child: Text('$a'))],
-            onChanged: (v) => setLocal(() => picked = v),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common_cancel'))),
-            FilledButton(
-              key: const ValueKey('profile-age-save'),
-              onPressed: picked == null ? null : () => Navigator.of(ctx).pop(true),
-              child: Text(strings.t('profile_phone_save')),
+        builder: (ctx, setLocal) {
+          final allowed = picked != null && birthDateAllowed(picked!, DateTime.now());
+          return AlertDialog(
+            title: Text(strings.t('profile_birth_title')),
+            content: SizedBox(
+              width: 360,
+              child: BirthDateField(
+                key: const ValueKey('profile-birth-pick'),
+                initial: current,
+                strings: strings,
+                languageCode: lang,
+                errorText: picked != null && !allowed ? strings.t('birth_too_young') : null,
+                onChanged: (d) => setLocal(() => picked = d),
+              ),
             ),
-          ],
-        ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(strings.t('common_cancel'))),
+              FilledButton(
+                key: const ValueKey('profile-birth-save'),
+                onPressed: allowed ? () => Navigator.of(ctx).pop(true) : null,
+                child: Text(strings.t('profile_phone_save')),
+              ),
+            ],
+          );
+        },
       ),
     );
     if (ok != true || picked == null || picked == current) return;
     try {
-      await ref.read(profileRepositoryProvider).updateBirthDate(birthDateForAge(picked!, DateTime.now()));
+      await ref.read(profileRepositoryProvider).updateBirthDate(picked!);
       ref.invalidate(publicProfileProvider(widget.userId));
       ref.invalidate(authStateProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_age_saved'))));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_birth_saved'))));
     } on PostgrestException catch (e) {
       // The database has no age column yet (0074 not run): say so instead
       // of a vague error.
@@ -563,11 +570,11 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
             ),
           ),
           const SizedBox(height: 10),
-          // Age (owner, 28.10.2026, 0074): private, used by İş Mərkəzi.
+          // Birth date (owner, 28.10.2026, 0074): private, used by İş Mərkəzi.
           InkWell(
             key: const ValueKey('profile-age'),
             borderRadius: BorderRadius.circular(16),
-            onTap: () => _editAge(age),
+            onTap: () => _editBirth(birth, lang),
             child: Container(
               padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
               decoration: BoxDecoration(
@@ -579,14 +586,16 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    age == null ? strings.t('profile_age_add') : '${strings.t('profile_age')}: $age',
-                    style: TextStyle(fontSize: 15, color: age == null ? AppColors.accent : AppColors.text),
+                    birth == null
+                        ? strings.t('profile_birth_add')
+                        : '${strings.t('profile_birth')}: ${birthDateLabel(birth, lang)} (${strings.t('job_age', {'n': '$age'})})',
+                    style: TextStyle(fontSize: 15, color: birth == null ? AppColors.accent : AppColors.text),
                   ),
                 ),
                 // A clear "Dəyiş" so it is obvious the age can be edited.
                 TextButton.icon(
                   key: const ValueKey('profile-age-edit'),
-                  onPressed: () => _editAge(age),
+                  onPressed: () => _editBirth(birth, lang),
                   style: TextButton.styleFrom(foregroundColor: AppColors.accent, visualDensity: VisualDensity.compact),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: Text(strings.t('profile_age_edit')),

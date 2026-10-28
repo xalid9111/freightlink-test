@@ -1531,5 +1531,15 @@
   "profile_age_title": "თქვენი ასაკი",
   "profile_age_saved": "ასაკი შენახულია",
   "profile_age_edit": "შეცვლა",
-  "profile_age_not_ready": "ასაკის შენახვა ჯერ შეუძლებელია. სცადეთ მოგვიანებით."
+  "profile_age_not_ready": "ასაკის შენახვა ჯერ შეუძლებელია. სცადეთ მოგვიანებით.",
+  "register_birth_label": "დაბადების თარიღი",
+  "register_birth_required": "აირჩიეთ დაბადების თარიღი",
+  "birth_day": "დღე",
+  "birth_month": "თვე",
+  "birth_year": "წელი",
+  "birth_too_young": "მინიმუმ 16 წლის",
+  "profile_birth": "დაბადების თარიღი",
+  "profile_birth_add": "მიუთითეთ დაბადების თარიღი",
+  "profile_birth_title": "თქვენი დაბადების თარიღი",
+  "profile_birth_saved": "დაბადების თარიღი შენახულია"
 }
