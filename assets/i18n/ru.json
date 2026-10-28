@@ -1529,5 +1529,17 @@
   "profile_age": "Возраст",
   "profile_age_add": "Укажите возраст",
   "profile_age_title": "Ваш возраст",
-  "profile_age_saved": "Возраст сохранён"
+  "profile_age_saved": "Возраст сохранён",
+  "profile_age_edit": "Изменить",
+  "profile_age_not_ready": "Возраст пока нельзя сохранить. Попробуйте позже.",
+  "register_birth_label": "Дата рождения",
+  "register_birth_required": "Выберите дату рождения",
+  "birth_day": "День",
+  "birth_month": "Месяц",
+  "birth_year": "Год",
+  "birth_too_young": "Не младше 16 лет",
+  "profile_birth": "Дата рождения",
+  "profile_birth_add": "Укажите дату рождения",
+  "profile_birth_title": "Ваша дата рождения",
+  "profile_birth_saved": "Дата рождения сохранена"
 }

@@ -7,6 +7,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/age.dart';
+import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/phone_country_field.dart';
 import 'providers/auth_providers.dart';
 
@@ -29,7 +30,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   String? _phone; // international number (+994…), filled by PhoneCountryField; required
-  int? _age; // required (owner, 28.10.2026); saved as a birth date (0074)
+  // Birth date Gün · Ay · İl, required (owner, 28.10.2026; users.birth_date, 0074).
+  DateTime? _birth;
+  String? _birthError;
   bool _obscure = true;
   bool _submitting = false;
   String? _errorText;
@@ -50,7 +53,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           : strings.t('role_label_cargo_owner');
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    final strings0 = ref.read(stringsProvider);
+    final formOk = _formKey.currentState!.validate();
+    final b = _birth;
+    setState(() => _birthError = b == null
+        ? strings0.t('register_birth_required')
+        : (birthDateAllowed(b, DateTime.now()) ? null : strings0.t('birth_too_young')));
+    if (!formOk || _birthError != null) return;
     // Phone is required: double-check the captured international number.
     final digits = (_phone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
     if (digits.length < 9) {
@@ -70,7 +79,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             role: widget.role,
             phone: _phone,
             extraData: {
-              'birth_date': birthDateText(birthDateForAge(_age!, DateTime.now())),
+              'birth_date': birthDateText(_birth!),
               if (widget.serviceKind != null) 'service_kind': widget.serviceKind,
             },
           );
@@ -179,18 +188,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       onChanged: (e164) => _phone = e164,
                     ),
                     const SizedBox(height: 14),
-                    // Age is required (owner, 28.10.2026): İş Mərkəzi uses it.
-                    DropdownButtonFormField<int>(
-                      key: const ValueKey('register-age'),
-                      initialValue: _age,
-                      menuMaxHeight: 360,
-                      decoration: InputDecoration(
-                        labelText: strings.t('register_age_label'),
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: [for (final a in kAgeChoices) DropdownMenuItem(value: a, child: Text('$a'))],
-                      onChanged: (v) => setState(() => _age = v),
-                      validator: (v) => v == null ? strings.t('register_age_required') : null,
+                    // Birth date is required (owner, 28.10.2026): İş Mərkəzi uses it.
+                    Text(strings.t('register_birth_label'), style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 6),
+                    BirthDateField(
+                      key: const ValueKey('register-birth'),
+                      initial: _birth,
+                      strings: strings,
+                      languageCode: ref.watch(currentLocaleProvider).languageCode,
+                      errorText: _birthError,
+                      onChanged: (d) => setState(() {
+                        _birth = d;
+                        if (d != null) _birthError = null;
+                      }),
                     ),
                     const SizedBox(height: 14),
                     TextFormField(

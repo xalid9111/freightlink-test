@@ -1529,5 +1529,17 @@
   "profile_age": "Age",
   "profile_age_add": "Add your age",
   "profile_age_title": "Your age",
-  "profile_age_saved": "Age saved"
+  "profile_age_saved": "Age saved",
+  "profile_age_edit": "Change",
+  "profile_age_not_ready": "The age cannot be saved yet. Please try again later.",
+  "register_birth_label": "Date of birth",
+  "register_birth_required": "Choose your date of birth",
+  "birth_day": "Day",
+  "birth_month": "Month",
+  "birth_year": "Year",
+  "birth_too_young": "Must be at least 16",
+  "profile_birth": "Date of birth",
+  "profile_birth_add": "Add your date of birth",
+  "profile_birth_title": "Your date of birth",
+  "profile_birth_saved": "Date of birth saved"
 }

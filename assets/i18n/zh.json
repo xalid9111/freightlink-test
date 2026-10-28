@@ -1529,5 +1529,17 @@
   "profile_age": "年龄",
   "profile_age_add": "添加您的年龄",
   "profile_age_title": "您的年龄",
-  "profile_age_saved": "年龄已保存"
+  "profile_age_saved": "年龄已保存",
+  "profile_age_edit": "修改",
+  "profile_age_not_ready": "暂时无法保存年龄，请稍后再试。",
+  "register_birth_label": "出生日期",
+  "register_birth_required": "请选择出生日期",
+  "birth_day": "日",
+  "birth_month": "月",
+  "birth_year": "年",
+  "birth_too_young": "须年满16岁",
+  "profile_birth": "出生日期",
+  "profile_birth_add": "添加出生日期",
+  "profile_birth_title": "您的出生日期",
+  "profile_birth_saved": "出生日期已保存"
 }
