@@ -1523,5 +1523,11 @@
   "job_ntf_accepted": "录用已确认",
   "job_ntf_rejected": "申请被拒绝",
   "job_ntf_closed": "申请已关闭",
-  "job_ntf_update": "申请有更新"
+  "job_ntf_update": "申请有更新",
+  "register_age_label": "您的年龄",
+  "register_age_required": "请选择年龄",
+  "profile_age": "年龄",
+  "profile_age_add": "添加您的年龄",
+  "profile_age_title": "您的年龄",
+  "profile_age_saved": "年龄已保存"
 }

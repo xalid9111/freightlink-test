@@ -1523,5 +1523,11 @@
   "job_ntf_accepted": "Hiring confirmed",
   "job_ntf_rejected": "Application declined",
   "job_ntf_closed": "Application closed",
-  "job_ntf_update": "Application update"
+  "job_ntf_update": "Application update",
+  "register_age_label": "Your age",
+  "register_age_required": "Choose your age",
+  "profile_age": "Age",
+  "profile_age_add": "Add your age",
+  "profile_age_title": "Your age",
+  "profile_age_saved": "Age saved"
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/supabase_config.dart';
+import '../core/utils/age.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 
 /// What a signed-in user may see about a user. For OTHER users this comes
@@ -27,6 +28,9 @@ class PublicProfile {
   final String? blockReason;
   final bool isActive;
 
+  /// Own row only (0074); others never get it.
+  final DateTime? birthDate;
+
   const PublicProfile({
     required this.id,
     required this.fullName,
@@ -40,6 +44,7 @@ class PublicProfile {
     this.blockedUntil,
     this.blockReason,
     this.isActive = true,
+    this.birthDate,
   });
 
   /// True while the account may not post loads, offers or messages.
@@ -64,6 +69,7 @@ class PublicProfile {
       blockedUntil: j['blocked_until'] is String ? DateTime.tryParse(j['blocked_until'] as String) : null,
       blockReason: j['block_reason'] as String?,
       isActive: j['is_active'] != false,
+      birthDate: j['birth_date'] is String ? DateTime.tryParse(j['birth_date'] as String) : null,
     );
   }
 
@@ -137,6 +143,13 @@ class ProfileRepository {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) throw StateError('not signed in');
     await _client.from('users').update({'full_name': name.trim()}).eq('id', uid);
+  }
+
+  /// Saves the signed-in user's age as a birth date (0074).
+  Future<void> updateBirthDate(DateTime birthDate) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('not signed in');
+    await _client.from('users').update({'birth_date': birthDateText(birthDate)}).eq('id', uid);
   }
 
   /// Saves the signed-in user's phone (E.164, e.g. +994501234567) on

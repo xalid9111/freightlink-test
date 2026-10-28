@@ -1523,5 +1523,11 @@
   "job_ntf_accepted": "Приём на работу подтверждён",
   "job_ntf_rejected": "Отклик отклонён",
   "job_ntf_closed": "Отклик закрыт",
-  "job_ntf_update": "Обновление по отклику"
+  "job_ntf_update": "Обновление по отклику",
+  "register_age_label": "Ваш возраст",
+  "register_age_required": "Выберите возраст",
+  "profile_age": "Возраст",
+  "profile_age_add": "Укажите возраст",
+  "profile_age_title": "Ваш возраст",
+  "profile_age_saved": "Возраст сохранён"
 }

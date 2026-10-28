@@ -10,6 +10,9 @@ class AppUser extends Equatable {
   final String role; // cargo_owner | carrier | driver | admin
   final bool isVerified;
 
+  /// Picked as an age at registration / in Profil (0074); private.
+  final DateTime? birthDate;
+
   const AppUser({
     required this.id,
     required this.email,
@@ -17,10 +20,11 @@ class AppUser extends Equatable {
     required this.fullName,
     required this.role,
     required this.isVerified,
+    this.birthDate,
   });
 
   @override
-  List<Object?> get props => [id, email, phone, fullName, role, isVerified];
+  List<Object?> get props => [id, email, phone, fullName, role, isVerified, birthDate];
 }
 
 /// Result of signUp(). Split from a bare AppUser because Supabase

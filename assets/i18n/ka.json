@@ -1523,5 +1523,11 @@
   "job_ntf_accepted": "დასაქმება დადასტურდა",
   "job_ntf_rejected": "განაცხადი უარყოფილია",
   "job_ntf_closed": "განაცხადი დახურულია",
-  "job_ntf_update": "განაცხადის განახლება"
+  "job_ntf_update": "განაცხადის განახლება",
+  "register_age_label": "თქვენი ასაკი",
+  "register_age_required": "აირჩიეთ ასაკი",
+  "profile_age": "ასაკი",
+  "profile_age_add": "მიუთითეთ ასაკი",
+  "profile_age_title": "თქვენი ასაკი",
+  "profile_age_saved": "ასაკი შენახულია"
 }
