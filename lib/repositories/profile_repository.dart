@@ -127,6 +127,19 @@ class ProfileRepository {
     }
   }
 
+  /// [userId]'s age in whole years (RPC user_age, migration 0075); the
+  /// birth date itself stays private. Null when not given, or while 0075
+  /// is not applied yet.
+  Future<int?> age(String userId) async {
+    try {
+      final res = await _client.rpc('user_age', params: {'p_user': userId});
+      return res is num ? res.toInt() : null;
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202') return null;
+      rethrow;
+    }
+  }
+
   /// Records "now" as the signed-in user's last activity (own row only —
   /// RLS users_update_self). Silently ignored if migration 0009 hasn't
   /// added the column yet.
@@ -198,6 +211,12 @@ final publicProfileProvider = FutureProvider.family<PublicProfile?, String>((ref
 final userContactProvider = FutureProvider.autoDispose.family<UserContact, String>((ref, userId) {
   ref.watch(currentUserIdProvider);
   return ref.watch(profileRepositoryProvider).contact(userId);
+});
+
+/// Another user's age as a number ("48 yaş", owner 28.10.2026, 0075).
+final userAgeProvider = FutureProvider.autoDispose.family<int?, String>((ref, userId) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(profileRepositoryProvider).age(userId);
 });
 
 /// Result of get_user_contact / get_cargo_contact.

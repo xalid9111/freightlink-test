@@ -121,8 +121,14 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final loads = ref.watch(userOpenCargoProvider(widget.userId));
     final isMe = me == widget.userId;
     // Phone only when the server releases it (advertiser, open load, chat…).
-    final contactPhone = isMe ? null : ref.watch(userContactProvider(widget.userId)).valueOrNull?.phone?.trim();
+    final contact = isMe ? null : ref.watch(userContactProvider(widget.userId)).valueOrNull;
+    final contactPhone = contact?.phone?.trim();
     final hasPhone = (contactPhone ?? '').isNotEmpty;
+    // E-mail under the same server rules (get_user_contact, 0019).
+    final contactEmail = contact?.email?.trim();
+    final hasEmail = (contactEmail ?? '').isNotEmpty;
+    // Age as a number only, never the date (owner, 28.10.2026, 0075).
+    final age = ref.watch(userAgeProvider(widget.userId)).valueOrNull;
 
     final lang = ref.watch(currentLocaleProvider).languageCode;
     // One account, several activities (0039); the old signup role only
@@ -216,6 +222,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                             children: [
                                               if (roleText != null)
                                                 Text(roleText, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                                              if (age != null) ...[
+                                                if (roleText != null) Text('•', style: TextStyle(color: AppColors.textSoft)),
+                                                Text(s.t('job_age', {'n': '$age'}),
+                                                    key: const ValueKey('profile-public-age'),
+                                                    style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                                              ],
                                               if (country != null) ...[
                                                 if (roleText != null) Text('•', style: TextStyle(color: AppColors.textSoft)),
                                                 Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
@@ -312,7 +324,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             ),
                           ),
                         // About / hours / address.
-                        if (!(details?.isEmpty ?? true) || isMe)
+                        if (!(details?.isEmpty ?? true) || isMe || hasPhone || hasEmail)
                           _Section(
                             title: s.t('profile_info'),
                             child: Column(
@@ -328,6 +340,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 if ((details?.address ?? '').isNotEmpty)
                                   _InfoRow(icon: Icons.place_outlined, text: details!.address!),
                                 if (hasPhone) _InfoRow(icon: Icons.call_outlined, text: contactPhone!),
+                                if (hasEmail) _InfoRow(icon: Icons.mail_outline, text: contactEmail!),
                                 if (isMe && (details?.isEmpty ?? true))
                                   Text(s.t('profile_info_empty_me'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                               ],

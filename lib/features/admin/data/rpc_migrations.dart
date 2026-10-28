@@ -114,6 +114,7 @@ const kRpcMigration = <String, String>{
   'admin_job_set_hidden': '0069_job_center.sql',
   'job_application_send': '0069_job_center.sql',
   'job_application_set_status': '0069_job_center.sql',
+  'user_age': '0075_user_age_public.sql',
   'admin_market_set_hero': '0044_market_hero_vip.sql',
   'admin_market_set_vip_plan': '0044_market_hero_vip.sql',
   'admin_cargo_set_vip_plan': '0062_cargo_vip_buy.sql',
