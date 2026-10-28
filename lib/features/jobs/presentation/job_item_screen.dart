@@ -92,7 +92,7 @@ class _Body extends ConsumerWidget {
       if ((v?.city ?? p?.city) != null) Cities.label((v?.city ?? p?.city)!, lang),
       if ((v?.country ?? p?.country) != null) Countries.label((v?.country ?? p?.country)!, lang),
     ].join(', ');
-    final schedule = v?.schedule ?? p?.schedule;
+    final schedules = v?.allSchedules ?? p!.allSchedules;
     final note = v?.conditions ?? p?.note;
     final rows = <(IconData, String, String?)>[
       (Icons.local_shipping_outlined, s.t('job_detail_transport'),
@@ -110,7 +110,8 @@ class _Body extends ConsumerWidget {
       (Icons.payments_outlined, s.t('job_detail_salary'), jobFeedSalary(item, s)),
       (Icons.groups_outlined, s.t('job_age_range'),
           v == null || (v.ageMin == null && v.ageMax == null) ? null : '${v.ageMin ?? ''}–${v.ageMax ?? ''}'),
-      (Icons.schedule, s.t('job_detail_schedule'), schedule == null ? null : s.t('job_sch_$schedule')),
+      (Icons.schedule, s.t('job_detail_schedule'),
+          schedules.isEmpty ? null : [for (final k in schedules) s.t('job_sch_$k')].join(', ')),
       (Icons.notes, s.t('job_detail_extra'), note),
     ];
 

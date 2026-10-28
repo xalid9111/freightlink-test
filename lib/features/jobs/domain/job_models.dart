@@ -119,6 +119,10 @@ class JobSeeker {
   final String? currency;
   final bool salaryNegotiable;
   final String? schedule;
+
+  /// Several İş rejimi at once (0073); empty on older rows — see
+  /// [allSchedules].
+  final List<String> schedules;
   final String? note;
   final String? phone;
   final bool showPhone;
@@ -145,6 +149,7 @@ class JobSeeker {
     this.currency,
     this.salaryNegotiable = false,
     this.schedule,
+    this.schedules = const [],
     this.note,
     this.phone,
     this.showPhone = false,
@@ -177,6 +182,7 @@ class JobSeeker {
       currency: _text(j['currency']),
       salaryNegotiable: j['salary_negotiable'] == true,
       schedule: _text(j['schedule']),
+      schedules: _strings(j['schedules']),
       note: _text(j['note']),
       phone: _text(j['phone']),
       showPhone: j['show_phone'] == true,
@@ -205,7 +211,8 @@ class JobSeeker {
         'salary_min': salaryMin,
         'currency': salaryMin == null ? null : (currency ?? 'AZN'),
         'salary_negotiable': salaryNegotiable,
-        'schedule': schedule,
+        'schedule': allSchedules.firstOrNull,
+        'schedules': allSchedules,
         'note': note,
         'phone': phone,
         'show_phone': showPhone,
@@ -240,6 +247,10 @@ class JobVacancy {
   final bool salaryNegotiable;
   final int? ageMin, ageMax;
   final String? schedule;
+
+  /// Several İş rejimi at once (0073); empty on older rows — see
+  /// [allSchedules].
+  final List<String> schedules;
   final String? conditions;
   final String? phone;
   final bool showPhone;
@@ -270,6 +281,7 @@ class JobVacancy {
     this.ageMin,
     this.ageMax,
     this.schedule,
+    this.schedules = const [],
     this.conditions,
     this.phone,
     this.showPhone = false,
@@ -306,6 +318,7 @@ class JobVacancy {
         ageMin: _int(j['age_min']),
         ageMax: _int(j['age_max']),
         schedule: _text(j['schedule']),
+        schedules: _strings(j['schedules']),
         conditions: _text(j['conditions']),
         phone: _text(j['phone']),
         showPhone: j['show_phone'] == true,
@@ -339,7 +352,8 @@ class JobVacancy {
         'salary_negotiable': salaryNegotiable,
         'age_min': ageMin,
         'age_max': ageMax,
-        'schedule': schedule,
+        'schedule': allSchedules.firstOrNull,
+        'schedules': allSchedules,
         'conditions': conditions,
         'phone': phone,
         'show_phone': showPhone,
@@ -383,7 +397,7 @@ List<JobCatalogItem> orderedCatalog(List<JobCatalogItem> items, List<String> ord
 
 /// Columns added after 0069 — left out when an older database does not
 /// have them yet (PGRST204), so the rest is still saved.
-const kJobNewColumns = ['job_type', 'age_min', 'age_max', 'salary_negotiable'];
+const kJobNewColumns = ['job_type', 'age_min', 'age_max', 'salary_negotiable', 'schedules'];
 
 /// Two stored countries name the same place; "Avropa İttifaqı" covers its
 /// member countries.
@@ -393,4 +407,15 @@ bool jobCountryFits(String? a, String? b, String? Function(String) codeOf) {
   if (a == kJobEu) return kEuCodes.contains(codeOf(b));
   if (b == kJobEu) return kEuCodes.contains(codeOf(a));
   return false;
+}
+
+/// The work modes of a row: the list (0073), or the single older value.
+List<String> _allSchedules(List<String> list, String? one) => list.isNotEmpty ? list : (one == null ? const [] : [one]);
+
+extension JobSeekerSchedules on JobSeeker {
+  List<String> get allSchedules => _allSchedules(schedules, schedule);
+}
+
+extension JobVacancySchedules on JobVacancy {
+  List<String> get allSchedules => _allSchedules(schedules, schedule);
 }
