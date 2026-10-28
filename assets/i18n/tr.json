@@ -1529,5 +1529,7 @@
   "profile_age": "Yaş",
   "profile_age_add": "Yaşınızı ekleyin",
   "profile_age_title": "Yaşınız",
-  "profile_age_saved": "Yaş kaydedildi"
+  "profile_age_saved": "Yaş kaydedildi",
+  "profile_age_edit": "Değiştir",
+  "profile_age_not_ready": "Yaş henüz kaydedilemiyor. Biraz sonra tekrar deneyin."
 }

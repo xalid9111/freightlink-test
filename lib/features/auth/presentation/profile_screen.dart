@@ -12,6 +12,7 @@ import '../../../core/widgets/text_size_picker.dart';
 import '../../../repositories/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import 'providers/auth_providers.dart';
 import 'widgets/activity_buttons.dart';
 import '../data/activities_repository.dart';
@@ -322,6 +323,14 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
       ref.invalidate(publicProfileProvider(widget.userId));
       ref.invalidate(authStateProvider);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_age_saved'))));
+    } on PostgrestException catch (e) {
+      // The database has no age column yet (0074 not run): say so instead
+      // of a vague error.
+      final missing = e.code == 'PGRST204' || e.code == '42703';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(strings.t(missing ? 'profile_age_not_ready' : 'error_generic'))));
+      }
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
     }
@@ -574,7 +583,14 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                     style: TextStyle(fontSize: 15, color: age == null ? AppColors.accent : AppColors.text),
                   ),
                 ),
-                Icon(Icons.chevron_right, color: AppColors.textSoft),
+                // A clear "Dəyiş" so it is obvious the age can be edited.
+                TextButton.icon(
+                  key: const ValueKey('profile-age-edit'),
+                  onPressed: () => _editAge(age),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.accent, visualDensity: VisualDensity.compact),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: Text(strings.t('profile_age_edit')),
+                ),
               ]),
             ),
           ),

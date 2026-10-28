@@ -1529,5 +1529,7 @@
   "profile_age": "年龄",
   "profile_age_add": "添加您的年龄",
   "profile_age_title": "您的年龄",
-  "profile_age_saved": "年龄已保存"
+  "profile_age_saved": "年龄已保存",
+  "profile_age_edit": "修改",
+  "profile_age_not_ready": "暂时无法保存年龄，请稍后再试。"
 }

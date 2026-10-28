@@ -1529,5 +1529,7 @@
   "profile_age": "ასაკი",
   "profile_age_add": "მიუთითეთ ასაკი",
   "profile_age_title": "თქვენი ასაკი",
-  "profile_age_saved": "ასაკი შენახულია"
+  "profile_age_saved": "ასაკი შენახულია",
+  "profile_age_edit": "შეცვლა",
+  "profile_age_not_ready": "ასაკის შენახვა ჯერ შეუძლებელია. სცადეთ მოგვიანებით."
 }

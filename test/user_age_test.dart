@@ -40,7 +40,10 @@ void main() {
     expect(reg, contains("if (widget.serviceKind != null) 'service_kind': widget.serviceKind,"), reason: 'Usta / Servis signup kept');
     expect(src('lib/features/auth/data/auth_repository_impl.dart'), contains("birthDate: row['birth_date'] is String"));
     expect(src('lib/repositories/profile_repository.dart'), contains("update({'birth_date': birthDateText(birthDate)})"));
-    expect(src('lib/features/auth/presentation/profile_screen.dart'), contains("key: const ValueKey('profile-age'),"));
+    final prof = src('lib/features/auth/presentation/profile_screen.dart');
+    expect(prof, contains("key: const ValueKey('profile-age'),"));
+    expect(prof, contains("key: const ValueKey('profile-age-edit'),"), reason: 'a visible "Dəyiş" button (owner, 28.10.2026)');
+    expect(prof, contains("e.code == 'PGRST204' || e.code == '42703'"), reason: 'a clear message while 0074 is not run');
     final sql = src('supabase/migrations/0074_user_birth_date.sql').toLowerCase();
     for (final bad in ['drop table', 'truncate', 'delete from', 'drop column', 'user_profiles as', 'update public.users']) {
       expect(sql.contains(bad), isFalse, reason: bad);
@@ -49,7 +52,7 @@ void main() {
     expect(sql, contains("raise exception 'invalid_birth_date'"));
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
       final m = jsonDecode(src('assets/i18n/$lang.json')) as Map;
-      for (final k in ['register_age_label', 'register_age_required', 'profile_age', 'profile_age_add', 'profile_age_title', 'profile_age_saved']) {
+      for (final k in ['register_age_label', 'register_age_required', 'profile_age', 'profile_age_add', 'profile_age_title', 'profile_age_saved', 'profile_age_edit', 'profile_age_not_ready']) {
         expect((m[k] as String?)?.isNotEmpty, isTrue, reason: '$lang $k');
       }
     }

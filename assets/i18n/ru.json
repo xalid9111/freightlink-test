@@ -1529,5 +1529,7 @@
   "profile_age": "Возраст",
   "profile_age_add": "Укажите возраст",
   "profile_age_title": "Ваш возраст",
-  "profile_age_saved": "Возраст сохранён"
+  "profile_age_saved": "Возраст сохранён",
+  "profile_age_edit": "Изменить",
+  "profile_age_not_ready": "Возраст пока нельзя сохранить. Попробуйте позже."
 }

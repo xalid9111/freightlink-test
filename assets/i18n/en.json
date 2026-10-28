@@ -1529,5 +1529,7 @@
   "profile_age": "Age",
   "profile_age_add": "Add your age",
   "profile_age_title": "Your age",
-  "profile_age_saved": "Age saved"
+  "profile_age_saved": "Age saved",
+  "profile_age_edit": "Change",
+  "profile_age_not_ready": "The age cannot be saved yet. Please try again later."
 }
