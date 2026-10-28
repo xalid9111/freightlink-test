@@ -33,7 +33,8 @@ class JobCatalogItem {
       JobCatalogItem('${j['code']}', '${j['name'] ?? j['code']}', j['kind'] as String?);
 }
 
-/// The catalogues as seeded by 0069 (+ ADR, route_mix, night in 0070) (used until / unless the server list
+/// The catalogues as seeded by 0069 (+ ADR, route_mix, night in 0070;
+/// + Açıq, D1, C1E, D1E, DE, international licence in 0072) (used until / unless the server list
 /// loads; an admin can add more on the server later).
 const kJobSpecialties = [
   JobCatalogItem('tent', 'Tent'),
@@ -42,6 +43,7 @@ const kJobSpecialties = [
   JobCatalogItem('container', 'Konteyner'),
   JobCatalogItem('dump', 'Samosval'),
   JobCatalogItem('tanker', 'Sistern'),
+  JobCatalogItem('open', 'Açıq'),
   JobCatalogItem('car_carrier', 'Avtovoz'),
   JobCatalogItem('bus', 'Avtobus'),
   JobCatalogItem('excavator', 'Ekskavator'),
@@ -53,10 +55,15 @@ const kJobSkills = [
   JobCatalogItem('lic_c1', 'C1', 'license'),
   JobCatalogItem('lic_c', 'C', 'license'),
   JobCatalogItem('lic_ce', 'CE', 'license'),
+  JobCatalogItem('lic_d1', 'D1', 'license'),
   JobCatalogItem('lic_d', 'D', 'license'),
+  JobCatalogItem('lic_c1e', 'C1E', 'license'),
+  JobCatalogItem('lic_d1e', 'D1E', 'license'),
+  JobCatalogItem('lic_de', 'DE', 'license'),
   JobCatalogItem('tachograph', 'Taxoqraf kartı', 'document'),
   JobCatalogItem('cpc', 'Peşə sertifikatı', 'document'),
   JobCatalogItem('adr', 'ADR sertifikatı', 'document'),
+  JobCatalogItem('idp', 'Beynəlxalq sürücülük vəsiqəsi', 'document'),
   JobCatalogItem('intl_exp', 'Beynəlxalq daşıma təcrübəsi', 'skill'),
   JobCatalogItem('tech', 'Nəqliyyatın texniki quruluşundan anlayış', 'skill'),
   JobCatalogItem('discipline', 'Nizam-intizam', 'skill'),
@@ -66,7 +73,19 @@ const kJobSkills = [
 ];
 
 const kJobSkillKinds = ['license', 'document', 'skill'];
-const kJobSchedules = ['full_time', 'part_time', 'rotation', 'flexible', 'project'];
+const kJobSchedules = ['full_time', 'part_time', 'rotation', 'flexible', 'project', 'permanent', 'temporary', 'long_haul', 'regional'];
+
+/// İş rejimi in the forms (owner, 28.10.2026, 0072): Daimi · Müvəqqəti ·
+/// Uzun marşrut · Regional. Older values stay valid and are shown as they
+/// were saved.
+const kJobFormSchedules = ['permanent', 'temporary', 'long_haul', 'regional'];
+
+/// "Avropa İttifaqı" in the work countries (stored as this value).
+const kJobEu = 'European Union';
+const kEuCodes = {
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL',
+  'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
+};
 
 /// İş növü of a vacancy (0070): 'tir' | 'other' (null = older vacancy).
 const kJobTypes = ['tir', 'other'];
@@ -98,6 +117,7 @@ class JobSeeker {
   final String? routes;
   final double? salaryMin;
   final String? currency;
+  final bool salaryNegotiable;
   final String? schedule;
   final String? note;
   final String? phone;
@@ -123,6 +143,7 @@ class JobSeeker {
     this.routes,
     this.salaryMin,
     this.currency,
+    this.salaryNegotiable = false,
     this.schedule,
     this.note,
     this.phone,
@@ -154,6 +175,7 @@ class JobSeeker {
       routes: _text(j['routes']),
       salaryMin: _num(j['salary_min']),
       currency: _text(j['currency']),
+      salaryNegotiable: j['salary_negotiable'] == true,
       schedule: _text(j['schedule']),
       note: _text(j['note']),
       phone: _text(j['phone']),
@@ -182,6 +204,7 @@ class JobSeeker {
         'routes': routes,
         'salary_min': salaryMin,
         'currency': salaryMin == null ? null : (currency ?? 'AZN'),
+        'salary_negotiable': salaryNegotiable,
         'schedule': schedule,
         'note': note,
         'phone': phone,
@@ -214,6 +237,8 @@ class JobVacancy {
   final String? routes;
   final double? salaryMin, salaryMax;
   final String? currency;
+  final bool salaryNegotiable;
+  final int? ageMin, ageMax;
   final String? schedule;
   final String? conditions;
   final String? phone;
@@ -241,6 +266,9 @@ class JobVacancy {
     this.salaryMin,
     this.salaryMax,
     this.currency,
+    this.salaryNegotiable = false,
+    this.ageMin,
+    this.ageMax,
     this.schedule,
     this.conditions,
     this.phone,
@@ -274,6 +302,9 @@ class JobVacancy {
         salaryMin: _num(j['salary_min']),
         salaryMax: _num(j['salary_max']),
         currency: _text(j['currency']),
+        salaryNegotiable: j['salary_negotiable'] == true,
+        ageMin: _int(j['age_min']),
+        ageMax: _int(j['age_max']),
         schedule: _text(j['schedule']),
         conditions: _text(j['conditions']),
         phone: _text(j['phone']),
@@ -305,6 +336,9 @@ class JobVacancy {
         'salary_min': salaryMin,
         'salary_max': salaryMax,
         'currency': (salaryMin == null && salaryMax == null) ? null : (currency ?? 'AZN'),
+        'salary_negotiable': salaryNegotiable,
+        'age_min': ageMin,
+        'age_max': ageMax,
         'schedule': schedule,
         'conditions': conditions,
         'phone': phone,
@@ -345,4 +379,18 @@ List<JobCatalogItem> orderedCatalog(List<JobCatalogItem> items, List<String> ord
     return c != 0 ? c : a.$1.compareTo(b.$1);
   });
   return [for (final e in indexed) e.$2];
+}
+
+/// Columns added after 0069 — left out when an older database does not
+/// have them yet (PGRST204), so the rest is still saved.
+const kJobNewColumns = ['job_type', 'age_min', 'age_max', 'salary_negotiable'];
+
+/// Two stored countries name the same place; "Avropa İttifaqı" covers its
+/// member countries.
+bool jobCountryFits(String? a, String? b, String? Function(String) codeOf) {
+  if (a == null || b == null) return false;
+  if (a.trim().toLowerCase() == b.trim().toLowerCase()) return true;
+  if (a == kJobEu) return kEuCodes.contains(codeOf(b));
+  if (b == kJobEu) return kEuCodes.contains(codeOf(a));
+  return false;
 }

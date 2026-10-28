@@ -10,7 +10,7 @@ begin;
 -- ---- catalogues ----------------------------------------------------------------
 set role authenticated;
 select tests.login(:drv);
-select tests.check((select count(*) = 10 from public.job_specialties), 'C1 10 specialties (Tent … Digər)');
+select tests.check((select count(*) >= 10 and bool_or(code = 'tent') and bool_or(code = 'other') from public.job_specialties), 'C1 10 specialties (Tent … Digər; 0072 adds Açıq)');
 select tests.check((select count(*) >= 11 and bool_or(code = 'lic_ce') and bool_or(code = 'tachograph') from public.job_skills),
   'C2 licences, documents, skills');
 select tests.check(tests.err($$ insert into public.job_specialties (code, name) values ('xx', 'X') $$) like '%permission denied%',

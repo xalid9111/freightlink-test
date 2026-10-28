@@ -213,6 +213,7 @@ String checkLabel(AppStrings s, MatchCheck c, List<JobCatalogItem> specs, List<J
     CheckKind.specialty => '${s.t('job_chk_specialty')}: ${jobCodeLabel(s, 'job_spec_', c.code ?? '', specs)}',
     CheckKind.skill => jobCodeLabel(s, 'job_skill_', c.code ?? '', skills),
     CheckKind.experience => '${s.t('job_chk_experience')}: ${s.t('job_years', {'n': '${v.minExperience}+'})}',
+    CheckKind.age => '${s.t('job_detail_age')}: ${v.ageMin ?? ''}–${v.ageMax ?? ''}',
     CheckKind.place => '${s.t('job_chk_place')}: ${Countries.label(v.country ?? '', lang)}',
     CheckKind.city => '${s.t('job_chk_city')}: ${Cities.label(v.city ?? '', lang)}',
     CheckKind.countries => s.t('job_chk_countries'),

@@ -129,10 +129,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   requirement ("Bütün …" lists everybody). Phone hidden by default (server
   decides), lists only for signed-in users, published at once, an admin
   can hide / show. Chat = the existing Mesajlar.
-  "Vakansiya yerləşdir" is a 4-step wizard as in the owner's picture
-  (26.10.2026, 0070): Əsas məlumat · Tələblər · Marşrut · Dərc et; İş növü
-  TIR / Digər; a ticked document or category = Mütləq, a ticked skill =
-  Arzuolunan.
+  Forms (owner, 28.10.2026, pictures 2 and 3, 0072 — replace the 4-step
+  wizard of 26.10.2026): one page each, scrolled down, NO "Sürücü |
+  Sahibkar" switch on them (chosen on the home page); banners from the
+  owner's pictures. Employer: company, work countries (flags, Avropa
+  İttifaqı, Başqa), transport (truck pictures, several), licence
+  categories B · C1 · C · CE · D1 · D · C1E · D1E · DE, experience, age
+  range, documents, skills (compact), extra requirements, İş rejimi
+  Daimi · Müvəqqəti · Uzun marşrut · Regional, salary min–max or
+  Danışılacaq, contact (Yalnız mesajla by default) → "Tələblərimi
+  yerləşdir". Driver: the same choices about himself → "Profilimi dərc
+  et". A ticked document or category = Mütləq (employer) / has it
+  (driver), a ticked skill = Arzuolunan. QRUPAJ is not a vehicle.
   İş Mərkəzi home (owner, 28.10.2026, picture 1): orange "Sürücü — Profil /
   Elan ver" and blue "Sahibkar — Vakansiya yerləşdir" cards, "Uyğun
   təkliflər" (SmartMatch), "Mənim elanlarım" (edit, on / off, delete kept),

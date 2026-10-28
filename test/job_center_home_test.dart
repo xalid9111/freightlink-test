@@ -90,8 +90,8 @@ void main() {
       expect(jobFeedTitle(_az, JobFeedItem.vacancy(_vRef), specs), 'REF sürücüsü tələb olunur');
       expect(jobFeedTitle(_az, JobFeedItem.seeker(_dRef), specs), 'REF sürücüsü iş axtarır');
       expect(jobFeedTitle(_az, const JobFeedItem.seeker(JobSeeker(userId: 'y', fullName: 'y')), specs), 'Sürücü iş axtarır');
-      expect(jobFeedSalary(JobFeedItem.vacancy(_vTir)), '2 500 AZN');
-      expect(jobFeedWhere(JobFeedItem.seeker(_dRef), 'az'), 'Azərbaycan / Türkiyə');
+      expect(jobFeedSalary(JobFeedItem.vacancy(_vTir), _az), '2 500 AZN');
+      expect(jobFeedWhere(JobFeedItem.seeker(_dRef), 'az', _az), 'Azərbaycan / Türkiyə');
     });
   });
 
@@ -202,10 +202,9 @@ void main() {
     expect(find.byKey(const ValueKey('job-item-contact')), findsNothing);
   });
 
-  test('wired: routes for the ad page; no new SQL', () {
+  test('wired: routes for the ad page', () {
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: '/jobs/v/:id',"));
     expect(router, contains("path: '/jobs/d/:id',"));
-    expect(Directory('supabase/migrations').listSync().where((f) => f.path.contains('0072')), isEmpty);
   });
 }
