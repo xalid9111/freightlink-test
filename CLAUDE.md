@@ -133,6 +133,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   (26.10.2026, 0070): Əsas məlumat · Tələblər · Marşrut · Dərc et; İş növü
   TIR / Digər; a ticked document or category = Mütləq, a ticked skill =
   Arzuolunan.
+  İş Mərkəzi home (owner, 28.10.2026, picture 1): orange "Sürücü — Profil /
+  Elan ver" and blue "Sahibkar — Vakansiya yerləşdir" cards, "Uyğun
+  təkliflər" (SmartMatch), "Mənim elanlarım" (edit, on / off, delete kept),
+  "Aktiv elanlar" (vacancies + drivers in one list, Filtrlə); a tap opens
+  the ad page /jobs/v/:id · /jobs/d/:id.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
   Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
