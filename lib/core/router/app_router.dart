@@ -34,6 +34,7 @@ import '../autofix/route_error_screen.dart';
 import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
 import 'main_shell.dart';
+import '../../features/jobs/presentation/job_applications_screen.dart';
 import '../../features/jobs/presentation/job_center_screen.dart';
 import '../../features/jobs/presentation/job_item_screen.dart';
 import '../../features/jobs/presentation/job_results_screen.dart';
@@ -178,6 +179,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/jobs/vacancy/:id',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => DeskFrame(section: 0, child: JobVacancyFormScreen(id: state.pathParameters['id'])),
+      ),
+      // PR 2: applications / offers and job notices (owner, 28.10.2026).
+      GoRoute(
+        path: '/jobs/applications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobApplicationsScreen()),
+      ),
+      GoRoute(
+        path: '/jobs/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobNoticesScreen()),
       ),
       // The page of one ad from "Aktiv elanlar" (owner, 28.10.2026).
       GoRoute(
