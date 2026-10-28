@@ -116,6 +116,10 @@ class AppColors {
   static const Color sizeCardBg = Color(0xFF16243A);
   /// WhatsApp brand green (call sheet).
   static const Color whatsapp = Color(0xFF25D366);
+  // İş Mərkəzi form banners (owner's pictures, 28.10.2026): the same
+  // dusk photo in day and night, so the same colours.
+  static const Color jobBannerBg = Color(0xFF0B1422);
+  static const Color jobBannerAccent = Color(0xFF29B6F6);
   /// VIP gold (TIR Bazarı and VIP loads, owner 23.10.2026).
   /// İrəli çək / VIP / Premium (owner's icons, 25.10.2026): green, orange,
   /// gold — a little deeper by day so the text stays readable.

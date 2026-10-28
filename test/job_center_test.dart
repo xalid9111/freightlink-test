@@ -179,12 +179,14 @@ void main() {
 
   test('catalogues: the 10 specialties and the document / skill template', () {
     expect([for (final s in kJobSpecialties) s.code],
-        ['tent', 'ref', 'tow', 'container', 'dump', 'tanker', 'car_carrier', 'bus', 'excavator', 'other']);
+        ['tent', 'ref', 'tow', 'container', 'dump', 'tanker', 'open', 'car_carrier', 'bus', 'excavator', 'other']);
     for (final code in ['lic_c', 'lic_ce', 'tachograph', 'cpc', 'intl_exp', 'tech', 'discipline', 'responsibility']) {
       expect(kJobSkills.any((k) => k.code == code), isTrue, reason: code);
     }
-    // 0070 adds ADR, route_mix, night.
-    final sql = src('supabase/migrations/0069_job_center.sql') + src('supabase/migrations/0070_job_vacancy_wizard.sql');
+    // 0070 adds ADR, route_mix, night; 0072 Açıq, D1, C1E, D1E, DE, idp.
+    final sql = src('supabase/migrations/0069_job_center.sql') +
+        src('supabase/migrations/0070_job_vacancy_wizard.sql') +
+        src('supabase/migrations/0072_job_forms.sql');
     for (final s in kJobSpecialties) {
       expect(sql, contains("('${s.code}', "), reason: s.code);
     }

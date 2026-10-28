@@ -1,3 +1,4 @@
+import '../../../core/constants/countries.dart';
 import 'job_models.dart';
 
 /// SmartMatch (owner, 26.10.2026): explainable, deterministic rules — no
@@ -16,7 +17,7 @@ enum CheckState { yes, no, unknown, ready }
 
 /// What a line is about; [code] is the specialty / skill code for
 /// [specialty] and [skill] lines.
-enum CheckKind { specialty, skill, experience, place, city, countries, salary, schedule }
+enum CheckKind { specialty, skill, experience, age, place, city, countries, salary, schedule }
 
 class MatchCheck {
   final CheckKind kind;
@@ -58,6 +59,7 @@ const kWeightSpecialty = 40;
 const kWeightMust = 10;
 const kWeightNice = 4;
 const kWeightExperience = 10;
+const kWeightAge = 10;
 const kWeightPlace = 10;
 const kWeightCity = 5;
 const kWeightCountries = 10;
@@ -65,6 +67,9 @@ const kWeightSalary = 10;
 const kWeightSchedule = 5;
 
 bool _same(String? a, String? b) => a != null && b != null && a.trim().toLowerCase() == b.trim().toLowerCase();
+
+/// Countries: the same one, or "Avropa İttifaqı" and one of its members.
+bool _country(String? a, String? b) => jobCountryFits(a, b, (x) => Countries.find(x)?.code);
 
 /// Compares one driver with one vacancy. The same result is used both ways:
 /// "Uyğun sürücülər" for the employer and "Mənə uyğun işlər" for the driver.
@@ -120,10 +125,20 @@ JobMatch matchJob(JobSeeker s, JobVacancy v) {
     ));
   }
 
+  // 3b) Age range (0072).
+  if (v.ageMin != null || v.ageMax != null) {
+    final a = s.age ?? (s.birthDate == null ? null : ageOn(s.birthDate!, DateTime.now()));
+    out.add(MatchCheck(
+      CheckKind.age,
+      a == null ? CheckState.unknown : ((v.ageMin == null || a >= v.ageMin!) && (v.ageMax == null || a <= v.ageMax!) ? CheckState.yes : CheckState.no),
+      weight: kWeightAge,
+    ));
+  }
+
   // 4) Country (his country, or a country he wants to work in), then city.
   if (v.country != null) {
     final known = s.country != null || s.countries.isNotEmpty;
-    final fits = _same(s.country, v.country) || s.countries.any((c) => _same(c, v.country));
+    final fits = _country(s.country, v.country) || s.countries.any((c) => _country(c, v.country));
     out.add(MatchCheck(CheckKind.place, !known ? CheckState.unknown : (fits ? CheckState.yes : CheckState.no),
         weight: kWeightPlace));
     if (v.city != null && s.city != null && _same(s.country, v.country)) {
@@ -133,7 +148,7 @@ JobMatch matchJob(JobSeeker s, JobVacancy v) {
 
   // 5) Countries / routes of the work.
   if (v.countries.isNotEmpty && s.countries.isNotEmpty) {
-    final overlap = v.countries.any((c) => s.countries.any((d) => _same(c, d)));
+    final overlap = v.countries.any((c) => s.countries.any((d) => _country(c, d)));
     out.add(MatchCheck(CheckKind.countries, overlap ? CheckState.yes : CheckState.no, weight: kWeightCountries));
   }
 

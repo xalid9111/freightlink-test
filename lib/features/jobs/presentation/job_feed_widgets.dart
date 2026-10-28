@@ -14,6 +14,12 @@ import 'job_widgets.dart';
 String jobMoneyText(double v) =>
     v.round().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
 
+/// A work country's name; "Avropa İttifaqı" in the user's language.
+String jobCountryName(AppStrings s, String c, String lang) => c == kJobEu ? s.t('job_eu') : (Countries.find(c)?.name(lang) ?? c);
+
+/// …with its flag (🇪🇺 for the EU).
+String jobCountryLabel(AppStrings s, String c, String lang) => c == kJobEu ? '🇪🇺 ${s.t('job_eu')}' : Countries.label(c, lang);
+
 /// "TIR sürücüsü tələb olunur" / "REF sürücüsü iş axtarır" (picture 1).
 String jobFeedTitle(AppStrings s, JobFeedItem it, List<JobCatalogItem> specs) {
   String? what;
@@ -31,8 +37,8 @@ String jobFeedTitle(AppStrings s, JobFeedItem it, List<JobCatalogItem> specs) {
 
 /// Where: the vacancy's route (or work countries / place), the driver's
 /// countries (or place).
-String? jobFeedWhere(JobFeedItem it, String lang) {
-  String countries(List<String> cs) => [for (final c in cs) Countries.find(c)?.name(lang) ?? c].join(' / ');
+String? jobFeedWhere(JobFeedItem it, String lang, AppStrings s) {
+  String countries(List<String> cs) => [for (final c in cs) jobCountryName(s, c, lang)].join(' / ');
   String? place(String? city, String? country) {
     final p = [if (city != null) Cities.label(city, lang), if (country != null) Countries.find(country)?.name(lang) ?? country];
     return p.isEmpty ? null : p.join(', ');
@@ -49,19 +55,24 @@ String? jobFeedWhere(JobFeedItem it, String lang) {
   return p.routes ?? place(p.city, p.country);
 }
 
-/// The vacancy's salary range / the driver's wish.
-String? jobFeedSalary(JobFeedItem it) {
+/// The vacancy's salary range / the driver's wish; "Danışılacaq" when
+/// no amount is given and it is to be agreed.
+String? jobFeedSalary(JobFeedItem it, AppStrings s) {
+  String? amount;
   if (it.isVacancy) {
     final v = it.vacancy!;
     final cur = v.currency ?? 'AZN';
-    if (v.salaryMin != null && v.salaryMax != null && v.salaryMin != v.salaryMax) {
-      return '${jobMoneyText(v.salaryMin!)} – ${jobMoneyText(v.salaryMax!)} $cur';
-    }
     final one = v.salaryMax ?? v.salaryMin;
-    return one == null ? null : '${jobMoneyText(one)} $cur';
+    if (v.salaryMin != null && v.salaryMax != null && v.salaryMin != v.salaryMax) {
+      amount = '${jobMoneyText(v.salaryMin!)} – ${jobMoneyText(v.salaryMax!)} $cur';
+    } else if (one != null) {
+      amount = '${jobMoneyText(one)} $cur';
+    }
+    return amount ?? (v.salaryNegotiable ? s.t('job_negotiable') : null);
   }
   final p = it.seeker!;
-  return p.salaryMin == null ? null : '${jobMoneyText(p.salaryMin!)} ${p.currency ?? 'AZN'}';
+  if (p.salaryMin != null) return '${jobMoneyText(p.salaryMin!)} ${p.currency ?? 'AZN'}';
+  return p.salaryNegotiable ? s.t('job_negotiable') : null;
 }
 
 /// One card of "Aktiv elanlar" / "Uyğun təkliflər" (picture 1): the icon
@@ -81,8 +92,8 @@ class JobFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = item.isVacancy ? AppColors.accent : AppColors.blue;
     final lic = topLicence(item.licences);
-    final where = jobFeedWhere(item, lang);
-    final salary = jobFeedSalary(item);
+    final where = jobFeedWhere(item, lang, s);
+    final salary = jobFeedSalary(item, s);
     final exp = item.experience;
     Widget fact(IconData icon, String text, {Color? iconColor}) => Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 18, color: iconColor ?? AppColors.textSoft),

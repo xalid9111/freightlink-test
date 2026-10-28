@@ -11,6 +11,8 @@ class JobsNotReady implements Exception {
   const JobsNotReady();
 }
 
+Map<String, dynamic> _withoutNew(Map<String, dynamic> data) => {...data}..removeWhere((k, _) => kJobNewColumns.contains(k));
+
 bool _missing(PostgrestException e) => e.code == 'PGRST202' || e.code == '42P01' || e.code == 'PGRST205';
 
 /// İş Mərkəzi (0069). Other people's profiles and vacancies come only from
@@ -48,7 +50,14 @@ class JobsRepository {
       });
 
   Future<void> saveProfile(JobSeeker p) => _guard(() async {
-        await _c.from('job_seeker_profiles').upsert(p.toRow(), onConflict: 'user_id').timeout(_timeout);
+        final data = p.toRow();
+        try {
+          await _c.from('job_seeker_profiles').upsert(data, onConflict: 'user_id').timeout(_timeout);
+        } on PostgrestException catch (e) {
+          // 0072 not run yet: save everything but the new column.
+          if (e.code != 'PGRST204') rethrow;
+          await _c.from('job_seeker_profiles').upsert(_withoutNew(data), onConflict: 'user_id').timeout(_timeout);
+        }
       });
 
   /// "İş axtarıram" / "İş axtarışını dayandırmışam".
@@ -76,9 +85,9 @@ class JobsRepository {
         try {
           return JobVacancy.fromJson(await save(data));
         } on PostgrestException catch (e) {
-          // 0070 not run yet: no job_type column — save everything else.
-          if (e.code != 'PGRST204' || !data.containsKey('job_type')) rethrow;
-          return JobVacancy.fromJson(await save({...data}..remove('job_type')));
+          // 0070 / 0072 not run yet: a new column is missing — save the rest.
+          if (e.code != 'PGRST204') rethrow;
+          return JobVacancy.fromJson(await save(_withoutNew(data)));
         }
       });
 
