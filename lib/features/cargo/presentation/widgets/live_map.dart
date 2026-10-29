@@ -31,7 +31,10 @@ import 'wheel_feed.dart';
 class LiveMap extends StatefulWidget {
   /// Text of the blinking badge in the map's top-right corner.
   final String liveLabel;
-  const LiveMap({super.key, this.liveLabel = 'CANLI'});
+  /// Distance of the "CANLI" badge from the map's top (phone: lower, so
+  /// the live counters fit above it — owner, 28.10.2026).
+  final double badgeTop;
+  const LiveMap({super.key, this.liveLabel = 'CANLI', this.badgeTop = 6});
 
   @override
   State<LiveMap> createState() => _LiveMapState();
@@ -378,7 +381,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
           ),
           // "CANLI" badge with a breathing green light, top-right.
           Positioned(
-            top: 6,
+            top: widget.badgeTop,
             right: 14,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),

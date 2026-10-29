@@ -284,10 +284,38 @@ class _Hero extends ConsumerWidget {
             ),
           ),
           // Full width, edge to edge; edges fade into the page colour.
-          // İş Mərkəzi on the map, under the "CANLI" badge (owner, 27.10.2026).
           Stack(children: [
-            LiveMap(liveLabel: strings.t('map_live_badge')),
-            Positioned(top: 40, right: 14, child: JobCenterMapButton(strings: strings)),
+            LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32),
+            // Three live counters (all real numbers from the database),
+            // top-right above "CANLI" (owner, 28.10.2026).
+            Positioned(
+              top: 6,
+              right: 14,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  _StatCard(
+                    icon: Icons.local_shipping,
+                    color: AppColors.accent,
+                    value: stat(cargoList.length),
+                    label: strings.t('home_stat_active'),
+                    onTap: () => _scrollToFeed(),
+                  ),
+                  const SizedBox(width: 4),
+                  _StatCard(
+                    icon: Icons.groups_2,
+                    color: AppColors.blue,
+                    value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                    label: strings.t('home_stat_carriers'),
+                  ),
+                  const SizedBox(width: 4),
+                  _StatCard(
+                    icon: Icons.bar_chart_rounded,
+                    color: AppColors.online,
+                    value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                    label: strings.t('home_stat_24h'),
+                    onTap: () => _scrollToFeed(),
+                  ),
+              ]),
+            ),
           ]),
           _CloudScene(
             asset: '${scene}_bottom.jpg',
@@ -296,36 +324,14 @@ class _Hero extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
           const SizedBox(height: 14),
-          // Three live counters (all real numbers from the database).
+          // İş Mərkəzi where the counters were (owner, 28.10.2026) and
+          // "Yük hovuzu" (+), the add-load button (/cargo/create),
+          // right-aligned (owner, 21.10.2026).
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _StatCard(
-                  icon: Icons.local_shipping,
-                  color: AppColors.accent,
-                  value: stat(cargoList.length),
-                  label: strings.t('home_stat_active'),
-                  onTap: () => _scrollToFeed(),
-                ),
-                const SizedBox(width: 4),
-                _StatCard(
-                  icon: Icons.groups_2,
-                  color: AppColors.blue,
-                  value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                  label: strings.t('home_stat_carriers'),
-                ),
-                const SizedBox(width: 4),
-                _StatCard(
-                  icon: Icons.bar_chart_rounded,
-                  color: AppColors.online,
-                  value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                  label: strings.t('home_stat_24h'),
-                  onTap: () => _scrollToFeed(),
-                ),
-                // "Yük hovuzu" (+) — the add-load button (same form:
-                // /cargo/create), in line with the counters, right-aligned
-                // (owner, 21.10.2026); one line, shrinks on a narrow screen.
+                JobCenterMapButton(strings: strings),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Align(
