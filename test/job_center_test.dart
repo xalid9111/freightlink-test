@@ -206,8 +206,16 @@ void main() {
 
   test('wired: Loads header, computer header, Profil, routes; existing chat reused', () {
     final loads = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    // Owner, 27.10.2026: on the map under "CANLI", slogan under the logo.
-    expect(loads, contains('Positioned(top: 40, right: 14, child: JobCenterMapButton(strings: strings)),'));
+    // Owner, 28.10.2026: İş Mərkəzi under the map where the counters were
+    // (left of "Yük hovuzu"), the counters top-right above "CANLI".
+    expect(loads, contains('JobCenterMapButton(strings: strings),\n                const SizedBox(width: 8),'));
+    expect(loads, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32),"));
+    final hero = loads.substring(loads.indexOf('LiveMap(liveLabel'), loads.indexOf('_CloudScene(', loads.indexOf('LiveMap(liveLabel')));
+    expect(RegExp('_StatCard\\(').allMatches(hero).length, 3, reason: 'all three counters on the map');
+    expect(hero.contains('JobCenterMapButton'), isFalse);
+    expect(src('lib/features/cargo/presentation/widgets/live_map.dart'), contains('top: widget.badgeTop,'));
+    expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("LiveMap(liveLabel: strings.t('map_live_badge'))),"),
+        reason: 'computer unchanged');
     expect(loads, contains("key: const ValueKey('home-slogan'),"));
     expect(loads.contains("strings.t('home_live_map')"), isFalse);
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("ValueKey('desk-job-center')"));
