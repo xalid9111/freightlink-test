@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +11,8 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/presence/online_users.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/gif.dart';
+import '../../../core/widgets/framed_image.dart';
+import '../../../core/widgets/image_frame_editor.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_page_repository.dart';
 import '../../../repositories/profile_repository.dart';
@@ -21,7 +22,6 @@ import '../../chat/data/group_repository.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/widgets/call_options.dart';
 import 'ads_providers.dart';
-import 'cover_crop_screen.dart';
 import 'profile_catalog.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../auth/data/activities_repository.dart';
@@ -78,6 +78,56 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('profile_link_copied'))));
   }
 
+  /// The camera on the cover: a new picture, or — when there is one —
+  /// "Yerini düzəlt" to move / zoom it in the cover's frame (owner, 29.10.2026).
+  Future<void> _coverMenu(AppStrings s, String? current) async {
+    if (current == null || current.isEmpty) return _changeCover(s);
+    final pick = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            key: const ValueKey('cover-new'),
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text(s.t('photo_new')),
+            onTap: () => Navigator.of(ctx).pop('new'),
+          ),
+          ListTile(
+            key: const ValueKey('cover-adjust'),
+            leading: const Icon(Icons.crop_free),
+            title: Text(s.t('photo_adjust')),
+            onTap: () => Navigator.of(ctx).pop('adjust'),
+          ),
+        ]),
+      ),
+    );
+    if (pick == 'new') return _changeCover(s);
+    if (pick != 'adjust' || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final f = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => ImageFrameEditorScreen(
+        image: NetworkImage(ImageFraming.baseOf(current)),
+        initial: ImageFraming.of(current),
+        aspect: _coverAspect(),
+        circle: false,
+        title: s.t('profile_change_cover'),
+        s: s,
+      ),
+    ));
+    if (f == null) return;
+    try {
+      await ref.read(profilePageRepositoryProvider).setCoverFraming(current, f);
+      ref.invalidate(profileDetailsProvider(widget.userId));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.t('profile_photo_error'))));
+    }
+  }
+
+  /// Same shape as the cover on this screen (its width × [_coverHeight]).
+  double? _coverWidth;
+  double _coverAspect() => (_coverWidth ?? MediaQuery.of(context).size.width - 32) / _coverHeight;
+
   Future<void> _changeCover(AppStrings s) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -85,29 +135,33 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       if (file == null || !mounted) return;
       final picked = await file.readAsBytes();
       if (!mounted) return;
-      // A GIF goes up as it is (no crop), so it stays animated (owner, 29.10.2026).
-      if (isGifBytes(picked)) {
-        if (picked.length > kGifMaxBytes) {
-          messenger.showSnackBar(SnackBar(content: Text(s.t('profile_gif_too_big'))));
-          return;
-        }
-        await ref.read(profilePageRepositoryProvider).uploadCover(picked, contentType: 'image/gif');
-        ref.invalidate(profileDetailsProvider(widget.userId));
+      // A GIF goes up as it is, so it stays animated (owner, 29.10.2026).
+      final gif = isGifBytes(picked);
+      if (gif && picked.length > kGifMaxBytes) {
+        messenger.showSnackBar(SnackBar(content: Text(s.t('profile_gif_too_big'))));
         return;
       }
-      // Same shape as the cover on this screen (card width × 120).
-      final aspect = (MediaQuery.of(context).size.width - 32) / _coverHeight;
-      final bytes = await Navigator.of(context).push<Uint8List>(MaterialPageRoute(
+      // The whole picture is kept; the frame chooses which part shows.
+      final framing = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => CoverCropScreen(bytes: picked, aspect: aspect, s: s),
+        builder: (_) => ImageFrameEditorScreen(
+          image: MemoryImage(picked),
+          aspect: _coverAspect(),
+          circle: false,
+          title: s.t('profile_change_cover'),
+          s: s,
+        ),
       ));
-      if (bytes == null) return;
-      await ref.read(profilePageRepositoryProvider).uploadCover(bytes, contentType: 'image/png');
+      if (framing == null) return;
+      await ref
+          .read(profilePageRepositoryProvider)
+          .uploadCover(picked, contentType: gif ? 'image/gif' : (file.mimeType ?? 'image/jpeg'), framing: framing);
       ref.invalidate(profileDetailsProvider(widget.userId));
     } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(s.t('profile_photo_error'))));
     }
   }
+
 
   Future<void> _editInfo(AppStrings s, ProfileDetails? d) async {
     final saved = await showModalBottomSheet<bool>(
@@ -194,17 +248,25 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 child: Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    (details?.coverUrl ?? '').isNotEmpty
-                                        ? Image.network(details!.coverUrl!, fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => const _CoverPlaceholder())
-                                        : const _CoverPlaceholder(),
+                                    // The place / zoom chosen in "Yerini düzəlt" (owner, 29.10.2026).
+                                    LayoutBuilder(builder: (context, c) {
+                                      _coverWidth = c.maxWidth;
+                                      return (details?.coverUrl ?? '').isNotEmpty
+                                          ? FramedImage(
+                                              key: const ValueKey('profile-cover'),
+                                              image: NetworkImage(details!.coverUrl!),
+                                              framing: ImageFraming.of(details.coverUrl),
+                                              errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
+                                            )
+                                          : const _CoverPlaceholder();
+                                    }),
                                     if (isMe)
                                       Positioned(
                                         right: 8,
                                         top: 8,
                                         child: IconButton.filledTonal(
                                           tooltip: s.t('profile_change_cover'),
-                                          onPressed: () => _changeCover(s),
+                                          onPressed: () => _coverMenu(s, details?.coverUrl),
                                           icon: const Icon(Icons.photo_camera_outlined),
                                         ),
                                       ),

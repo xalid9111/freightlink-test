@@ -1546,5 +1546,8 @@
   "job_home_ads": "Elanlar",
   "job_my_active_n": "{n} aktiv elan",
   "job_my_ads_empty": "Hələ elanınız yoxdur. Yuxarıdakı kartlardan elan verin.",
-  "profile_gif_too_big": "GIF çox böyükdür (ən çox 5 MB)"
+  "profile_gif_too_big": "GIF çox böyükdür (ən çox 5 MB)",
+  "photo_new": "Yeni şəkil seç",
+  "photo_adjust": "Yerini düzəlt",
+  "frame_reset": "Sıfırla"
 }

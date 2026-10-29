@@ -1546,5 +1546,8 @@
   "job_home_ads": "Ads",
   "job_my_active_n": "{n} active ads",
   "job_my_ads_empty": "You have no ads yet. Post one from the cards above.",
-  "profile_gif_too_big": "The GIF is too large (5 MB at most)"
+  "profile_gif_too_big": "The GIF is too large (5 MB at most)",
+  "photo_new": "Choose a new picture",
+  "photo_adjust": "Adjust position",
+  "frame_reset": "Reset"
 }

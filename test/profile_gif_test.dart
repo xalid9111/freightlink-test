@@ -22,10 +22,10 @@ void main() {
     final prof = src('lib/features/auth/presentation/profile_screen.dart');
     expect(prof, contains("contentType: gif ? 'image/gif' : file.mimeType"));
     expect(prof, contains("strings.t('profile_gif_too_big')"));
-    expect(prof, contains('maxWidth: 512,'), reason: 'photos are still made small');
+    expect(prof, contains('maxWidth: 1024,'), reason: 'photos are still made small (room for the zoom)');
     final pub = src('lib/features/ads/presentation/public_profile_screen.dart');
-    expect(pub, contains("uploadCover(picked, contentType: 'image/gif')"), reason: 'no crop for a GIF');
-    expect(pub, contains('CoverCropScreen(bytes: picked'), reason: 'photos are still cropped');
+    expect(pub, contains("contentType: gif ? 'image/gif'"), reason: 'the GIF goes up as it is');
+    expect(pub.contains('CoverCropScreen('), isFalse, reason: 'the frame editor keeps the whole picture (GIF too)');
     expect(src('supabase/migrations/0031_profile_catalog_message_delete.sql'), contains("'image/gif'"),
         reason: 'the cover bucket accepts GIF — no new SQL');
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {

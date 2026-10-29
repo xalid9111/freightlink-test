@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/supabase_config.dart';
+import '../core/widgets/framed_image.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 
 /// Extra, WhatsApp-business-style profile info (migration 0031).
@@ -81,7 +82,7 @@ class ProfilePageRepository {
     }, onConflict: 'user_id');
   }
 
-  Future<void> uploadCover(Uint8List bytes, {String? contentType}) async {
+  Future<void> uploadCover(Uint8List bytes, {String? contentType, ImageFraming framing = ImageFraming.centre}) async {
     final uid = _uid;
     if (uid == null) throw StateError('not_signed_in');
     final path = '$uid/cover';
@@ -90,10 +91,21 @@ class ProfilePageRepository {
           bytes,
           fileOptions: FileOptions(upsert: true, contentType: contentType ?? 'image/jpeg'),
         );
-    final url = '${publicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}';
+    final url = framing.applyTo('${publicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}');
     await _client.from('profile_details').upsert({
       'user_id': uid,
       'cover_url': url,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'user_id');
+  }
+
+  /// "Yerini düzəlt" for the cover: same picture, another place / zoom.
+  Future<void> setCoverFraming(String currentUrl, ImageFraming framing) async {
+    final uid = _uid;
+    if (uid == null) throw StateError('not_signed_in');
+    await _client.from('profile_details').upsert({
+      'user_id': uid,
+      'cover_url': framing.applyTo(currentUrl),
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }, onConflict: 'user_id');
   }

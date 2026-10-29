@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/supabase_config.dart';
+import '../core/widgets/framed_image.dart';
 import '../core/utils/age.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 
@@ -182,7 +183,7 @@ class ProfileRepository {
   /// Uploads a profile photo to storage bucket "avatars" under the
   /// user's own folder (policy avatars_insert_own, migration 0009) and
   /// stores its public URL on the user row. Returns the new URL.
-  Future<String> uploadAvatar(Uint8List bytes, {String? contentType}) async {
+  Future<String> uploadAvatar(Uint8List bytes, {String? contentType, ImageFraming framing = ImageFraming.centre}) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) throw StateError('not signed in');
     final path = '$uid/avatar';
@@ -192,9 +193,17 @@ class ProfileRepository {
           fileOptions: FileOptions(upsert: true, contentType: contentType ?? 'image/jpeg'),
         );
     // Cache-buster so every client shows the new photo immediately.
-    final url = '${_client.storage.from('avatars').getPublicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}';
+    final url = framing.applyTo('${_client.storage.from('avatars').getPublicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}');
     await _client.from('users').update({'avatar_url': url}).eq('id', uid);
     return url;
+  }
+
+  /// "Yerini düzəlt": the same picture, another place / zoom (kept in the
+  /// link, see [ImageFraming]).
+  Future<void> setAvatarFraming(String currentUrl, ImageFraming framing) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('not signed in');
+    await _client.from('users').update({'avatar_url': framing.applyTo(currentUrl)}).eq('id', uid);
   }
 }
 

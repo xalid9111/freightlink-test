@@ -1546,5 +1546,8 @@
   "job_home_ads": "信息",
   "job_my_active_n": "{n} 条有效信息",
   "job_my_ads_empty": "您还没有发布信息。请通过上方卡片发布。",
-  "profile_gif_too_big": "GIF 太大（最多 5 MB）"
+  "profile_gif_too_big": "GIF 太大（最多 5 MB）",
+  "photo_new": "选择新图片",
+  "photo_adjust": "调整位置",
+  "frame_reset": "重置"
 }
