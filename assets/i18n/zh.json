@@ -1541,5 +1541,9 @@
   "profile_birth": "出生日期",
   "profile_birth_add": "添加出生日期",
   "profile_birth_title": "您的出生日期",
-  "profile_birth_saved": "出生日期已保存"
+  "profile_birth_saved": "出生日期已保存",
+  "job_home_suggest": "匹配推荐",
+  "job_home_ads": "信息",
+  "job_my_active_n": "{n} 条有效信息",
+  "job_my_ads_empty": "您还没有发布信息。请通过上方卡片发布。"
 }

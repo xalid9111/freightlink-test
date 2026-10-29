@@ -1541,5 +1541,9 @@
   "profile_birth": "Дата рождения",
   "profile_birth_add": "Укажите дату рождения",
   "profile_birth_title": "Ваша дата рождения",
-  "profile_birth_saved": "Дата рождения сохранена"
+  "profile_birth_saved": "Дата рождения сохранена",
+  "job_home_suggest": "Подходящее предложение",
+  "job_home_ads": "Объявления",
+  "job_my_active_n": "Активных объявлений: {n}",
+  "job_my_ads_empty": "У вас пока нет объявлений. Разместите его через карточки выше."
 }

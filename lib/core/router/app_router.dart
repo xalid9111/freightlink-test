@@ -166,6 +166,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DeskFrame(section: 0, child: JobCenterScreen()),
       ),
       GoRoute(
+        path: '/jobs/mine',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: JobMyAdsScreen()),
+      ),
+      GoRoute(
         path: '/jobs/profile',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: JobSeekerFormScreen()),

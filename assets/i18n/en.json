@@ -1541,5 +1541,9 @@
   "profile_birth": "Date of birth",
   "profile_birth_add": "Add your date of birth",
   "profile_birth_title": "Your date of birth",
-  "profile_birth_saved": "Date of birth saved"
+  "profile_birth_saved": "Date of birth saved",
+  "job_home_suggest": "Best match",
+  "job_home_ads": "Ads",
+  "job_my_active_n": "{n} active ads",
+  "job_my_ads_empty": "You have no ads yet. Post one from the cards above."
 }
