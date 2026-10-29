@@ -147,6 +147,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   təkliflər" (SmartMatch), "Mənim elanlarım" (edit, on / off, delete kept),
   "Aktiv elanlar" (vacancies + drivers in one list, Filtrlə); a tap opens
   the ad page /jobs/v/:id · /jobs/d/:id.
+  Home design (owner, 29.10.2026 picture): blue "Sahibkar" card left,
+  orange "Sürücü" right; "Uyğun təklif" shows the best match (Hamısına bax
+  = the rest); "Elanlar" with Sürücülər (n) · Vakansiyalar (n) tabs
+  ("Hamısına bax" = both, all); "Mənim elanlarım" is one card ("n aktiv
+  elan") that opens /jobs/mine with all the controls (on / off, edit,
+  delete, applications).
   PR 2 (owner, 28.10.2026): "Müraciət et" on a vacancy, "İş təklif et" on a
   driver, "Müraciətlər və təkliflər" (/jobs/applications: Göndərildi ·
   Baxıldı · Danışıq gedir · İşə qəbul edildi only when BOTH confirm ·

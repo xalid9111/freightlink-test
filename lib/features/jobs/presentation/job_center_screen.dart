@@ -16,10 +16,11 @@ import 'job_feed_widgets.dart';
 import 'job_widgets.dart';
 import 'jobs_providers.dart';
 
-/// İş Mərkəzi home (owner, 28.10.2026, picture 1): the orange "Sürücü" and
-/// blue "Sahibkar" cards, "Uyğun təkliflər" (SmartMatch), my own ads
-/// (edit, on / off, delete — kept from 26.10.2026) and "Aktiv elanlar":
-/// vacancies and drivers in one list with a filter.
+/// İş Mərkəzi home (owner, 29.10.2026 design): the blue "Sahibkar" and
+/// orange "Sürücü" cards, "Uyğun təklif" (SmartMatch, the best one first),
+/// "Elanlar" with Sürücülər / Vakansiyalar tabs ("Hamısına bax" = both, all)
+/// and "Mənim elanlarım" as one card that opens /jobs/mine, where my own
+/// ads keep edit, on / off and delete (26.10.2026).
 class JobCenterScreen extends ConsumerStatefulWidget {
   const JobCenterScreen({super.key});
 
@@ -28,7 +29,13 @@ class JobCenterScreen extends ConsumerStatefulWidget {
 }
 
 class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
+  /// Transport / licence / country; what (drivers / vacancies) is [_tab].
   JobFeedFilter _filter = const JobFeedFilter();
+  JobFeedKind _tab = JobFeedKind.drivers;
+  bool _all = false;
+
+  JobFeedFilter get _feedFilter =>
+      JobFeedFilter(kind: _tab, specialty: _filter.specialty, licence: _filter.licence, country: _filter.country);
 
   Future<void> _openFilter() async {
     final s = ref.read(stringsProvider);
@@ -36,10 +43,20 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _FilterSheet(initial: _filter, s: s),
+      builder: (_) => _FilterSheet(initial: _feedFilter, s: s),
     );
-    if (f != null) setState(() => _filter = f);
+    if (f != null) {
+      setState(() {
+        _tab = f.kind;
+        _filter = JobFeedFilter(specialty: f.specialty, licence: f.licence, country: f.country);
+      });
+    }
   }
+
+  void _reset() => setState(() {
+        _filter = const JobFeedFilter();
+        _tab = JobFeedKind.all;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +86,7 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
         },
         child: LayoutBuilder(builder: (context, c) {
           final side = c.maxWidth > 820 ? (c.maxWidth - 780) / 2 : 16.0;
+          final wideCards = (c.maxWidth - 2 * side - 12) / 2 >= 165;
           return ListView(
             padding: EdgeInsets.fromLTRB(side, 12, side, 32),
             children: [
@@ -76,18 +94,8 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
                   child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Expanded(
                   child: _RoleCard(
-                    cardKey: 'job-home-driver',
-                    color: jobDriverColor,
-                    icon: Icons.local_shipping,
-                    title: s.t('job_home_driver'),
-                    subtitle: s.t('job_home_driver_sub'),
-                    onTap: () => context.pushOnce('/jobs/profile'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _RoleCard(
                     cardKey: 'job-home-employer',
+                    wide: wideCards,
                     color: jobEmployerColor,
                     icon: Icons.work,
                     title: s.t('job_home_employer'),
@@ -95,28 +103,36 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
                     onTap: () => context.pushOnce('/jobs/vacancy/new'),
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _RoleCard(
+                    cardKey: 'job-home-driver',
+                    wide: wideCards,
+                    color: jobDriverColor,
+                    icon: Icons.local_shipping,
+                    title: s.t('job_home_driver'),
+                    subtitle: s.t('job_home_driver_sub'),
+                    onTap: () => context.pushOnce('/jobs/profile'),
+                  ),
+                ),
               ])),
               const SizedBox(height: 14),
               _Suggestions(s: s),
-              _MyAds(s: s),
-              const SizedBox(height: 18),
-              Row(children: [
-                Expanded(
-                  child: Text(s.t('job_active_ads'),
-                      style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: AppColors.text)),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('job-filter'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.blue),
-                  onPressed: _openFilter,
-                  iconAlignment: IconAlignment.end,
-                  icon: const Icon(Icons.tune),
-                  label: Text(_filter.count > 0 ? '${s.t('job_filter')} (${_filter.count})' : s.t('job_filter'),
-                      style: const TextStyle(fontSize: 15.5)),
-                ),
-              ]),
-              const SizedBox(height: 8),
-              _Feed(s: s, filter: _filter, onReset: () => setState(() => _filter = const JobFeedFilter())),
+              const SizedBox(height: 22),
+              _SectionHead(
+                title: s.t('job_home_ads'),
+                linkKey: 'job-feed-all',
+                link: s.t('catalog_see_all'),
+                onLink: () => setState(() {
+                  _tab = JobFeedKind.all;
+                  _all = true;
+                }),
+              ),
+              const SizedBox(height: 10),
+              _Tabs(s: s, tab: _tab, filter: _filter, onTab: (k) => setState(() => _tab = k)),
+              const SizedBox(height: 12),
+              _Feed(s: s, filter: _feedFilter, limit: _all ? null : 3, onReset: _reset),
+              _MyAdsCard(s: s),
             ],
           );
         }),
@@ -125,54 +141,95 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
   }
 }
 
-/// "Sürücü — Profil / Elan ver" (orange) · "Sahibkar — Vakansiya yerləşdir"
-/// (blue), as in the picture.
+/// "Sahibkar — Vakansiya yerləşdir" (blue) · "Sürücü — Profil / Elan ver"
+/// (orange): icon square, title, subtitle, › (owner, 29.10.2026). A narrow
+/// card stacks the icon over the text.
 class _RoleCard extends StatelessWidget {
   final String cardKey, title, subtitle;
   final Color color;
   final IconData icon;
   final VoidCallback onTap;
-  const _RoleCard(
-      {required this.cardKey, required this.color, required this.icon, required this.title, required this.subtitle, required this.onTap});
+  final bool wide;
+  const _RoleCard({
+    required this.cardKey,
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.wide,
+  });
 
   @override
   Widget build(BuildContext context) {
     final light = Color.lerp(color, Colors.white, 0.18)!;
-    return Material(
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [light, color]),
-        ),
-        child: InkWell(
-          key: ValueKey(cardKey),
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 12, 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Icon(icon, color: Colors.white, size: 30),
-              const SizedBox(height: 8),
-              Text(title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white)),
-              const SizedBox(height: 2),
-              Row(children: [
-                Expanded(
-                  child: Text(subtitle,
-                      maxLines: 2, style: TextStyle(fontSize: 13.5, color: Colors.white.withValues(alpha: 0.92))),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.28), shape: BoxShape.circle),
-                  child: const Icon(Icons.chevron_right, color: Colors.white),
-                ),
-              ]),
-            ]),
+    final box = wide ? 36.0 : 46.0;
+    final iconBox = Container(
+      width: box,
+      height: box,
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+      child: Icon(icon, color: Colors.white, size: wide ? 22 : 28),
+    );
+    final arrow = Container(
+      width: wide ? 26 : 34,
+      height: wide ? 26 : 34,
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.28), shape: BoxShape.circle),
+      child: Icon(Icons.chevron_right, color: Colors.white, size: wide ? 20 : 24),
+    );
+    // The whole word, scaled down a little on a narrow card (no "Sahib…").
+    final titleText = FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(title, maxLines: 1, style: TextStyle(fontSize: wide ? 17 : 18, fontWeight: FontWeight.w600, color: Colors.white)),
+    );
+    final subText =
+        Text(subtitle, maxLines: 2, style: TextStyle(fontSize: wide ? 12.5 : 13.5, color: Colors.white.withValues(alpha: 0.92)));
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 4))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [light, color]),
+          ),
+          child: InkWell(
+            key: ValueKey(cardKey),
+            borderRadius: BorderRadius.circular(18),
+            onTap: onTap,
+            child: Builder(builder: (context) {
+              if (wide) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 16, 8, 16),
+                  child: Row(children: [
+                    iconBox,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                        titleText,
+                        const SizedBox(height: 2),
+                        subText,
+                      ]),
+                    ),
+                    const SizedBox(width: 4),
+                    arrow,
+                  ]),
+                );
+              }
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(12, 14, 10, 14),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  iconBox,
+                  const SizedBox(height: 8),
+                  titleText,
+                  const SizedBox(height: 2),
+                  Row(children: [Expanded(child: subText), const SizedBox(width: 6), arrow]),
+                ]),
+              );
+            }),
           ),
         ),
       ),
@@ -180,13 +237,107 @@ class _RoleCard extends StatelessWidget {
   }
 }
 
+/// "Elanlar" / "Mənim elanlarım" heading with "Hamısına bax ›".
+class _SectionHead extends StatelessWidget {
+  final String title, link, linkKey;
+  final VoidCallback onLink;
+  const _SectionHead({required this.title, required this.link, required this.linkKey, required this.onLink});
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Expanded(child: Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text))),
+        TextButton(
+          key: ValueKey(linkKey),
+          style: TextButton.styleFrom(foregroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(horizontal: 6)),
+          onPressed: onLink,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(link, style: const TextStyle(fontSize: 15)),
+            const Icon(Icons.chevron_right, size: 20),
+          ]),
+        ),
+      ]);
+}
+
+/// Sürücülər (n) · Vakansiyalar (n); the counts follow the filter.
+class _Tabs extends ConsumerWidget {
+  final AppStrings s;
+  final JobFeedKind tab;
+  final JobFeedFilter filter;
+  final ValueChanged<JobFeedKind> onTab;
+  const _Tabs({required this.s, required this.tab, required this.filter, required this.onTab});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vs = ref.watch(jobVacanciesProvider).valueOrNull ?? const <JobVacancy>[];
+    final ps = ref.watch(jobSeekersProvider).valueOrNull ?? const <JobSeeker>[];
+    int n(JobFeedKind k) =>
+        buildJobFeed(vs, ps, filter: JobFeedFilter(kind: k, specialty: filter.specialty, licence: filter.licence, country: filter.country))
+            .length;
+    Widget one(JobFeedKind k, IconData icon, String label) {
+      final on = tab == k;
+      return Expanded(
+        child: Material(
+          color: on ? AppColors.blue.withValues(alpha: 0.28) : Colors.transparent,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12), side: BorderSide(color: on ? AppColors.blue : Colors.transparent, width: 1.2)),
+          child: InkWell(
+            key: ValueKey('job-tab-${k.name}'),
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => onTab(k),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(icon, size: 20, color: on ? AppColors.text : AppColors.textSoft),
+                const SizedBox(width: 8),
+                Flexible(
+                  // Whole word on a narrow phone, a little smaller.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('$label (${n(k)})',
+                        maxLines: 1,
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                            color: on ? AppColors.text : AppColors.textSoft)),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(children: [
+        one(JobFeedKind.drivers, Icons.people_outline, s.t('job_filter_drivers')),
+        one(JobFeedKind.vacancies, Icons.work_outline, s.t('job_filter_vacancies')),
+      ]),
+    );
+  }
+}
+
 /// "Uyğun təkliflər" — SmartMatch over my driver profile and my vacancies.
-class _Suggestions extends ConsumerWidget {
+class _Suggestions extends ConsumerStatefulWidget {
   final AppStrings s;
   const _Suggestions({required this.s});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Suggestions> createState() => _SuggestionsState();
+}
+
+class _SuggestionsState extends ConsumerState<_Suggestions> {
+  bool _all = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s;
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final specs = ref.watch(jobSpecialtiesProvider).valueOrNull ?? kJobSpecialties;
     final skills = ref.watch(jobSkillsProvider).valueOrNull ?? kJobSkills;
@@ -210,8 +361,7 @@ class _Suggestions extends ConsumerWidget {
           Icon(Icons.auto_awesome, color: AppColors.blue, size: 26),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(s.t('job_suggest_title'),
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+            child: Text(s.t('job_home_suggest'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -233,11 +383,22 @@ class _Suggestions extends ConsumerWidget {
               padding: const EdgeInsets.only(left: 4, bottom: 8),
               child: Text(s.t('job_suggest_empty'), style: TextStyle(fontSize: 15, color: AppColors.textSoft)))
         else
-          for (final m in list)
+          // The best match first; "Hamısına bax" shows the others too.
+          for (final m in _all ? list : list.take(1))
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: JobFeedCard(item: m.item, match: m.match, s: s, lang: lang, specs: specs, skills: skills),
             ),
+        if (!_all && list.length > 1)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              key: const ValueKey('job-suggest-all'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.blue),
+              onPressed: () => setState(() => _all = true),
+              child: Text('${s.t('catalog_see_all')} (${list.length})'),
+            ),
+          ),
       ]),
     );
   }
@@ -247,7 +408,8 @@ class _Suggestions extends ConsumerWidget {
 /// jobs for me) and my vacancies (on / off, edit, drivers, delete).
 class _MyAds extends ConsumerWidget {
   final AppStrings s;
-  const _MyAds({required this.s});
+  final bool showTitle;
+  const _MyAds({required this.s, this.showTitle = true});
 
   Future<void> _seeking(BuildContext context, WidgetRef ref, bool on) async {
     try {
@@ -315,7 +477,14 @@ class _MyAds extends ConsumerWidget {
       );
     }
     final apps = ref.watch(myApplicationsProvider).valueOrNull ?? const <JobApplication>[];
-    if (p == null && vs.isEmpty && apps.isEmpty) return const SizedBox.shrink();
+    if (p == null && vs.isEmpty && apps.isEmpty) {
+      return showTitle
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(s.t('job_my_ads_empty'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+            );
+    }
     final me = ref.watch(currentUserIdProvider) ?? '';
     final openApps = apps.where((a) => a.isOpen).length;
     final newApps = apps.where((a) => a.status == 'sent' && a.incomingFor(me)).length;
@@ -328,10 +497,12 @@ class _MyAds extends ConsumerWidget {
           label: Text(label),
         );
     return Padding(
-      padding: const EdgeInsets.only(top: 18),
+      padding: EdgeInsets.only(top: showTitle ? 18 : 0),
       child: Column(key: const ValueKey('job-my-ads'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(s.t('job_my_ads'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
-        const SizedBox(height: 8),
+        if (showTitle) ...[
+          Text(s.t('job_my_ads'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+          const SizedBox(height: 8),
+        ],
         // PR 2: applications and job offers, with the new ones counted.
         Material(
           color: AppColors.card,
@@ -342,8 +513,7 @@ class _MyAds extends ConsumerWidget {
             title: Text(s.t('job_apps_title'), style: TextStyle(color: AppColors.text)),
             subtitle: Text(s.t('job_apps_count', {'n': '$openApps'}), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              if (newApps > 0)
-                Badge(key: const ValueKey('job-apps-new'), label: Text('$newApps'), backgroundColor: AppColors.danger),
+              if (newApps > 0) Badge(key: const ValueKey('job-apps-new'), label: Text('$newApps'), backgroundColor: AppColors.danger),
               Icon(Icons.chevron_right, color: AppColors.textSoft),
             ]),
             onTap: () => context.pushOnce('/jobs/applications'),
@@ -444,8 +614,7 @@ class _MyRow extends StatelessWidget {
                 Text(title,
                     maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
                 if (subtitle.isNotEmpty)
-                  Text(subtitle,
-                      maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                 Text(status, style: TextStyle(fontSize: 12.5, color: active ? AppColors.online : AppColors.textSoft)),
                 if (hidden) Text(s.t('job_hidden_badge'), style: TextStyle(fontSize: 12.5, color: AppColors.danger)),
               ]),
@@ -457,12 +626,117 @@ class _MyRow extends StatelessWidget {
       );
 }
 
-/// "Aktiv elanlar": vacancies and drivers together, newest first.
+/// "Mənim elanlarım" on the home page: how many of my ads are on and the
+/// new applications; it opens /jobs/mine (all of them, with the controls).
+class _MyAdsCard extends ConsumerWidget {
+  final AppStrings s;
+  const _MyAdsCard({required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(myJobProfileProvider);
+    final vacancies = ref.watch(myVacanciesProvider);
+    if (profile.error is JobsNotReady || vacancies.error is JobsNotReady) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 18),
+        child: Text(s.t('job_not_ready'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+      );
+    }
+    final p = profile.valueOrNull;
+    final vs = vacancies.valueOrNull ?? const <JobVacancy>[];
+    final apps = ref.watch(myApplicationsProvider).valueOrNull ?? const <JobApplication>[];
+    if (p == null && vs.isEmpty && apps.isEmpty) return const SizedBox.shrink();
+    final me = ref.watch(currentUserIdProvider) ?? '';
+    final active = (p?.isActive == true ? 1 : 0) + vs.where((v) => v.isActive).length;
+    final newApps = apps.where((a) => a.status == 'sent' && a.incomingFor(me)).length;
+    void open() => context.pushOnce('/jobs/mine');
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _SectionHead(title: s.t('job_my_ads'), linkKey: 'job-my-all', link: s.t('catalog_see_all'), onLink: open),
+        const SizedBox(height: 8),
+        Material(
+          color: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+          child: InkWell(
+            key: const ValueKey('job-my-card'),
+            borderRadius: BorderRadius.circular(16),
+            onTap: open,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+              child: Row(children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
+                  child: Icon(Icons.article_outlined, color: AppColors.blue, size: 26),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(s.t('job_my_active_n', {'n': '$active'}),
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+                    const SizedBox(height: 2),
+                    Text(s.t('job_apps_title'), style: TextStyle(fontSize: 14, color: AppColors.textSoft)),
+                  ]),
+                ),
+                if (newApps > 0) ...[
+                  Badge(key: const ValueKey('job-apps-new'), label: Text('$newApps'), backgroundColor: AppColors.danger),
+                  const SizedBox(width: 8),
+                ],
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(color: AppColors.cardAlt, shape: BoxShape.circle),
+                  child: Icon(Icons.chevron_right, color: AppColors.text),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// /jobs/mine — "Mənim elanlarım": applications and offers, my driver
+/// profile and my vacancies with on / off, edit, drivers and delete
+/// (the same controls as before, 26.10.2026).
+class JobMyAdsScreen extends ConsumerWidget {
+  const JobMyAdsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    return Scaffold(
+      appBar: AppBar(centerTitle: true, title: Text(s.t('job_my_ads'), style: const TextStyle(fontWeight: FontWeight.w600))),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(myJobProfileProvider);
+          ref.invalidate(myVacanciesProvider);
+          ref.invalidate(myApplicationsProvider);
+        },
+        child: LayoutBuilder(builder: (context, c) {
+          final side = c.maxWidth > 820 ? (c.maxWidth - 780) / 2 : 16.0;
+          return ListView(
+            padding: EdgeInsets.fromLTRB(side, 12, side, 32),
+            children: [_MyAds(s: s, showTitle: false)],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// "Elanlar": drivers or vacancies (or both after "Hamısına bax"), newest first.
 class _Feed extends ConsumerWidget {
   final AppStrings s;
   final JobFeedFilter filter;
   final VoidCallback onReset;
-  const _Feed({required this.s, required this.filter, required this.onReset});
+
+  /// Cards on the home page before "Hamısına bax" (null = all).
+  final int? limit;
+  const _Feed({required this.s, required this.filter, required this.onReset, this.limit});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -493,8 +767,9 @@ class _Feed extends ConsumerWidget {
         ]),
       );
     }
+    final shown = limit == null ? items : items.take(limit!);
     return Column(key: const ValueKey('job-feed'), children: [
-      for (final it in items)
+      for (final it in shown)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: JobFeedCard(item: it, s: s, lang: lang, specs: specs, skills: skills),
@@ -525,7 +800,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final specs = ref.watch(jobSpecialtiesProvider).valueOrNull ?? kJobSpecialties;
     final skills = ref.watch(jobSkillsProvider).valueOrNull ?? kJobSkills;
-    final lics = [for (final k in skills) if (k.kind == 'license') k];
+    final lics = [
+      for (final k in skills)
+        if (k.kind == 'license') k
+    ];
     Widget chip(String key, String label, bool on, VoidCallback tap) => ChoiceChip(
           key: ValueKey(key),
           label: Text(label),
@@ -597,8 +875,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 child: FilledButton(
                   key: const ValueKey('job-f-apply'),
                   style: FilledButton.styleFrom(backgroundColor: AppColors.blue),
-                  onPressed: () => Navigator.of(context)
-                      .pop(JobFeedFilter(kind: _kind, specialty: _spec, licence: _lic, country: _country)),
+                  onPressed: () =>
+                      Navigator.of(context).pop(JobFeedFilter(kind: _kind, specialty: _spec, licence: _lic, country: _country)),
                   child: Text(s.t('job_filter_apply')),
                 ),
               ),

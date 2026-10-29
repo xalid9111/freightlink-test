@@ -59,7 +59,7 @@ void main() {
         jobSeekersProvider.overrideWith((ref) async => const <JobSeeker>[]),
         currentUserIdProvider.overrideWithValue('u1'),
       ],
-      child: const MaterialApp(home: JobCenterScreen()),
+      child: const MaterialApp(home: JobMyAdsScreen()),
     ));
     await tester.pumpAndSettle();
     final del = find.byKey(const ValueKey('job-vacancy-delete-v1'));

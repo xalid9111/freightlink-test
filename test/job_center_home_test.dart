@@ -130,37 +130,80 @@ void main() {
         jobSkillsProvider.overrideWith((ref) async => kJobSkills),
       ];
 
-  testWidgets('home: the two cards, SmartMatch, my ads kept, the feed and its filter', (tester) async {
+  testWidgets('home (owner, 29.10.2026): the two cards, the best match, Elanlar tabs, Mənim elanlarım card', (tester) async {
     tester.view.physicalSize = const Size(390, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     const mine = JobVacancy(id: 'm1', ownerId: 'me', companyName: 'Mənim MMC', specialties: ['ref']);
     await tester.pumpWidget(ProviderScope(overrides: overrides(mine: [mine]), child: const MaterialApp(home: JobCenterScreen())));
     await tester.pumpAndSettle();
-    for (final t in ['İş Mərkəzi', 'Sürücü', 'Profil / Elan ver', 'Sahibkar', 'Vakansiya yerləşdir', 'Uyğun təkliflər', 'SmartMatch',
-      'Aktiv elanlar', 'Filtrlə', 'Mənim elanlarım', 'TIR sürücüsü tələb olunur', 'REF sürücüsü iş axtarır', 'Bakı — İstanbul',
-      '2 500 AZN', '5 il təcrübə', '7 il təcrübə']) {
+    for (final t in ['İş Mərkəzi', 'Sürücü', 'Profil / Elan ver', 'Sahibkar', 'Vakansiya yerləşdir', 'Uyğun təklif', 'SmartMatch',
+      'Elanlar', 'Sürücülər (1)', 'Vakansiyalar (2)', 'Mənim elanlarım', '1 aktiv elan', 'Müraciətlər və təkliflər',
+      'REF sürücüsü iş axtarır', '7 il təcrübə']) {
       expect(find.text(t), findsWidgets, reason: t);
     }
-    // My vacancy keeps edit / on-off / drivers / delete.
-    for (final k in ['job-vacancy-switch-m1', 'job-vacancy-edit-m1', 'job-vacancy-match-m1', 'job-vacancy-delete-m1']) {
-      expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
-    }
+    // Sahibkar (blue) left, Sürücü (orange) right.
+    expect(tester.getCenter(find.byKey(const ValueKey('job-home-employer'))).dx,
+        lessThan(tester.getCenter(find.byKey(const ValueKey('job-home-driver'))).dx));
     // SmartMatch suggests the REF driver for my REF vacancy.
     expect(find.descendant(of: find.byKey(const ValueKey('job-suggestions')), matching: find.byKey(const ValueKey('job-feed-d-d1'))),
         findsOneWidget);
+    // My ads' controls live on /jobs/mine now, not on the home page.
+    expect(find.byKey(const ValueKey('job-vacancy-switch-m1')), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('job-filter')));
+    final feed = find.byKey(const ValueKey('job-feed'));
+    // Sürücülər tab first.
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('job-tab-vacancies')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsNothing);
+    expect(find.text('TIR sürücüsü tələb olunur'), findsWidgets);
+    expect(find.text('Bakı — İstanbul'), findsWidgets);
+    expect(find.text('2 500 AZN'), findsWidgets);
+    expect(find.text('5 il təcrübə'), findsWidgets);
+    // "Hamısına bax": vacancies and drivers together.
+    await tester.tap(find.byKey(const ValueKey('job-feed-all')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsOneWidget);
+
+    // The filter (top-right) still works and picks the tab.
+    await tester.tap(find.byKey(const ValueKey('job-filter-top')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('job-f-kind-drivers')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('job-f-spec-ref')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('job-f-apply')));
     await tester.pumpAndSettle();
-    final feed = find.byKey(const ValueKey('job-feed'));
     expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsOneWidget);
     expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsNothing);
-    expect(find.text('Filtrlə (1)'), findsOneWidget);
+    expect(find.text('Vakansiyalar (1)'), findsOneWidget, reason: 'tab counts follow the filter (REF only)');
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('/jobs/mine keeps every control of my ads', (tester) async {
+    tester.view.physicalSize = const Size(390, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const mine = JobVacancy(id: 'm1', ownerId: 'me', companyName: 'Mənim MMC', specialties: ['ref']);
+    const me = JobSeeker(userId: 'me', fullName: 'Mən', specialties: ['ref']);
+    await tester.pumpWidget(ProviderScope(overrides: overrides(profile: me, mine: [mine]), child: const MaterialApp(home: JobMyAdsScreen())));
+    await tester.pumpAndSettle();
+    for (final k in ['job-apps-open', 'job-seeking-switch', 'job-profile-open', 'job-see-jobs',
+      'job-vacancy-switch-m1', 'job-vacancy-edit-m1', 'job-vacancy-match-m1', 'job-vacancy-delete-m1']) {
+      expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
+    }
+    expect(find.text('Mənim MMC'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('wired: /jobs/mine route, the home card opens it', () {
+    expect(File('lib/core/router/app_router.dart').readAsStringSync(), contains("path: '/jobs/mine',"));
+    expect(File('lib/features/jobs/presentation/job_center_screen.dart').readAsStringSync(),
+        contains("void open() => context.pushOnce('/jobs/mine');"));
   });
 
   testWidgets('home on a 320 pt phone: no overflow', (tester) async {

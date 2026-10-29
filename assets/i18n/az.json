@@ -1541,5 +1541,9 @@
   "profile_birth": "Doğum tarixi",
   "profile_birth_add": "Doğum tarixinizi əlavə edin",
   "profile_birth_title": "Doğum tarixiniz",
-  "profile_birth_saved": "Doğum tarixi yadda saxlanıldı"
+  "profile_birth_saved": "Doğum tarixi yadda saxlanıldı",
+  "job_home_suggest": "Uyğun təklif",
+  "job_home_ads": "Elanlar",
+  "job_my_active_n": "{n} aktiv elan",
+  "job_my_ads_empty": "Hələ elanınız yoxdur. Yuxarıdakı kartlardan elan verin."
 }
