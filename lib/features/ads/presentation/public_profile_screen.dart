@@ -11,6 +11,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/presence/online_users.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/gif.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_page_repository.dart';
 import '../../../repositories/profile_repository.dart';
@@ -84,6 +85,16 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       if (file == null || !mounted) return;
       final picked = await file.readAsBytes();
       if (!mounted) return;
+      // A GIF goes up as it is (no crop), so it stays animated (owner, 29.10.2026).
+      if (isGifBytes(picked)) {
+        if (picked.length > kGifMaxBytes) {
+          messenger.showSnackBar(SnackBar(content: Text(s.t('profile_gif_too_big'))));
+          return;
+        }
+        await ref.read(profilePageRepositoryProvider).uploadCover(picked, contentType: 'image/gif');
+        ref.invalidate(profileDetailsProvider(widget.userId));
+        return;
+      }
       // Same shape as the cover on this screen (card width × 120).
       final aspect = (MediaQuery.of(context).size.width - 32) / _coverHeight;
       final bytes = await Navigator.of(context).push<Uint8List>(MaterialPageRoute(

@@ -1545,5 +1545,6 @@
   "job_home_suggest": "Uygun teklif",
   "job_home_ads": "İlanlar",
   "job_my_active_n": "{n} aktif ilan",
-  "job_my_ads_empty": "Henüz ilanınız yok. Üstteki kartlardan ilan verin."
+  "job_my_ads_empty": "Henüz ilanınız yok. Üstteki kartlardan ilan verin.",
+  "profile_gif_too_big": "GIF çok büyük (en fazla 5 MB)"
 }

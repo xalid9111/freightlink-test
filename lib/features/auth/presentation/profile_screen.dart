@@ -7,6 +7,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/age.dart';
+import '../../../core/utils/gif.dart';
 import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../core/widgets/text_size_picker.dart';
@@ -245,9 +246,15 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
         imageQuality: 85,
       );
       if (file == null) return;
-      setState(() => _uploading = true);
       final bytes = await file.readAsBytes();
-      await ref.read(profileRepositoryProvider).uploadAvatar(bytes, contentType: file.mimeType);
+      // A GIF stays animated: the picker leaves it as it is (web).
+      final gif = isGifBytes(bytes);
+      if (gif && bytes.length > kGifMaxBytes) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_gif_too_big'))));
+        return;
+      }
+      setState(() => _uploading = true);
+      await ref.read(profileRepositoryProvider).uploadAvatar(bytes, contentType: gif ? 'image/gif' : file.mimeType);
       ref.invalidate(publicProfileProvider(widget.userId));
     } catch (_) {
       if (mounted) {
