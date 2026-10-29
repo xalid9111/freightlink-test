@@ -97,6 +97,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
+  Night colours (owner, 29.10.2026, 0076): only the admin changes them,
+  in Admin → Dizayn və Rənglər (Klassik FreightLink = the old night,
+  Bordo Premium, own named combinations; Önizlə on one device, Yayımla
+  for all, Əvvəlki temaya qayıt, Sıfırla). AppPalette.light (day) never
+  changes; status colours, VIP gold, WhatsApp and pictures keep theirs.
   Colours only via `AppColors` / `ChatColors` (palette getters, see
   `app_theme.dart`), never hard-coded. App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.

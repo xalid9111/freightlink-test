@@ -10,6 +10,7 @@ import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/flag_font.dart';
+import 'core/theme/night_preview_badge.dart';
 import 'core/theme/theme_mode.dart';
 import 'core/theme/ui_scale.dart';
 import 'core/layout/desktop_preview.dart';
@@ -100,8 +101,9 @@ class FreightLinkApp extends ConsumerWidget {
       themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark,
       routerConfig: router,
       // Site closed (0068): only admins see the app, others the notice.
-      builder: (context, child) =>
-          SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child))),
+      // An admin's try-out of night colours shows a "Bitir" pill (0076).
+      builder: (context, child) => NightPreviewBadge(
+          child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)))),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

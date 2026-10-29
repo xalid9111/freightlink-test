@@ -10,6 +10,13 @@ class AppPalette {
   final Color background, hero, card, cardAlt, line, lineSoft, text, textSoft;
   final Color accent, accentFill, myBubble, route, routeSoft, blue, online, danger;
   final Color urgentBg, urgentFg, newBg, newFg;
+
+  /// Night colours chosen by the admin (night_theme.dart, 0076): accent
+  /// tint of the bars (0…1), soft glow under cards / buttons (0…1), and
+  /// whether this is such a palette (then the navy-only colours below
+  /// follow it). All three are 0 / false for the classic night and day.
+  final double gradient, glow;
+  final bool custom;
   const AppPalette({
     required this.brightness,
     required this.background,
@@ -32,6 +39,9 @@ class AppPalette {
     required this.urgentFg,
     required this.newBg,
     required this.newFg,
+    this.gradient = 0,
+    this.glow = 0,
+    this.custom = false,
   });
 
   /// Night (the existing look, unchanged).
@@ -103,14 +113,21 @@ class AppColors {
   /// 21.10.2026). Day: a white tile, dark navy picture and text, a thin
   /// light grey border. Night: a dark navy tile, white picture and text, a
   /// thin blue-grey border. Selected: orange.
-  static Color get tileBg => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF0E1A2E);
+  /// An admin's night palette (0076) uses its own card / line colours.
+  static Color get tileBg => isDay ? const Color(0xFFFFFFFF) : (_p.custom ? _p.card : const Color(0xFF0E1A2E));
   static Color get tileFg => isDay ? const Color(0xFF16243A) : const Color(0xFFFFFFFF);
-  static Color get tileLine => isDay ? const Color(0xFFE2E7EE) : const Color(0xFF2A3B57);
+  static Color get tileLine => isDay ? const Color(0xFFE2E7EE) : (_p.custom ? _p.line : const Color(0xFF2A3B57));
   /// Plate behind a brand logo: white in day and night, so dark logos stay
   /// readable (owner, 25.10.2026); letters on it are dark.
   static Color get logoPlate => const Color(0xFFFFFFFF);
   static Color get logoPlateText => const Color(0xFF16243A);
-  static Color get tileSelectedBg => isDay ? const Color(0xFFFFEADF) : const Color(0xFF1A1410);
+  static Color get tileSelectedBg =>
+      isDay ? const Color(0xFFFFEADF) : (_p.custom ? Color.lerp(_p.card, _p.accent, 0.14)! : const Color(0xFF1A1410));
+
+  /// Accent tint of the top / bottom bars (0 = none, the classic look).
+  static double get gradient => _p.gradient;
+  /// Soft glow level under cards and buttons (0 = none, the classic look).
+  static double get glow => _p.glow;
 
   /// Ground of a big / small card without a picture (both modes).
   static const Color sizeCardBg = Color(0xFF16243A);
@@ -196,7 +213,22 @@ class ChatPalette {
 
 class ChatColors {
   ChatColors._();
-  static ChatPalette get _p => AppColors.isDay ? ChatPalette.light : ChatPalette.dark;
+  static ChatPalette get _p => AppColors.isDay
+      ? ChatPalette.light
+      : (AppColors.palette.custom ? _custom(AppColors.palette) : ChatPalette.dark);
+
+  /// Chats in an admin's night palette (0076): page, cards and buttons of
+  /// that palette; the read tick keeps its blue.
+  static ChatPalette _custom(AppPalette p) => ChatPalette(
+        text: p.text,
+        background: p.background,
+        dots: Color.lerp(p.background, p.line, 0.35)!,
+        mine: Color.lerp(p.accentFill, p.background, 0.25)!,
+        theirs: p.card,
+        meta: p.textSoft,
+        readTick: ChatPalette.dark.readTick,
+        dateChip: p.card,
+      );
   static Color get background => _p.background;
   static Color get dots => _p.dots;
   static Color get mine => _p.mine;
@@ -251,6 +283,10 @@ class AppTheme {
     );
 
     final textTheme = base.textTheme.apply(fontFamily: AppFonts.family, bodyColor: AppColors.text, displayColor: AppColors.text);
+    // An admin's night palette (0076): bars tinted with the accent, a soft
+    // glow under cards / buttons. Both 0 for the classic night and day.
+    final bars = AppColors.gradient > 0 ? Color.lerp(AppColors.hero, AppColors.accentFill, AppColors.gradient * 0.22)! : AppColors.hero;
+    final glow = AppColors.glow;
 
     return base.copyWith(
       colorScheme: scheme,
@@ -269,7 +305,8 @@ class AppTheme {
         TargetPlatform.fuchsia: _SoftPageTransitionsBuilder(),
       }),
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: glow > 0 ? glow * 8 : 0,
+        shadowColor: glow > 0 ? AppColors.accentFill.withValues(alpha: 0.6) : null,
         color: AppColors.card,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -278,7 +315,7 @@ class AppTheme {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.hero,
+        backgroundColor: bars,
         foregroundColor: AppColors.text,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -286,7 +323,7 @@ class AppTheme {
         shape: Border(bottom: BorderSide(color: AppColors.lineSoft)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.hero,
+        backgroundColor: bars,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.accent.withValues(alpha: 0.16),
         iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
@@ -311,6 +348,8 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accentFill,
           foregroundColor: Colors.white,
+          elevation: glow > 0 ? glow * 8 : null,
+          shadowColor: glow > 0 ? AppColors.accentFill.withValues(alpha: 0.7) : null,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
