@@ -8,6 +8,8 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/age.dart';
 import '../../../core/utils/gif.dart';
+import '../../../core/widgets/framed_image.dart';
+import '../../../core/widgets/image_frame_editor.dart';
 import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../core/widgets/text_size_picker.dart';
@@ -236,13 +238,59 @@ class _ProfileCard extends ConsumerStatefulWidget {
 class _ProfileCardState extends ConsumerState<_ProfileCard> {
   bool _uploading = false;
 
+  /// The camera on the picture: a new picture, or — when there is one —
+  /// "Yerini düzəlt" to move / zoom it in the circle (owner, 29.10.2026).
+  Future<void> _photoMenu(String? current) async {
+    if (current == null || current.isEmpty) return _changePhoto();
+    final strings = widget.strings;
+    final pick = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            key: const ValueKey('photo-new'),
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text(strings.t('photo_new')),
+            onTap: () => Navigator.of(ctx).pop('new'),
+          ),
+          ListTile(
+            key: const ValueKey('photo-adjust'),
+            leading: const Icon(Icons.crop_free),
+            title: Text(strings.t('photo_adjust')),
+            onTap: () => Navigator.of(ctx).pop('adjust'),
+          ),
+        ]),
+      ),
+    );
+    if (pick == 'new') return _changePhoto();
+    if (pick != 'adjust' || !mounted) return;
+    final f = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => ImageFrameEditorScreen(
+        image: NetworkImage(ImageFraming.baseOf(current)),
+        initial: ImageFraming.of(current),
+        aspect: 1,
+        circle: true,
+        title: strings.t('profile_change_photo'),
+        s: strings,
+      ),
+    ));
+    if (f == null) return;
+    try {
+      await ref.read(profileRepositoryProvider).setAvatarFraming(current, f);
+      ref.invalidate(publicProfileProvider(widget.userId));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_photo_error'))));
+    }
+  }
+
   Future<void> _changePhoto() async {
     final strings = widget.strings;
     try {
       final file = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 85,
       );
       if (file == null) return;
@@ -253,8 +301,23 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_gif_too_big'))));
         return;
       }
+      if (!mounted) return;
+      // Which part shows in the circle (owner, 29.10.2026).
+      final framing = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ImageFrameEditorScreen(
+          image: MemoryImage(bytes),
+          aspect: 1,
+          circle: true,
+          title: strings.t('profile_change_photo'),
+          s: strings,
+        ),
+      ));
+      if (framing == null) return;
       setState(() => _uploading = true);
-      await ref.read(profileRepositoryProvider).uploadAvatar(bytes, contentType: gif ? 'image/gif' : file.mimeType);
+      await ref
+          .read(profileRepositoryProvider)
+          .uploadAvatar(bytes, contentType: gif ? 'image/gif' : file.mimeType, framing: framing);
       ref.invalidate(publicProfileProvider(widget.userId));
     } catch (_) {
       if (mounted) {
@@ -453,7 +516,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
             children: [
               InkWell(
                 customBorder: const CircleBorder(),
-                onTap: _uploading ? null : _changePhoto,
+                onTap: _uploading ? null : () => _photoMenu(profile?.avatarUrl),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [

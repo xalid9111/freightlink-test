@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'framed_image.dart';
 
 /// Round profile photo with initials fallback and an optional online dot.
 class UserAvatar extends StatelessWidget {
@@ -15,6 +16,9 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
+    // The place / zoom the owner chose in "Yerini düzəlt" (owner, 29.10.2026).
+    final framing = ImageFraming.of(imageUrl);
+    final framed = hasImage && !framing.isDefault;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -23,9 +27,21 @@ class UserAvatar extends StatelessWidget {
           backgroundColor: AppColors.cardAlt,
           // Decoded at the size it is shown (×3 for sharp retina), not at
           // the full upload size — saves a lot of memory on iPhones.
-          foregroundImage: hasImage ? ResizeImage(NetworkImage(imageUrl!), width: (radius * 6).round()) : null,
+          foregroundImage: hasImage && !framed ? ResizeImage(NetworkImage(imageUrl!), width: (radius * 6).round()) : null,
           child: Text(initials, style: AppFonts.display(size: radius * 0.85, color: AppColors.text)),
         ),
+        if (framed)
+          SizedBox(
+            width: radius * 2,
+            height: radius * 2,
+            child: ClipOval(
+              child: FramedImage(
+                image: ResizeImage(NetworkImage(imageUrl!), width: (radius * 6 * framing.z).round().clamp(1, 1600)),
+                framing: framing,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
         if (online != null)
           Positioned(
             right: -1,
