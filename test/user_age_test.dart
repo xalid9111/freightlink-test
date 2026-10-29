@@ -26,6 +26,24 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   setUpAll(() async => initializeDateFormatting());
 
+  test('others see the age as a number, never the date; phone / e-mail keep the 0019 rules (0075)', () {
+    final pub = src('lib/features/ads/presentation/public_profile_screen.dart');
+    expect(pub, contains('ref.watch(userAgeProvider(widget.userId))'));
+    expect(pub, contains("s.t('job_age', {'n': '\$age'})"), reason: '"48 yaş"');
+    expect(pub.contains('birthDateLabel') || pub.contains('birthDate'), isFalse, reason: 'no date on another user\'s profile');
+    expect(pub, contains('if (hasEmail) _InfoRow(icon: Icons.mail_outline, text: contactEmail!),'));
+    expect(pub, contains('ref.watch(userContactProvider(widget.userId))'), reason: 'phone / e-mail only as get_user_contact releases them');
+    final repo = src('lib/repositories/profile_repository.dart');
+    expect(repo, contains("_client.rpc('user_age', params: {'p_user': userId})"));
+    expect(repo, contains("if (e.code == 'PGRST202') return null;"), reason: 'works before 0075 is run');
+    final sql = src('supabase/migrations/0075_user_age_public.sql').toLowerCase();
+    for (final bad in ['drop table', 'truncate', 'delete from', 'drop column', 'update public.users', 'get_user_contact(', 'returns date']) {
+      expect(sql.contains(bad), isFalse, reason: bad);
+    }
+    expect(sql, contains('returns integer'));
+    expect(sql, contains('revoke execute on function public.user_age(uuid) from public, anon;'));
+  });
+
   test('age ↔ birth date: the picked age comes back and grows every year', () {
     final now = DateTime(2026, 10, 28);
     final b = birthDateForAge(34, now);
