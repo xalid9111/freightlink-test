@@ -1549,5 +1549,6 @@
   "profile_gif_too_big": "GIF слишком большой (не более 5 МБ)",
   "photo_new": "Выбрать новое фото",
   "photo_adjust": "Настроить положение",
-  "frame_reset": "Сбросить"
+  "frame_reset": "Сбросить",
+  "chat_load_older": "Старые сообщения"
 }

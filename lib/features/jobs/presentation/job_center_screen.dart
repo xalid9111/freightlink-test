@@ -21,6 +21,9 @@ import 'jobs_providers.dart';
 /// "Elanlar" with Sürücülər / Vakansiyalar tabs ("Hamısına bax" = both, all)
 /// and "Mənim elanlarım" as one card that opens /jobs/mine, where my own
 /// ads keep edit, on / off and delete (26.10.2026).
+/// Cards added by each "Daha 20" in "Elanlar".
+const kJobFeedStep = 20;
+
 class JobCenterScreen extends ConsumerStatefulWidget {
   const JobCenterScreen({super.key});
 
@@ -32,7 +35,9 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
   /// Transport / licence / country; what (drivers / vacancies) is [_tab].
   JobFeedFilter _filter = const JobFeedFilter();
   JobFeedKind _tab = JobFeedKind.drivers;
-  bool _all = false;
+  /// Cards shown in "Elanlar": 3 on the home page, after "Hamısına bax"
+  /// 20 more at a time (never hundreds of cards at once on a phone).
+  int _feedLimit = 3;
 
   JobFeedFilter get _feedFilter =>
       JobFeedFilter(kind: _tab, specialty: _filter.specialty, licence: _filter.licence, country: _filter.country);
@@ -125,13 +130,19 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
                 link: s.t('catalog_see_all'),
                 onLink: () => setState(() {
                   _tab = JobFeedKind.all;
-                  _all = true;
+                  _feedLimit = kJobFeedStep;
                 }),
               ),
               const SizedBox(height: 10),
               _Tabs(s: s, tab: _tab, filter: _filter, onTab: (k) => setState(() => _tab = k)),
               const SizedBox(height: 12),
-              _Feed(s: s, filter: _feedFilter, limit: _all ? null : 3, onReset: _reset),
+              _Feed(
+                s: s,
+                filter: _feedFilter,
+                limit: _feedLimit,
+                onReset: _reset,
+                onMore: _feedLimit > 3 ? () => setState(() => _feedLimit += kJobFeedStep) : null,
+              ),
               _MyAdsCard(s: s),
             ],
           );
@@ -734,9 +745,11 @@ class _Feed extends ConsumerWidget {
   final JobFeedFilter filter;
   final VoidCallback onReset;
 
-  /// Cards on the home page before "Hamısına bax" (null = all).
+  /// Cards shown (null = all).
   final int? limit;
-  const _Feed({required this.s, required this.filter, required this.onReset, this.limit});
+  /// "Daha 20": shows the next cards (null = no button).
+  final VoidCallback? onMore;
+  const _Feed({required this.s, required this.filter, required this.onReset, this.limit, this.onMore});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -768,11 +781,19 @@ class _Feed extends ConsumerWidget {
       );
     }
     final shown = limit == null ? items : items.take(limit!);
+    final rest = limit == null ? 0 : items.length - limit!;
     return Column(key: const ValueKey('job-feed'), children: [
       for (final it in shown)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: JobFeedCard(item: it, s: s, lang: lang, specs: specs, skills: skills),
+        ),
+      if (onMore != null && rest > 0)
+        TextButton(
+          key: const ValueKey('job-feed-more'),
+          style: TextButton.styleFrom(foregroundColor: AppColors.blue),
+          onPressed: onMore,
+          child: Text(s.t('job_more', {'n': '${rest < kJobFeedStep ? rest : kJobFeedStep}'})),
         ),
     ]);
   }

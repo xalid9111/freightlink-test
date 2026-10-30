@@ -1549,5 +1549,6 @@
   "profile_gif_too_big": "The GIF is too large (5 MB at most)",
   "photo_new": "Choose a new picture",
   "photo_adjust": "Adjust position",
-  "frame_reset": "Reset"
+  "frame_reset": "Reset",
+  "chat_load_older": "Older messages"
 }

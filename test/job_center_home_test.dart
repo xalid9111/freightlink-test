@@ -184,6 +184,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('"Hamısına bax" shows 20 cards at a time, "Daha" the next ones (light on phones)', (tester) async {
+    tester.view.physicalSize = const Size(390, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final many = [for (var i = 0; i < 25; i++) JobSeeker(userId: 'p$i', fullName: 'S $i', specialties: const ['ref'])];
+    await tester.pumpWidget(ProviderScope(
+      overrides: [...overrides(), jobSeekersProvider.overrideWith((ref) async => many)],
+      child: const MaterialApp(home: JobCenterScreen()),
+    ));
+    await tester.pumpAndSettle();
+    final cards = find.descendant(of: find.byKey(const ValueKey('job-feed')), matching: find.byType(JobFeedCard));
+    expect(cards, findsNWidgets(3), reason: 'home page: 3');
+    expect(find.byKey(const ValueKey('job-feed-more')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('job-feed-all')));
+    await tester.pumpAndSettle();
+    expect(cards, findsNWidgets(20));
+    final more = find.byKey(const ValueKey('job-feed-more'));
+    await tester.scrollUntilVisible(more, 300, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Daha 7'), findsOneWidget, reason: '25 drivers + 2 vacancies = 27');
+    tester.widget<TextButton>(more).onPressed!();
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('job-feed')), matching: find.byType(JobFeedCard, skipOffstage: false), skipOffstage: false),
+        findsNWidgets(27));
+    expect(find.byKey(const ValueKey('job-feed-more'), skipOffstage: false), findsNothing);
+  });
+
   testWidgets('/jobs/mine keeps every control of my ads', (tester) async {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1;

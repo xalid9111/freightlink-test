@@ -61,7 +61,10 @@ def find_rls_enabled(sql):
     return set(re.findall(r"alter table\s+public\.(\w+)\s+enable row level security", sql, re.I))
 
 def find_policy_targets(sql):
-    return set(re.findall(r"on\s+public\.(\w+)\s*\n?\s*for", sql, re.I))
+    # Only real `create policy ... on public.<table>` statements: the old
+    # pattern ("on public.x ... for") also matched function names such as
+    # public.clear_chat_for_me( and reported them as tables (false alarm).
+    return set(re.findall(r'create\s+policy\s+(?:"[^"]+"|\w+)\s+on\s+public\.(\w+)', sql, re.I))
 
 def find_duplicate_policy_names(sql):
     # Policy names need only be unique per table. Forward migrations often

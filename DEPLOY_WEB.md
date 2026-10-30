@@ -29,6 +29,9 @@
 
 ## Path B — you have Flutter 3.35.x locally (Netlify Drop)
 ```
+# pubspec.yaml lists .env as an asset: a fresh copy / ZIP has none, so make
+# one as the GitHub workflows do (keys still come from --dart-define).
+[ -f .env ] || printf 'APP_ENV=production\n' > .env
 flutter pub get
 flutter build web --release \
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co \

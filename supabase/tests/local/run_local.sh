@@ -124,6 +124,7 @@ suites() {
   "${PSQL[@]}" -d "$DB" -f "$HERE/111_user_birth_date.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/112_user_age_public.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/113_night_theme.sql" >/dev/null
+  "${PSQL[@]}" -d "$DB" -f "$HERE/114_rls_coverage.sql" >/dev/null
   PGOPTIONS="-c client_min_messages=notice" "${PSQL[@]}" -d "$DB" -f "$HERE/../messaging_audit_test.sql" 2>&1 \
     | grep -E "ALL MESSAGING|FAILED|ERROR" | sed 's/^/messaging_audit_test: /'
 }

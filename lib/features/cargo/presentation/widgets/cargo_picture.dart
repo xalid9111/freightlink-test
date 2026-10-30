@@ -13,6 +13,7 @@ import '../../domain/cargo_categories.dart';
 import '../../data/cargo_media_repository.dart';
 import '../../domain/cargo_pictures.dart';
 import '../providers/cargo_media_providers.dart';
+import '../../../../core/utils/image_decode.dart';
 
 /// A load's card picture (0058). A load without its own picture shows an
 /// admin template of its type (owner, 24.10.2026), picked by [seed] (the
@@ -52,12 +53,16 @@ class CargoPicture extends ConsumerWidget {
       url = templateFor([for (final t in templates) t.imageUrl], seed!);
     }
     if (url == null || url.isEmpty) return placeholder;
-    return Image.network(
-      url,
-      fit: fit,
-      cacheWidth: 800, // decoded small: fast lists on phones
-      errorBuilder: (_, __, ___) => placeholder,
-      loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+    final src = url;
+    // Decoded at the size it is shown (list tile or full page), not more.
+    return LayoutBuilder(
+      builder: (context, c) => Image.network(
+        src,
+        fit: fit,
+        cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+      ),
     );
   }
 }

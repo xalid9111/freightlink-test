@@ -13,6 +13,7 @@ import '../../../repositories/profile_repository.dart';
 import '../../../models/message_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/chat_delete_repository.dart';
+import '../domain/message_repository.dart';
 import 'providers/chat_providers.dart';
 import 'widgets/attachment_view.dart';
 import 'widgets/call_options.dart';
@@ -50,6 +51,20 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
 
   /// Topic picked by the user (conversation id); null = follow the latest.
   String? _picked;
+  /// How many of the newest messages of each topic are shown.
+  int _pageLimit = kChatPageSize;
+  final _lastMessages = <String, List<MessageModel>>{};
+
+  /// The topic's messages; the last ones known while a bigger page loads.
+  AsyncValue<List<MessageModel>> _keep(String id, AsyncValue<List<MessageModel>> a) {
+    final v = a.valueOrNull;
+    if (v != null) {
+      _lastMessages[id] = v;
+      return a;
+    }
+    final last = _lastMessages[id];
+    return a.isLoading && last != null ? AsyncData(last) : a;
+  }
 
   /// Conversation new messages are sent to (resolved on every build).
   String? _target;
@@ -176,9 +191,18 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
     final topicById = {for (final t in topics) t.conversation.id: t};
 
     // Messages of all topics, merged into one timeline.
-    final perTopic = [for (final t in topics) ref.watch(conversationMessagesProvider(t.conversation.id))];
+    // The newest [_pageLimit] of each topic; while a bigger page loads the
+    // messages already shown stay (no flash of the spinner).
+    final perTopic = [
+      for (final t in topics) _keep(t.conversation.id, ref.watch(conversationMessagesProvider((t.conversation.id, _pageLimit)))),
+    ];
     final anyData = perTopic.any((a) => a.hasValue);
     final anyError = perTopic.any((a) => a.hasError);
+    // A topic that filled its page may have older messages: offer them, and
+    // show nothing older than what such a topic has loaded (no gaps).
+    final full = [for (final a in perTopic) if ((a.valueOrNull?.length ?? 0) >= _pageLimit) a.valueOrNull!];
+    final hasOlder = full.isNotEmpty;
+    final cutoff = hasOlder ? full.map((l) => l.first.createdAt).reduce((a, b) => a.isAfter(b) ? a : b) : null;
     // "Delete for me" (single messages) and "delete chat" (everything up
     // to that moment) only hide things from my own view — migration 0031.
     final hidden = ref.watch(hiddenMessagesProvider).valueOrNull ?? const <String>{};
@@ -187,7 +211,9 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
     final merged = <MessageModel>[
       for (final a in perTopic)
         for (final m in (a.valueOrNull ?? const <MessageModel>[]))
-          if (!m.deletedSilent && visibleToMe(id: m.id, chatId: m.conversationId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel)) m,
+          if (!m.deletedSilent && visibleToMe(id: m.id, chatId: m.conversationId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel) &&
+              (cutoff == null || !m.createdAt.isBefore(cutoff)))
+            m,
     ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
     // Mark what I received as read, in every topic.
@@ -221,7 +247,8 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
         (topics.isNotEmpty && !anyData && !anyError);
 
     // Timeline rows: messages plus a topic chip wherever the subject changes.
-    final rows = <Object>[]; // MessageModel | ConversationWithCargo (chip) | DateTime (day)
+    final rows = <Object>[]; // MessageModel | ConversationWithCargo (chip) | DateTime (day) | _LoadOlder
+    if (hasOlder) rows.add(const _LoadOlder());
     String? prevTopic;
     DateTime? prevDay;
     for (final m in merged) {
@@ -352,6 +379,16 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                   );
                                 }
                                 if (row is DateTime) return ChatDateChip(day: row, strings: strings);
+                                if (row is _LoadOlder) {
+                                  return Center(
+                                    child: TextButton.icon(
+                                      key: const ValueKey('chat-load-older'),
+                                      onPressed: () => setState(() => _pageLimit += kChatPageSize),
+                                      icon: const Icon(Icons.history),
+                                      label: Text(strings.t('chat_load_older')),
+                                    ),
+                                  );
+                                }
                                 final m = row as MessageModel;
                                 final mine = me != null && m.senderId == me;
                                 final goneForAll = deletedForAll(m.id, m.isDeleted, localDel);
@@ -525,4 +562,9 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The "Köhnə mesajlar" row at the top of a long chat.
+class _LoadOlder {
+  const _LoadOlder();
 }

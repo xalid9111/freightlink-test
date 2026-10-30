@@ -55,9 +55,11 @@ final conversationByIdProvider = FutureProvider.family<ConversationModel?, Strin
 // autoDispose: a chat's realtime subscription is closed when nobody shows
 // that chat any more (before, every chat ever opened kept a live channel
 // until the app was reloaded — heavy on iPhone PWAs).
-final conversationMessagesProvider = StreamProvider.autoDispose.family<List<MessageModel>, String>((ref, conversationId) {
+/// Keyed by (chat id, how many of the newest messages): "Köhnə mesajlar"
+/// asks for a bigger number.
+final conversationMessagesProvider = StreamProvider.autoDispose.family<List<MessageModel>, (String, int)>((ref, key) {
   ref.watch(currentUserIdProvider); // re-fetch when the signed-in account changes
-  return ref.watch(messageRepositoryProvider).watchConversation(conversationId);
+  return ref.watch(messageRepositoryProvider).watchConversation(key.$1, limit: key.$2);
 });
 
 /// Number of unread messages addressed to the signed-in user, live

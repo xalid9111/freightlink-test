@@ -116,13 +116,16 @@ class MessageRepositoryImpl implements MessageRepository {
   }
 
   @override
-  Stream<List<MessageModel>> watchConversation(String conversationId) {
+  Stream<List<MessageModel>> watchConversation(String conversationId, {int limit = kChatPageSize}) {
+    // Only the newest [limit] (not the whole history on every open);
+    // shown oldest first as before.
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
-        .order('created_at')
-        .map((rows) => rows.map(MessageModel.fromJson).toList());
+        .order('created_at', ascending: false)
+        .limit(limit)
+        .map((rows) => rows.map(MessageModel.fromJson).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt)));
   }
 
   @override

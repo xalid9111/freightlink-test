@@ -1549,5 +1549,6 @@
   "profile_gif_too_big": "GIF çox böyükdür (ən çox 5 MB)",
   "photo_new": "Yeni şəkil seç",
   "photo_adjust": "Yerini düzəlt",
-  "frame_reset": "Sıfırla"
+  "frame_reset": "Sıfırla",
+  "chat_load_older": "Köhnə mesajlar"
 }
