@@ -5,6 +5,10 @@ import '../../../models/cargo_model.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/cargo_repository.dart';
 
+/// At most this many open loads are read for the feed (newest first): the
+/// phone never downloads an unbounded table on start (iPhone PWA memory).
+const kCargoFeedMax = 1000;
+
 class CargoRepositoryImpl implements CargoRepository {
   final SupabaseClient _client = SupabaseConfig.client;
 
@@ -28,7 +32,7 @@ class CargoRepositoryImpl implements CargoRepository {
       if (maxPrice != null) query = query.lte('offered_price', maxPrice);
       if (maxWeightKg != null) query = query.lte('weight_kg', maxWeightKg);
 
-      final rows = await query.order('created_at', ascending: false);
+      final rows = await query.order('created_at', ascending: false).limit(kCargoFeedMax);
       // Loads hidden by an admin are filtered by RLS (0012) for everyone
       // else; this also keeps the owner's own hidden loads out of the feed.
       // Switched off by the owner or past the loading date: not listed.
@@ -49,7 +53,7 @@ class CargoRepositoryImpl implements CargoRepository {
       if (truckType != null) query = query.or(truckTypeOrFilter(truckType));
       if (groupage) query = query.eq('groupage', true);
       if (loadSize != null) query = query.eq('load_size', loadSize);
-      final rows = await query.order('created_at', ascending: false);
+      final rows = await query.order('created_at', ascending: false).limit(kCargoFeedMax);
       final now = DateTime.now();
       return (rows as List)
           .map((r) => CargoModel.fromJson(r))

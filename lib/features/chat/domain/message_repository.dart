@@ -18,7 +18,8 @@ abstract class MessageRepository {
 
   /// Realtime stream of messages in a conversation, backed by Supabase
   /// Realtime (migration 0001 publishes public.messages).
-  Stream<List<MessageModel>> watchConversation(String conversationId);
+  /// The newest [limit] messages of the chat, oldest first, live.
+  Stream<List<MessageModel>> watchConversation(String conversationId, {int limit = kChatPageSize});
 
   /// All conversations the signed-in user is part of (RLS already
   /// scopes "part of" — see conversations_participants in migration
@@ -59,3 +60,7 @@ abstract class MessageRepository {
   /// offer ([carrierId] = carriers.id).
   Future<ConversationModel> openConversationAsOwner({required String cargoId, required String carrierId});
 }
+
+/// Messages loaded per step in a chat ("Köhnə mesajlar" loads the next
+/// step): long chats open fast and use little memory on phones.
+const kChatPageSize = 300;

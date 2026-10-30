@@ -1549,5 +1549,6 @@
   "profile_gif_too_big": "GIF ძალიან დიდია (მაქსიმუმ 5 MB)",
   "photo_new": "ახალი სურათის არჩევა",
   "photo_adjust": "პოზიციის შესწორება",
-  "frame_reset": "გადატვირთვა"
+  "frame_reset": "გადატვირთვა",
+  "chat_load_older": "ძველი შეტყობინებები"
 }

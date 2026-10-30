@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../domain/market_models.dart';
 import 'market_promo.dart';
 import 'market_providers.dart';
+import '../../../core/utils/image_decode.dart';
 
 const kVipGold = Color(0xFFFFC83D);
 
@@ -46,12 +47,16 @@ class MarketPhoto extends StatelessWidget {
       child: Icon(Icons.local_shipping_outlined, color: AppColors.textSoft, size: 36),
     );
     if (url == null) return placeholder;
-    return Image.network(
-      url!,
-      fit: fit,
-      cacheWidth: 800, // decoded small: fast lists on phones
-      errorBuilder: (_, __, ___) => placeholder,
-      loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+    final src = url!;
+    // Decoded at the size it is shown (list tile or full page), not more.
+    return LayoutBuilder(
+      builder: (context, c) => Image.network(
+        src,
+        fit: fit,
+        cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+      ),
     );
   }
 }

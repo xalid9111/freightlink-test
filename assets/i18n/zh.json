@@ -1549,5 +1549,6 @@
   "profile_gif_too_big": "GIF 太大（最多 5 MB）",
   "photo_new": "选择新图片",
   "photo_adjust": "调整位置",
-  "frame_reset": "重置"
+  "frame_reset": "重置",
+  "chat_load_older": "更早的消息"
 }

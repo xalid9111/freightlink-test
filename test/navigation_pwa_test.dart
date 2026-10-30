@@ -83,7 +83,8 @@ void main() {
     test('one shared subscription for received messages', () {
       final p = _read('lib/features/chat/presentation/providers/chat_providers.dart');
       expect('watchReceived('.allMatches(p).length, 1);
-      expect(p.contains('StreamProvider.autoDispose.family<List<MessageModel>, String>'), isTrue);
+      // One live chat stream per (chat, page size), closed when the chat is left.
+      expect(p.contains('StreamProvider.autoDispose.family<List<MessageModel>, (String, int)>'), isTrue);
     });
   });
 }

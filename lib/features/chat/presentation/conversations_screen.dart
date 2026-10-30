@@ -229,9 +229,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
         },
         child: conversationsAsync.isLoading && entries.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(14),
+            : _LazyList(
                 children: [
                   if (conversationsAsync.hasError && entries.isEmpty)
                     Padding(
@@ -486,4 +484,19 @@ class _ConversationTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The chats list, built as it scrolls (only the visible rows are laid out
+/// — long lists stay smooth on phones); looks the same as a plain ListView.
+class _LazyList extends StatelessWidget {
+  final List<Widget> children;
+  const _LazyList({required this.children});
+
+  @override
+  Widget build(BuildContext context) => ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(14),
+        itemCount: children.length,
+        itemBuilder: (_, i) => children[i],
+      );
 }

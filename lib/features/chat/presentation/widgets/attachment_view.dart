@@ -40,6 +40,9 @@ class AttachmentView extends ConsumerWidget {
               child: Image.network(
                 url,
                 width: 220,
+                // Decoded at the shown width (×3 for sharp retina), not the
+                // full photo: long chats stay light on iPhones.
+                cacheWidth: 660,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _FileRow(message: message, url: url, color: fg),
               ),
