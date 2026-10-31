@@ -171,7 +171,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                   ),
                   children: [
                     // Night: the map dimmed to the dark page (owner's picture).
-                    const ParkMapTiles(),
+                    const AppTileLayer(),
                     MarkerLayer(markers: [
                       for (final p in shownOnMap)
                         Marker(
