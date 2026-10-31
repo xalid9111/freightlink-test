@@ -9,11 +9,11 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/map_tiles.dart';
-import '../../../core/widgets/page_hero.dart';
 import '../../../services/geo_service.dart';
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
+import 'map_page_banner.dart';
 import 'tir_park_add_sheet.dart';
 import 'tir_park_widgets.dart';
 
@@ -147,7 +147,18 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
       body: SafeArea(
         bottom: false,
         child: Column(children: [
-          _Banner(s: s),
+          MapPageBanner(
+            s: s,
+            page: 'tirpark',
+            brandIcon: Icons.local_shipping_outlined,
+            editIcon: Icons.local_parking,
+            brandAccent: 'TIR',
+            brandRest: 'Park',
+            defaultTitle: s.t('tp_title_1'),
+            defaultAccent: s.t('tp_title_2'),
+            defaultSubtitle: s.t('tp_subtitle'),
+            asset: 'assets/images/tirpark/banner.jpg',
+          ),
           Expanded(
             child: Stack(children: [
               Positioned.fill(
@@ -261,18 +272,19 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                 ]),
               ),
               // My position.
-              Positioned(
-                right: 12,
-                top: 118,
+              if (!_adding)
+                AboveSheet(
+                sheet: 0.26,
+                gap: 76,
                 child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
               ),
               // "TIR parkı əlavə et +" / choosing the place.
-              Positioned(
-                right: 12,
+              AboveSheet(
                 left: _adding ? 12 : null,
                 // While choosing the place the panel sits low, so the pin in
                 // the middle of the map stays in view.
-                bottom: _adding ? 16 : MediaQuery.sizeOf(context).height * 0.26 + 10,
+                sheet: _adding ? 0 : 0.26,
+                gap: _adding ? 16 : 10,
                 child: _adding
                     ? Container(
                         padding: const EdgeInsets.all(12),
@@ -346,92 +358,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
           ),
         ]),
       ),
-    );
-  }
-}
-
-/// "TIRPark — Yolda özünə uyğun park tap" with the owner's park photo.
-/// An admin changes the picture (a GIF too), its place / zoom and the
-/// texts with the pencil — the same banner editor as Servislər and TIR
-/// Bazarı (page 'tirpark', 0078).
-class _Banner extends ConsumerWidget {
-  final AppStrings s;
-  const _Banner({required this.s});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bg = AppColors.background;
-    final hero = ref.watch(pageHeroProvider('tirpark')).valueOrNull;
-    final img = hero?.imageFor(day: AppColors.isDay);
-    final texts = img == null || (hero?.showText ?? true);
-    final admin = isAdminUser(ref);
-    return SizedBox(
-      height: 168,
-      child: Stack(fit: StackFit.expand, children: [
-        if (img != null)
-          PageHeroImage(
-            url: img,
-            align: hero!.alignmentFor(day: AppColors.isDay),
-            zoom: hero.zoomFor(day: AppColors.isDay),
-            fallback: (_) => const SizedBox.shrink(),
-          )
-        else
-          Align(
-            alignment: Alignment.centerRight,
-            child: Image.asset('assets/images/tirpark/banner.jpg',
-                fit: BoxFit.cover, alignment: const Alignment(0, -0.45), height: 168, width: 230),
-          ),
-        if (texts)
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [bg, bg, bg.withValues(alpha: 0.55), bg.withValues(alpha: 0.0)],
-                stops: const [0, 0.42, 0.62, 0.85],
-              ),
-            ),
-          ),
-        if (texts)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 120, 12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Row(children: [
-                Icon(Icons.local_shipping_outlined, color: AppColors.accent, size: 26),
-                const SizedBox(width: 6),
-                Text('TIR', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent)),
-                Text('Park', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
-              ]),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(hero?.title ?? s.t('tp_title_1'),
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.1)),
-              ),
-              Text(hero?.titleAccent ?? s.t('tp_title_2'),
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent, height: 1.15)),
-              const SizedBox(height: 4),
-              Text(hero?.subtitle ?? s.t('tp_subtitle'),
-                  maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-            ]),
-          ),
-        if (admin)
-          Positioned(
-            right: 10,
-            top: 10,
-            child: Material(
-              color: Colors.black.withValues(alpha: 0.55),
-              shape: const CircleBorder(),
-              child: IconButton(
-                key: const ValueKey('page-hero-edit-tirpark'),
-                tooltip: s.t('mk_hero_edit'),
-                icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 20),
-                onPressed: () => showPageHeroEditor(context, strings: s, page: 'tirpark', hero: hero, icon: Icons.local_parking),
-              ),
-            ),
-          ),
-      ]),
     );
   }
 }

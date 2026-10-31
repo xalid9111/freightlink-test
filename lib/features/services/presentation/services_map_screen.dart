@@ -20,6 +20,7 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
+import '../../tirpark/presentation/map_page_banner.dart';
 import '../../tirpark/presentation/tir_park_widgets.dart';
 
 
@@ -338,24 +339,38 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
       body: Column(children: [
         // Banner (owner, 21.10.2026): night / day picture, the admin
         // changes it here (pencil).
+        // On the phone the same banner as TIRPark (owner, 31.10.2026: both
+        // pages keep one form, only the names change).
         SafeArea(
           bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: LayoutBuilder(
-              builder: (context, c) => PageHeroBanner(
-                page: 'services',
-                strings: s,
-                kicker: s.t('nav_services'),
-                defaultTitle: s.t('svc_hero_title'),
-                defaultAccent: s.t('svc_hero_accent'),
-                defaultSubtitle: s.t('svc_hero_subtitle'),
-                icon: Icons.handyman,
-                compact: !isDesktopLayout(context),
-                height: isDesktopLayout(context) ? (c.maxWidth * 0.16).clamp(180.0, 260.0) : 150,
-              ),
-            ),
-          ),
+          child: isDesktopLayout(context)
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: LayoutBuilder(
+                    builder: (context, c) => PageHeroBanner(
+                      page: 'services',
+                      strings: s,
+                      kicker: s.t('nav_services'),
+                      defaultTitle: s.t('svc_hero_title'),
+                      defaultAccent: s.t('svc_hero_accent'),
+                      defaultSubtitle: s.t('svc_hero_subtitle'),
+                      icon: Icons.handyman,
+                      compact: false,
+                      height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
+                    ),
+                  ),
+                )
+              : MapPageBanner(
+                  s: s,
+                  page: 'services',
+                  brandIcon: Icons.handyman,
+                  editIcon: Icons.handyman,
+                  brandAccent: '',
+                  brandRest: s.t('nav_services'),
+                  defaultTitle: s.t('svc_hero_title'),
+                  defaultAccent: s.t('svc_hero_accent'),
+                  defaultSubtitle: s.t('svc_hero_subtitle'),
+                ),
         ),
         // The map and its controls under the banner (no second top inset).
         Expanded(
@@ -422,17 +437,21 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
                       Expanded(
-                        child: Material(
-                          color: AppColors.hero.withValues(alpha: 0.96),
-                          elevation: 3,
-                          borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.card.withValues(alpha: 0.96),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.line),
+                          ),
                           child: TextField(
                             controller: _searchCtrl,
                             focusNode: _searchFocus,
@@ -457,7 +476,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                                             _picked = null;
                                           }),
                                         )),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
                               filled: false,
                               contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
@@ -465,7 +486,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       _RoundButton(
                         icon: Icons.tune,
                         tooltip: s.t('svc_filters'),
@@ -541,9 +562,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
             ),
           ),
           // My location button.
-          Positioned(
-            right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.28 + 76,
+          AboveSheet(
+            sheet: 0.26,
+            gap: 76,
             child: _RoundButton(
               icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
               tooltip: s.t('svc_my_location'),
@@ -555,9 +576,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           // joining as a master / service centre (the existing flows). It
           // sits at the bottom of the map, right above the list, like "TIR
           // parkı əlavə et" (owner, 31.10.2026).
-          Positioned(
-            right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.28 + 10,
+          AboveSheet(
+            sheet: 0.26,
+            gap: 10,
             child: MapAddButton(
               buttonKey: 'svc-add',
               label: s.t('svc_add'),
@@ -570,11 +591,11 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           // Results sheet.
           DraggableScrollableSheet(
             controller: _sheet,
-            initialChildSize: 0.28,
+            initialChildSize: 0.26,
             minChildSize: 0.12,
             maxChildSize: 0.88,
             snap: true,
-            snapSizes: const [0.28, 0.5],
+            snapSizes: const [0.26, 0.5],
             builder: (context, scroll) => _ResultsSheet(
               scroll: scroll,
               s: s,
@@ -610,13 +631,19 @@ class _RoundButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.hero.withValues(alpha: 0.96),
-      elevation: 3,
-      shape: const CircleBorder(),
-      child: IconButton(
-        tooltip: tooltip,
-        onPressed: onTap,
-        icon: Icon(icon, color: highlighted ? AppColors.accent : AppColors.text, size: 22),
+      color: AppColors.card,
+      shape: CircleBorder(side: BorderSide(color: AppColors.line)),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: Icon(icon, color: highlighted ? AppColors.accent : AppColors.text, size: 24),
+          ),
+        ),
       ),
     );
   }
@@ -732,10 +759,13 @@ class _ResultsSheet extends ConsumerWidget {
       ...items.where((p) => p.id != selected?.id),
     ];
 
+    // The same sheet edge as TIRPark (owner, 31.10.2026: one form).
     return Material(
       color: AppColors.background,
-      elevation: 8,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: AppColors.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: CustomScrollView(
         controller: scroll,
