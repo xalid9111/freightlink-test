@@ -175,7 +175,16 @@ void main() {
     expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
     expect(tp, contains('sheet: _adding ? 0 : 0.26,'));
     expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
-    expect(svc, contains('initialChildSize: 0.28,'));
+    // One form for both pages: the same banner, sheet and button places;
+    // only the names change (owner, 31.10.2026).
+    expect(svc, contains('initialChildSize: 0.26,'));
+    expect(tp, contains('initialChildSize: 0.26,'));
+    expect(svc, contains("page: 'services',"));
+    expect(svc, contains('sheet: 0.26,'));
+    for (final page in [svc, tp]) {
+      expect(page, contains('MapPageBanner('));
+      expect(page, contains('gap: 76,'), reason: 'locate button above the add button');
+    }
     expect(svc, contains("context.pushOnce(id != null ? '/service/\$id' : '/service-join');"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));
     final sql = src('supabase/migrations/0077_tir_parks.sql').toLowerCase();
