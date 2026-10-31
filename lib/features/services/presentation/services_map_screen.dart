@@ -541,9 +541,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
             ),
           ),
           // My location button.
-          Positioned(
-            right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.28 + 76,
+          AboveSheet(
+            sheet: 0.28,
+            gap: 76,
             child: _RoundButton(
               icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
               tooltip: s.t('svc_my_location'),
@@ -555,9 +555,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           // joining as a master / service centre (the existing flows). It
           // sits at the bottom of the map, right above the list, like "TIR
           // parkı əlavə et" (owner, 31.10.2026).
-          Positioned(
-            right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.28 + 10,
+          AboveSheet(
+            sheet: 0.28,
+            gap: 10,
             child: MapAddButton(
               buttonKey: 'svc-add',
               label: s.t('svc_add'),

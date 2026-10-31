@@ -267,12 +267,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                 child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
               ),
               // "TIR parkı əlavə et +" / choosing the place.
-              Positioned(
-                right: 12,
+              AboveSheet(
                 left: _adding ? 12 : null,
                 // While choosing the place the panel sits low, so the pin in
                 // the middle of the map stays in view.
-                bottom: _adding ? 16 : MediaQuery.sizeOf(context).height * 0.26 + 10,
+                sheet: _adding ? 0 : 0.26,
+                gap: _adding ? 16 : 10,
                 child: _adding
                     ? Container(
                         padding: const EdgeInsets.all(12),

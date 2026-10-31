@@ -169,7 +169,12 @@ void main() {
       expect(page.contains('ColorFilter.matrix'), isFalse);
     }
     final add = svc.indexOf("buttonKey: 'svc-add',");
-    expect(svc.lastIndexOf('height * 0.28 + 10,', add), greaterThan(svc.lastIndexOf('height * 0.28 + 76,', add)));
+    // Measured in the map area (not the screen), so the button sits right
+    // above the list on any phone.
+    expect(svc.lastIndexOf('gap: 10,', add), greaterThan(svc.lastIndexOf('gap: 76,', add)));
+    expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
+    expect(tp, contains('sheet: _adding ? 0 : 0.26,'));
+    expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
     expect(svc, contains('initialChildSize: 0.28,'));
     expect(svc, contains("context.pushOnce(id != null ? '/service/\$id' : '/service-join');"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));

@@ -314,3 +314,24 @@ class MapAddButton extends StatelessWidget {
       );
 }
 
+
+/// A map control placed [gap] px over the list sheet. The sheet's top is a
+/// part ([sheet]) of the MAP AREA under the banner, not of the whole
+/// screen, so the place is measured there (owner, 31.10.2026: the "əlavə
+/// et" buttons sit right above the list on TIRPark and Servislər). Must be
+/// a child of the map's Stack; taps outside [child] reach the map.
+class AboveSheet extends StatelessWidget {
+  final double sheet, gap;
+  final double? left;
+  final Widget child;
+  const AboveSheet({super.key, required this.sheet, required this.gap, this.left, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Positioned.fill(
+        child: LayoutBuilder(
+          builder: (context, box) => Stack(children: [
+            Positioned(right: 12, left: left, bottom: box.maxHeight * sheet + gap, child: child),
+          ]),
+        ),
+      );
+}
