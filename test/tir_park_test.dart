@@ -160,6 +160,13 @@ void main() {
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     expect(svc, contains("ParksServicesSwitch(parks: false, s: s, onParks: () => context.go('/tirpark'), onServices: () {}),"));
     expect(svc, contains("buttonKey: 'svc-add',"));
+    // Same map colours on both pages, and "Servis əlavə et" low, right
+    // above the list, like "TIR parkı əlavə et" (owner, 31.10.2026).
+    expect(svc, contains('const ParkMapTiles(),'));
+    expect(svc.contains('const AppTileLayer(),'), isFalse);
+    expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('const ParkMapTiles(),'));
+    final add = svc.indexOf("buttonKey: 'svc-add',");
+    expect(svc.lastIndexOf('height * 0.30 + 10,', add), greaterThan(svc.lastIndexOf('height * 0.30 + 76,', add)));
     expect(svc, contains("context.pushOnce(id != null ? '/service/\$id' : '/service-join');"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));
     final sql = src('supabase/migrations/0077_tir_parks.sql').toLowerCase();

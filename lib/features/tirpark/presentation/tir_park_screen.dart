@@ -142,7 +142,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final from = me ?? _center;
     final list = nearbyParks(parks, from.latitude, from.longitude, radiusKm: kTirParkRadiusKm, query: _query, needs: _needs);
     final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
-    final night = !AppColors.isDay;
 
     return Scaffold(
       body: SafeArea(
@@ -172,7 +171,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                   ),
                   children: [
                     // Night: the map dimmed to the dark page (owner's picture).
-                    if (night) const _NightTiles() else const AppTileLayer(),
+                    const ParkMapTiles(),
                     MarkerLayer(markers: [
                       for (final p in shownOnMap)
                         Marker(
@@ -349,22 +348,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
       ),
     );
   }
-}
-
-/// The map tiles, dimmed for night (only on this page).
-class _NightTiles extends StatelessWidget {
-  const _NightTiles();
-
-  @override
-  Widget build(BuildContext context) => const ColorFiltered(
-        colorFilter: ColorFilter.matrix(<double>[
-          0.42, 0, 0, 0, 0, //
-          0, 0.46, 0, 0, 2, //
-          0, 0, 0.58, 0, 10, //
-          0, 0, 0, 1, 0,
-        ]),
-        child: AppTileLayer(),
-      );
 }
 
 /// "TIRPark — Yolda özünə uyğun park tap" with the owner's park photo.
