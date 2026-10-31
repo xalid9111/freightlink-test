@@ -404,7 +404,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 },
               ),
               children: [
-                const ParkMapTiles(),
+                const AppTileLayer(),
                 if (selected != null && selectedHasPin && me != null)
                   PolylineLayer(polylines: [
                     Polyline(
@@ -543,7 +543,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           // My location button.
           Positioned(
             right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.30 + 76,
+            bottom: MediaQuery.sizeOf(context).height * 0.28 + 76,
             child: _RoundButton(
               icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
               tooltip: s.t('svc_my_location'),
@@ -553,10 +553,11 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           ),
           // "Servis əlavə et" (owner, 31.10.2026): one's own service, or
           // joining as a master / service centre (the existing flows). It
-          // sits right above the list, like "TIR parkı əlavə et".
+          // sits at the bottom of the map, right above the list, like "TIR
+          // parkı əlavə et" (owner, 31.10.2026).
           Positioned(
             right: 12,
-            bottom: MediaQuery.sizeOf(context).height * 0.30 + 10,
+            bottom: MediaQuery.sizeOf(context).height * 0.28 + 10,
             child: MapAddButton(
               buttonKey: 'svc-add',
               label: s.t('svc_add'),
