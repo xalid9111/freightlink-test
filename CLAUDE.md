@@ -92,8 +92,13 @@ files to the owner separately (they are run by hand in the SQL editor).
 
 ## 5. Owner decisions to keep
 
-- Bottom bar: Yüklər · Servislər · TIR Bazarı (centre) · Mesajlar ·
-  Profil (owner, 18.10.2026). "Yük əlavə et" (orange +) is on the Loads
+- Bottom bar: Yüklər · TIRPark · TIR Bazarı (centre) · Mesajlar ·
+  Profil (owner, 18.10.2026; TIRPark in place of Servislər, 31.10.2026 —
+  Servislər is kept and opens from the "Parklar | Servislər" switch on
+  TIRPark). TIRPark (0077): parks on the map (approved = orange pin, own
+  pending = grey), nearby list (100 km), "TIR parkı əlavə et" (place on
+  the map, name, amenities; nearby parks shown first, closer than 60 m
+  refused); a user's park waits for admin approval (Admin → TIRPark). "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

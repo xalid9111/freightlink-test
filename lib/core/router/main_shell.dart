@@ -124,14 +124,15 @@ class MainShell extends ConsumerWidget {
 
 List<_NavItem> _navItems(AppStrings strings, int unread) => <_NavItem>[
       _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
-      _NavItem(5, Icons.home_repair_service_outlined, Icons.home_repair_service, strings.t('nav_services')),
+      // TIRPark (owner, 31.10.2026) in place of Servislər, which opens from it.
+      _NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark')),
       _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market')),
       _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread),
       _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
     ];
 
 /// Start page of each section in the sidebar (shell branch → path).
-const kDeskSectionPaths = <int, String>{0: '/cargo', 5: '/services', 6: '/market', 3: '/messages', 4: '/profile'};
+const kDeskSectionPaths = <int, String>{0: '/cargo', 5: '/tirpark', 6: '/market', 3: '/messages', 4: '/profile'};
 
 /// Computer view of a page opened outside the tabs (a TIR Bazarı ad, a
 /// load, a chat, a form…): the left sidebar stays on screen (owner) and
