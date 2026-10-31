@@ -116,6 +116,7 @@ flutter:
     - assets/images/brands/
     - assets/images/promo/
     - assets/images/jobs/
+    - assets/images/tirpark/
     # Country flags for the web (loaded at run time, see
     # lib/core/theme/flag_font.dart; Noto Color Emoji, SIL OFL 1.1).
     - assets/fonts/flags/
