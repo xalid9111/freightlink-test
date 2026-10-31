@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/map_tiles.dart';
 import '../domain/tir_park.dart';
 
 /// Icon of an amenity (labels: `tp_am_<code>` in the six languages).
@@ -312,4 +313,24 @@ class MapAddButton extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// The map tiles of TIRPark and Servislər: dimmed at night, so both maps
+/// look the same (owner, 31.10.2026); the day map is unchanged.
+class ParkMapTiles extends StatelessWidget {
+  const ParkMapTiles({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppColors.isDay) return const AppTileLayer();
+    return const ColorFiltered(
+      colorFilter: ColorFilter.matrix(<double>[
+        0.42, 0, 0, 0, 0, //
+        0, 0.46, 0, 0, 2, //
+        0, 0, 0.58, 0, 10, //
+        0, 0, 0, 1, 0,
+      ]),
+      child: AppTileLayer(),
+    );
+  }
 }
