@@ -107,3 +107,27 @@ class NearbyPark {
 /// Closer than this to an existing park = the same park (the server
 /// refuses it too, 'duplicate_nearby').
 const kTirParkDuplicateM = 60;
+
+/// A comment on a park (0078): 1…5 stars and an optional text; one per
+/// user and park.
+class TirParkReview {
+  final String id, userId;
+  final int rating;
+  final String? comment;
+  final String? name, avatarUrl;
+  final DateTime? createdAt;
+  const TirParkReview({required this.id, required this.userId, required this.rating, this.comment, this.name, this.avatarUrl, this.createdAt});
+
+  factory TirParkReview.fromJson(Map<String, dynamic> j) => TirParkReview(
+        id: '${j['id']}',
+        userId: '${j['user_id']}',
+        rating: (j['rating'] as num?)?.toInt() ?? 0,
+        comment: j['comment'] as String?,
+        name: j['name'] as String?,
+        avatarUrl: j['avatar_url'] as String?,
+        createdAt: DateTime.tryParse('${j['created_at']}'),
+      );
+}
+
+/// At most this many pictures per park (the server checks the same).
+const kTirParkMaxPhotos = 10;

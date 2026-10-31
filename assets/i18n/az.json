@@ -1591,5 +1591,20 @@
   "tp_am_lighting": "İşıqlandırma",
   "tp_am_camera": "Kamera",
   "tp_am_free": "Pulsuz",
-  "tp_am_paid": "Ödənişli"
+  "tp_am_paid": "Ödənişli",
+  "tp_reviews_short": "Şərhlər ({n})",
+  "tp_reviews_n": "Şərhlər ({n})",
+  "tp_write": "Şərh yaz",
+  "tp_review_edit": "Şərhimi dəyiş",
+  "tp_reviews_none": "Hələ şərh yoxdur. İlk şərhi siz yazın.",
+  "tp_reviews_after_approval": "Şərhlər park təsdiqləndikdən sonra yazılır.",
+  "tp_review_hint": "Park haqqında yazın (istəyə bağlı)",
+  "tp_review_send": "Göndər",
+  "tp_review_stars_required": "Ulduz seçin (1–5)",
+  "tp_review_delete_q": "Şərh silinsin?",
+  "tp_delete": "Sil",
+  "tp_photo_replace": "Şəkli dəyiş",
+  "tp_photos_hint": "Şəkli dəyişmək və ya silmək üçün kiçik şəklə toxunun. Ən çox 10 şəkil.",
+  "tp_not_found": "Park tapılmadı.",
+  "svc_add": "Servis əlavə et"
 }

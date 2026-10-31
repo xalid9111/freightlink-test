@@ -1591,5 +1591,20 @@
   "tp_am_lighting": "Освещение",
   "tp_am_camera": "Камеры",
   "tp_am_free": "Бесплатно",
-  "tp_am_paid": "Платно"
+  "tp_am_paid": "Платно",
+  "tp_reviews_short": "Отзывы ({n})",
+  "tp_reviews_n": "Отзывы ({n})",
+  "tp_write": "Написать отзыв",
+  "tp_review_edit": "Изменить мой отзыв",
+  "tp_reviews_none": "Отзывов пока нет. Будьте первым.",
+  "tp_reviews_after_approval": "Отзывы можно оставить после проверки стоянки.",
+  "tp_review_hint": "О стоянке (необязательно)",
+  "tp_review_send": "Отправить",
+  "tp_review_stars_required": "Выберите звёзды (1–5)",
+  "tp_review_delete_q": "Удалить отзыв?",
+  "tp_delete": "Удалить",
+  "tp_photo_replace": "Заменить фото",
+  "tp_photos_hint": "Нажмите на миниатюру, чтобы заменить или удалить. До 10 фото.",
+  "tp_not_found": "Стоянка не найдена.",
+  "svc_add": "Добавить сервис"
 }

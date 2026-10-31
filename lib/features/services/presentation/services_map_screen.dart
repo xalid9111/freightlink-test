@@ -20,6 +20,7 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
+import '../../tirpark/presentation/tir_park_widgets.dart';
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
@@ -473,6 +474,12 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                       ),
                     ],
                   ),
+                  // "Parklar | Servislər" (owner, 31.10.2026): back to TIRPark.
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ParksServicesSwitch(parks: false, s: s, onParks: () => context.go('/tirpark'), onServices: () {}),
+                  ),
                   if (_searchFocus.hasFocus && _searchCtrl.text.trim().length >= 2)
                     TextFieldTapRegion(
                       child: _SearchSuggestions(
@@ -542,6 +549,20 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
               tooltip: s.t('svc_my_location'),
               highlighted: loc.state == GpsState.ok,
               onTap: () => _locate(),
+            ),
+          ),
+          // "Servis əlavə et" (owner, 31.10.2026): one's own service, or
+          // joining as a master / service centre (the existing flows).
+          Positioned(
+            right: 12,
+            bottom: MediaQuery.sizeOf(context).height * 0.30 + 72,
+            child: MapAddButton(
+              buttonKey: 'svc-add',
+              label: s.t('svc_add'),
+              onTap: () {
+                final id = ref.read(myServiceProvider).valueOrNull?.id;
+                context.pushOnce(id != null ? '/service/$id' : '/service-join');
+              },
             ),
           ),
           // Results sheet.

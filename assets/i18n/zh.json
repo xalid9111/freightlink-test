@@ -1591,5 +1591,20 @@
   "tp_am_lighting": "照明",
   "tp_am_camera": "监控",
   "tp_am_free": "免费",
-  "tp_am_paid": "收费"
+  "tp_am_paid": "收费",
+  "tp_reviews_short": "评论（{n}）",
+  "tp_reviews_n": "评论（{n}）",
+  "tp_write": "写评论",
+  "tp_review_edit": "修改我的评论",
+  "tp_reviews_none": "暂无评论，来写第一条吧。",
+  "tp_reviews_after_approval": "停车场通过审核后才能评论。",
+  "tp_review_hint": "关于停车场（可选）",
+  "tp_review_send": "提交",
+  "tp_review_stars_required": "请选择星级（1–5）",
+  "tp_review_delete_q": "删除评论？",
+  "tp_delete": "删除",
+  "tp_photo_replace": "更换图片",
+  "tp_photos_hint": "点击缩略图可更换或删除。最多10张。",
+  "tp_not_found": "未找到停车场。",
+  "svc_add": "添加服务"
 }

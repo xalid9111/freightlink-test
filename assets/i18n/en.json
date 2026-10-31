@@ -1591,5 +1591,20 @@
   "tp_am_lighting": "Lighting",
   "tp_am_camera": "CCTV",
   "tp_am_free": "Free",
-  "tp_am_paid": "Paid"
+  "tp_am_paid": "Paid",
+  "tp_reviews_short": "Comments ({n})",
+  "tp_reviews_n": "Comments ({n})",
+  "tp_write": "Write a comment",
+  "tp_review_edit": "Edit my comment",
+  "tp_reviews_none": "No comments yet. Be the first.",
+  "tp_reviews_after_approval": "Comments can be written once the park is approved.",
+  "tp_review_hint": "About the park (optional)",
+  "tp_review_send": "Send",
+  "tp_review_stars_required": "Choose the stars (1–5)",
+  "tp_review_delete_q": "Delete the comment?",
+  "tp_delete": "Delete",
+  "tp_photo_replace": "Replace the picture",
+  "tp_photos_hint": "Tap a small picture to replace or delete it. Up to 10 pictures.",
+  "tp_not_found": "Park not found.",
+  "svc_add": "Add a service"
 }

@@ -1591,5 +1591,20 @@
   "tp_am_lighting": "Aydınlatma",
   "tp_am_camera": "Kamera",
   "tp_am_free": "Ücretsiz",
-  "tp_am_paid": "Ücretli"
+  "tp_am_paid": "Ücretli",
+  "tp_reviews_short": "Yorumlar ({n})",
+  "tp_reviews_n": "Yorumlar ({n})",
+  "tp_write": "Yorum yaz",
+  "tp_review_edit": "Yorumumu değiştir",
+  "tp_reviews_none": "Henüz yorum yok. İlk yorumu siz yazın.",
+  "tp_reviews_after_approval": "Yorumlar park onaylandıktan sonra yazılır.",
+  "tp_review_hint": "Park hakkında yazın (isteğe bağlı)",
+  "tp_review_send": "Gönder",
+  "tp_review_stars_required": "Yıldız seçin (1–5)",
+  "tp_review_delete_q": "Yorum silinsin mi?",
+  "tp_delete": "Sil",
+  "tp_photo_replace": "Resmi değiştir",
+  "tp_photos_hint": "Değiştirmek veya silmek için küçük resme dokunun. En fazla 10 resim.",
+  "tp_not_found": "Park bulunamadı.",
+  "svc_add": "Servis ekle"
 }
