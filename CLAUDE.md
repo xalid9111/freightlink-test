@@ -98,7 +98,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   TIRPark). TIRPark (0077): parks on the map (approved = orange pin, own
   pending = grey), nearby list (100 km), "TIR parkı əlavə et" (place on
   the map, name, amenities; nearby parks shown first, closer than 60 m
-  refused); a user's park waits for admin approval (Admin → TIRPark). "Yük əlavə et" (orange +) is on the Loads
+  refused); a user's park waits for admin approval (Admin → TIRPark).
+  The "Parklar | Servislər" switch stands on both maps (fixed), with "TIR
+  parkı əlavə et" on TIRPark and "Servis əlavə et" on Servislər (owner,
+  31.10.2026). Park page (0078): pictures, rating, comments (one per user,
+  1–5 stars, approved parks); park pictures and the TIRPark banner (night /
+  day, GIF allowed, place, zoom, texts) are changed by admins only. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

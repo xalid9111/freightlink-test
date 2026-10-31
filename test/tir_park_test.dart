@@ -94,6 +94,24 @@ void main() {
     expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
   });
 
+  testWidgets('the switch: the chosen side is orange and does nothing; the other one goes there', (tester) async {
+    var went = '';
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Column(children: [
+          ParksServicesSwitch(parks: true, s: _az, onParks: () => went = 'p', onServices: () => went = 's'),
+          MapAddButton(buttonKey: 'x-add', label: 'Servis əlavə et', onTap: () => went = 'add'),
+        ]),
+      ),
+    ));
+    await tester.tap(find.byKey(const ValueKey('tp-tab-parks')));
+    expect(went, '', reason: 'already on parks');
+    await tester.tap(find.byKey(const ValueKey('tp-tab-services')));
+    expect(went, 's');
+    await tester.tap(find.byKey(const ValueKey('x-add')));
+    expect(went, 'add');
+  });
+
   testWidgets('adding: nearby parks are shown first; closer than 60 m cannot be sent', (tester) async {
     tester.view.physicalSize = const Size(390, 1400);
     tester.view.devicePixelRatio = 1;
@@ -134,9 +152,15 @@ void main() {
     expect(shell.contains("strings.t('nav_services'))"), isFalse);
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');
-    expect(router, contains("GoRoute(path: '/tirpark', builder: (context, state) => const TirParkScreen()),"));
+    expect(router, contains("path: '/tirpark',"));
+    expect(router, contains('builder: (context, state) => const TirParkScreen(),'));
     expect(router, contains("GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),"), reason: 'Servislər kept');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onServices: () => context.go('/services')"));
+    // The same switch on Servislər, back to the parks, and "Servis əlavə et" there (owner, 31.10.2026).
+    final svc = src('lib/features/services/presentation/services_map_screen.dart');
+    expect(svc, contains("ParksServicesSwitch(parks: false, s: s, onParks: () => context.go('/tirpark'), onServices: () {}),"));
+    expect(svc, contains("buttonKey: 'svc-add',"));
+    expect(svc, contains("context.pushOnce(id != null ? '/service/\$id' : '/service-join');"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));
     final sql = src('supabase/migrations/0077_tir_parks.sql').toLowerCase();
     for (final bad in ['drop table', 'truncate', 'delete from', 'alter table public.users', 'drop column']) {

@@ -6,8 +6,10 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../../../services/geo_service.dart';
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
@@ -255,7 +257,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: _ParksServicesSwitch(s: s, onServices: () => context.go('/services')),
+                    child: ParksServicesSwitch(parks: true, s: s, onParks: () {}, onServices: () => context.go('/services')),
                   ),
                 ]),
               ),
@@ -302,7 +304,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                           ]),
                         ]),
                       )
-                    : _AddButton(label: s.t('tp_add'), onTap: () => setState(() => _adding = true)),
+                    : MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: () => setState(() => _adding = true)),
               ),
               // Nearby parks.
               if (!_adding)
@@ -327,7 +329,15 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                         final (p, km) = list[i - 1];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: TirParkCard(park: p, km: km, s: s, selected: p.id == _selectedId, onTap: () => _select(p)),
+                          child: TirParkCard(
+                            park: p,
+                            km: km,
+                            s: s,
+                            selected: p.id == _selectedId,
+                            onTap: () => _select(p),
+                            onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
+                            onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
+                          ),
                         );
                       },
                     ),
@@ -358,50 +368,86 @@ class _NightTiles extends StatelessWidget {
 }
 
 /// "TIRPark — Yolda özünə uyğun park tap" with the owner's park photo.
-class _Banner extends StatelessWidget {
+/// An admin changes the picture (a GIF too), its place / zoom and the
+/// texts with the pencil — the same banner editor as Servislər and TIR
+/// Bazarı (page 'tirpark', 0078).
+class _Banner extends ConsumerWidget {
   final AppStrings s;
   const _Banner({required this.s});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bg = AppColors.background;
+    final hero = ref.watch(pageHeroProvider('tirpark')).valueOrNull;
+    final img = hero?.imageFor(day: AppColors.isDay);
+    final texts = img == null || (hero?.showText ?? true);
+    final admin = isAdminUser(ref);
     return SizedBox(
       height: 168,
       child: Stack(fit: StackFit.expand, children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: Image.asset('assets/images/tirpark/banner.jpg', fit: BoxFit.cover, alignment: const Alignment(0, -0.45), height: 168, width: 230),
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [bg, bg, bg.withValues(alpha: 0.55), bg.withValues(alpha: 0.0)],
-              stops: const [0, 0.42, 0.62, 0.85],
+        if (img != null)
+          PageHeroImage(
+            url: img,
+            align: hero!.alignmentFor(day: AppColors.isDay),
+            zoom: hero.zoomFor(day: AppColors.isDay),
+            fallback: (_) => const SizedBox.shrink(),
+          )
+        else
+          Align(
+            alignment: Alignment.centerRight,
+            child: Image.asset('assets/images/tirpark/banner.jpg',
+                fit: BoxFit.cover, alignment: const Alignment(0, -0.45), height: 168, width: 230),
+          ),
+        if (texts)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [bg, bg, bg.withValues(alpha: 0.55), bg.withValues(alpha: 0.0)],
+                stops: const [0, 0.42, 0.62, 0.85],
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 120, 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Row(children: [
-              Icon(Icons.local_shipping_outlined, color: AppColors.accent, size: 26),
-              const SizedBox(width: 6),
-              Text('TIR', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent)),
-              Text('Park', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
+        if (texts)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 120, 12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+              Row(children: [
+                Icon(Icons.local_shipping_outlined, color: AppColors.accent, size: 26),
+                const SizedBox(width: 6),
+                Text('TIR', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                Text('Park', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
+              ]),
+              const SizedBox(height: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(hero?.title ?? s.t('tp_title_1'),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.1)),
+              ),
+              Text(hero?.titleAccent ?? s.t('tp_title_2'),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent, height: 1.15)),
+              const SizedBox(height: 4),
+              Text(hero?.subtitle ?? s.t('tp_subtitle'),
+                  maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
             ]),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(s.t('tp_title_1'), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.1)),
+          ),
+        if (admin)
+          Positioned(
+            right: 10,
+            top: 10,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.55),
+              shape: const CircleBorder(),
+              child: IconButton(
+                key: const ValueKey('page-hero-edit-tirpark'),
+                tooltip: s.t('mk_hero_edit'),
+                icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 20),
+                onPressed: () => showPageHeroEditor(context, strings: s, page: 'tirpark', hero: hero, icon: Icons.local_parking),
+              ),
             ),
-            Text(s.t('tp_title_2'), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.accent, height: 1.15)),
-            const SizedBox(height: 4),
-            Text(s.t('tp_subtitle'), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-          ]),
-        ),
+          ),
       ]),
     );
   }
@@ -466,84 +512,7 @@ class _RoundButton extends StatelessWidget {
       );
 }
 
-/// "Parklar | Servislər": Servislər opens the services map (former tab).
-class _ParksServicesSwitch extends StatelessWidget {
-  final AppStrings s;
-  final VoidCallback onServices;
-  const _ParksServicesSwitch({required this.s, required this.onServices});
 
-  @override
-  Widget build(BuildContext context) {
-    Widget seg(String key, IconData icon, String label, bool on, VoidCallback? tap) => InkWell(
-          key: ValueKey(key),
-          borderRadius: BorderRadius.circular(20),
-          onTap: tap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: on ? AppColors.accentFill : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: on ? Colors.white : AppColors.text),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 13.5, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
-            ]),
-          ),
-        );
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), true, null),
-        seg('tp-tab-services', Icons.home_repair_service_outlined, s.t('nav_services'), false, onServices),
-      ]),
-    );
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _AddButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: const ValueKey('tp-add'),
-          borderRadius: BorderRadius.circular(30),
-          onTap: onTap,
-          // The label pill runs under the round + (owner's picture).
-          child: Stack(alignment: Alignment.centerRight, children: [
-            Container(
-              margin: const EdgeInsets.only(right: 30),
-              padding: const EdgeInsets.fromLTRB(16, 10, 30, 10),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Text(label, style: TextStyle(fontSize: 14.5, color: AppColors.text)),
-            ),
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.accentFill,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: AppColors.accentFill.withValues(alpha: 0.45), blurRadius: 12)],
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 30),
-            ),
-          ]),
-        ),
-      );
-}
 
 class _FilterSheet extends StatefulWidget {
   final Set<String> initial;

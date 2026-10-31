@@ -112,6 +112,8 @@ const kRpcMigration = <String, String>{
   'tir_parks_near': '0077_tir_parks.sql',
   'tir_park_add': '0077_tir_parks.sql',
   'admin_tir_park_set_status': '0077_tir_parks.sql',
+  'tir_park_reviews_list': '0078_tir_park_reviews_photos.sql',
+  'tir_park_set_photos': '0078_tir_park_reviews_photos.sql',
   'admin_night_themes': '0076_night_theme.sql',
   'admin_night_theme_save': '0076_night_theme.sql',
   'admin_night_theme_delete': '0076_night_theme.sql',

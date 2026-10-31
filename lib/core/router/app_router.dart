@@ -42,6 +42,7 @@ import '../../features/jobs/presentation/job_seeker_form.dart';
 import '../../features/jobs/presentation/job_vacancy_form.dart';
 import 'password_recovery.dart';
 import '../../features/finance/presentation/finance_screen.dart';
+import '../../features/tirpark/presentation/tir_park_detail_screen.dart';
 import '../../features/tirpark/presentation/tir_park_screen.dart';
 import '../widgets/deferred_page.dart';
 import '../../features/market/presentation/market_module.dart' deferred as market;
@@ -404,7 +405,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           // Branch 5 — TIRPark (owner, 31.10.2026; was the Services tab).
           // Servislər stays in the same tab, opened from TIRPark.
           StatefulShellBranch(routes: [
-            GoRoute(path: '/tirpark', builder: (context, state) => const TirParkScreen()),
+            GoRoute(
+              path: '/tirpark',
+              builder: (context, state) => const TirParkScreen(),
+              routes: [
+                // One park: pictures, rating, comments (TIRPark PR 2, 0078).
+                GoRoute(
+                  path: 'p/:id',
+                  builder: (context, state) => TirParkDetailScreen(
+                    parkId: state.pathParameters['id']!,
+                    write: state.uri.queryParameters['write'] == '1',
+                  ),
+                ),
+              ],
+            ),
             GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),
           ]),
           // Branch 6 — TIR Bazarı: a separate part of the app, downloaded

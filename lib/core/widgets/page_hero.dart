@@ -10,6 +10,7 @@ import '../config/supabase_config.dart';
 import '../constants/app_constants.dart';
 import '../localization/app_strings.dart';
 import '../theme/app_theme.dart';
+import '../utils/gif.dart';
 
 /// Banner at the top of a page (owner, 21.10.2026): TIR Bazarı ('market',
 /// table market_hero, 0044) and Servislər ('services', services_hero,
@@ -102,7 +103,8 @@ class PageHeroImage extends StatelessWidget {
       );
 }
 
-const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero'};
+/// TIRPark's banner too (owner, 31.10.2026, 0078).
+const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero', 'tirpark': 'tirpark_hero'};
 
 class PageHeroRepository {
   SupabaseClient get _c => SupabaseConfig.client;
@@ -160,7 +162,7 @@ class PageHeroRepository {
         .from('market-photos')
         .uploadBinary(path, bytes,
             fileOptions:
-                FileOptions(contentType: e == 'png' ? 'image/png' : (e == 'webp' ? 'image/webp' : 'image/jpeg')))
+                FileOptions(contentType: switch (e) { 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif', _ => 'image/jpeg' }))
         .timeout(const Duration(minutes: 2));
     return _c.storage.from('market-photos').getPublicUrl(path);
   }
@@ -378,7 +380,12 @@ class _PageHeroEditDialogState extends ConsumerState<PageHeroEditDialog> {
     });
     try {
       final bytes = await f.readAsBytes();
-      final ext = f.name.contains('.') ? f.name.split('.').last : 'jpg';
+      // A GIF stays a GIF (animated) whatever the file name says (owner, 31.10.2026).
+      final ext = isGifBytes(bytes) ? 'gif' : (f.name.contains('.') ? f.name.split('.').last : 'jpg');
+      if (bytes.length > kGifMaxBytes) {
+        if (mounted) setState(() => _error = 'profile_gif_too_big');
+        return;
+      }
       final url = await ref.read(pageHeroRepositoryProvider).upload(bytes, ext);
       // A new picture starts centred.
       if (mounted) {

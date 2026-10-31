@@ -105,7 +105,10 @@ class TirParkCard extends StatelessWidget {
   final AppStrings s;
   final bool selected;
   final VoidCallback onTap;
-  const TirParkCard({super.key, required this.park, required this.km, required this.s, required this.onTap, this.selected = false});
+  /// "Şərhlər (n) ›" and "Şərh yaz" (owner's picture; null = not shown).
+  final VoidCallback? onReviews, onWrite;
+  const TirParkCard(
+      {super.key, required this.park, required this.km, required this.s, required this.onTap, this.selected = false, this.onReviews, this.onWrite});
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +187,45 @@ class TirParkCard extends StatelessWidget {
                       ),
                   ]),
                 ],
+                if (onReviews != null) ...[
+                  const SizedBox(height: 8),
+                  Divider(height: 1, color: AppColors.line),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Expanded(
+                      child: InkWell(
+                        key: ValueKey('tp-reviews-${park.id}'),
+                        onTap: onReviews,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(children: [
+                            Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.textSoft),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(s.t('tp_reviews_short', {'n': '${park.ratingCount}'}),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13.5, color: AppColors.text)),
+                            ),
+                            Icon(Icons.chevron_right, size: 18, color: AppColors.textSoft),
+                          ]),
+                        ),
+                      ),
+                    ),
+                    if (onWrite != null && park.isApproved)
+                      OutlinedButton.icon(
+                        key: ValueKey('tp-write-${park.id}'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.accent,
+                          side: BorderSide(color: AppColors.accent),
+                          minimumSize: const Size(0, 36),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: onWrite,
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: Text(s.t('tp_write'), style: const TextStyle(fontSize: 13)),
+                      ),
+                  ]),
+                ],
               ]),
             ),
           ]),
@@ -191,4 +233,83 @@ class TirParkCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Parklar | Servislər" (owner, 31.10.2026): the same switch on the
+/// TIRPark map and on the Servislər map, so either one is one tap away.
+class ParksServicesSwitch extends StatelessWidget {
+  final bool parks;
+  final AppStrings s;
+  final VoidCallback onParks, onServices;
+  const ParksServicesSwitch({super.key, required this.parks, required this.s, required this.onParks, required this.onServices});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget seg(String key, IconData icon, String label, bool on, VoidCallback tap) => InkWell(
+          key: ValueKey(key),
+          borderRadius: BorderRadius.circular(20),
+          onTap: on ? null : tap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(color: on ? AppColors.accentFill : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 16, color: on ? Colors.white : AppColors.text),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(fontSize: 13.5, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+            ]),
+          ),
+        );
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.card.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), parks, onParks),
+        seg('tp-tab-services', Icons.home_repair_service_outlined, s.t('nav_services'), !parks, onServices),
+      ]),
+    );
+  }
+}
+
+/// "… əlavə et +" on a map: a label pill running under a round orange +.
+class MapAddButton extends StatelessWidget {
+  final String label, buttonKey;
+  final VoidCallback onTap;
+  const MapAddButton({super.key, required this.label, required this.buttonKey, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: ValueKey(buttonKey),
+          borderRadius: BorderRadius.circular(30),
+          onTap: onTap,
+          child: Stack(alignment: Alignment.centerRight, children: [
+            Container(
+              margin: const EdgeInsets.only(right: 30),
+              padding: const EdgeInsets.fromLTRB(16, 10, 30, 10),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Text(label, style: TextStyle(fontSize: 14.5, color: AppColors.text)),
+            ),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.accentFill,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: AppColors.accentFill.withValues(alpha: 0.45), blurRadius: 12)],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 30),
+            ),
+          ]),
+        ),
+      );
 }

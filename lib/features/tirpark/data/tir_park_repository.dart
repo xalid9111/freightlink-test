@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,7 +31,7 @@ class TirParkRepository {
       return await f();
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST205' || e.code == '42P01' || e.code == 'PGRST202' || e.code == '42883') throw const TirParkNotReady();
-      for (final r in ['duplicate_nearby', 'too_many', 'blocked', 'admin_only']) {
+      for (final r in ['duplicate_nearby', 'too_many', 'blocked', 'admin_only', 'not_allowed', 'invalid_url']) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
       rethrow;
@@ -74,6 +76,44 @@ class TirParkRepository {
         return '$id';
       });
 
+  /// Comments of a park, newest first (0078).
+  Future<List<TirParkReview>> reviews(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_reviews_list', params: {'p_park': parkId}).timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirParkReview.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  /// Writes or changes my comment on the park (one per user and park).
+  Future<void> saveReview(String parkId, int rating, String? comment) => _run(() async {
+        final me = _c.auth.currentUser?.id;
+        if (me == null) throw StateError('not signed in');
+        final text = (comment ?? '').trim().isEmpty ? null : comment!.trim();
+        final mine = await _c.from('tir_park_reviews').select('id').eq('park_id', parkId).eq('user_id', me).maybeSingle().timeout(_timeout);
+        if (mine == null) {
+          await _c.from('tir_park_reviews').insert({'park_id': parkId, 'rating': rating, 'comment': text}).timeout(_timeout);
+        } else {
+          await _c.from('tir_park_reviews').update({'rating': rating, 'comment': text}).eq('id', mine['id']).timeout(_timeout);
+        }
+      });
+
+  /// My comment (or, for an admin, any comment).
+  Future<void> deleteReview(String id) => _run(() => _c.from('tir_park_reviews').delete().eq('id', id).timeout(_timeout));
+
+  /// A picture into my own folder of the profile-media bucket (0031);
+  /// returns its public link.
+  Future<String> uploadPhoto(String parkId, Uint8List bytes, {String? contentType}) => _run(() async {
+        final me = _c.auth.currentUser?.id;
+        if (me == null) throw StateError('not signed in');
+        final ext = switch (contentType) { 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp', _ => 'jpg' };
+        final path = '$me/tirpark/$parkId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+        await _c.storage.from('profile-media').uploadBinary(path, bytes,
+            fileOptions: FileOptions(upsert: true, contentType: contentType ?? 'image/jpeg'));
+        return _c.storage.from('profile-media').getPublicUrl(path);
+      });
+
+  /// The park's pictures, in order (author or admin; 0078).
+  Future<void> setPhotos(String parkId, List<String> urls) =>
+      _run(() => _c.rpc('tir_park_set_photos', params: {'p_park': parkId, 'p_urls': urls}).timeout(_timeout));
+
   Future<void> setStatus(String id, String status) =>
       _run(() => _c.rpc('admin_tir_park_set_status', params: {'p_id': id, 'p_status': status}).timeout(_timeout));
 }
@@ -86,3 +126,6 @@ final tirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) {
 });
 
 final adminTirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) => ref.watch(tirParkRepositoryProvider).adminParks());
+
+final tirParkReviewsProvider = FutureProvider.autoDispose.family<List<TirParkReview>, String>(
+    (ref, parkId) => ref.watch(tirParkRepositoryProvider).reviews(parkId));
