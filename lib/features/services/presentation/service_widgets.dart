@@ -310,3 +310,56 @@ class ServiceLegend extends StatelessWidget {
     );
   }
 }
+
+/// Under a selected service on the map (owner, 01.11.2026 — like a park):
+/// "Şərhlər (n) ›" opens its page, "Şərh yaz" opens the stars + comment
+/// form there. The owner of the service does not review it (server rule).
+class ServiceReviewRow extends ConsumerWidget {
+  final ServiceProvider p;
+  final AppStrings s;
+  const ServiceReviewRow({super.key, required this.p, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(currentUserIdProvider);
+    final own = p.ownerId != null && p.ownerId == me;
+    return Row(children: [
+      Expanded(
+        child: InkWell(
+          key: ValueKey('svc-reviews-${p.id}'),
+          onTap: () => context.pushOnce('/service/${p.id}'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              if (p.ratingCount > 0) ...[
+                Icon(Icons.star_rounded, size: 18, color: AppColors.promoPremium),
+                const SizedBox(width: 2),
+                Text(p.ratingAvg.toStringAsFixed(1), style: TextStyle(fontSize: 13.5, color: AppColors.text)),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Text(s.t('tp_reviews_short', {'n': '${p.ratingCount}'}),
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13.5, color: AppColors.text)),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: AppColors.textSoft),
+            ]),
+          ),
+        ),
+      ),
+      if (!own && me != null)
+        OutlinedButton.icon(
+          key: ValueKey('svc-write-${p.id}'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.accent,
+            side: BorderSide(color: AppColors.accent),
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            visualDensity: VisualDensity.compact,
+          ),
+          onPressed: () => context.pushOnce('/service/${p.id}?write=1'),
+          icon: const Icon(Icons.edit_outlined, size: 16),
+          label: Text(s.t('tp_write'), style: const TextStyle(fontSize: 13)),
+        ),
+    ]);
+  }
+}
