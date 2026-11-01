@@ -335,3 +335,61 @@ class AboveSheet extends StatelessWidget {
         ),
       );
 }
+
+/// The title row of a sheet with a close (X) button (owner, 01.11.2026:
+/// every opened sheet can be left without doing anything — X, a swipe
+/// down on the handle, or a tap outside).
+class SheetTitle extends StatelessWidget {
+  final String title, closeKey;
+  final AppStrings s;
+  final TextStyle? style;
+  const SheetTitle({super.key, required this.title, required this.s, required this.closeKey, this.style});
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Expanded(
+          child: Text(title, style: style ?? TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+        ),
+        IconButton(
+          key: ValueKey(closeKey),
+          tooltip: s.t('nav_sheet_cancel'),
+          visualDensity: VisualDensity.compact,
+          icon: Icon(Icons.close, color: AppColors.textSoft),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ]);
+}
+
+/// A page opened from TIRPark closes with a swipe from the left edge to the
+/// right, the way it came (owner, 01.11.2026); the back arrow stays.
+class EdgeSwipeBack extends StatefulWidget {
+  final Widget child;
+  const EdgeSwipeBack({super.key, required this.child});
+
+  @override
+  State<EdgeSwipeBack> createState() => _EdgeSwipeBackState();
+}
+
+class _EdgeSwipeBackState extends State<EdgeSwipeBack> {
+  double _dx = 0;
+
+  @override
+  Widget build(BuildContext context) => Stack(children: [
+        widget.child,
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 24,
+          child: GestureDetector(
+            key: const ValueKey('edge-swipe-back'),
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: (_) => _dx = 0,
+            onHorizontalDragUpdate: (d) => _dx += d.delta.dx,
+            onHorizontalDragEnd: (d) {
+              if (_dx > 80 || (d.primaryVelocity ?? 0) > 400) Navigator.of(context).maybePop();
+            },
+          ),
+        ),
+      ]);
+}

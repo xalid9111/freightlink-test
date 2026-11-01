@@ -99,7 +99,7 @@ class _TirParkAddSheetState extends ConsumerState<TirParkAddSheet> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-            Text(s.t('tp_add_title'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+            SheetTitle(title: s.t('tp_add_title'), s: s, closeKey: 'tp-add-close'),
             const SizedBox(height: 4),
             Text('${widget.lat.toStringAsFixed(5)}, ${widget.lng.toStringAsFixed(5)}',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),

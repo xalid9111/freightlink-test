@@ -204,6 +204,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => _FilterSheet(query: _query, s: s),
     );
     if (res != null && mounted) setState(() => _query = res);
@@ -1231,12 +1232,12 @@ class _FilterSheetState extends State<_FilterSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(s.t('svc_filters'), style: Theme.of(context).textTheme.titleMedium),
+            SheetTitle(title: s.t('svc_filters'), s: s, closeKey: 'svc-filter-close', style: Theme.of(context).textTheme.titleMedium),
             title('svc_filter_name'),
             TextField(
               controller: _text,

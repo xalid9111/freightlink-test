@@ -106,6 +106,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final picked = await showModalBottomSheet<Set<String>>(
       context: context,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => _FilterSheet(initial: _needs, s: s),
     );
     if (picked != null) setState(() => _needs = picked);
@@ -117,6 +118,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => TirParkAddSheet(lat: c.latitude, lng: c.longitude, s: s),
     );
     if (!mounted) return;
@@ -143,7 +145,13 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final list = nearbyParks(parks, from.latitude, from.longitude, radiusKm: kTirParkRadiusKm, query: _query, needs: _needs);
     final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
 
-    return Scaffold(
+    // While a place is being chosen, "back" leaves that mode first.
+    return PopScope(
+      canPop: !_adding,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _adding) setState(() => _adding = false);
+      },
+      child: Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(children: [
@@ -358,6 +366,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
           ),
         ]),
       ),
+    ),
     );
   }
 }
@@ -442,7 +451,7 @@ class _FilterSheetState extends State<_FilterSheet> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(s.t('tp_filter'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+          SheetTitle(title: s.t('tp_filter'), s: s, closeKey: 'tp-filter-close'),
           const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final a in kTirParkAmenities)

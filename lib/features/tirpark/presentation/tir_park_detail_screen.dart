@@ -40,6 +40,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => _ReviewSheet(park: park, mine: mine, s: s),
     );
     if (saved == true) {
@@ -114,6 +115,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
   Future<void> _photoMenu(TirPark park, int i, AppStrings s) async {
     final pick = await showModalBottomSheet<String>(
       context: context,
+      showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
@@ -167,7 +169,9 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
       });
     }
 
-    return Scaffold(
+    // Closes with a swipe from the left edge too (owner, 01.11.2026).
+    return EdgeSwipeBack(
+      child: Scaffold(
       appBar: AppBar(title: Text(park?.name ?? s.t('tp_parks'), maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: park == null
           ? Center(
@@ -246,6 +250,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                     ),
               ],
             ),
+      ),
     );
   }
 }
@@ -430,7 +435,8 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(widget.park.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+            SheetTitle(title: widget.park.name, s: s, closeKey: 'tp-review-close',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
             const SizedBox(height: 10),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               for (var i = 1; i <= 5; i++)
