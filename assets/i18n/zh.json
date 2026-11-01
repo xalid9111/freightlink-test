@@ -1606,5 +1606,10 @@
   "tp_photo_replace": "更换图片",
   "tp_photos_hint": "点击缩略图可更换或删除。最多10张。",
   "tp_not_found": "未找到停车场。",
-  "svc_add": "添加服务"
+  "svc_add": "添加服务",
+  "nav_here_no_dest": "此链接没有坐标，无法传给 HERE。请选择“打开链接”。",
+  "nav_here_no_start": "没有起点：链接中没有，GPS 也未开启。请开启 GPS 或选择“打开链接”。",
+  "nav_here_failed": "HERE WeGo 未能打开。请选择“打开链接”。",
+  "nav_here_ready": "路线已准备好。",
+  "nav_here_open": "在 HERE 中打开"
 }

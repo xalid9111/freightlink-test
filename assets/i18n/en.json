@@ -1606,5 +1606,10 @@
   "tp_photo_replace": "Replace the picture",
   "tp_photos_hint": "Tap a small picture to replace or delete it. Up to 10 pictures.",
   "tp_not_found": "Park not found.",
-  "svc_add": "Add a service"
+  "svc_add": "Add a service",
+  "nav_here_no_dest": "This link has no coordinates — it cannot be passed to HERE. Choose \"Open link\".",
+  "nav_here_no_start": "No start point: the link has none and GPS is off. Turn on GPS or choose \"Open link\".",
+  "nav_here_failed": "HERE WeGo did not open. Choose \"Open link\".",
+  "nav_here_ready": "The route is ready.",
+  "nav_here_open": "Open in HERE"
 }
