@@ -40,6 +40,11 @@ select tests.check((select status = 'approved' and manager_status = 'approved' f
   'M6 the admin approves the manager (and the new park)');
 reset role;
 select tests.check(exists (select 1 from public.admin_audit_log where action = 'tir_park.manager_approved'), 'M7 logged');
+-- Since 0080 a park opens for booking only with its payment details.
+set role authenticated;
+select tests.login(:manager);
+select public.tir_park_set_pay_details((select id from ids where k='p'), 'Utep MMC', 'Kapital Bank', 'AZ21NABZ00000000137010001944', null, null);
+reset role;
 
 -- ---- booking: price and the last space ---------------------------------------
 set role authenticated;
@@ -81,13 +86,11 @@ reset role;
 update public.payment_settings set mode = 'live' where id = 1;
 set role authenticated;
 select tests.login(:driver);
-create temp table t_live as select * from public.tir_park_booking_payment_create((select id from ids where k='b1'), 'card', 'tpbook-live-01');
-select tests.check((select amount = 15 and commission = 0 and tir_park_booking_id = (select id from ids where k='b1') from t_live),
-  'P2 amount from the booking; no commission set');
-select tests.check((select id from public.tir_park_booking_payment_create((select id from ids where k='b1'), 'card', 'tpbook-live-01')) = (select id from t_live),
-  'P3 the same key = the same payment');
+-- 0080: FreightLink takes no money for parks — the card checkout stays closed even in LIVE.
+select tests.check(tests.err($$ select public.tir_park_booking_payment_create((select id from ids where k='b1'), 'card', 'tpbook-live-01') $$)
+  like '%payments_disabled%', 'P2 no card checkout for bookings, even in live mode (0080)');
+select tests.check((select count(*) = 0 from public.ad_payments where idempotency_key = 'tpbook-live-01'), 'P3 …no payment row made');
 reset role;
-delete from public.ad_payments where idempotency_key = 'tpbook-live-01';
 update public.payment_settings set mode = 'test' where id = 1;
 insert into public.ad_payments (tir_park_booking_id, user_id, amount, currency, method, provider, mode, idempotency_key)
 select id, :driver, amount, currency, 'card', 'test', 'test', 'tpbook-b1-001' from public.tir_park_bookings where id = (select id from ids where k='b1');

@@ -109,11 +109,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   capacity, bookable now, price per hour / day, hours, services; managing
   only after an admin approves it in Admin → TIRPark) and "Park
   rezervasiyalarım". Drivers book on the park page (free places counted
-  on the server with the park row locked; 15-minute hold; existing card
-  checkout; only the verified webhook confirms; 8-character one-time
-  entry code checked by the park's manager / admin). TEST payments stay
-  test (finance owner only, marked TEST); no commission, no payouts and no
-  card / bank data in FreightLink until a real provider is connected. "Yük əlavə et" (orange +) is on the Loads
+  on the server with the park row locked; 8-character one-time entry
+  code + QR checked by the park's manager / admin). Payment (owner,
+  01.11.2026, 0080): direct bank transfer to the park — the manager
+  enters the park's own details (holder, bank, IBAN / account, card
+  number; never CVV / PIN), shown to a driver only after he books (60-
+  minute hold); the driver uploads the receipt → "Ödəniş yoxlanılır";
+  the manager presses "Ödənişi təsdiqlə" → booking number + code / QR.
+  FreightLink takes no money, asks no card data from drivers, no card
+  checkout for bookings. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

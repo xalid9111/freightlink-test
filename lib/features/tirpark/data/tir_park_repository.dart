@@ -38,6 +38,8 @@ class TirParkRepository {
         // 0079: booking and managing.
         'no_space', 'not_bookable', 'invalid_time', 'own_park', 'already_managed', 'already_used', 'not_valid', 'not_in_time',
         'not_checked_in', 'not_cancellable', 'not_paid', 'invalid_argument', 'not_found',
+        // 0080: direct transfer.
+        'not_payable', 'not_in_review', 'invalid_path',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -240,6 +242,51 @@ class TirParkRepository {
         return [for (final r in rows as List) TirParkBooking.fromJson(Map<String, dynamic>.from(r as Map))];
       });
 
+  // ---- Direct bank transfer to the park (0080) ------------------------------
+  /// The manager's own details (null = not entered yet).
+  Future<TirParkPayDetails?> payDetails(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_get_pay_details', params: {'p_park': parkId}).timeout(_timeout);
+        return res == null ? null : TirParkPayDetails.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<void> setPayDetails(String parkId,
+          {required String holder, String? bank, String? account, String? card, String? note}) =>
+      _run(() => _c.rpc('tir_park_set_pay_details', params: {
+            'p_park': parkId,
+            'p_holder': holder,
+            'p_bank': bank,
+            'p_account': account,
+            'p_card': card,
+            'p_note': note,
+          }).timeout(_timeout));
+
+  /// Where the driver pays for his booking (his own booking only).
+  Future<TirParkPayDetails?> bookingPayDetails(String bookingId) => _run(() async {
+        final res = await _c.rpc('tir_park_booking_pay_details', params: {'p_booking': bookingId}).timeout(_timeout);
+        return res == null ? null : TirParkPayDetails.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  /// The receipt picture into the private bucket (own folder), then the
+  /// booking becomes "Ödəniş yoxlanılır".
+  Future<void> uploadReceipt(String bookingId, Uint8List bytes, {String? contentType}) => _run(() async {
+        final me = _c.auth.currentUser?.id;
+        if (me == null) throw StateError('not signed in');
+        final ext = switch (contentType) { 'image/png' => 'png', 'image/webp' => 'webp', 'image/heic' => 'heic', _ => 'jpg' };
+        final path = '$me/$bookingId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+        await _c.storage.from('tirpark-receipts').uploadBinary(path, bytes,
+            fileOptions: FileOptions(upsert: false, contentType: contentType ?? 'image/jpeg'));
+        await _c.rpc('tir_park_booking_receipt', params: {'p_booking': bookingId, 'p_path': path}).timeout(_timeout);
+      });
+
+  /// A short-lived link to look at a receipt (driver, the park's manager, admin).
+  Future<String> receiptUrl(String path) => _c.storage.from('tirpark-receipts').createSignedUrl(path, 60 * 30);
+
+  Future<void> confirmPayment(String bookingId) =>
+      _run(() => _c.rpc('tir_park_booking_confirm_payment', params: {'p_booking': bookingId}).timeout(_timeout));
+
+  Future<void> rejectPayment(String bookingId, String? note) =>
+      _run(() => _c.rpc('tir_park_booking_reject_payment', params: {'p_booking': bookingId, 'p_note': note}).timeout(_timeout));
+
   // Admin.
   Future<void> adminManagerSet(String parkId, String status) =>
       _run(() => _c.rpc('admin_tir_park_manager_set', params: {'p_park': parkId, 'p_status': status}).timeout(_timeout));
@@ -280,3 +327,6 @@ final managerBookingsProvider =
 
 final adminParkBookingsProvider =
     FutureProvider.autoDispose.family<List<TirParkBooking>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).adminBookings(parkId));
+
+final parkPayDetailsProvider =
+    FutureProvider.autoDispose.family<TirParkPayDetails?, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).payDetails(parkId));

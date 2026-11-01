@@ -103,14 +103,19 @@ class TirParkBooking {
   final DateTime startAt, endAt;
   final double amount;
   final String currency;
-  /// pending_payment · confirmed · checked_in · completed · cancelled ·
-  /// expired (refund_pending / refunded are reserved, never set today).
+  /// pending_payment · payment_review ("Ödəniş yoxlanılır", 0080) ·
+  /// confirmed · checked_in · completed · cancelled · expired
+  /// (refund_pending / refunded are reserved, never set today).
   final String status;
   final DateTime? holdUntil;
   final String? paidMode; // test | live
   final String? code; // the driver's own bookings only
   final String? driver; // the manager's list
   final DateTime? checkedInAt, checkedOutAt;
+  /// Direct transfer (0080): the receipt picture and the manager's note
+  /// when he did not find the money.
+  final String? receiptPath;
+  final String? rejectNote;
 
   const TirParkBooking({
     required this.id,
@@ -130,6 +135,8 @@ class TirParkBooking {
     this.driver,
     this.checkedInAt,
     this.checkedOutAt,
+    this.receiptPath,
+    this.rejectNote,
   });
 
   /// A payment hold whose time is over counts as expired (the server frees it).
@@ -155,6 +162,8 @@ class TirParkBooking {
       driver: j['driver'] as String?,
       checkedInAt: t(j['checked_in_at']),
       checkedOutAt: t(j['checked_out_at']),
+      receiptPath: j['receipt_path'] as String?,
+      rejectNote: j['reject_note'] as String?,
     );
   }
 }
@@ -242,3 +251,39 @@ class TirParkReview {
 
 /// At most this many pictures per park (the server checks the same).
 const kTirParkMaxPhotos = 10;
+
+/// The park's own payment details (0080): the manager enters them; a driver
+/// sees them only for his own booking, after booking.
+class TirParkPayDetails {
+  final String holder;
+  final String? bank, account, card, note;
+  // For a booking: what to pay.
+  final double? amount;
+  final String currency;
+  final String? bookingNo;
+  final DateTime? holdUntil;
+
+  const TirParkPayDetails({
+    required this.holder,
+    this.bank,
+    this.account,
+    this.card,
+    this.note,
+    this.amount,
+    this.currency = 'AZN',
+    this.bookingNo,
+    this.holdUntil,
+  });
+
+  factory TirParkPayDetails.fromJson(Map<String, dynamic> j) => TirParkPayDetails(
+        holder: '${j['holder'] ?? ''}',
+        bank: j['bank'] as String?,
+        account: j['account'] as String?,
+        card: j['card'] as String?,
+        note: j['note'] as String?,
+        amount: j['amount'] == null ? null : double.tryParse('${j['amount']}'),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        bookingNo: j['booking_no'] as String?,
+        holdUntil: j['hold_until'] == null ? null : DateTime.tryParse('${j['hold_until']}')?.toLocal(),
+      );
+}
