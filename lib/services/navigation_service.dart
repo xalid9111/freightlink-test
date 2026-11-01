@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform, visibleForTesting;
 import 'package:url_launcher/url_launcher.dart';
+
+import 'app_link_stub.dart' if (dart.library.js_interop) 'app_link_web.dart' as app_link;
 
 /// Opens an EXTERNAL navigation app for a pickup/destination point
 /// (brief §10). This deliberately does not build any in-app routing —
@@ -37,7 +39,7 @@ class NavigationService {
     return apps;
   }
 
-  Uri _uriFor(NavApp app, {required double lat, required double lng, String? label}) {
+  Uri? _uriFor(NavApp app, {required double lat, required double lng, String? label}) {
     switch (app) {
       case NavApp.googleMaps:
         // Universal link: opens the Google Maps app if installed (iOS
@@ -55,22 +57,39 @@ class NavigationService {
         // otherwise shows the route on Waze's web map — never an error.
         return Uri.parse('https://www.waze.com/live-map/directions?to=ll.${lat.toStringAsFixed(6)}%2C${lng.toStringAsFixed(6)}&navigate=yes');
       case NavApp.sygic:
-        // Sygic's documented app scheme (longitude FIRST). Works when the
-        // Sygic app is installed; otherwise launch returns false.
-        return Uri.parse('com.sygic.aura://coordinate%7C$lng%7C$lat%7Cdrive');
+        // Sygic has no web map: the app link below is the only way.
+        return null;
     }
   }
+
+  /// The app's own link (owner, 01.11.2026: Waze and Sygic must open the
+  /// app directly). Sygic: documented scheme, longitude FIRST, plain "|".
+  @visibleForTesting
+  String? appLinkFor(NavApp app, {required double lat, required double lng}) => switch (app) {
+        NavApp.waze => 'waze://?ll=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}&navigate=yes',
+        NavApp.sygic => 'com.sygic.aura://coordinate|${lng.toStringAsFixed(6)}|${lat.toStringAsFixed(6)}|drive',
+        _ => null,
+      };
+
+  @visibleForTesting
+  Uri? webLinkFor(NavApp app, {required double lat, required double lng, String? label}) => _uriFor(app, lat: lat, lng: lng, label: label);
 
   /// Launches the chosen app. Returns false if nothing could handle the
   /// link (e.g. no browser/map app at all) so the caller can show a
   /// fallback message instead of failing silently.
+  /// Waze / Sygic: the app itself first; when it does not open, Waze's
+  /// web map (no error page), Sygic → false (the caller says it is not
+  /// installed). Google / Apple Maps: their links open the app themselves.
   Future<bool> startNavigation(
     NavApp app, {
     required double lat,
     required double lng,
     String? label,
-  }) {
+  }) async {
+    final appLink = appLinkFor(app, lat: lat, lng: lng);
+    if (appLink != null && await app_link.openAppLink(appLink)) return true;
     final uri = _uriFor(app, lat: lat, lng: lng, label: label);
+    if (uri == null) return false;
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
