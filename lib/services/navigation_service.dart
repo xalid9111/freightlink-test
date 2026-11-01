@@ -57,19 +57,22 @@ class NavigationService {
         // otherwise shows the route on Waze's web map — never an error.
         return Uri.parse('https://www.waze.com/live-map/directions?to=ll.${lat.toStringAsFixed(6)}%2C${lng.toStringAsFixed(6)}&navigate=yes');
       case NavApp.sygic:
-        // Sygic's universal link (what Sygic support gives in place of the
-        // old com.sygic.aura:// scheme, which iPhone Safari refused —
-        // owner, 01.11.2026: "Sygic açılmadı" while it was installed). It
-        // opens the Sygic app when installed, otherwise Sygic's page.
-        return Uri.parse('https://go.sygic.com/directions?to=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}');
+        // Sygic's documented consumer universal link (the place, with its
+        // "Get directions"); used only when the app link below did not open
+        // the app. "/directions" is not one of them — it led to sygic.com
+        // (owner, 01.11.2026).
+        return Uri.parse('https://go.sygic.com/place?coordinates=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}');
     }
   }
 
-  /// The app's own link (owner, 01.11.2026: Waze must open the app
-  /// directly). Sygic opens through its universal link instead (above).
+  /// The app's own link, tried first (owner, 01.11.2026: Waze and Sygic
+  /// must open the app directly, with the route).
   @visibleForTesting
   String? appLinkFor(NavApp app, {required double lat, required double lng}) => switch (app) {
         NavApp.waze => 'waze://?ll=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}&navigate=yes',
+        // Sygic's app scheme (longitude FIRST). iPhone Safari takes it only
+        // with the "|" written as %7C (the plain "|" was refused).
+        NavApp.sygic => 'com.sygic.aura://coordinate%7C${lng.toStringAsFixed(6)}%7C${lat.toStringAsFixed(6)}%7Cdrive',
         _ => null,
       };
 
@@ -79,9 +82,9 @@ class NavigationService {
   /// Launches the chosen app. Returns false if nothing could handle the
   /// link (e.g. no browser/map app at all) so the caller can show a
   /// fallback message instead of failing silently.
-  /// Waze: the app itself first; when it does not open, Waze's web map (no
-  /// error page). Google / Apple Maps and Sygic: their https links open the
-  /// app themselves (universal links).
+  /// Waze / Sygic: the app itself first; when it does not open, Waze's web
+  /// map / Sygic's place link. Google / Apple Maps: their https links open
+  /// the app themselves (universal links).
   Future<bool> startNavigation(
     NavApp app, {
     required double lat,
