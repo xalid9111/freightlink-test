@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../services/geo_service.dart';
+import '../../services/presentation/services_providers.dart' show fmtKm;
 import '../domain/tir_park.dart';
 
 /// Icon of an amenity (labels: `tp_am_<code>` in the six languages).
@@ -107,8 +109,19 @@ class TirParkCard extends StatelessWidget {
   final VoidCallback onTap;
   /// "Şərhlər (n) ›" and "Şərh yaz" (owner's picture; null = not shown).
   final VoidCallback? onReviews, onWrite;
+  /// Shown under the park while it is selected: the way there (owner,
+  /// 01.11.2026 — like Servislər).
+  final Widget? footer;
   const TirParkCard(
-      {super.key, required this.park, required this.km, required this.s, required this.onTap, this.selected = false, this.onReviews, this.onWrite});
+      {super.key,
+      required this.park,
+      required this.km,
+      required this.s,
+      required this.onTap,
+      this.selected = false,
+      this.onReviews,
+      this.onWrite,
+      this.footer});
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +199,10 @@ class TirParkCard extends StatelessWidget {
                         child: Text('+${park.amenities.length - 3}', style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                       ),
                   ]),
+                ],
+                if (selected && footer != null) ...[
+                  const SizedBox(height: 8),
+                  footer!,
                 ],
                 if (onReviews != null) ...[
                   const SizedBox(height: 8),
@@ -392,4 +409,55 @@ class _EdgeSwipeBackState extends State<EdgeSwipeBack> {
           ),
         ),
       ]);
+}
+
+/// The way to a selected park (owner, 01.11.2026, the same as Servislər):
+/// distance and time by road, and "Marşrut" that offers the navigation
+/// apps (Google Maps, Waze, Sygic, Apple Maps on iPhone).
+class TirParkRouteRow extends StatelessWidget {
+  final AppStrings s;
+  final RouteInfo? route;
+  final bool hasGps;
+  final VoidCallback onNavigate;
+  const TirParkRouteRow({super.key, required this.s, required this.route, required this.hasGps, required this.onNavigate});
+
+  String _duration(double minutes) {
+    final h = minutes ~/ 60;
+    final m = (minutes % 60).round();
+    return h > 0 ? s.t('map_duration_hm', {'h': '$h', 'm': '$m'}) : s.t('map_duration_m', {'m': '$m'});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = route;
+    final text = !hasGps
+        ? s.t('svc_route_need_gps')
+        : r == null
+            ? s.t('svc_route_loading')
+            : r.isRoad
+                ? s.t('svc_route_info', {'km': fmtKm(r.distanceKm), 'time': r.durationMin == null ? '—' : _duration(r.durationMin!)})
+                : s.t('svc_route_straight', {'km': fmtKm(r.distanceKm)});
+    return Container(
+      key: const ValueKey('tp-route'),
+      padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
+      decoration: BoxDecoration(color: AppColors.routeSoft, borderRadius: BorderRadius.circular(10)),
+      child: Row(children: [
+        Icon(Icons.route, size: 18, color: AppColors.route),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: TextStyle(fontSize: 12.5, color: AppColors.newFg))),
+        const SizedBox(width: 6),
+        FilledButton.icon(
+          key: const ValueKey('tp-navigate'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            visualDensity: VisualDensity.compact,
+          ),
+          onPressed: onNavigate,
+          icon: const Icon(Icons.directions, size: 18),
+          label: Text(s.t('svc_route'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        ),
+      ]),
+    );
+  }
 }

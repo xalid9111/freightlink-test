@@ -14,6 +14,7 @@ import 'package:freightlink/features/tirpark/domain/tir_park.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_add_sheet.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_screen.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_widgets.dart';
+import 'package:freightlink/services/geo_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 String src(String p) => File(p).readAsStringSync();
@@ -92,6 +93,49 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('tp-add-cancel')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
+  });
+
+  testWidgets('a park opens first, then the way there: route row and "Marşrut" with the map apps (owner, 01.11.2026)', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        stringsProvider.overrideWithValue(_az),
+        tirParksProvider.overrideWith((ref) async => const [_utep, _mine, _far]),
+      ],
+      child: const MaterialApp(home: TirParkScreen()),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('tp-route')), findsNothing, reason: 'nothing before a park is chosen');
+    // The pin opens the park: its card first in the list, with the way.
+    await tester.tap(find.byKey(const ValueKey('tp-pin-p1')));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const ValueKey('tp-route')), findsOneWidget);
+    expect(find.text('Marşrut və vaxt üçün GPS-i aktiv edin'), findsOneWidget, reason: 'no GPS here');
+    final cards = tester.widgetList<TirParkCard>(find.byType(TirParkCard)).map((c) => c.park.id).toList();
+    expect(cards.first, 'p1', reason: 'the chosen park stands first');
+    await tester.ensureVisible(find.byKey(const ValueKey('tp-navigate')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tp-navigate')));
+    await tester.pumpAndSettle();
+    expect(find.text('Naviqasiyanı başlat'), findsOneWidget);
+    expect(find.text('Google Xəritələr'), findsOneWidget);
+  });
+
+  testWidgets('route row: road distance and time', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: TirParkRouteRow(
+          s: _az,
+          route: const RouteInfo(distanceKm: 12.4, durationMin: 75, points: [], isRoad: true),
+          hasGps: true,
+          onNavigate: () {},
+        ),
+      ),
+    ));
+    expect(find.text('Yolla 12.4 km · təxminən ~1 saat 15 dəq'), findsOneWidget);
+    expect(find.text('Marşrut'), findsOneWidget);
   });
 
   testWidgets('the switch: the chosen side is orange and does nothing; the other one goes there', (tester) async {

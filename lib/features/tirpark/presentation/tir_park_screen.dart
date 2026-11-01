@@ -10,6 +10,7 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../services/geo_service.dart';
+import '../../chat/presentation/widgets/location_message.dart' show ChatLocation, showNavigationPicker;
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
@@ -129,10 +130,22 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     }
   }
 
+  /// A pin or a card: the park opens first (its card on top of the list,
+  /// the list raised), then the way there is drawn and "Marşrut" offers
+  /// the navigation apps (owner, 01.11.2026 — like Servislər).
   void _select(TirPark p) {
     setState(() => _selectedId = p.id);
     _move(LatLng(p.lat, p.lng), 13);
+    if (_sheet.isAttached && _sheet.size < 0.4) {
+      _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
   }
+
+  void _navigate(TirPark p, AppStrings s) => showNavigationPicker(
+        context,
+        s,
+        ChatLocation(url: 'https://maps.google.com/?q=${p.lat},${p.lng}', lat: p.lat, lng: p.lng),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +155,20 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final parks = async.valueOrNull ?? const <TirPark>[];
     final me = ref.watch(userLocationProvider).point;
     final from = me ?? _center;
-    final list = nearbyParks(parks, from.latitude, from.longitude, radiusKm: kTirParkRadiusKm, query: _query, needs: _needs);
+    final found = nearbyParks(parks, from.latitude, from.longitude, radiusKm: kTirParkRadiusKm, query: _query, needs: _needs);
+    TirPark? selected;
+    for (final p in parks) {
+      if (p.id == _selectedId) selected = p;
+    }
+    // The selected park stands first in the list.
+    final list = [
+      ...found.where((e) => e.$1.id == _selectedId),
+      ...found.where((e) => e.$1.id != _selectedId),
+    ];
+    RouteInfo? route;
+    if (selected != null && me != null) {
+      route = ref.watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: selected.lat, bLng: selected.lng))).valueOrNull;
+    }
     final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
 
     // While a place is being chosen, "back" leaves that mode first.
@@ -191,6 +217,14 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                   children: [
                     // Night: the map dimmed to the dark page (owner's picture).
                     const AppTileLayer(),
+                    if (selected != null && me != null)
+                      PolylineLayer(polylines: [
+                        Polyline(
+                          points: route?.points ?? [me, LatLng(selected.lat, selected.lng)],
+                          color: AppColors.accent,
+                          strokeWidth: 4,
+                        ),
+                      ]),
                     MarkerLayer(markers: [
                       for (final p in shownOnMap)
                         Marker(
@@ -356,6 +390,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                             onTap: () => _select(p),
                             onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
+                            footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
                           ),
                         );
                       },
