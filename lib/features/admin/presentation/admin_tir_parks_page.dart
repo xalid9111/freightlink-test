@@ -16,10 +16,38 @@ class AdminTirParksPage extends ConsumerStatefulWidget {
 }
 
 const _statusLabel = {'pending': 'Təsdiq gözləyir', 'approved': 'Təsdiqlənib', 'rejected': 'Rədd edilib', 'hidden': 'Gizlədilib'};
+const _managerLabel = {'pending': 'gözləyir', 'approved': 'təsdiqlənib', 'rejected': 'rədd edilib'};
+const _bookingLabel = {
+  'pending_payment': 'Ödəniş gözləyir',
+  'confirmed': 'Təsdiqlənib',
+  'checked_in': 'Parka daxil olub',
+  'completed': 'Tamamlanıb',
+  'cancelled': 'Ləğv edilib',
+  'expired': 'Vaxtı bitib',
+  'refund_pending': 'Qaytarılma gözləyir',
+  'refunded': 'Qaytarılıb',
+};
 
 class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
   String _filter = 'pending';
   String? _busy;
+
+  // Manager application (0079): approve / reject; logged on the server.
+  Future<void> _manager(TirPark p, String status) async {
+    setState(() => _busy = p.id);
+    try {
+      await ref.read(tirParkRepositoryProvider).adminManagerSet(p.id, status);
+      ref.invalidate(adminTirParksProvider);
+      ref.invalidate(tirParksProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e is TirParkNotReady ? 'Əvvəlcə Supabase-də SQL 0079 işə salınmalıdır.' : 'Alınmadı. Yenidən cəhd edin.')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
 
   Future<void> _set(TirPark p, String status) async {
     setState(() => _busy = p.id);
@@ -82,6 +110,34 @@ class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
                     style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                 if (p.amenities.isNotEmpty) Text(p.amenities.join(', '), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
                 if ((p.note ?? '').isNotEmpty) Text(p.note!, style: TextStyle(fontSize: 13, color: AppColors.text)),
+                // Manager application and bookings (0079).
+                if (p.managerId != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Rəhbər müraciəti: ${_managerLabel[p.managerStatus] ?? p.managerStatus ?? '—'} · tutum ${p.capacity ?? '—'} · '
+                    'boş ${p.bookable ?? '—'} · ${p.price?.toStringAsFixed(2) ?? '—'} ${p.currency} / ${p.priceUnit == 'day' ? 'gün' : 'saat'}'
+                    '${(p.phone ?? '').isEmpty ? '' : ' · ${p.phone}'}${(p.hours ?? '').isEmpty ? '' : ' · ${p.hours}'}',
+                    key: ValueKey('atp-mgr-${p.id}'),
+                    style: TextStyle(fontSize: 13, color: AppColors.text),
+                  ),
+                  if ((p.address ?? '').isNotEmpty) Text(p.address!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                  const SizedBox(height: 6),
+                  Wrap(spacing: 8, runSpacing: 6, children: [
+                    if (p.managerStatus != 'approved')
+                      FilledButton(
+                        key: ValueKey('atp-mgr-ok-${p.id}'),
+                        onPressed: _busy == p.id ? null : () => _manager(p, 'approved'),
+                        child: const Text('Rəhbəri təsdiqlə'),
+                      ),
+                    if (p.managerStatus != 'rejected')
+                      OutlinedButton(
+                        key: ValueKey('atp-mgr-no-${p.id}'),
+                        onPressed: _busy == p.id ? null : () => _manager(p, 'rejected'),
+                        child: const Text('Rəhbər müraciətini rədd et'),
+                      ),
+                  ]),
+                  if (p.managerStatus == 'approved') _AdminBookings(parkId: p.id),
+                ],
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 6, children: [
                   if (!p.isApproved)
@@ -104,6 +160,54 @@ class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
                     ),
                 ]),
               ]),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A managed park's bookings for the admin; the status can be changed
+/// (checked and logged on the server, 0079). Refund states are not offered:
+/// the payment provider has no refunds yet.
+class _AdminBookings extends ConsumerWidget {
+  final String parkId;
+  const _AdminBookings({required this.parkId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(adminParkBookingsProvider(parkId));
+    final list = async.valueOrNull ?? const <TirParkBooking>[];
+    return ExpansionTile(
+      key: ValueKey('atp-bookings-$parkId'),
+      tilePadding: EdgeInsets.zero,
+      title: Text('Rezervasiyalar (${list.length})', style: TextStyle(fontSize: 14, color: AppColors.text)),
+      children: [
+        if (async.isLoading && !async.hasValue) const Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()),
+        for (final b in list)
+          ListTile(
+            key: ValueKey('atp-b-${b.id}'),
+            contentPadding: EdgeInsets.zero,
+            title: Text('${b.bookingNo} · ${b.trucks} TIR · ${b.amount.toStringAsFixed(2)} ${b.currency}${b.paidMode == 'test' ? ' · TEST' : ''}'),
+            subtitle: Text('${b.startAt.toString().substring(0, 16)} → ${b.endAt.toString().substring(0, 16)} · '
+                '${_bookingLabel[b.shownStatus] ?? b.shownStatus}'),
+            trailing: PopupMenuButton<String>(
+              tooltip: 'Statusu dəyiş',
+              onSelected: (st) async {
+                try {
+                  await ref.read(tirParkRepositoryProvider).adminBookingSet(b.id, st);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(e is TirParkRefused && e.reason == 'not_paid' ? 'Ödənilməmiş rezervasiya təsdiqlənə bilməz.' : 'Alınmadı.')));
+                  }
+                }
+                ref.invalidate(adminParkBookingsProvider(parkId));
+              },
+              itemBuilder: (_) => [
+                for (final st in ['confirmed', 'checked_in', 'completed', 'cancelled', 'expired'])
+                  if (st != b.status) PopupMenuItem(value: st, child: Text(_bookingLabel[st]!)),
+              ],
             ),
           ),
       ],

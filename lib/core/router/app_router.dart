@@ -42,7 +42,9 @@ import '../../features/jobs/presentation/job_seeker_form.dart';
 import '../../features/jobs/presentation/job_vacancy_form.dart';
 import 'password_recovery.dart';
 import '../../features/finance/presentation/finance_screen.dart';
+import '../../features/tirpark/presentation/tir_park_booking.dart';
 import '../../features/tirpark/presentation/tir_park_detail_screen.dart';
+import '../../features/tirpark/presentation/tir_park_manage.dart';
 import '../../features/tirpark/presentation/tir_park_screen.dart';
 import '../widgets/deferred_page.dart';
 import '../../features/market/presentation/market_module.dart' deferred as market;
@@ -417,6 +419,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     write: state.uri.queryParameters['write'] == '1',
                   ),
                 ),
+                // Managing a park and bookings (owner, 01.11.2026, 0079).
+                GoRoute(
+                  path: 'manage',
+                  builder: (context, state) => const TirParkManageScreen(),
+                  routes: [GoRoute(path: 'new', builder: (context, state) => const TirParkManageFormScreen())],
+                ),
+                GoRoute(path: 'bookings', builder: (context, state) => const MyParkBookingsScreen()),
               ],
             ),
             GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),

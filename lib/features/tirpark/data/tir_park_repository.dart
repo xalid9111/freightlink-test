@@ -24,14 +24,21 @@ class TirParkRefused implements Exception {
 class TirParkRepository {
   SupabaseClient get _c => SupabaseConfig.client;
   static const _timeout = Duration(seconds: 15);
-  static const _cols = 'id,name,lat,lng,city,amenities,note,status,photo_urls,rating_avg,rating_count,created_by,created_at';
+  // '*': the booking fields of 0079 come with it once that SQL runs; before
+  // that the map keeps working with the 0077 / 0078 columns.
+  static const _cols = '*';
 
   Future<T> _run<T>(Future<T> Function() f) async {
     try {
       return await f();
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST205' || e.code == '42P01' || e.code == 'PGRST202' || e.code == '42883') throw const TirParkNotReady();
-      for (final r in ['duplicate_nearby', 'too_many', 'blocked', 'admin_only', 'not_allowed', 'invalid_url']) {
+      for (final r in [
+        'duplicate_nearby', 'too_many_attempts', 'too_many', 'blocked', 'admin_only', 'not_allowed', 'invalid_url',
+        // 0079: booking and managing.
+        'no_space', 'not_bookable', 'invalid_time', 'own_park', 'already_managed', 'already_used', 'not_valid', 'not_in_time',
+        'not_checked_in', 'not_cancellable', 'not_paid', 'invalid_argument', 'not_found',
+      ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
       rethrow;
@@ -116,6 +123,134 @@ class TirParkRepository {
 
   Future<void> setStatus(String id, String status) =>
       _run(() => _c.rpc('admin_tir_park_set_status', params: {'p_id': id, 'p_status': status}).timeout(_timeout));
+
+  // ---- Managing a park and booking (0079) ---------------------------------
+  /// Apply to manage a new park ([parkId] null) or an approved one nobody
+  /// manages yet. Waits for an admin.
+  Future<String> manageApply({
+    String? parkId,
+    required String name,
+    double? lat,
+    double? lng,
+    String? city,
+    String? address,
+    required String phone,
+    List<String> amenities = const [],
+    required int capacity,
+    required int bookable,
+    required double price,
+    required String unit,
+    String? hours,
+    String? note,
+  }) =>
+      _run(() async {
+        final id = await _c.rpc('tir_park_manage_apply', params: {
+          'p_park': parkId,
+          'p_name': name,
+          'p_lat': lat,
+          'p_lng': lng,
+          'p_city': city,
+          'p_address': address,
+          'p_phone': phone,
+          'p_amenities': amenities,
+          'p_capacity': capacity,
+          'p_bookable': bookable,
+          'p_price': price,
+          'p_unit': unit,
+          'p_hours': hours,
+          'p_note': note,
+        }).timeout(_timeout);
+        return '$id';
+      });
+
+  /// My parks (applications and the ones I manage).
+  Future<List<TirPark>> myManaged() => _run(() async {
+        final res = await _c.rpc('tir_park_my_managed').timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirPark.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<void> managerUpdate(String parkId,
+          {required int capacity,
+          required int bookable,
+          required double price,
+          required String unit,
+          String? hours,
+          required String phone,
+          required bool open}) =>
+      _run(() => _c.rpc('tir_park_manager_update', params: {
+            'p_park': parkId,
+            'p_capacity': capacity,
+            'p_bookable': bookable,
+            'p_price': price,
+            'p_unit': unit,
+            'p_hours': hours,
+            'p_phone': phone,
+            'p_booking_open': open,
+          }).timeout(_timeout));
+
+  /// The park's bookings for its manager (no codes).
+  Future<List<TirParkBooking>> managerBookings(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_manager_bookings', params: {'p_park': parkId}).timeout(_timeout);
+        return [
+          for (final r in (res as List? ?? const [])) TirParkBooking.fromJson({...Map<String, dynamic>.from(r as Map), 'park_id': parkId}),
+        ];
+      });
+
+  /// Entry: the code is checked on the server. Returns the booking, or
+  /// throws [TirParkRefused] ('invalid_code', 'already_used', …).
+  Future<TirParkBooking> checkIn(String parkId, String code) => _run(() async {
+        final res = Map<String, dynamic>.from(
+            await _c.rpc('tir_park_booking_check_in', params: {'p_park': parkId, 'p_code': code}).timeout(_timeout) as Map);
+        if (res['error'] != null) throw TirParkRefused('${res['error']}');
+        return TirParkBooking.fromJson(res);
+      });
+
+  Future<void> checkOut(String bookingId) =>
+      _run(() => _c.rpc('tir_park_booking_check_out', params: {'p_booking': bookingId}).timeout(_timeout));
+
+  /// Free places for a time (bookable parks).
+  Future<int> freePlaces(String parkId, DateTime from, DateTime to) => _run(() async {
+        final res = await _c.rpc('tir_park_availability', params: {
+          'p_park': parkId,
+          'p_from': from.toUtc().toIso8601String(),
+          'p_to': to.toUtc().toIso8601String(),
+        }).timeout(_timeout);
+        return ((res as Map)['free'] as num?)?.toInt() ?? 0;
+      });
+
+  /// Books (the space is held 15 minutes for the payment).
+  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks) => _run(() async {
+        final res = await _c.rpc('tir_park_booking_create', params: {
+          'p_park': parkId,
+          'p_from': from.toUtc().toIso8601String(),
+          'p_to': to.toUtc().toIso8601String(),
+          'p_trucks': trucks,
+        }).timeout(_timeout);
+        return TirParkBooking.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<void> cancelBooking(String bookingId) =>
+      _run(() => _c.rpc('tir_park_booking_cancel', params: {'p_booking': bookingId}).timeout(_timeout));
+
+  /// My bookings (with my codes), newest first.
+  Future<List<TirParkBooking>> myBookings() => _run(() async {
+        final me = _c.auth.currentUser?.id;
+        if (me == null) return const <TirParkBooking>[];
+        final rows = await _c.from('tir_park_bookings').select().eq('user_id', me).order('created_at', ascending: false).limit(100).timeout(_timeout);
+        return [for (final r in rows as List) TirParkBooking.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  // Admin.
+  Future<void> adminManagerSet(String parkId, String status) =>
+      _run(() => _c.rpc('admin_tir_park_manager_set', params: {'p_park': parkId, 'p_status': status}).timeout(_timeout));
+
+  Future<List<TirParkBooking>> adminBookings(String parkId) => _run(() async {
+        final rows = await _c.from('tir_park_bookings').select().eq('park_id', parkId).order('start_at', ascending: false).limit(200).timeout(_timeout);
+        return [for (final r in rows as List) TirParkBooking.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<void> adminBookingSet(String bookingId, String status) =>
+      _run(() => _c.rpc('admin_tir_park_booking_set_status', params: {'p_booking': bookingId, 'p_status': status}).timeout(_timeout));
 }
 
 final tirParkRepositoryProvider = Provider<TirParkRepository>((ref) => TirParkRepository());
@@ -129,3 +264,19 @@ final adminTirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) =>
 
 final tirParkReviewsProvider = FutureProvider.autoDispose.family<List<TirParkReview>, String>(
     (ref, parkId) => ref.watch(tirParkRepositoryProvider).reviews(parkId));
+
+final myManagedParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(tirParkRepositoryProvider).myManaged();
+});
+
+final myParkBookingsProvider = FutureProvider.autoDispose<List<TirParkBooking>>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(tirParkRepositoryProvider).myBookings();
+});
+
+final managerBookingsProvider =
+    FutureProvider.autoDispose.family<List<TirParkBooking>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).managerBookings(parkId));
+
+final adminParkBookingsProvider =
+    FutureProvider.autoDispose.family<List<TirParkBooking>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).adminBookings(parkId));

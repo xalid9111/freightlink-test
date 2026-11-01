@@ -134,6 +134,24 @@ class ProfileScreen extends ConsumerWidget {
                     subtitle: strings.t('job_center_profile_sub'),
                     onTap: () => context.pushOnce('/jobs'),
                   ),
+                  // TIR parks (owner, 01.11.2026, 0079): managing a park and
+                  // one's own space bookings.
+                  _MenuRow(
+                    key: const ValueKey('pf-tirpark-manage'),
+                    icon: Icons.local_parking,
+                    iconColor: AppColors.accent,
+                    title: strings.t('tpm_title'),
+                    subtitle: strings.t('tpm_sub'),
+                    onTap: () => context.pushOnce('/tirpark/manage'),
+                  ),
+                  _MenuRow(
+                    key: const ValueKey('pf-tirpark-bookings'),
+                    icon: Icons.event_available_outlined,
+                    iconColor: AppColors.accent,
+                    title: strings.t('tpb_my'),
+                    subtitle: strings.t('tpb_my_sub'),
+                    onTap: () => context.pushOnce('/tirpark/bookings'),
+                  ),
                   // Shown while the admin's "Reklam ver" switch is on, or
                   // when this user already has ad orders (to pay / follow).
                   Consumer(builder: (context, ref, _) {
@@ -731,6 +749,7 @@ class _MenuRow extends StatelessWidget {
   final Color? titleColor;
   final VoidCallback onTap;
   const _MenuRow({
+    super.key,
     required this.icon,
     required this.iconColor,
     required this.title,
