@@ -11,7 +11,8 @@
 //        | tir_park_booking_id, method, idempotency_key }
 //   → payment_create (ad order), market_vip_payment_create (VIP order,
 //     0044), cargo_vip_payment_create (load VIP order, 0062) or
-//     market_promo_payment_create (İrəli çək / Premium, 0066) runs WITH
+//     market_promo_payment_create (İrəli çək / Premium, 0066) or
+//     tir_park_booking_payment_create (TIR park booking, 0079) runs WITH
 //     THE CALLER'S JWT, so the database checks the owner,
 //     the order state, the amount (from the order) and the "one open
 //     payment per order" rule. Same key twice = same payment.
