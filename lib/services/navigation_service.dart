@@ -57,17 +57,19 @@ class NavigationService {
         // otherwise shows the route on Waze's web map — never an error.
         return Uri.parse('https://www.waze.com/live-map/directions?to=ll.${lat.toStringAsFixed(6)}%2C${lng.toStringAsFixed(6)}&navigate=yes');
       case NavApp.sygic:
-        // Sygic has no web map: the app link below is the only way.
-        return null;
+        // Sygic's universal link (what Sygic support gives in place of the
+        // old com.sygic.aura:// scheme, which iPhone Safari refused —
+        // owner, 01.11.2026: "Sygic açılmadı" while it was installed). It
+        // opens the Sygic app when installed, otherwise Sygic's page.
+        return Uri.parse('https://go.sygic.com/directions?to=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}');
     }
   }
 
-  /// The app's own link (owner, 01.11.2026: Waze and Sygic must open the
-  /// app directly). Sygic: documented scheme, longitude FIRST, plain "|".
+  /// The app's own link (owner, 01.11.2026: Waze must open the app
+  /// directly). Sygic opens through its universal link instead (above).
   @visibleForTesting
   String? appLinkFor(NavApp app, {required double lat, required double lng}) => switch (app) {
         NavApp.waze => 'waze://?ll=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}&navigate=yes',
-        NavApp.sygic => 'com.sygic.aura://coordinate|${lng.toStringAsFixed(6)}|${lat.toStringAsFixed(6)}|drive',
         _ => null,
       };
 
@@ -77,9 +79,9 @@ class NavigationService {
   /// Launches the chosen app. Returns false if nothing could handle the
   /// link (e.g. no browser/map app at all) so the caller can show a
   /// fallback message instead of failing silently.
-  /// Waze / Sygic: the app itself first; when it does not open, Waze's
-  /// web map (no error page), Sygic → false (the caller says it is not
-  /// installed). Google / Apple Maps: their links open the app themselves.
+  /// Waze: the app itself first; when it does not open, Waze's web map (no
+  /// error page). Google / Apple Maps and Sygic: their https links open the
+  /// app themselves (universal links).
   Future<bool> startNavigation(
     NavApp app, {
     required double lat,
