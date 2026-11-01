@@ -13,6 +13,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
+import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 
 /// One park (TIRPark PR 2, 0078): pictures, rating, place · distance,
@@ -220,6 +221,12 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                 if ((park.note ?? '').isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(park.note!, style: TextStyle(color: AppColors.text, height: 1.35)),
+                ],
+                // Paid space booking (owner, 01.11.2026, 0079): parks with
+                // an approved manager, open for booking.
+                if (park.canBook) ...[
+                  const SizedBox(height: 16),
+                  TirParkBookingSection(park: park, s: s),
                 ],
                 const SizedBox(height: 20),
                 Row(children: [

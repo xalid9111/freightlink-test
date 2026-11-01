@@ -57,8 +57,15 @@ class VipCheckoutTarget {
   /// An İrəli çək / Premium order instead of a VIP one: TIR Bazarı (0066),
   /// or a load's together with [cargo] (0067).
   final bool promo;
+  /// A TIR park booking (0079): [vipOrderId] is the booking's id.
+  final bool tirParkBooking;
   const VipCheckoutTarget(
-      {required this.vipOrderId, required this.amount, required this.currency, this.cargo = false, this.promo = false});
+      {required this.vipOrderId,
+      required this.amount,
+      required this.currency,
+      this.cargo = false,
+      this.promo = false,
+      this.tirParkBooking = false});
 }
 
 class CheckoutSheet extends ConsumerStatefulWidget {
@@ -94,7 +101,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   Future<CheckoutPayment> _start(FinanceRepository repo) {
     final vip = widget.vip;
     return vip != null
-        ? (vip.promo && vip.cargo
+        ? (vip.tirParkBooking
+            ? repo.startTirParkBookingCheckout(bookingId: vip.vipOrderId, method: _method, idempotencyKey: _key)
+            : vip.promo && vip.cargo
             ? repo.startCargoPromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
             : vip.promo
             ? repo.startPromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
@@ -210,7 +219,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               ]),
             ),
           ] else
-            _Result(payment: p, s: s, vip: widget.vip != null),
+            _Result(payment: p, s: s, vip: widget.vip != null, booking: widget.vip?.tirParkBooking ?? false),
           if (_errorKey != null) ...[
             const SizedBox(height: 10),
             Text(s.t(_errorKey!), style: TextStyle(color: AppColors.danger)),
@@ -225,8 +234,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 
 /// The result text: since 0054 a successful TEST payment also makes a VIP
 /// order's ad VIP; for ad (banner) orders TEST still changes nothing.
-String checkoutResultKey({required bool ok, required bool test, required bool vip}) {
+/// A TIR park booking (0079) has its own text (confirmed, code given).
+String checkoutResultKey({required bool ok, required bool test, required bool vip, bool booking = false}) {
   if (!ok) return 'pay_failed';
+  if (booking) return test ? 'pay_success_booking_test' : 'pay_success_booking';
   if (vip) return test ? 'pay_success_vip_test' : 'pay_success_vip';
   return test ? 'pay_success_test' : 'pay_success';
 }
@@ -234,12 +245,12 @@ String checkoutResultKey({required bool ok, required bool test, required bool vi
 class _Result extends StatelessWidget {
   final CheckoutPayment payment;
   final AppStrings s;
-  final bool vip;
-  const _Result({required this.payment, required this.s, this.vip = false});
+  final bool vip, booking;
+  const _Result({required this.payment, required this.s, this.vip = false, this.booking = false});
   @override
   Widget build(BuildContext context) {
     final ok = payment.status == 'succeeded';
-    final text = s.t(checkoutResultKey(ok: ok, test: payment.mode == 'test', vip: vip));
+    final text = s.t(checkoutResultKey(ok: ok, test: payment.mode == 'test', vip: vip, booking: booking));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

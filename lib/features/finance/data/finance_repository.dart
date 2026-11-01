@@ -77,6 +77,15 @@ class FinanceRepository {
     return CheckoutPayment.fromJson(j['payment'] as Map);
   }
 
+  /// Checkout for a TIR park booking (0079): the amount comes from the
+  /// booking on the server; only a verified provider event confirms it.
+  Future<CheckoutPayment> startTirParkBookingCheckout(
+      {required String bookingId, required PayMethod method, required String idempotencyKey}) async {
+    final j = await _checkout(
+        {'action': 'create', 'tir_park_booking_id': bookingId, 'method': method.wire, 'idempotency_key': idempotencyKey});
+    return CheckoutPayment.fromJson(j['payment'] as Map);
+  }
+
   /// TEST mode only: the built-in test provider sends a signed result to
   /// the webhook; the server decides.
   Future<CheckoutPayment> completeTestPayment(String paymentId, {required bool success}) async {

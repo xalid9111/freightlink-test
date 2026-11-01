@@ -16,6 +16,18 @@ class TirPark {
   final int ratingCount;
   final String? createdBy;
   final DateTime? createdAt;
+  // Managed parks and booking (0079); empty for parks without a manager.
+  final String? managerId;
+  final String? managerStatus; // pending | approved | rejected
+  final String? phone;
+  final String? address;
+  final int? capacity;
+  final int? bookable;
+  final double? price;
+  final String? priceUnit; // hour | day
+  final String currency;
+  final String? hours;
+  final bool bookingOpen;
 
   const TirPark({
     required this.id,
@@ -31,10 +43,25 @@ class TirPark {
     this.ratingCount = 0,
     this.createdBy,
     this.createdAt,
+    this.managerId,
+    this.managerStatus,
+    this.phone,
+    this.address,
+    this.capacity,
+    this.bookable,
+    this.price,
+    this.priceUnit,
+    this.currency = 'AZN',
+    this.hours,
+    this.bookingOpen = false,
   });
 
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
+
+  /// Open for booking: the same rule as the server's tir_park_bookable (0079).
+  bool get canBook =>
+      isApproved && managerStatus == 'approved' && bookingOpen && (price ?? 0) > 0 && priceUnit != null && (bookable ?? 0) > 0;
 
   factory TirPark.fromJson(Map<String, dynamic> j) {
     double d(Object? v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
@@ -53,8 +80,92 @@ class TirPark {
       ratingCount: (j['rating_count'] as num?)?.toInt() ?? 0,
       createdBy: j['created_by'] as String?,
       createdAt: DateTime.tryParse('${j['created_at']}'),
+      managerId: j['manager_id'] as String?,
+      managerStatus: j['manager_status'] as String?,
+      phone: j['phone'] as String?,
+      address: j['address'] as String?,
+      capacity: j['capacity'] == null ? null : int.tryParse('${j['capacity']}'),
+      bookable: j['bookable'] == null ? null : int.tryParse('${j['bookable']}'),
+      price: j['price'] == null ? null : d(j['price']),
+      priceUnit: j['price_unit'] as String?,
+      currency: (j['currency'] as String?) ?? 'AZN',
+      hours: j['hours'] as String?,
+      bookingOpen: j['booking_open'] == true,
     );
   }
+}
+
+/// A space booking in a TIR park (0079).
+class TirParkBooking {
+  final String id, bookingNo, parkId;
+  final int trucks, units;
+  final String unit; // hour | day
+  final DateTime startAt, endAt;
+  final double amount;
+  final String currency;
+  /// pending_payment · confirmed · checked_in · completed · cancelled ·
+  /// expired (refund_pending / refunded are reserved, never set today).
+  final String status;
+  final DateTime? holdUntil;
+  final String? paidMode; // test | live
+  final String? code; // the driver's own bookings only
+  final String? driver; // the manager's list
+  final DateTime? checkedInAt, checkedOutAt;
+
+  const TirParkBooking({
+    required this.id,
+    required this.bookingNo,
+    required this.parkId,
+    required this.trucks,
+    required this.units,
+    required this.unit,
+    required this.startAt,
+    required this.endAt,
+    required this.amount,
+    this.currency = 'AZN',
+    required this.status,
+    this.holdUntil,
+    this.paidMode,
+    this.code,
+    this.driver,
+    this.checkedInAt,
+    this.checkedOutAt,
+  });
+
+  /// A payment hold whose time is over counts as expired (the server frees it).
+  String get shownStatus => status == 'pending_payment' && holdUntil != null && holdUntil!.isBefore(DateTime.now()) ? 'expired' : status;
+
+  factory TirParkBooking.fromJson(Map<String, dynamic> j) {
+    DateTime? t(Object? v) => v == null ? null : DateTime.tryParse('$v')?.toLocal();
+    return TirParkBooking(
+      id: '${j['id']}',
+      bookingNo: '${j['booking_no'] ?? ''}',
+      parkId: '${j['park_id'] ?? ''}',
+      trucks: int.tryParse('${j['trucks']}') ?? 1,
+      units: int.tryParse('${j['units']}') ?? 1,
+      unit: (j['unit'] as String?) ?? 'hour',
+      startAt: t(j['start_at']) ?? DateTime.now(),
+      endAt: t(j['end_at']) ?? DateTime.now(),
+      amount: j['amount'] is num ? (j['amount'] as num).toDouble() : double.tryParse('${j['amount']}') ?? 0,
+      currency: (j['currency'] as String?) ?? 'AZN',
+      status: (j['status'] as String?) ?? 'pending_payment',
+      holdUntil: t(j['hold_until']),
+      paidMode: j['paid_mode'] as String?,
+      code: j['code'] as String?,
+      driver: j['driver'] as String?,
+      checkedInAt: t(j['checked_in_at']),
+      checkedOutAt: t(j['checked_out_at']),
+    );
+  }
+}
+
+/// Price units the server bills (the same rounding up as 0079): started
+/// hours / days count whole.
+int tirParkUnits(DateTime from, DateTime to, String unit) {
+  final secs = to.difference(from).inSeconds;
+  if (secs <= 0) return 0;
+  final per = unit == 'hour' ? 3600 : 86400;
+  return math.max(1, (secs / per).ceil());
 }
 
 /// What a park offers (the server accepts only these, 0077), in the order
