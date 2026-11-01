@@ -297,7 +297,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/service/:id',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeskFrame(section: 5, child: ServiceDetailScreen(id: state.pathParameters['id']!)),
+        builder: (context, state) => DeskFrame(section: 5, child: ServiceDetailScreen(id: state.pathParameters['id']!, write: state.uri.queryParameters['write'] == '1')),
       ),
       GoRoute(
         path: '/service-edit',

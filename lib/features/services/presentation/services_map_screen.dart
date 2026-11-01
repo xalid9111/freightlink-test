@@ -202,6 +202,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   Future<void> _openFilters(AppStrings s) async {
     final res = await showModalBottomSheet<ServiceQuery>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -1048,6 +1049,8 @@ class ServiceListCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ServiceContactBar(p: p, s: s, dense: true),
+                const SizedBox(height: 6),
+                ServiceReviewRow(p: p, s: s),
               ],
             ],
           ),

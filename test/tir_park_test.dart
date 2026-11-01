@@ -250,6 +250,43 @@ void main() {
     expect(det, contains('return EdgeSwipeBack('));
   });
 
+  test('wired: sheets open over the bottom bar; the filter scrolls; parks and services can be rated from the map (owner, 01.11.2026)', () {
+    final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
+    final det = src('lib/features/tirpark/presentation/tir_park_detail_screen.dart');
+    final svc = src('lib/features/services/presentation/services_map_screen.dart');
+    expect('showModalBottomSheet'.allMatches(tp).length, 'useRootNavigator: true,'.allMatches(tp).length);
+    expect('showModalBottomSheet'.allMatches(det).length, 'useRootNavigator: true,'.allMatches(det).length);
+    expect(svc, contains('useRootNavigator: true,'));
+    expect(tp, contains("      child: SingleChildScrollView(\n        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),\n        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [\n          SheetTitle(title: s.t('tp_filter')"));
+    expect(svc, contains('ServiceReviewRow(p: p, s: s),'));
+    expect(src('lib/features/services/presentation/service_widgets.dart'), contains("context.pushOnce('/service/\${p.id}?write=1')"));
+    expect(src('lib/core/router/app_router.dart'), contains("ServiceDetailScreen(id: state.pathParameters['id']!, write: state.uri.queryParameters['write'] == '1')"));
+    expect(src('lib/features/services/presentation/service_detail_screen.dart'), contains('if (widget.autoWrite && !_opened && !isOwner && async.hasValue) {'));
+  });
+
+  testWidgets('the TIRPark filter: all choices and both buttons reachable on a short phone', (tester) async {
+    tester.view.physicalSize = const Size(375, 560);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        stringsProvider.overrideWithValue(_az),
+        tirParksProvider.overrideWith((ref) async => const [_utep]),
+      ],
+      child: const MaterialApp(home: TirParkScreen()),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const ValueKey('tp-filter')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'no overflow');
+    await tester.ensureVisible(find.byKey(const ValueKey('tp-f-food')));
+    await tester.tap(find.byKey(const ValueKey('tp-f-food')));
+    await tester.pump();
+    final reset = find.text('Sıfırla');
+    await tester.ensureVisible(reset);
+    expect(reset.hitTestable(), findsOneWidget);
+  });
+
   test('wired: TIRPark tab in place of Servislər (kept, opened from TIRPark), admin approval, safe SQL', () {
     final shell = src('lib/core/router/main_shell.dart');
     expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark')),"));

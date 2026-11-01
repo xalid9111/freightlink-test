@@ -38,6 +38,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
     final s = ref.read(stringsProvider);
     final saved = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -115,6 +116,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
   Future<void> _photoMenu(TirPark park, int i, AppStrings s) async {
     final pick = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [

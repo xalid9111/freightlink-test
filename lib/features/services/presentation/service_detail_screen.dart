@@ -24,7 +24,9 @@ import '../../../core/widgets/mouse_drag_scroll.dart';
 /// unowned (admin-added) listing offers "This is my business".
 class ServiceDetailScreen extends ConsumerWidget {
   final String id;
-  const ServiceDetailScreen({super.key, required this.id});
+  /// Opened with "Şərh yaz" from the map: the stars + comment form opens at once.
+  final bool write;
+  const ServiceDetailScreen({super.key, required this.id, this.write = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -204,7 +206,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
-                _Reviews(p: p, s: s, isOwner: isOwner),
+                _Reviews(p: p, s: s, isOwner: isOwner, autoWrite: write),
                 const SizedBox(height: 16),
                 if (!isOwner && p.isUnclaimed) _ClaimButton(p: p, s: s),
                 if (!isOwner)
@@ -497,11 +499,21 @@ class _ProBanner extends StatelessWidget {
   }
 }
 
-class _Reviews extends ConsumerWidget {
+class _Reviews extends ConsumerStatefulWidget {
   final ServiceProvider p;
   final AppStrings s;
-  final bool isOwner;
-  const _Reviews({required this.p, required this.s, required this.isOwner});
+  final bool isOwner, autoWrite;
+  const _Reviews({required this.p, required this.s, required this.isOwner, this.autoWrite = false});
+
+  @override
+  ConsumerState<_Reviews> createState() => _ReviewsState();
+}
+
+class _ReviewsState extends ConsumerState<_Reviews> {
+  bool _opened = false;
+  ServiceProvider get p => widget.p;
+  AppStrings get s => widget.s;
+  bool get isOwner => widget.isOwner;
 
   Future<void> _write(BuildContext context, WidgetRef ref, ServiceReview? existing) async {
     final uid = ref.read(currentUserIdProvider);
@@ -557,13 +569,20 @@ class _Reviews extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final uid = ref.watch(currentUserIdProvider);
     final async = ref.watch(serviceReviewsProvider(p.id));
     final list = async.valueOrNull ?? const <ServiceReview>[];
     ServiceReview? mine;
     for (final r in list) {
       if (r.userId == uid) mine = r;
+    }
+    if (widget.autoWrite && !_opened && !isOwner && async.hasValue) {
+      _opened = true;
+      final existing = mine;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _write(context, ref, existing);
+      });
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

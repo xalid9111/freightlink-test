@@ -67,6 +67,17 @@ void main() {
         expect(c.add(t0.add(Duration(seconds: 30 * i))), isFalse);
       }
     });
+    test('map parts that failed are asked for again, at most once in 20 s (owner, 01.11.2026)', () {
+      final r = TileRetry();
+      final t0 = DateTime(2026, 11, 1, 10);
+      expect(r.allow(t0), isTrue);
+      expect(r.allow(t0.add(const Duration(seconds: 5))), isFalse);
+      expect(r.allow(t0.add(const Duration(seconds: 21))), isTrue);
+      final src = File('lib/core/widgets/map_tiles.dart').readAsStringSync();
+      expect(src, contains('evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,'));
+      expect(src, contains('reset: MapTiles.reloads,'));
+      expect(src, contains('errorTileCallback: MapTiles.onTileError,'), reason: 'the backup retries too');
+    });
     test('every map uses the shared tile layer (no direct OpenStreetMap URL)', () {
       final files = Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'));
       for (final f in files) {

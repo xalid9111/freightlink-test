@@ -106,6 +106,10 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
   Future<void> _openFilter(AppStrings s) async {
     final picked = await showModalBottomSheet<Set<String>>(
       context: context,
+      // Over the bottom bar, so "Sıfırla" / "Göstər" are never hidden
+      // (owner, 01.11.2026).
+      useRootNavigator: true,
+      isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
       builder: (_) => _FilterSheet(initial: _needs, s: s),
@@ -117,6 +121,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final c = _mapReady ? _map.camera.center : _center;
     final added = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -483,7 +488,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   Widget build(BuildContext context) {
     final s = widget.s;
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SheetTitle(title: s.t('tp_filter'), s: s, closeKey: 'tp-filter-close'),
