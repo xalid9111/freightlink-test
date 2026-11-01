@@ -1606,5 +1606,10 @@
   "tp_photo_replace": "Resmi değiştir",
   "tp_photos_hint": "Değiştirmek veya silmek için küçük resme dokunun. En fazla 10 resim.",
   "tp_not_found": "Park bulunamadı.",
-  "svc_add": "Servis ekle"
+  "svc_add": "Servis ekle",
+  "nav_here_no_dest": "Bu bağlantıda konum koordinatları yok — HERE'ye aktarılamıyor. «Bağlantıyı aç»ı seçin.",
+  "nav_here_no_start": "Başlangıç noktası bulunamadı: bağlantıda yok, GPS de kapalı. GPS'i açın veya «Bağlantıyı aç»ı seçin.",
+  "nav_here_failed": "HERE WeGo açılamadı. «Bağlantıyı aç»ı seçin.",
+  "nav_here_ready": "Rota hazır.",
+  "nav_here_open": "HERE'de aç"
 }
