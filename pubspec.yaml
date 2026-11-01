@@ -73,6 +73,7 @@ dependencies:
   # Cargo route map (OpenStreetMap tiles, no API key).
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  qr_flutter: ^4.1.0
 
 # ------------------------------------------------------------------
 # Why mapbox_maps_flutter / firebase_core / firebase_messaging are

@@ -19,6 +19,7 @@ const _statusLabel = {'pending': 'Təsdiq gözləyir', 'approved': 'Təsdiqləni
 const _managerLabel = {'pending': 'gözləyir', 'approved': 'təsdiqlənib', 'rejected': 'rədd edilib'};
 const _bookingLabel = {
   'pending_payment': 'Ödəniş gözləyir',
+  'payment_review': 'Ödəniş yoxlanılır',
   'confirmed': 'Təsdiqlənib',
   'checked_in': 'Parka daxil olub',
   'completed': 'Tamamlanıb',
@@ -205,7 +206,7 @@ class _AdminBookings extends ConsumerWidget {
                 ref.invalidate(adminParkBookingsProvider(parkId));
               },
               itemBuilder: (_) => [
-                for (final st in ['confirmed', 'checked_in', 'completed', 'cancelled', 'expired'])
+                for (final st in ['payment_review', 'confirmed', 'checked_in', 'completed', 'cancelled', 'expired'])
                   if (st != b.status) PopupMenuItem(value: st, child: Text(_bookingLabel[st]!)),
               ],
             ),

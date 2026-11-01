@@ -84,7 +84,10 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
     super.dispose();
   }
 
-  void _snack(String t) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
+  // The newest message replaces the previous one.
+  void _snack(String t) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(t)));
 
   Future<void> _save() async {
     final cap = int.tryParse(_capacity.text.trim());
@@ -212,25 +215,9 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
             ),
             FilledButton(key: ValueKey('tpm-save-${park.id}'), onPressed: _busy ? null : _save, child: Text(s.t('tpm_save'))),
             const SizedBox(height: 14),
-            // Payouts: honest status — no provider connected, nothing stored.
-            Container(
-              key: ValueKey('tpm-payout-${park.id}'),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.blue.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.blue.withValues(alpha: 0.35)),
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Icon(Icons.account_balance_outlined, color: AppColors.blue, size: 20),
-                  const SizedBox(width: 6),
-                  Text(s.t('tpm_payout_title'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
-                ]),
-                const SizedBox(height: 6),
-                Text(s.t('tpm_payout_body'), style: TextStyle(fontSize: 13, color: AppColors.textSoft, height: 1.35)),
-              ]),
-            ),
+            // The park's own payment details (owner, 01.11.2026, 0080):
+            // drivers transfer to them directly; FreightLink takes no money.
+            _PayDetailsForm(parkId: park.id, s: s),
             const SizedBox(height: 14),
             Text(s.t('tpm_check'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
             const SizedBox(height: 6),
@@ -289,7 +276,233 @@ class _Bookings extends ConsumerWidget {
               ? TextButton(key: ValueKey('tpm-out-${b.id}'), onPressed: () => onCheckOut(b), child: Text(s.t('tpm_checkout')))
               : null,
         ),
+      for (final b in list)
+        if (b.status == 'payment_review') _ReviewRow(booking: b, parkId: parkId, s: s),
     ]);
+  }
+}
+
+/// A receipt to check: look at it, then "Ödənişi təsdiqlə" (the money is on
+/// the park's account → the driver gets the code) or "Rədd et".
+class _ReviewRow extends ConsumerStatefulWidget {
+  final TirParkBooking booking;
+  final String parkId;
+  final AppStrings s;
+  const _ReviewRow({required this.booking, required this.parkId, required this.s});
+
+  @override
+  ConsumerState<_ReviewRow> createState() => _ReviewRowState();
+}
+
+class _ReviewRowState extends ConsumerState<_ReviewRow> {
+  bool _busy = false;
+  AppStrings get s => widget.s;
+  TirParkBooking get b => widget.booking;
+
+  // The newest message replaces the previous one.
+  void _snack(String t) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(t)));
+
+  Future<void> _showReceipt() async {
+    final path = b.receiptPath;
+    if (path == null) return;
+    try {
+      final url = await ref.read(tirParkRepositoryProvider).receiptUrl(path);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => Dialog(
+          child: InteractiveViewer(child: Image.network(url, key: const ValueKey('tpm-receipt-img'), fit: BoxFit.contain)),
+        ),
+      );
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    }
+  }
+
+  Future<void> _confirm() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(tirParkRepositoryProvider).confirmPayment(b.id);
+      _snack(s.t('tpm_confirmed', {'no': b.bookingNo}));
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    } finally {
+      ref.invalidate(managerBookingsProvider(widget.parkId));
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reject() async {
+    final note = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(s.t('tpm_reject_q')),
+          TextField(key: const ValueKey('tpm-reject-note'), controller: note, maxLength: 200),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.t('common_cancel'))),
+          TextButton(key: const ValueKey('tpm-reject-ok'), onPressed: () => Navigator.pop(ctx, true), child: Text(s.t('tpm_reject'))),
+        ],
+      ),
+    );
+    final text = note.text.trim();
+    note.dispose();
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(tirParkRepositoryProvider).rejectPayment(b.id, text.isEmpty ? null : text);
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    } finally {
+      ref.invalidate(managerBookingsProvider(widget.parkId));
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: ValueKey('tpm-review-${b.id}'),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.promoVip.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.promoVip.withValues(alpha: 0.4)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text('${b.bookingNo} · ${money(b.amount, b.currency)} · ${s.t('tpb_st_payment_review')}',
+              style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
+          const SizedBox(height: 6),
+          Wrap(spacing: 8, runSpacing: 6, children: [
+            OutlinedButton.icon(
+              key: ValueKey('tpm-receipt-${b.id}'),
+              onPressed: b.receiptPath == null ? null : _showReceipt,
+              icon: const Icon(Icons.receipt_long_outlined, size: 18),
+              label: Text(s.t('tpm_receipt')),
+            ),
+            FilledButton(key: ValueKey('tpm-confirm-${b.id}'), onPressed: _busy ? null : _confirm, child: Text(s.t('tpm_confirm'))),
+            TextButton(key: ValueKey('tpm-reject-${b.id}'), onPressed: _busy ? null : _reject, child: Text(s.t('tpm_reject'))),
+          ]),
+        ]),
+      );
+}
+
+/// The park's own payment details: holder, bank, IBAN / account, card
+/// number for transfers, note. Kept on the server, shown to a driver only
+/// after he books. Never CVV / PIN / SMS codes.
+class _PayDetailsForm extends ConsumerStatefulWidget {
+  final String parkId;
+  final AppStrings s;
+  const _PayDetailsForm({required this.parkId, required this.s});
+
+  @override
+  ConsumerState<_PayDetailsForm> createState() => _PayDetailsFormState();
+}
+
+class _PayDetailsFormState extends ConsumerState<_PayDetailsForm> {
+  final _holder = TextEditingController();
+  final _bank = TextEditingController();
+  final _account = TextEditingController();
+  final _card = TextEditingController();
+  final _note = TextEditingController();
+  bool _filled = false;
+  bool _busy = false;
+
+  AppStrings get s => widget.s;
+
+  @override
+  void dispose() {
+    for (final c in [_holder, _bank, _account, _card, _note]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final card = _card.text.replaceAll(RegExp(r'\D'), '');
+    final acc = _account.text.replaceAll(RegExp(r'\s'), '');
+    if (_holder.text.trim().length < 2 || (card.isEmpty && acc.isEmpty) || (card.isNotEmpty && (card.length < 12 || card.length > 19))) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_paydet_invalid'))));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(tirParkRepositoryProvider).setPayDetails(widget.parkId,
+          holder: _holder.text.trim(),
+          bank: _bank.text.trim().isEmpty ? null : _bank.text.trim(),
+          account: acc.isEmpty ? null : acc,
+          card: card.isEmpty ? null : card,
+          note: _note.text.trim().isEmpty ? null : _note.text.trim());
+      ref.invalidate(parkPayDetailsProvider(widget.parkId));
+      ref.invalidate(tirParksProvider);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_saved'))));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_paydet_invalid'))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(parkPayDetailsProvider(widget.parkId));
+    final d = async.valueOrNull;
+    if (async.hasValue && !_filled) {
+      _filled = true;
+      _holder.text = d?.holder ?? '';
+      _bank.text = d?.bank ?? '';
+      _account.text = d?.account ?? '';
+      _card.text = d?.card ?? '';
+      _note.text = d?.note ?? '';
+    }
+    Widget f(TextEditingController c, String label, String key, {TextInputType? type, int max = 120}) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: TextField(
+            key: ValueKey('$key-${widget.parkId}'),
+            controller: c,
+            keyboardType: type,
+            maxLength: max,
+            decoration: InputDecoration(labelText: label, counterText: ''),
+          ),
+        );
+    return Container(
+      key: ValueKey('tpm-paydet-${widget.parkId}'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Icon(Icons.account_balance_outlined, color: AppColors.accent, size: 20),
+          const SizedBox(width: 6),
+          Expanded(child: Text(s.t('tpm_paydet_title'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text))),
+        ]),
+        const SizedBox(height: 4),
+        Text(s.t('tpm_paydet_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft, height: 1.35)),
+        if (async.hasValue && d == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(s.t('tpm_paydet_need'), key: ValueKey('tpm-paydet-need-${widget.parkId}'), style: TextStyle(color: AppColors.promoVip)),
+          ),
+        const SizedBox(height: 8),
+        f(_holder, s.t('tpm_holder'), 'tpm-holder'),
+        f(_bank, s.t('tpm_bank'), 'tpm-bank'),
+        f(_account, s.t('tpm_account'), 'tpm-account', max: 64),
+        f(_card, s.t('tpm_card'), 'tpm-card', type: TextInputType.number, max: 23),
+        f(_note, s.t('tpm_paynote'), 'tpm-paynote', max: 300),
+        FilledButton(
+          key: ValueKey('tpm-paydet-save-${widget.parkId}'),
+          onPressed: _busy ? null : _save,
+          child: Text(s.t('tpm_save')),
+        ),
+      ]),
+    );
   }
 }
 
