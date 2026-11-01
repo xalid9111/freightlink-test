@@ -7,18 +7,18 @@ import 'package:freightlink/services/navigation_service.dart';
 /// Servislər. Their own app links are opened first, in the same tab.
 void main() {
   const s = NavigationService();
-  test('Waze and Sygic: the app links', () {
+  test('Waze: the app link; Sygic: none (universal link instead)', () {
     expect(s.appLinkFor(NavApp.waze, lat: 40.4093, lng: 49.8671), 'waze://?ll=40.409300,49.867100&navigate=yes');
-    expect(s.appLinkFor(NavApp.sygic, lat: 40.4093, lng: 49.8671), 'com.sygic.aura://coordinate|49.867100|40.409300|drive',
-        reason: 'longitude first, plain |');
+    expect(s.appLinkFor(NavApp.sygic, lat: 40.4093, lng: 49.8671), isNull, reason: 'the old scheme was refused by Safari');
     expect(s.appLinkFor(NavApp.googleMaps, lat: 1, lng: 2), isNull);
     expect(s.appLinkFor(NavApp.appleMaps, lat: 1, lng: 2), isNull);
   });
 
-  test('web links: Waze map when the app does not open; Sygic has none; Google / Apple unchanged', () {
+  test('web links: Waze map when the app does not open; Sygic universal link; Google / Apple unchanged', () {
     expect(s.webLinkFor(NavApp.waze, lat: 40.4093, lng: 49.8671).toString(),
         'https://www.waze.com/live-map/directions?to=ll.40.409300%2C49.867100&navigate=yes');
-    expect(s.webLinkFor(NavApp.sygic, lat: 1, lng: 2), isNull);
+    expect(s.webLinkFor(NavApp.sygic, lat: 40.4093, lng: 49.8671).toString(), 'https://go.sygic.com/directions?to=40.409300,49.867100',
+        reason: 'Sygic universal link: opens the installed app');
     expect(s.webLinkFor(NavApp.googleMaps, lat: 1, lng: 2).toString(), 'https://www.google.com/maps/dir/?api=1&destination=1.0,2.0');
     expect(s.webLinkFor(NavApp.appleMaps, lat: 1, lng: 2).toString(), 'https://maps.apple.com/?daddr=1.0,2.0');
   });
