@@ -146,6 +146,66 @@ void main() {
     expect(repo2.added, ['Sumqayıt Park|secure,wc'], reason: 'amenities in the fixed order');
   });
 
+  testWidgets('every sheet can be closed without doing anything: X, swipe down, back (owner, 01.11.2026)', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _FakeRepo();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [tirParkRepositoryProvider.overrideWithValue(repo)],
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                key: const ValueKey('open'),
+                onPressed: () => showModalBottomSheet<bool>(
+                  context: context,
+                  isScrollControlled: true,
+                  showDragHandle: true,
+                  builder: (_) => TirParkAddSheet(lat: 40.4, lng: 49.8, s: _az),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    // The X closes the add form, nothing is sent.
+    await tester.tap(find.byKey(const ValueKey('open')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TirParkAddSheet), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tp-add-close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TirParkAddSheet), findsNothing);
+    expect(repo.added, isEmpty);
+    // A swipe down on the handle closes it too.
+    await tester.tap(find.byKey(const ValueKey('open')));
+    await tester.pumpAndSettle();
+    final top = tester.getTopLeft(find.byType(TirParkAddSheet)).dy;
+    await tester.flingFrom(Offset(195, top - 20), const Offset(0, 500), 1500);
+    await tester.pumpAndSettle();
+    expect(find.byType(TirParkAddSheet), findsNothing);
+    expect(repo.added, isEmpty);
+  });
+
+  test('wired: all TIRPark / Servislər sheets have a handle and an X; choosing a place leaves with "back"; park page swipes back', () {
+    final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
+    final det = src('lib/features/tirpark/presentation/tir_park_detail_screen.dart');
+    final svc = src('lib/features/services/presentation/services_map_screen.dart');
+    expect('showModalBottomSheet'.allMatches(tp).length, 'showDragHandle: true,'.allMatches(tp).length);
+    expect('showModalBottomSheet'.allMatches(det).length, 'showDragHandle: true,'.allMatches(det).length);
+    expect(svc, contains('showDragHandle: true,'));
+    expect(tp, contains("closeKey: 'tp-filter-close'"));
+    expect(det, contains("closeKey: 'tp-review-close'"));
+    expect(svc, contains("closeKey: 'svc-filter-close'"));
+    expect(src('lib/features/tirpark/presentation/tir_park_add_sheet.dart'), contains("closeKey: 'tp-add-close'"));
+    expect(tp, contains('canPop: !_adding,'));
+    expect(tp, contains('if (!didPop && _adding) setState(() => _adding = false);'));
+    expect(det, contains('return EdgeSwipeBack('));
+  });
+
   test('wired: TIRPark tab in place of Servislər (kept, opened from TIRPark), admin approval, safe SQL', () {
     final shell = src('lib/core/router/main_shell.dart');
     expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark')),"));
