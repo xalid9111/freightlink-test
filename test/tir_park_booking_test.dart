@@ -231,6 +231,39 @@ void main() {
     expect(find.textContaining('Yekun: 12.00 AZN'), findsOneWidget);
   });
 
+  testWidgets('the booking sheet stays above the keyboard: the plate field and what is typed stay in view', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final day = TirPark.fromJson({..._jsonOf(_park), 'price': 3, 'price_unit': 'day', 'bookable': 6, 'capacity': 250});
+    await tester.pumpWidget(ProviderScope(
+      key: UniqueKey(),
+      overrides: [
+        stringsProvider.overrideWithValue(_az),
+        tirParkRepositoryProvider.overrideWithValue(_FakeRepo()..free = 6),
+        tirParksProvider.overrideWith((ref) async => [day]),
+        tirParkBookingNowProvider.overrideWith((ref) async => {'p1': const TirParkBookingNow(open: true, free: 6)}),
+      ],
+      child: MaterialApp(home: Scaffold(body: TirParkCardBooking(park: day, s: _az))),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpc-book-p1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('tpb-plate')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpb-plate')));
+    // The keyboard opens: 330 pt of the screen.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate')), '99-ZB-911');
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byKey(const ValueKey('tpb-plate')));
+    expect(field.bottom, lessThanOrEqualTo(844 - 330), reason: 'the field is above the keyboard');
+    expect(field.top, greaterThanOrEqualTo(0));
+    expect(find.text('99-ZB-911'), findsOneWidget);
+    tester.view.resetViewInsets();
+  });
+
   testWidgets('park card: "Boş yerlər: 6" + "Yeri rezerv et"; "Rezervasiya bağlıdır"; "Boş yer yoxdur"', (tester) async {
     Future<void> show(TirParkBookingNow now) async {
       await tester.pumpWidget(ProviderScope(

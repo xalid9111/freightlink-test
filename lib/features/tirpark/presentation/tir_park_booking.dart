@@ -271,6 +271,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
           TextField(
             key: const ValueKey('tpb-plate'),
             controller: _plate,
+            // Scrolled up enough that the field and the button under it
+            // stay above the keyboard.
+            scrollPadding: const EdgeInsets.fromLTRB(20, 20, 20, 140),
             enabled: !_busy,
             textCapitalization: TextCapitalization.characters,
             maxLength: 15,
@@ -323,19 +326,29 @@ Future<void> showTirParkBookSheet(BuildContext context, AppStrings s, TirPark pa
       useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.88),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-              Text(park.name, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
-              const SizedBox(height: 10),
-              TirParkBookingSection(park: park, s: s),
-            ]),
+      builder: (ctx) {
+        // The keyboard (owner, 02.11.2026): the sheet stands above it, so
+        // the plate field and what is typed there stay in view.
+        final keyboard = MediaQuery.viewInsetsOf(ctx).bottom;
+        final room = MediaQuery.sizeOf(ctx).height * 0.88 - keyboard;
+        return Padding(
+          padding: EdgeInsets.only(bottom: keyboard),
+          child: SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: room < 220 ? 220 : room),
+              child: SingleChildScrollView(
+                key: const ValueKey('tpb-sheet-scroll'),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                  Text(park.name, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+                  const SizedBox(height: 10),
+                  TirParkBookingSection(park: park, s: s),
+                ]),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
 /// The booking line of a park card (owner, 02.11.2026, 0081): "Boş
