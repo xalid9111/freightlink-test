@@ -24,6 +24,7 @@ import '../domain/activities.dart';
 import '../../services/presentation/services_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../tirpark/data/tir_park_repository.dart';
 import '../../finance/presentation/finance_providers.dart';
 
 /// Profile (owner's design): title + settings gear, a card with photo,
@@ -136,14 +137,23 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   // TIR parks (owner, 01.11.2026, 0079): managing a park and
                   // one's own space bookings.
-                  _MenuRow(
-                    key: const ValueKey('pf-tirpark-manage'),
-                    icon: Icons.local_parking,
-                    iconColor: AppColors.accent,
-                    title: strings.t('tpm_title'),
-                    subtitle: strings.t('tpm_sub'),
-                    onTap: () => context.pushOnce('/tirpark/manage'),
-                  ),
+                  // A receipt waiting (0085): a red count and "n ödəniş
+                  // yoxlanılır" under the title.
+                  Consumer(builder: (context, ref, _) {
+                    final n = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
+                    return _MenuRow(
+                      key: const ValueKey('pf-tirpark-manage'),
+                      icon: Icons.local_parking,
+                      iconColor: AppColors.accent,
+                      title: strings.t('tpm_title'),
+                      subtitle: n > 0 ? strings.t('tpm_pending_sub', {'n': '$n'}) : strings.t('tpm_sub'),
+                      badge: n,
+                      onTap: () async {
+                        await context.pushOnce('/tirpark/manage');
+                        ref.invalidate(tirParkManagerPendingProvider);
+                      },
+                    );
+                  }),
                   _MenuRow(
                     key: const ValueKey('pf-tirpark-bookings'),
                     icon: Icons.event_available_outlined,
@@ -748,6 +758,8 @@ class _MenuRow extends StatelessWidget {
   final String? subtitle;
   final Color? titleColor;
   final VoidCallback onTap;
+  /// A red count before the arrow (0 = none).
+  final int badge;
   const _MenuRow({
     super.key,
     required this.icon,
@@ -756,6 +768,7 @@ class _MenuRow extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.titleColor,
+    this.badge = 0,
   });
 
   @override
@@ -789,6 +802,14 @@ class _MenuRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (badge > 0)
+              Container(
+                key: const ValueKey('pf-badge'),
+                margin: const EdgeInsets.only(left: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
+                child: Text('$badge', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+              ),
             Icon(Icons.chevron_right, color: AppColors.textSoft),
           ],
         ),

@@ -1726,5 +1726,10 @@
   "tpb_rejected_plain": "Park ödənişi tapmadı. Rezervasiya ləğv edildi, yer boşaldı.",
   "tpb_plate": "Maşının dövlət nömrəsi",
   "tpb_plate_hint": "Məs. 99-ZB-911",
-  "tpb_err_plate": "Maşının dövlət nömrəsini yazın (məs. 99-ZB-911)."
+  "tpb_err_plate": "Maşının dövlət nömrəsini yazın (məs. 99-ZB-911).",
+  "tpb_arrive_day": "Gəlmə günü",
+  "tpb_leave_day": "Çıxış günü",
+  "tpm_day_only": "Rezervasiya indi yalnız günlə olur — qiyməti gün üçün yazıb saxlayın.",
+  "tpm_new_payments": "Yeni ödəniş — yoxlayın ({n})",
+  "tpm_pending_sub": "{n} ödəniş yoxlanılır"
 }

@@ -124,7 +124,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   first; "Ödəniş yoxlanılır" keeps the space; "Rədd et" or a cancel frees
   it. The driver writes the truck's state number (owner, 02.11.2026,
   0082, e.g. 99-ZB-911; required, tidied on the server); the manager sees
-  it next to the receipt, on the confirmed booking and at the entry check. "Yük əlavə et" (orange +) is on the Loads
+  it next to the receipt, on the confirmed booking and at the entry check. On a receipt (owner, 03.11.2026, 0085) the manager is
+  told: a red count on Profil → "TIR parkı idarə edirəm", "Yeni ödəniş —
+  yoxlayın" at the top of the park, and a message from the driver in
+  Mesajlar; no "Təyinat" line on the payment sheet. Days only (owner,
+  03.11.2026): the driver picks the arrival day (no hour), managers set a
+  price per day; a park still priced per hour shows "Rezervasiya
+  bağlıdır" until a day price is saved. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

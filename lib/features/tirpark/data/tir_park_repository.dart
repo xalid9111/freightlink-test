@@ -223,6 +223,16 @@ class TirParkRepository {
       });
 
   /// Books (the space is held 15 minutes for the payment).
+  /// Receipts waiting for me as a park manager (0085); 0 before that SQL.
+  Future<int> managerPending() async {
+    try {
+      final res = await _c.rpc('tir_park_manager_pending').timeout(_timeout);
+      return res is num ? res.toInt() : int.tryParse('$res') ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// Open / free places now for the managed parks of the list (0081).
   Future<Map<String, TirParkBookingNow>> bookingNow(List<String> parkIds) => _run(() async {
         if (parkIds.isEmpty) return const <String, TirParkBookingNow>{};
@@ -330,6 +340,12 @@ final tirParkBookingNowProvider = FutureProvider.autoDispose<Map<String, TirPark
   } catch (_) {
     return const <String, TirParkBookingNow>{};
   }
+});
+
+/// The red count on Profil → "TIR parkı idarə edirəm" (0085).
+final tirParkManagerPendingProvider = FutureProvider.autoDispose<int>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(tirParkRepositoryProvider).managerPending();
 });
 
 final adminTirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) => ref.watch(tirParkRepositoryProvider).adminParks());

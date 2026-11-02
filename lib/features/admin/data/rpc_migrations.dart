@@ -134,6 +134,7 @@ const kRpcMigration = <String, String>{
   'tir_parks_booking_now': '0081_tir_park_booking_card.sql',
   'admin_purge': '0083_admin_purge.sql',
   'admin_purge_list': '0083_admin_purge.sql',
+  'tir_park_manager_pending': '0085_tir_park_receipt_notice.sql',
   'admin_night_themes': '0076_night_theme.sql',
   'admin_night_theme_save': '0076_night_theme.sql',
   'admin_night_theme_delete': '0076_night_theme.sql',

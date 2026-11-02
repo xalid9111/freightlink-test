@@ -17,6 +17,12 @@ String tirParkTime(DateTime t) {
   return '${two(t.day)}.${two(t.month)} ${two(t.hour)}:${two(t.minute)}';
 }
 
+/// "03.11" (local date) — bookings are by days (owner, 03.11.2026).
+String tirParkDay(DateTime t) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(t.day)}.${two(t.month)}';
+}
+
 String tirParkUnitLabel(AppStrings s, String unit) => s.t(unit == 'day' ? 'tpb_unit_day' : 'tpb_unit_hour');
 
 Color tirParkStatusColor(String status) => switch (status) {
@@ -42,7 +48,8 @@ class TirParkBookingSection extends ConsumerStatefulWidget {
 }
 
 class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
-  late DateTime _from = _roundUp(DateTime.now().add(const Duration(hours: 1)));
+  // Days only (owner, 03.11.2026): the driver picks the arrival DAY, no hour.
+  DateTime _day = _today();
   // "Qalma müddəti" in the park's own price unit (days or hours).
   int _len = 1;
   int _trucks = 1;
@@ -54,13 +61,20 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   bool _busy = false;
   String? _error;
 
-  static DateTime _roundUp(DateTime t) => DateTime(t.year, t.month, t.day, t.hour).add(Duration(minutes: t.minute > 0 ? 60 : 0));
+  static DateTime _today() {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  /// Today → from now; a later day → from its start.
+  DateTime get _from => _day.isAfter(_today()) ? _day : DateTime.now();
 
   AppStrings get s => widget.s;
   TirPark get park => widget.park;
-  String get _unit => park.priceUnit ?? 'hour';
-  int get _maxLen => _unit == 'day' ? 30 : 72;
-  DateTime get _to => _from.add(_unit == 'day' ? Duration(days: _len) : Duration(hours: _len));
+  String get _unit => 'day';
+  int get _maxLen => 30;
+  DateTime get _to => _from.add(Duration(days: _len));
+  DateTime get _leaveDay => _day.add(Duration(days: _len));
 
   @override
   void initState() {
@@ -97,18 +111,16 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   }
 
   Future<void> _pickArrival() async {
-    final now = DateTime.now();
+    final today = _today();
     final d = await showDatePicker(
       context: context,
-      initialDate: _from.isBefore(now) ? now : _from,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 60)),
+      initialDate: _day.isBefore(today) ? today : _day,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 60)),
     );
     if (d == null || !mounted) return;
-    final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_from));
-    if (t == null || !mounted) return;
     setState(() {
-      _from = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+      _day = DateTime(d.year, d.month, d.day);
       _error = null;
     });
     _loadFree();
@@ -167,9 +179,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
             const SizedBox(height: 12),
             Text(park.name, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
             const SizedBox(height: 4),
-            Text('${s.t('tpb_arrive')}: ${tirParkTime(_from)}', style: TextStyle(color: AppColors.text)),
+            Text('${s.t('tpb_arrive_day')}: ${tirParkDay(_day)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_stay')}: $units ${tirParkUnitLabel(s, _unit)}', style: TextStyle(color: AppColors.text)),
-            Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', style: TextStyle(color: AppColors.text)),
+            Text('${s.t('tpb_leave_day')}: ${tirParkDay(_leaveDay)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_trucks')}: $_trucks', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_plate')}: $plate', key: const ValueKey('tpb-plate-confirm'), style: TextStyle(color: AppColors.text)),
             const SizedBox(height: 8),
@@ -234,7 +246,8 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   @override
   Widget build(BuildContext context) {
     final units = tirParkUnits(_from, _to, _unit);
-    final closed = _closed || !park.bookingOpen || (park.price ?? 0) <= 0 || park.priceUnit == null;
+    // A park still priced per hour takes no bookings until its manager sets a day price.
+    final closed = _closed || !park.bookingOpen || (park.price ?? 0) <= 0 || park.priceUnit != 'day';
     final full = _free == 0;
     final enough = _free != null && _free! >= _trucks;
     return Container(
@@ -262,11 +275,11 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
           OutlinedButton(
             key: const ValueKey('tpb-from'),
             onPressed: _busy ? null : _pickArrival,
-            child: Text('${s.t('tpb_arrive')}\n${tirParkTime(_from)}', textAlign: TextAlign.center),
+            child: Text('${s.t('tpb_arrive_day')}\n${tirParkDay(_day)}', textAlign: TextAlign.center),
           ),
           const SizedBox(height: 6),
           _stepper(s.t('tpb_stay'), _len, '$_len ${tirParkUnitLabel(s, _unit)}', 'tpb-len', 1, _maxLen, _setLen),
-          Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', key: const ValueKey('tpb-to'), style: TextStyle(color: AppColors.textSoft)),
+          Text('${s.t('tpb_leave_day')}: ${tirParkDay(_leaveDay)}', key: const ValueKey('tpb-to'), style: TextStyle(color: AppColors.textSoft)),
           _stepper(s.t('tpb_trucks'), _trucks, '$_trucks', 'tpb-trucks', 1, 50, (v) => setState(() => _trucks = v)),
           TextField(
             key: const ValueKey('tpb-plate'),
@@ -364,7 +377,7 @@ class TirParkCardBooking extends ConsumerWidget {
     if (!park.isManaged) return const SizedBox.shrink();
     final now = ref.watch(tirParkBookingNowProvider).valueOrNull?[park.id];
     // Before 0081 runs: the park's own fields.
-    final open = now?.open ?? park.canBook;
+    final open = (now?.open ?? park.canBook) && park.priceUnit == 'day';
     final free = now?.free;
     final unit = park.priceUnit ?? 'hour';
     Widget line(String text, Color color, String key) =>
@@ -506,7 +519,6 @@ class _TirParkPaySheetState extends ConsumerState<TirParkPaySheet> {
             _row(s.t('tpb_bank'), d.bank, 'tpb-pay-bank'),
             _row(s.t('tpb_account'), d.account, 'tpb-pay-account'),
             _row(s.t('tpb_card'), d.card, 'tpb-pay-card'),
-            _row(s.t('tpb_purpose_label'), d.bookingNo ?? b.bookingNo, 'tpb-pay-no'),
             if ((b.plate ?? '').isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),

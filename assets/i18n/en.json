@@ -1726,5 +1726,10 @@
   "tpb_rejected_plain": "The park did not find the payment. The booking is cancelled, the space is free again.",
   "tpb_plate": "Truck plate number",
   "tpb_plate_hint": "E.g. 99-ZB-911",
-  "tpb_err_plate": "Enter the truck's plate number (e.g. 99-ZB-911)."
+  "tpb_err_plate": "Enter the truck's plate number (e.g. 99-ZB-911).",
+  "tpb_arrive_day": "Arrival day",
+  "tpb_leave_day": "Departure day",
+  "tpm_day_only": "Bookings are by days now — enter the price per day and save.",
+  "tpm_new_payments": "New payment — check it ({n})",
+  "tpm_pending_sub": "{n} payments to check"
 }
