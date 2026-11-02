@@ -132,6 +132,8 @@ const kRpcMigration = <String, String>{
   'tir_park_booking_confirm_payment': '0080_tir_park_direct_payment.sql',
   'tir_park_booking_reject_payment': '0080_tir_park_direct_payment.sql',
   'tir_parks_booking_now': '0081_tir_park_booking_card.sql',
+  'admin_purge': '0083_admin_purge.sql',
+  'admin_purge_list': '0083_admin_purge.sql',
   'admin_night_themes': '0076_night_theme.sql',
   'admin_night_theme_save': '0076_night_theme.sql',
   'admin_night_theme_delete': '0076_night_theme.sql',
