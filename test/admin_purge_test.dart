@@ -32,7 +32,7 @@ void main() {
       child: const MaterialApp(home: Scaffold(body: AdminPurgePage())),
     ));
     await tester.pumpAndSettle();
-    for (final k in ['user', 'cargo', 'service', 'market', 'job_vacancy', 'job_seeker']) {
+    for (final k in ['user', 'cargo', 'service', 'market', 'job_vacancy', 'job_seeker', 'tir_park']) {
       expect(find.byKey(ValueKey('purge-kind-$k')), findsOneWidget, reason: k);
     }
     expect(find.text('Saxta Profil'), findsOneWidget);
@@ -72,5 +72,12 @@ void main() {
     final outside = sql.replaceAll(RegExp(r'\$\$[\s\S]*?\$\$'), '').toLowerCase();
     expect(outside.contains('delete from'), isFalse, reason: 'running the SQL deletes nothing');
     expect(src('supabase/tests/local/run_local.sh'), contains('121_admin_purge.sql'));
+    // 0084: + TIR parks, the same server checks.
+    final parks = src('supabase/migrations/0084_admin_purge_tir_parks.sql');
+    expect(parks, contains("when 'tir_park' then v_table := 'public.tir_parks'; v_key := 'id';"));
+    expect(parks, contains("if p_confirm is distinct from 'SİL' then raise exception 'confirm_required'"));
+    expect(parks, contains('perform public._require_admin();'));
+    expect(parks.replaceAll(RegExp(r'\$\$[\s\S]*?\$\$'), '').toLowerCase().contains('delete from'), isFalse);
+    expect(src('supabase/tests/local/run_local.sh'), contains('122_admin_purge_tir_parks.sql'));
   });
 }
