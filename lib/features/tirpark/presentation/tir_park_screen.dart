@@ -394,6 +394,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                             s: s,
                             selected: p.id == _selectedId,
                             onTap: () => _select(p),
+                            onOpen: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
                             booking: p.isManaged ? TirParkCardBooking(park: p, s: s) : null,

@@ -132,6 +132,23 @@ void main() {
 
   });
 
+  testWidgets('the selected card: a tap on the name or the picture opens the park page', (tester) async {
+    var taps = 0, opens = 0;
+    Future<void> show(bool selected) => tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: TirParkCard(park: _park, km: 2.5, s: _az, selected: selected, onTap: () => taps++, onOpen: () => opens++),
+          ),
+        ));
+    await show(false);
+    await tester.tap(find.byKey(const ValueKey('tp-name-p1')));
+    expect((taps, opens), (1, 0), reason: 'first tap selects the park (route), as before');
+    await show(true);
+    await tester.tap(find.byKey(const ValueKey('tp-name-p1')));
+    await tester.tap(find.byKey(const ValueKey('tp-photo-p1')));
+    expect((taps, opens), (1, 2), reason: 'selected: name and picture open the page');
+    expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onOpen: () => context.pushOnce('/tirpark/p/\${p.id}')"));
+  });
+
   testWidgets('the card: "Şərhlər (n) ›" and "Şərh yaz" (approved parks only)', (tester) async {
     var opened = '';
     await tester.pumpWidget(MaterialApp(
