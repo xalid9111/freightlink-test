@@ -1723,5 +1723,8 @@
   "tpb_free_now": "Free spaces: {n}",
   "tpb_st_payment_rejected": "Payment rejected",
   "tpb_rejected_end": "The park did not find the payment: {note}. The booking is cancelled, the space is free again.",
-  "tpb_rejected_plain": "The park did not find the payment. The booking is cancelled, the space is free again."
+  "tpb_rejected_plain": "The park did not find the payment. The booking is cancelled, the space is free again.",
+  "tpb_plate": "Truck plate number",
+  "tpb_plate_hint": "E.g. 99-ZB-911",
+  "tpb_err_plate": "Enter the truck's plate number (e.g. 99-ZB-911)."
 }

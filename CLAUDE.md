@@ -122,7 +122,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   "Rezervasiya bağlıdır" / "Boş yer yoxdur"); booking = arrival, stay
   (days / hours of the park's unit), TIRs, price × units × TIRs shown
   first; "Ödəniş yoxlanılır" keeps the space; "Rədd et" or a cancel frees
-  it. "Yük əlavə et" (orange +) is on the Loads
+  it. The driver writes the truck's state number (owner, 02.11.2026,
+  0082, e.g. 99-ZB-911; required, tidied on the server); the manager sees
+  it next to the receipt, on the confirmed booking and at the entry check. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

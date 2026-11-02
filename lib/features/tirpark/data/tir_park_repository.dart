@@ -40,6 +40,8 @@ class TirParkRepository {
         'not_checked_in', 'not_cancellable', 'not_paid', 'invalid_argument', 'not_found',
         // 0080: direct transfer.
         'not_payable', 'not_in_review', 'invalid_path',
+        // 0082: the truck's plate.
+        'invalid_plate',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -231,12 +233,13 @@ class TirParkRepository {
         };
       });
 
-  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks) => _run(() async {
+  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate) => _run(() async {
         final res = await _c.rpc('tir_park_booking_create', params: {
           'p_park': parkId,
           'p_from': from.toUtc().toIso8601String(),
           'p_to': to.toUtc().toIso8601String(),
           'p_trucks': trucks,
+          'p_plate': plate,
         }).timeout(_timeout);
         return TirParkBooking.fromJson(Map<String, dynamic>.from(res as Map));
       });

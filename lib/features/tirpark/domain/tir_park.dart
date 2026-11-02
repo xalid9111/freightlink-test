@@ -122,6 +122,8 @@ class TirParkBooking {
   final String? rejectNote;
   /// 'driver' · 'payment_rejected' (0081: "Rədd et" ends the booking) · …
   final String? cancelReason;
+  /// The truck's state number, e.g. 99-ZB-911 (0082; old bookings: null).
+  final String? plate;
 
   const TirParkBooking({
     required this.id,
@@ -144,6 +146,7 @@ class TirParkBooking {
     this.receiptPath,
     this.rejectNote,
     this.cancelReason,
+    this.plate,
   });
 
   /// A payment hold whose time is over counts as expired (the server frees it).
@@ -175,6 +178,7 @@ class TirParkBooking {
       receiptPath: j['receipt_path'] as String?,
       rejectNote: j['reject_note'] as String?,
       cancelReason: j['cancel_reason'] as String?,
+      plate: j['plate'] as String?,
     );
   }
 }
@@ -188,6 +192,18 @@ class TirParkBookingNow {
 
   factory TirParkBookingNow.fromJson(Map<String, dynamic> j) =>
       TirParkBookingNow(open: j['open'] == true, free: int.tryParse('${j['free'] ?? 0}') ?? 0);
+}
+
+/// The same tidying as the server's _tir_park_plate (0082): "99 zb.911" →
+/// "99-ZB-911"; null when it does not look like a state number.
+String? tidyTruckPlate(String raw) {
+  var v = raw.trim().toUpperCase();
+  v = v.replaceAll(RegExp(r'[\s._/]+'), '-').replaceAll(RegExp(r'-{2,}'), '-');
+  v = v.replaceAll(RegExp(r'^-+|-+$'), '');
+  if (v.length < 3 || v.length > 15) return null;
+  if (!RegExp(r'^[\p{L}\p{N}][\p{L}\p{N}-]*[\p{L}\p{N}]$', unicode: true).hasMatch(v)) return null;
+  if (!RegExp(r'[0-9]').hasMatch(v)) return null;
+  return v;
 }
 
 /// Price units the server bills (the same rounding up as 0079): started

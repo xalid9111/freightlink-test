@@ -46,6 +46,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   // "Qalma müddəti" in the park's own price unit (days or hours).
   int _len = 1;
   int _trucks = 1;
+  // The truck's state number (0082), e.g. 99-ZB-911; filled in from the
+  // driver's last booking.
+  final _plate = TextEditingController();
   int? _free;
   bool _closed = false; // the server says the park takes no bookings now (e.g. no payment details)
   bool _busy = false;
@@ -63,6 +66,21 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   void initState() {
     super.initState();
     _loadFree();
+    _lastPlate();
+  }
+
+  Future<void> _lastPlate() async {
+    try {
+      final mine = await ref.read(tirParkRepositoryProvider).myBookings();
+      final last = mine.map((b) => b.plate).whereType<String>().firstOrNull;
+      if (last != null && mounted && _plate.text.isEmpty) setState(() => _plate.text = last);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _plate.dispose();
+    super.dispose();
   }
 
   Future<void> _loadFree() async {
@@ -109,6 +127,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
         TirParkRefused(reason: 'invalid_time') => 'tpb_err_time',
         TirParkRefused(reason: 'own_park') => 'tpb_err_own',
         TirParkRefused(reason: 'not_bookable') => 'tpb_closed',
+        TirParkRefused(reason: 'invalid_plate') => 'tpb_err_plate',
         _ => 'tpb_err_generic',
       };
 
@@ -122,6 +141,12 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
       });
 
   Future<void> _book() async {
+    final plate = tidyTruckPlate(_plate.text);
+    if (plate == null) {
+      setState(() => _error = 'tpb_err_plate');
+      return;
+    }
+    _plate.text = plate;
     final units = tirParkUnits(_from, _to, _unit);
     if (units <= 0 || _from.isBefore(DateTime.now().subtract(const Duration(minutes: 15)))) {
       setState(() => _error = 'tpb_err_time');
@@ -146,6 +171,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
             Text('${s.t('tpb_stay')}: $units ${tirParkUnitLabel(s, _unit)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_trucks')}: $_trucks', style: TextStyle(color: AppColors.text)),
+            Text('${s.t('tpb_plate')}: $plate', key: const ValueKey('tpb-plate-confirm'), style: TextStyle(color: AppColors.text)),
             const SizedBox(height: 8),
             Text(_calc(units), key: const ValueKey('tpb-calc-confirm'), style: TextStyle(color: AppColors.text)),
             Text(
@@ -173,7 +199,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
     });
     try {
       // 2) The server holds the space (atomic) and prices the booking.
-      final b = await ref.read(tirParkRepositoryProvider).book(park.id, _from, _to, _trucks);
+      final b = await ref.read(tirParkRepositoryProvider).book(park.id, _from, _to, _trucks, plate);
       if (!mounted) return;
       final container = ProviderScope.containerOf(context, listen: false);
       container.invalidate(tirParkBookingNowProvider);
@@ -242,6 +268,23 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
           _stepper(s.t('tpb_stay'), _len, '$_len ${tirParkUnitLabel(s, _unit)}', 'tpb-len', 1, _maxLen, _setLen),
           Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', key: const ValueKey('tpb-to'), style: TextStyle(color: AppColors.textSoft)),
           _stepper(s.t('tpb_trucks'), _trucks, '$_trucks', 'tpb-trucks', 1, 50, (v) => setState(() => _trucks = v)),
+          TextField(
+            key: const ValueKey('tpb-plate'),
+            controller: _plate,
+            enabled: !_busy,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 15,
+            onChanged: (_) {
+              if (_error == 'tpb_err_plate') setState(() => _error = null);
+            },
+            decoration: InputDecoration(
+              labelText: s.t('tpb_plate'),
+              hintText: s.t('tpb_plate_hint'),
+              counterText: '',
+              prefixIcon: const Icon(Icons.local_shipping_outlined),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             _free == null ? '…' : s.t('tpb_free', {'n': '$_free'}),
             key: const ValueKey('tpb-free'),
@@ -451,6 +494,11 @@ class _TirParkPaySheetState extends ConsumerState<TirParkPaySheet> {
             _row(s.t('tpb_account'), d.account, 'tpb-pay-account'),
             _row(s.t('tpb_card'), d.card, 'tpb-pay-card'),
             _row(s.t('tpb_purpose_label'), d.bookingNo ?? b.bookingNo, 'tpb-pay-no'),
+            if ((b.plate ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('${s.t('tpb_plate')}: ${b.plate}', key: const ValueKey('tpb-pay-plate'), style: TextStyle(color: AppColors.text)),
+              ),
             if ((d.note ?? '').isNotEmpty) Text(d.note!, style: TextStyle(color: AppColors.text)),
             if (d.holdUntil != null) ...[
               const SizedBox(height: 6),
@@ -542,6 +590,8 @@ class MyParkBookingsScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text('${b.bookingNo} · ${tirParkTime(b.startAt)} → ${tirParkTime(b.endAt)} · ${b.trucks} TIR',
                         style: TextStyle(color: AppColors.textSoft)),
+                    if ((b.plate ?? '').isNotEmpty)
+                      Text('${s.t('tpb_plate')}: ${b.plate}', key: ValueKey('tpb-plate-${b.id}'), style: TextStyle(color: AppColors.text)),
                     Text(money(b.amount, b.currency), style: TextStyle(color: AppColors.text)),
                     if (b.shownStatus == 'payment_rejected')
                       Text(

@@ -1723,5 +1723,8 @@
   "tpb_free_now": "Boş yerlər: {n}",
   "tpb_st_payment_rejected": "Ödəniş rədd edildi",
   "tpb_rejected_end": "Park ödənişi tapmadı: {note}. Rezervasiya ləğv edildi, yer boşaldı.",
-  "tpb_rejected_plain": "Park ödənişi tapmadı. Rezervasiya ləğv edildi, yer boşaldı."
+  "tpb_rejected_plain": "Park ödənişi tapmadı. Rezervasiya ləğv edildi, yer boşaldı.",
+  "tpb_plate": "Maşının dövlət nömrəsi",
+  "tpb_plate_hint": "Məs. 99-ZB-911",
+  "tpb_err_plate": "Maşının dövlət nömrəsini yazın (məs. 99-ZB-911)."
 }
