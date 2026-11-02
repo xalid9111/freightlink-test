@@ -13,6 +13,7 @@ const adminPurgeKinds = <String, String>{
   'market': 'TIR Bazarı elanları',
   'job_vacancy': 'İş elanları (vakansiya)',
   'job_seeker': 'Sürücü profilləri (İş Mərkəzi)',
+  'tir_park': 'TIR parkları', // 0084
 };
 
 /// For tests: the SİL check of the confirm dialog.

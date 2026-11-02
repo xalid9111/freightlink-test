@@ -230,7 +230,7 @@ files to the owner separately (they are run by hand in the SQL editor).
   yoxdur / var — in the form, the filter, the ad page and on the computer.
 - Admin → "Test məlumatlarını sil" (owner, 02.11.2026, 0083): admins
   only (server `_require_admin`, typed SİL) delete fake test profiles,
-  loads, services, TIR Bazarı sale ads and job ads for good. A user goes
+  loads, services, TIR Bazarı sale ads, job ads and TIR parks (0084) for good. A user goes
   with everything ("Hamısını sil": account + sign-in, loads, services,
   parks he added, ads, chats and messages also with real people,
   comments, bookings, test payments); never oneself, the founder or
