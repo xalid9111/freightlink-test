@@ -115,6 +115,9 @@ class TirParkCard extends StatelessWidget {
   /// The booking line (0081): free places now and "Yeri rezerv et"; shown
   /// whether or not the park is selected.
   final Widget? booking;
+  /// Opens the park's page (owner, 02.11.2026): a tap on the picture or the
+  /// name of the selected park.
+  final VoidCallback? onOpen;
   const TirParkCard(
       {super.key,
       required this.park,
@@ -125,7 +128,17 @@ class TirParkCard extends StatelessWidget {
       this.onReviews,
       this.onWrite,
       this.footer,
-      this.booking});
+      this.booking,
+      this.onOpen});
+
+  /// The picture and the name: on the selected park they open its page,
+  /// otherwise they select it like the rest of the card.
+  Widget _opens(String key, Widget child) => GestureDetector(
+        key: ValueKey('$key-${park.id}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: selected && onOpen != null ? onOpen : onTap,
+        child: child,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +156,7 @@ class TirParkCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            ClipRRect(
+            _opens('tp-photo', ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: SizedBox(
                 width: 88,
@@ -156,16 +169,16 @@ class TirParkCard extends StatelessWidget {
                     : Image.network(photo, fit: BoxFit.cover, cacheWidth: 270,
                         errorBuilder: (_, __, ___) => Container(color: AppColors.cardAlt)),
               ),
-            ),
+            )),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Expanded(
-                    child: Text(park.name,
+                    child: _opens('tp-name', Text(park.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+                        style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600, color: AppColors.text))),
                   ),
                   // A real rating only (no stars before anybody rated).
                   if (park.ratingCount > 0) ...[
