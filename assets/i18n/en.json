@@ -1687,7 +1687,6 @@
   "pay_success_booking": "Payment confirmed. The booking is confirmed — the entry code is in \"My park bookings\".",
   "pay_success_booking_test": "Test payment succeeded (confirmed by the server). The booking is confirmed — the code is in \"My park bookings\". No real money is charged in test mode.",
   "tpb_st_payment_review": "Payment being checked",
-  "tpb_not_open": "This park does not take bookings yet.",
   "tpb_no_money": "FreightLink takes no money and does not ask for your card data — you pay the park directly.",
   "tpb_paysheet_title": "Payment details",
   "tpb_pay_to": "Transfer the amount yourself to this park account, then upload a picture of the receipt.",
@@ -1716,5 +1715,13 @@
   "tpm_confirm": "Confirm payment",
   "tpm_reject": "Reject",
   "tpm_reject_q": "The money has not arrived? Write a short note to the driver (optional).",
-  "tpm_confirmed": "Payment confirmed: {no}. The driver got the code."
+  "tpm_confirmed": "Payment confirmed: {no}. The driver got the code.",
+  "tpb_calc": "{price} / {unit} × {units} {unit} × {trucks} trucks = {amount}",
+  "tpb_stay": "Length of stay",
+  "tpb_closed": "Booking is closed",
+  "tpb_full": "No free spaces",
+  "tpb_free_now": "Free spaces: {n}",
+  "tpb_st_payment_rejected": "Payment rejected",
+  "tpb_rejected_end": "The park did not find the payment: {note}. The booking is cancelled, the space is free again.",
+  "tpb_rejected_plain": "The park did not find the payment. The booking is cancelled, the space is free again."
 }

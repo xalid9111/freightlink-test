@@ -63,6 +63,10 @@ class TirPark {
   bool get canBook =>
       isApproved && managerStatus == 'approved' && bookingOpen && (price ?? 0) > 0 && priceUnit != null && (bookable ?? 0) > 0;
 
+  /// A park with an approved manager: its card and page carry the booking
+  /// line ("Boş yerlər: n" / "Rezervasiya bağlıdır" / "Boş yer yoxdur").
+  bool get isManaged => isApproved && managerStatus == 'approved';
+
   factory TirPark.fromJson(Map<String, dynamic> j) {
     double d(Object? v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
     List<String> l(Object? v) => [for (final x in (v as List? ?? const [])) '$x'];
@@ -116,6 +120,8 @@ class TirParkBooking {
   /// when he did not find the money.
   final String? receiptPath;
   final String? rejectNote;
+  /// 'driver' · 'payment_rejected' (0081: "Rədd et" ends the booking) · …
+  final String? cancelReason;
 
   const TirParkBooking({
     required this.id,
@@ -137,10 +143,14 @@ class TirParkBooking {
     this.checkedOutAt,
     this.receiptPath,
     this.rejectNote,
+    this.cancelReason,
   });
 
   /// A payment hold whose time is over counts as expired (the server frees it).
-  String get shownStatus => status == 'pending_payment' && holdUntil != null && holdUntil!.isBefore(DateTime.now()) ? 'expired' : status;
+  /// A receipt the park did not accept shows as "Ödəniş rədd edildi" (0081).
+  String get shownStatus => status == 'pending_payment' && holdUntil != null && holdUntil!.isBefore(DateTime.now())
+      ? 'expired'
+      : (status == 'cancelled' && cancelReason == 'payment_rejected' ? 'payment_rejected' : status);
 
   factory TirParkBooking.fromJson(Map<String, dynamic> j) {
     DateTime? t(Object? v) => v == null ? null : DateTime.tryParse('$v')?.toLocal();
@@ -164,8 +174,20 @@ class TirParkBooking {
       checkedOutAt: t(j['checked_out_at']),
       receiptPath: j['receipt_path'] as String?,
       rejectNote: j['reject_note'] as String?,
+      cancelReason: j['cancel_reason'] as String?,
     );
   }
+}
+
+/// The booking line of a park card right now (0081): open for booking and
+/// how many TIRs it can take now. Never any payment details.
+class TirParkBookingNow {
+  final bool open;
+  final int free;
+  const TirParkBookingNow({required this.open, required this.free});
+
+  factory TirParkBookingNow.fromJson(Map<String, dynamic> j) =>
+      TirParkBookingNow(open: j['open'] == true, free: int.tryParse('${j['free'] ?? 0}') ?? 0);
 }
 
 /// Price units the server bills (the same rounding up as 0079): started

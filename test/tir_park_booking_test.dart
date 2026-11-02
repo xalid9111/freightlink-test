@@ -110,8 +110,9 @@ void main() {
     expect(find.text('Ümumi tutum: 20 TIR'), findsOneWidget);
     expect(find.text('Seçilən vaxtda boş yer: 2'), findsOneWidget);
     expect(find.textContaining('Utep MMC'), findsNothing, reason: 'payment details are not on the park card');
-    await tester.tap(find.byKey(const ValueKey('tpb-plus')));
+    await tester.tap(find.byKey(const ValueKey('tpb-trucks-plus')));
     await tester.pump();
+    expect(find.text('5.00 AZN / saat × 1 saat × 2 TIR = 10.00 AZN'), findsOneWidget, reason: 'the calculation before paying');
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpb-terms')), findsOneWidget, reason: 'conditions shown first');
@@ -135,7 +136,14 @@ void main() {
     final repo = _FakeRepo()..free = 0;
     await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: _park, s: _az))), repo));
     await tester.pumpAndSettle();
-    expect(tester.widget<FilledButton>(find.byKey(const ValueKey('tpb-book'))).onPressed, isNull);
+    expect(find.text('Boş yer yoxdur'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpb-book')), findsNothing, reason: '"Boş yer yoxdur" instead of the button');
+    await tester.pumpWidget(_app(
+        Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: TirPark.fromJson({..._jsonOf(_park), 'booking_open': false}), s: _az))),
+        _FakeRepo()));
+    await tester.pumpAndSettle();
+    expect(find.text('Rezervasiya bağlıdır'), findsOneWidget, reason: 'the manager turned booking off');
+    expect(find.byKey(const ValueKey('tpb-book')), findsNothing);
     await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: _park, s: _az))), _ClosedRepo()));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpb-closed')), findsOneWidget);
@@ -159,6 +167,10 @@ void main() {
             id: 'b3', bookingNo: 'TP261102-GHI', parkId: 'p1', trucks: 1, units: 2, unit: 'hour', startAt: later,
             endAt: later.add(const Duration(hours: 2)), amount: 10, status: 'pending_payment',
             holdUntil: DateTime.now().add(const Duration(minutes: 30)), rejectNote: 'Pul gəlməyib'),
+        TirParkBooking(
+            id: 'b4', bookingNo: 'TP261102-JKL', parkId: 'p1', trucks: 1, units: 2, unit: 'hour', startAt: later,
+            endAt: later.add(const Duration(hours: 2)), amount: 10, status: 'cancelled', cancelReason: 'payment_rejected',
+            rejectNote: 'Məbləğ azdır'),
       ];
     await tester.pumpWidget(_app(const MyParkBookingsScreen(), repo));
     await tester.pumpAndSettle();
@@ -168,6 +180,67 @@ void main() {
     expect(find.byKey(const ValueKey('tpb-code-b2')), findsNothing, reason: 'no code before the park confirms');
     expect(find.byKey(const ValueKey('tpb-pay-b3')), findsOneWidget, reason: 'unpaid: details and receipt again');
     expect(find.textContaining('Pul gəlməyib'), findsOneWidget);
+    expect(find.text('Ödəniş rədd edildi'), findsOneWidget, reason: '0081: "Rədd et" ends the booking');
+    expect(find.byKey(const ValueKey('tpb-rejected-b4')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpb-pay-b4')), findsNothing, reason: 'no paying for a rejected booking');
+  });
+
+  testWidgets('a day park: arrival, stay in days, TIRs → 3 AZN/gün × 2 gün × 2 TIR = 12 AZN', (tester) async {
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final day = TirPark.fromJson({..._jsonOf(_park), 'price': 3, 'price_unit': 'day', 'bookable': 6});
+    final repo = _FakeRepo()..free = 6;
+    await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: day, s: _az))), repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Qalma müddəti'), findsOneWidget);
+    expect(find.text('1 gün'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpb-len-plus')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpb-trucks-plus')));
+    await tester.pumpAndSettle();
+    expect(find.text('2 gün'), findsOneWidget);
+    expect(find.text('3.00 AZN / gün × 2 gün × 2 TIR = 12.00 AZN'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpb-book')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpb-calc-confirm')), findsOneWidget, reason: 'the calculation again before anything is held');
+    expect(find.textContaining('Yekun: 12.00 AZN'), findsOneWidget);
+  });
+
+  testWidgets('park card: "Boş yerlər: 6" + "Yeri rezerv et"; "Rezervasiya bağlıdır"; "Boş yer yoxdur"', (tester) async {
+    Future<void> show(TirParkBookingNow now) async {
+      await tester.pumpWidget(ProviderScope(
+        key: UniqueKey(),
+        overrides: [
+          stringsProvider.overrideWithValue(_az),
+          tirParkRepositoryProvider.overrideWithValue(_FakeRepo()),
+          tirParksProvider.overrideWith((ref) async => [_park]),
+          tirParkBookingNowProvider.overrideWith((ref) async => {'p1': now}),
+        ],
+        child: MaterialApp(home: Scaffold(body: TirParkCardBooking(park: _park, s: _az))),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    await show(const TirParkBookingNow(open: true, free: 6));
+    expect(find.text('Boş yerlər: 6'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpc-book-p1')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpc-book-p1')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TirParkBookingSection), findsOneWidget, reason: 'the booking opens from the card');
+    await show(const TirParkBookingNow(open: false, free: 0));
+    expect(find.text('Rezervasiya bağlıdır'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpc-book-p1')), findsNothing);
+    await show(const TirParkBookingNow(open: true, free: 0));
+    expect(find.text('Boş yer yoxdur'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpc-book-p1')), findsNothing);
+    // A park without a manager has no booking line.
+    await tester.pumpWidget(ProviderScope(
+        key: UniqueKey(),
+        child: MaterialApp(
+            home: Scaffold(
+                body: TirParkCardBooking(park: TirPark.fromJson({'id': 'x', 'name': 'A', 'lat': 1, 'lng': 2, 'status': 'approved'}), s: _az)))));
+    expect(find.byType(FilledButton), findsNothing);
   });
 
   testWidgets('manager: pending waits; approved: payment details form (no provider notice), code check, "Ödənişi təsdiqlə"',
@@ -230,6 +303,19 @@ void main() {
     expect(src('lib/features/tirpark/presentation/tir_park_booking.dart').contains('CheckoutSheet'), isFalse,
         reason: 'no card checkout in the booking flow');
     expect(src('supabase/tests/local/run_local.sh'), contains('118_tir_park_direct_payment.sql'));
+    // 0081: the booking line on the card; "Rədd et" frees the space.
+    final c = src('supabase/migrations/0081_tir_park_booking_card.sql').toLowerCase();
+    for (final bad in ['drop table', 'truncate', 'delete from', 'tir_park_pay_details d']) {
+      expect(c.contains(bad), isFalse, reason: bad);
+    }
+    expect(c, contains("set status = 'cancelled', cancelled_at = now(), cancel_reason = 'payment_rejected', hold_until = null"));
+    expect(c, contains("'open', public.tir_park_bookable(p)"), reason: 'the same open rule as booking itself');
+    expect(src('supabase/migrations/0080_tir_park_direct_payment.sql'), contains("status in ('confirmed', 'checked_in', 'payment_review')"),
+        reason: 'a receipt being checked keeps its space');
+    expect(src('supabase/tests/local/run_local.sh'), contains('119_tir_park_booking_card.sql'));
+    expect(src('supabase/tests/local/run_local.sh'), contains('0081_tir_park_booking_card.sql'));
+    expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('TirParkCardBooking(park: p, s: s)'));
+    expect(src('lib/features/tirpark/presentation/tir_park_detail_screen.dart'), contains('if (park.isManaged) ...['));
     expect(src('lib/core/router/app_router.dart'), contains("path: 'manage'"));
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains("context.pushOnce('/tirpark/manage')"));
     expect(src('supabase/tests/local/run_local.sh'), contains('117_tir_park_booking.sql'));
@@ -240,7 +326,8 @@ void main() {
     }
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
       final m = jsonDecode(src('assets/i18n/$lang.json')) as Map;
-      for (final k in ['tpb_book', 'tpb_terms', 'tpb_st_payment_review', 'tpm_title', 'tpm_paydet_hint', 'tpm_confirm', 'tpb_upload', 'tpb_no_money']) {
+      for (final k in ['tpb_free_now', 'tpb_closed', 'tpb_full', 'tpb_calc', 'tpb_stay', 'tpb_st_payment_rejected', 'tpb_rejected_end',
+                       'tpb_book', 'tpb_terms', 'tpb_st_payment_review', 'tpm_title', 'tpm_paydet_hint', 'tpm_confirm', 'tpb_upload', 'tpb_no_money']) {
         expect(m[k], isNotNull, reason: '$lang $k');
       }
     }

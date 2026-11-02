@@ -112,6 +112,9 @@ class TirParkCard extends StatelessWidget {
   /// Shown under the park while it is selected: the way there (owner,
   /// 01.11.2026 — like Servislər).
   final Widget? footer;
+  /// The booking line (0081): free places now and "Yeri rezerv et"; shown
+  /// whether or not the park is selected.
+  final Widget? booking;
   const TirParkCard(
       {super.key,
       required this.park,
@@ -121,7 +124,8 @@ class TirParkCard extends StatelessWidget {
       this.selected = false,
       this.onReviews,
       this.onWrite,
-      this.footer});
+      this.footer,
+      this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +203,10 @@ class TirParkCard extends StatelessWidget {
                         child: Text('+${park.amenities.length - 3}', style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                       ),
                   ]),
+                ],
+                if (booking != null) ...[
+                  const SizedBox(height: 8),
+                  booking!,
                 ],
                 if (selected && footer != null) ...[
                   const SizedBox(height: 8),

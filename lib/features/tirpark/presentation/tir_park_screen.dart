@@ -16,6 +16,7 @@ import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'map_page_banner.dart';
 import 'tir_park_add_sheet.dart';
+import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 
 /// TIRPark (owner, 31.10.2026, picture): the banner, the map with the park
@@ -395,6 +396,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                             onTap: () => _select(p),
                             onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
+                            booking: p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
                             footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
                           ),
                         );
