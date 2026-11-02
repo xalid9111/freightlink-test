@@ -75,6 +75,8 @@ class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
+        // "Park işlədirəm" requests (owner, 03.11.2026, 0086): only a name.
+        const _OwnerRequests(),
         Text('TIRPark — parklar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 4),
         Text('İstifadəçilərin əlavə etdiyi parklar təsdiqdən sonra hamıya görünür. Rədd / gizlət heç nəyi silmir.',
@@ -213,6 +215,93 @@ class _AdminBookings extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// "Park işlədirəm": the owner wrote only the park's name; once approved his
+/// owner panel opens and he puts the park on the map himself.
+class _OwnerRequests extends ConsumerStatefulWidget {
+  const _OwnerRequests();
+
+  @override
+  ConsumerState<_OwnerRequests> createState() => _OwnerRequestsState();
+}
+
+class _OwnerRequestsState extends ConsumerState<_OwnerRequests> {
+  String? _busy;
+
+  Future<void> _set(String id, String status) async {
+    setState(() => _busy = id);
+    try {
+      await ref.read(tirParkRepositoryProvider).adminOwnerRequestSet(id, status);
+      ref.invalidate(adminOwnerRequestsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e is TirParkNotReady ? 'Əvvəlcə Supabase-də SQL 0086 işə salınmalıdır.' : 'Alınmadı. Yenidən cəhd edin.')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(adminOwnerRequestsProvider);
+    final list = async.valueOrNull ?? const <Map<String, dynamic>>[];
+    if (async.hasError) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Text(async.error is TirParkNotReady ? '"Park işlədirəm" müraciətləri: SQL 0086 işə salınmayıb.' : 'Müraciətlər yüklənmədi.',
+            style: TextStyle(color: AppColors.textSoft)),
+      );
+    }
+    if (list.isEmpty) return const SizedBox.shrink();
+    const label = {'pending': 'Təsdiq gözləyir', 'approved': 'Təsdiqlənib', 'rejected': 'Rədd edilib'};
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('"Park işlədirəm" müraciətləri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 6),
+        for (final r in list)
+          Card(
+            key: ValueKey('atp-req-${r['id']}'),
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${r['park_name'] ?? ''}', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+                Text(
+                  [
+                    '${r['user_name'] ?? ''}',
+                    if ('${r['user_phone'] ?? ''}'.isNotEmpty) '${r['user_phone']}',
+                    if ('${r['user_email'] ?? ''}'.isNotEmpty) '${r['user_email']}',
+                    label['${r['status']}'] ?? '${r['status']}',
+                    if (r['status'] == 'approved') r['park_id'] == null ? 'park hələ qurulmayıb' : 'park qurulub',
+                  ].join(' · '),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSoft),
+                ),
+                if (r['status'] == 'pending') ...[
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    FilledButton(
+                      key: ValueKey('atp-req-ok-${r['id']}'),
+                      onPressed: _busy == r['id'] ? null : () => _set('${r['id']}', 'approved'),
+                      child: const Text('Təsdiqlə'),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: ValueKey('atp-req-no-${r['id']}'),
+                      onPressed: _busy == r['id'] ? null : () => _set('${r['id']}', 'rejected'),
+                      child: const Text('Rədd et'),
+                    ),
+                  ]),
+                ],
+              ]),
+            ),
+          ),
+      ]),
     );
   }
 }

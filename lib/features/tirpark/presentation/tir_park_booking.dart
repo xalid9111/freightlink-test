@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -66,8 +65,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
     return DateTime(n.year, n.month, n.day);
   }
 
-  /// Today → from now; a later day → from its start.
-  DateTime get _from => _day.isAfter(_today()) ? _day : DateTime.now();
+  /// The stay counts from the chosen day's 00:00 (owner, 03.11.2026), today
+  /// too; the server checks the places of every chosen day.
+  DateTime get _from => _day;
 
   AppStrings get s => widget.s;
   TirPark get park => widget.park;
@@ -160,7 +160,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
     }
     _plate.text = plate;
     final units = tirParkUnits(_from, _to, _unit);
-    if (units <= 0 || _from.isBefore(DateTime.now().subtract(const Duration(minutes: 15)))) {
+    if (units <= 0 || _day.isBefore(_today())) {
       setState(() => _error = 'tpb_err_time');
       return;
     }
@@ -613,7 +613,8 @@ class MyParkBookingsScreen extends ConsumerWidget {
                       Text(s.t('tpb_st_${b.shownStatus}'), style: TextStyle(color: tirParkStatusColor(b.shownStatus))),
                     ]),
                     const SizedBox(height: 4),
-                    Text('${b.bookingNo} · ${tirParkTime(b.startAt)} → ${tirParkTime(b.endAt)} · ${b.trucks} TIR',
+                    Text('${b.bookingNo} · ${b.unit == 'day' ? tirParkDay(b.startAt) : tirParkTime(b.startAt)} → '
+                        '${b.unit == 'day' ? tirParkDay(b.endAt) : tirParkTime(b.endAt)} · ${b.trucks} TIR',
                         style: TextStyle(color: AppColors.textSoft)),
                     if ((b.plate ?? '').isNotEmpty)
                       Text('${s.t('tpb_plate')}: ${b.plate}', key: ValueKey('tpb-plate-${b.id}'), style: TextStyle(color: AppColors.text)),
@@ -635,33 +636,14 @@ class MyParkBookingsScreen extends ConsumerWidget {
                         label: Text(s.t('tpb_pay_open')),
                       ),
                     ],
-                    if ((b.code ?? '').isNotEmpty && b.status == 'confirmed') ...[
-                      const SizedBox(height: 10),
-                      Text(s.t('tpb_code'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
-                      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                        // The QR on a white plate so it reads in day and night.
-                        Container(
-                          key: ValueKey('tpb-qr-${b.id}'),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: AppColors.logoPlate, borderRadius: BorderRadius.circular(8)),
-                          child: QrImageView(data: b.code!, size: 112, padding: EdgeInsets.zero),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            SelectableText(b.code!,
-                                key: ValueKey('tpb-code-${b.id}'),
-                                style: TextStyle(fontSize: 26, letterSpacing: 3, fontWeight: FontWeight.w600, color: AppColors.text)),
-                            IconButton(
-                              tooltip: s.t('tpb_copied'),
-                              onPressed: () => Clipboard.setData(ClipboardData(text: b.code!)),
-                              icon: const Icon(Icons.copy, size: 18),
-                            ),
-                          ]),
-                        ),
-                      ]),
-                      Text(s.t('tpb_code_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
-                    ],
+                    // No entry code or QR (owner, 03.11.2026): at the park the
+                    // truck is found by its plate.
+                    if (b.status == 'confirmed')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(s.t('tpb_confirmed_hint', {'plate': b.plate ?? ''}),
+                            key: ValueKey('tpb-confirmed-${b.id}'), style: TextStyle(color: AppColors.online)),
+                      ),
                     if ((b.shownStatus == 'pending_payment' || b.status == 'payment_review' || b.status == 'confirmed') &&
                         b.startAt.isAfter(DateTime.now())) ...[
                       const SizedBox(height: 8),

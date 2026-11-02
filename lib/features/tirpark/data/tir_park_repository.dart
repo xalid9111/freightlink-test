@@ -42,6 +42,8 @@ class TirParkRepository {
         'not_payable', 'not_in_review', 'invalid_path',
         // 0082: the truck's plate.
         'invalid_plate',
+        // 0086: owner panel.
+        'already_applied', 'already_in', 'already_out', 'payment_in_review', 'already_reviewed',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -168,6 +170,75 @@ class TirParkRepository {
       });
 
   /// My parks (applications and the ones I manage).
+  // ---- Owner panel, stage 1 (0086) ----------------------------------------
+  /// My latest "Park işlədirəm" request (null = none).
+  Future<TirParkOwnerRequest?> myOwnerRequest() => _run(() async {
+        final me = _c.auth.currentUser?.id;
+        if (me == null) return null;
+        final row = await _c
+            .from('tir_park_owner_requests')
+            .select()
+            .eq('user_id', me)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle()
+            .timeout(_timeout);
+        return row == null ? null : TirParkOwnerRequest.fromJson(Map<String, dynamic>.from(row));
+      });
+
+  Future<void> ownerApply(String name) => _run(() => _c.rpc('tir_park_owner_apply', params: {'p_name': name}).timeout(_timeout));
+
+  Future<String> ownerSetup(
+          {required String requestId, String? parkId, double? lat, double? lng, String? city, required int capacity, required double price, required String phone}) =>
+      _run(() async {
+        final id = await _c.rpc('tir_park_owner_setup', params: {
+          'p_request': requestId,
+          'p_park': parkId,
+          'p_lat': lat,
+          'p_lng': lng,
+          'p_city': city,
+          'p_capacity': capacity,
+          'p_price': price,
+          'p_phone': phone,
+        }).timeout(_timeout);
+        return '$id';
+      });
+
+  Future<TirParkStay> stayEnter(String parkId, String plate) => _run(() async {
+        final res = await _c.rpc('tir_park_stay_enter', params: {'p_park': parkId, 'p_plate': plate}).timeout(_timeout);
+        return TirParkStay.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  /// The car leaves; returns the amount taken.
+  Future<double> stayExit(String stayId) => _run(() async {
+        final res = await _c.rpc('tir_park_stay_exit', params: {'p_stay': stayId}).timeout(_timeout);
+        final a = (res as Map)['amount'];
+        return a is num ? a.toDouble() : double.tryParse('$a') ?? 0;
+      });
+
+  Future<TirParkParked> parked(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_parked', params: {'p_park': parkId}).timeout(_timeout);
+        return TirParkParked.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<TirParkSummary> ownerSummary(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_owner_summary', params: {'p_park': parkId}).timeout(_timeout);
+        return TirParkSummary.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<List<TirParkFeedItem>> ownerFeed(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_owner_feed', params: {'p_park': parkId, 'p_limit': 30}).timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirParkFeedItem.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<List<Map<String, dynamic>>> adminOwnerRequests() => _run(() async {
+        final res = await _c.rpc('admin_tir_park_owner_requests').timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) Map<String, dynamic>.from(r as Map)];
+      });
+
+  Future<void> adminOwnerRequestSet(String id, String status, {String? note}) => _run(
+      () => _c.rpc('admin_tir_park_owner_request_set', params: {'p_id': id, 'p_status': status, 'p_note': note}).timeout(_timeout));
+
   Future<List<TirPark>> myManaged() => _run(() async {
         final res = await _c.rpc('tir_park_my_managed').timeout(_timeout);
         return [for (final r in (res as List? ?? const [])) TirPark.fromJson(Map<String, dynamic>.from(r as Map))];
@@ -341,6 +412,27 @@ final tirParkBookingNowProvider = FutureProvider.autoDispose<Map<String, TirPark
     return const <String, TirParkBookingNow>{};
   }
 });
+
+final myOwnerRequestProvider = FutureProvider.autoDispose<TirParkOwnerRequest?>((ref) async {
+  ref.watch(currentUserIdProvider);
+  try {
+    return await ref.watch(tirParkRepositoryProvider).myOwnerRequest();
+  } on TirParkNotReady {
+    return null;
+  }
+});
+
+final tirParkParkedProvider =
+    FutureProvider.autoDispose.family<TirParkParked, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).parked(parkId));
+
+final tirParkSummaryProvider =
+    FutureProvider.autoDispose.family<TirParkSummary, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerSummary(parkId));
+
+final tirParkFeedProvider =
+    FutureProvider.autoDispose.family<List<TirParkFeedItem>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerFeed(parkId));
+
+final adminOwnerRequestsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) => ref.watch(tirParkRepositoryProvider).adminOwnerRequests());
 
 /// The red count on Profil → "TIR parkı idarə edirəm" (0085).
 final tirParkManagerPendingProvider = FutureProvider.autoDispose<int>((ref) {
