@@ -59,9 +59,10 @@ class TirPark {
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
 
-  /// Open for booking: the same rule as the server's tir_park_bookable (0079).
+  /// Open for booking: the server's tir_park_bookable (0079) + days only
+  /// (owner, 03.11.2026: a park priced per hour waits for a day price).
   bool get canBook =>
-      isApproved && managerStatus == 'approved' && bookingOpen && (price ?? 0) > 0 && priceUnit != null && (bookable ?? 0) > 0;
+      isApproved && managerStatus == 'approved' && bookingOpen && (price ?? 0) > 0 && priceUnit == 'day' && (bookable ?? 0) > 0;
 
   /// A park with an approved manager: its card and page carry the booking
   /// line ("Boş yerlər: n" / "Rezervasiya bağlıdır" / "Boş yer yoxdur").

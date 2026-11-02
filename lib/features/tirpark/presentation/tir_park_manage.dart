@@ -69,7 +69,9 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
   late final _hours = TextEditingController(text: widget.park.hours ?? '');
   late final _phone = TextEditingController(text: widget.park.phone ?? '');
   final _code = TextEditingController();
-  late String _unit = widget.park.priceUnit ?? 'hour';
+  // Days only (owner, 03.11.2026): a price per day; a park still priced
+  // per hour switches to days when it is saved.
+  final String _unit = 'day';
   late bool _open = widget.park.bookingOpen;
   bool _busy = false;
 
@@ -178,6 +180,8 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
             ),
           ],
           if (approved) ...[
+            // Receipts waiting first (owner, 03.11.2026): the notice leads here.
+            _NewPayments(parkId: park.id, s: s),
             const SizedBox(height: 10),
             Row(children: [
               Expanded(child: _num(_capacity, s.t('tpm_capacity'), 'tpm-cap-${park.id}')),
@@ -195,14 +199,13 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
                 ),
               ),
               const SizedBox(width: 8),
-              DropdownButton<String>(
-                value: _unit,
-                items: [
-                  for (final u in ['hour', 'day']) DropdownMenuItem(value: u, child: Text(tirParkUnitLabel(s, u))),
-                ],
-                onChanged: (v) => setState(() => _unit = v ?? _unit),
-              ),
+              Text('/ ${tirParkUnitLabel(s, 'day')}', key: ValueKey('tpm-unit-${park.id}'), style: TextStyle(color: AppColors.text)),
             ]),
+            if (park.priceUnit == 'hour') ...[
+              const SizedBox(height: 4),
+              Text(s.t('tpm_day_only'), key: ValueKey('tpm-day-only-${park.id}'),
+                  style: TextStyle(fontSize: 13, color: AppColors.promoVip)),
+            ],
             const SizedBox(height: 8),
             TextField(controller: _hours, decoration: InputDecoration(labelText: s.t('tpm_hours'))),
             const SizedBox(height: 8),
@@ -278,9 +281,33 @@ class _Bookings extends ConsumerWidget {
               ? TextButton(key: ValueKey('tpm-out-${b.id}'), onPressed: () => onCheckOut(b), child: Text(s.t('tpm_checkout')))
               : null,
         ),
-      for (final b in list)
-        if (b.status == 'payment_review') _ReviewRow(booking: b, parkId: parkId, s: s),
     ]);
+  }
+}
+
+/// "Yeni ödəniş — yoxlayın": the receipts waiting for this park, at the top
+/// of its block, each with "Qəbzə bax · Ödənişi təsdiqlə · Rədd et".
+class _NewPayments extends ConsumerWidget {
+  final String parkId;
+  final AppStrings s;
+  const _NewPayments({required this.parkId, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list = [
+      for (final b in ref.watch(managerBookingsProvider(parkId)).valueOrNull ?? const <TirParkBooking>[])
+        if (b.status == 'payment_review') b,
+    ];
+    if (list.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(s.t('tpm_new_payments', {'n': '${list.length}'}),
+            key: ValueKey('tpm-new-payments-$parkId'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.promoVip)),
+        for (final b in list) _ReviewRow(booking: b, parkId: parkId, s: s),
+      ]),
+    );
   }
 }
 
@@ -332,6 +359,7 @@ class _ReviewRowState extends ConsumerState<_ReviewRow> {
       _snack(s.t('tpb_err_generic'));
     } finally {
       ref.invalidate(managerBookingsProvider(widget.parkId));
+      ref.invalidate(tirParkManagerPendingProvider);
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -361,6 +389,7 @@ class _ReviewRowState extends ConsumerState<_ReviewRow> {
       _snack(s.t('tpb_err_generic'));
     } finally {
       ref.invalidate(managerBookingsProvider(widget.parkId));
+      ref.invalidate(tirParkManagerPendingProvider);
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -532,7 +561,7 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
   final _note = TextEditingController();
   final _amenities = <String>{};
   final _map = MapController();
-  String _unit = 'hour';
+  final String _unit = 'day'; // days only (owner, 03.11.2026)
   LatLng _center = kDefaultServiceCenter;
   bool _busy = false;
   String? _error;
@@ -661,12 +690,7 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
           Row(children: [
             Expanded(child: field(_price, s.t('tpm_price'), 'tpm-f-price', type: const TextInputType.numberWithOptions(decimal: true), max: 9)),
             const SizedBox(width: 8),
-            DropdownButton<String>(
-              key: const ValueKey('tpm-f-unit'),
-              value: _unit,
-              items: [for (final u in ['hour', 'day']) DropdownMenuItem(value: u, child: Text(tirParkUnitLabel(s, u)))],
-              onChanged: (v) => setState(() => _unit = v ?? _unit),
-            ),
+            Text('/ ${tirParkUnitLabel(s, 'day')}', key: const ValueKey('tpm-f-unit'), style: TextStyle(color: AppColors.text)),
           ]),
           field(_hours, s.t('tpm_hours'), 'tpm-f-hours', max: 40),
           Text(s.t('tpm_amenities'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),

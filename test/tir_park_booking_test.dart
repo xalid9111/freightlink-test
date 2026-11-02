@@ -26,7 +26,7 @@ final _park = TirPark.fromJson({
   'capacity': 20,
   'bookable': 2,
   'price': '5.00',
-  'price_unit': 'hour',
+  'price_unit': 'day',
   'currency': 'AZN',
   'hours': '24/7',
   'phone': '+994501234567',
@@ -89,6 +89,7 @@ void main() {
     expect(TirPark.fromJson({'id': 'x', 'name': 'A', 'lat': 1, 'lng': 2, 'status': 'approved'}).canBook, isFalse, reason: 'parks from 0077 stay as they were');
     expect(TirPark.fromJson({..._jsonOf(_park), 'manager_status': 'pending'}).canBook, isFalse);
     expect(TirPark.fromJson({..._jsonOf(_park), 'booking_open': false}).canBook, isFalse);
+    expect(TirPark.fromJson({..._jsonOf(_park), 'price_unit': 'hour'}).canBook, isFalse, reason: 'days only: an hourly park waits for a day price');
     final t0 = DateTime(2026, 11, 2, 10);
     expect(tirParkUnits(t0, t0.add(const Duration(hours: 2, minutes: 10)), 'hour'), 3, reason: 'started hours count whole (server: ceil)');
     expect(tirParkUnits(t0, t0.add(const Duration(hours: 25)), 'day'), 2);
@@ -107,13 +108,14 @@ void main() {
     final repo = _FakeRepo();
     await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: _park, s: _az))), repo));
     await tester.pumpAndSettle();
-    expect(find.text('Qiymət: 5.00 AZN / saat'), findsOneWidget);
+    expect(find.text('Qiymət: 5.00 AZN / gün'), findsOneWidget);
+    expect(find.text('Gəlmə günü\n${tirParkDay(DateTime.now())}'), findsOneWidget, reason: 'a day, no hour (owner, 03.11.2026)');
     expect(find.text('Ümumi tutum: 20 TIR'), findsOneWidget);
     expect(find.text('Seçilən vaxtda boş yer: 2'), findsOneWidget);
     expect(find.textContaining('Utep MMC'), findsNothing, reason: 'payment details are not on the park card');
     await tester.tap(find.byKey(const ValueKey('tpb-trucks-plus')));
     await tester.pump();
-    expect(find.text('5.00 AZN / saat × 1 saat × 2 TIR = 10.00 AZN'), findsOneWidget, reason: 'the calculation before paying');
+    expect(find.text('5.00 AZN / gün × 1 gün × 2 TIR = 10.00 AZN'), findsOneWidget, reason: 'the calculation before paying');
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
     expect(find.text('Maşının dövlət nömrəsini yazın (məs. 99-ZB-911).'), findsOneWidget, reason: 'no booking without the plate');
@@ -135,6 +137,8 @@ void main() {
     expect(find.text('4169 7388 1234 5678'), findsOneWidget);
     expect(find.text('AZ21NABZ00000000137010001944'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpb-upload')), findsOneWidget, reason: 'the receipt picture');
+    expect(find.byKey(const ValueKey('tpb-pay-no')), findsNothing, reason: 'no "Təyinat" line (owner, 03.11.2026)');
+    expect(find.textContaining('Təyinat'), findsNothing);
   });
 
   testWidgets('no free places → no booking; a park without payment details → said plainly', (tester) async {
@@ -205,6 +209,30 @@ void main() {
     expect(tidyTruckPlate('1234567890123456'), isNull, reason: 'too long');
     final b = TirParkBooking.fromJson({'id': 'b', 'status': 'confirmed', 'plate': '99-ZB-911'});
     expect(b.plate, '99-ZB-911');
+  });
+
+  testWidgets('days only: a park still priced per hour says "Rezervasiya bağlıdır" (section and card)', (tester) async {
+    tester.view.physicalSize = const Size(400, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final hourly = TirPark.fromJson({..._jsonOf(_park), 'price_unit': 'hour'});
+    await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: hourly, s: _az))), _FakeRepo()));
+    await tester.pumpAndSettle();
+    expect(find.text('Rezervasiya bağlıdır'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpb-book')), findsNothing);
+    await tester.pumpWidget(ProviderScope(
+      key: UniqueKey(),
+      overrides: [
+        stringsProvider.overrideWithValue(_az),
+        tirParkRepositoryProvider.overrideWithValue(_FakeRepo()),
+        tirParksProvider.overrideWith((ref) async => [hourly]),
+        tirParkBookingNowProvider.overrideWith((ref) async => {'p1': const TirParkBookingNow(open: true, free: 6)}),
+      ],
+      child: MaterialApp(home: Scaffold(body: TirParkCardBooking(park: hourly, s: _az))),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Rezervasiya bağlıdır'), findsOneWidget, reason: 'even if the server still counts it open');
+    expect(find.byKey(const ValueKey('tpc-book-p1')), findsNothing);
   });
 
   testWidgets('a day park: arrival, stay in days, TIRs → 3 AZN/gün × 2 gün × 2 TIR = 12 AZN', (tester) async {
@@ -326,6 +354,10 @@ void main() {
     expect(find.textContaining('CVV, PIN'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpm-receipt-b9')), findsOneWidget);
     expect(find.byKey(const ValueKey('tpm-plate-b9')), findsOneWidget, reason: 'the manager sees the truck next to the receipt');
+    expect(find.byKey(const ValueKey('tpm-new-payments-p1')), findsOneWidget, reason: 'new receipts at the top of the park');
+    expect(find.text('Yeni ödəniş — yoxlayın (1)'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpm-unit-p1')), findsOneWidget, reason: 'price per day only');
+    expect(find.byType(DropdownButton<String>), findsNothing, reason: 'no hour / day choice any more');
     await tester.tap(find.byKey(const ValueKey('tpm-confirm-b9')));
     await tester.pumpAndSettle();
     expect(repo.confirmed, ['b9'], reason: 'the server makes the code');
@@ -371,6 +403,15 @@ void main() {
     expect(src('supabase/migrations/0080_tir_park_direct_payment.sql'), contains("status in ('confirmed', 'checked_in', 'payment_review')"),
         reason: 'a receipt being checked keeps its space');
     expect(src('supabase/tests/local/run_local.sh'), contains('119_tir_park_booking_card.sql'));
+    // 0085: the manager is told about a receipt (notice + Mesajlar), never blocking it.
+    final nt = src('supabase/migrations/0085_tir_park_receipt_notice.sql');
+    expect(nt, contains("'tirpark_payment_review'"));
+    expect(nt, contains('public.get_or_create_direct_conversation(v_p.manager_id)'));
+    expect(nt, contains('null;   -- a notice never stops the receipt'));
+    expect(nt.toLowerCase().contains('drop table') || nt.toLowerCase().contains('delete from'), isFalse);
+    expect(src('supabase/tests/local/run_local.sh'), contains('123_tir_park_receipt_notice.sql'));
+    expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('ref.watch(tirParkManagerPendingProvider)'),
+        reason: 'the red count on Profil → TIR parkı idarə edirəm');
     // 0082: the truck's plate.
     final pl = src('supabase/migrations/0082_tir_park_booking_plate.sql').toLowerCase();
     for (final bad in ['drop table', 'truncate', 'delete from', 'update tir_park_bookings set plate']) {

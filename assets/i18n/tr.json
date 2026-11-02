@@ -1726,5 +1726,10 @@
   "tpb_rejected_plain": "Park ödemeyi bulamadı. Rezervasyon iptal edildi, yer boşaldı.",
   "tpb_plate": "Aracın plakası",
   "tpb_plate_hint": "Örn. 99-ZB-911",
-  "tpb_err_plate": "Aracın plakasını yazın (örn. 99-ZB-911)."
+  "tpb_err_plate": "Aracın plakasını yazın (örn. 99-ZB-911).",
+  "tpb_arrive_day": "Varış günü",
+  "tpb_leave_day": "Çıkış günü",
+  "tpm_day_only": "Rezervasyon artık sadece gün bazlı — fiyatı gün için yazıp kaydedin.",
+  "tpm_new_payments": "Yeni ödeme — kontrol edin ({n})",
+  "tpm_pending_sub": "{n} ödeme kontrol ediliyor"
 }
