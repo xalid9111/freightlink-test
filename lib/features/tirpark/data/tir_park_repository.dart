@@ -221,6 +221,16 @@ class TirParkRepository {
       });
 
   /// Books (the space is held 15 minutes for the payment).
+  /// Open / free places now for the managed parks of the list (0081).
+  Future<Map<String, TirParkBookingNow>> bookingNow(List<String> parkIds) => _run(() async {
+        if (parkIds.isEmpty) return const <String, TirParkBookingNow>{};
+        final res = await _c.rpc('tir_parks_booking_now', params: {'p_ids': parkIds.take(500).toList()}).timeout(_timeout);
+        return {
+          for (final r in (res as List? ?? const []))
+            '${(r as Map)['park_id']}': TirParkBookingNow.fromJson(Map<String, dynamic>.from(r)),
+        };
+      });
+
   Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks) => _run(() async {
         final res = await _c.rpc('tir_park_booking_create', params: {
           'p_park': parkId,
@@ -305,6 +315,18 @@ final tirParkRepositoryProvider = Provider<TirParkRepository>((ref) => TirParkRe
 final tirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) {
   ref.watch(currentUserIdProvider);
   return ref.watch(tirParkRepositoryProvider).parks();
+});
+
+/// "Boş yerlər: n" on the park cards. Before 0081 runs (or offline) the
+/// cards simply show no booking line.
+final tirParkBookingNowProvider = FutureProvider.autoDispose<Map<String, TirParkBookingNow>>((ref) async {
+  final parks = await ref.watch(tirParksProvider.future);
+  final ids = [for (final p in parks) if (p.isManaged) p.id];
+  try {
+    return await ref.watch(tirParkRepositoryProvider).bookingNow(ids);
+  } catch (_) {
+    return const <String, TirParkBookingNow>{};
+  }
 });
 
 final adminTirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) => ref.watch(tirParkRepositoryProvider).adminParks());

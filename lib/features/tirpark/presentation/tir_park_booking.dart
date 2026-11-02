@@ -23,6 +23,7 @@ Color tirParkStatusColor(String status) => switch (status) {
       'confirmed' || 'checked_in' => AppColors.online,
       'completed' => AppColors.blue,
       'pending_payment' || 'payment_review' => AppColors.promoVip,
+      'payment_rejected' => AppColors.danger,
       _ => AppColors.textSoft,
     };
 
@@ -42,10 +43,11 @@ class TirParkBookingSection extends ConsumerStatefulWidget {
 
 class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   late DateTime _from = _roundUp(DateTime.now().add(const Duration(hours: 1)));
-  late DateTime _to = _from.add(Duration(hours: widget.park.priceUnit == 'day' ? 24 : 4));
+  // "Qalma müddəti" in the park's own price unit (days or hours).
+  int _len = 1;
   int _trucks = 1;
   int? _free;
-  bool _closed = false; // the park takes no bookings now (e.g. no payment details)
+  bool _closed = false; // the server says the park takes no bookings now (e.g. no payment details)
   bool _busy = false;
   String? _error;
 
@@ -53,6 +55,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
 
   AppStrings get s => widget.s;
   TirPark get park => widget.park;
+  String get _unit => park.priceUnit ?? 'hour';
+  int get _maxLen => _unit == 'day' ? 30 : 72;
+  DateTime get _to => _from.add(_unit == 'day' ? Duration(days: _len) : Duration(hours: _len));
 
   @override
   void initState() {
@@ -62,7 +67,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
 
   Future<void> _loadFree() async {
     setState(() => _free = null);
-    if (!_to.isAfter(_from)) return;
+    if (!park.bookingOpen) return;
     try {
       final n = await ref.read(tirParkRepositoryProvider).freePlaces(park.id, _from, _to);
       if (mounted) setState(() => _free = n);
@@ -73,27 +78,27 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
     }
   }
 
-  Future<void> _pick(bool start) async {
-    final cur = start ? _from : _to;
+  Future<void> _pickArrival() async {
     final now = DateTime.now();
     final d = await showDatePicker(
       context: context,
-      initialDate: cur,
+      initialDate: _from.isBefore(now) ? now : _from,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: now.add(const Duration(days: 60)),
     );
     if (d == null || !mounted) return;
-    final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(cur));
+    final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_from));
     if (t == null || !mounted) return;
-    final v = DateTime(d.year, d.month, d.day, t.hour, t.minute);
     setState(() {
-      if (start) {
-        final len = _to.difference(_from);
-        _from = v;
-        if (!_to.isAfter(_from)) _to = _from.add(len.isNegative || len == Duration.zero ? const Duration(hours: 1) : len);
-      } else {
-        _to = v;
-      }
+      _from = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+      _error = null;
+    });
+    _loadFree();
+  }
+
+  void _setLen(int v) {
+    setState(() {
+      _len = v.clamp(1, _maxLen);
       _error = null;
     });
     _loadFree();
@@ -103,13 +108,22 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
         TirParkRefused(reason: 'no_space') => 'tpb_err_no_space',
         TirParkRefused(reason: 'invalid_time') => 'tpb_err_time',
         TirParkRefused(reason: 'own_park') => 'tpb_err_own',
-        TirParkRefused(reason: 'not_bookable') => 'tpb_not_open',
+        TirParkRefused(reason: 'not_bookable') => 'tpb_closed',
         _ => 'tpb_err_generic',
       };
 
+  /// "3,00 AZN / gün × 2 gün × 2 TIR = 12,00 AZN".
+  String _calc(int units) => s.t('tpb_calc', {
+        'price': money(park.price ?? 0, park.currency),
+        'unit': tirParkUnitLabel(s, _unit),
+        'units': '$units',
+        'trucks': '$_trucks',
+        'amount': money((park.price ?? 0) * units * _trucks, park.currency),
+      });
+
   Future<void> _book() async {
-    final units = tirParkUnits(_from, _to, park.priceUnit ?? 'hour');
-    if (units <= 0 || _to.difference(_from) > const Duration(days: 30)) {
+    final units = tirParkUnits(_from, _to, _unit);
+    if (units <= 0 || _from.isBefore(DateTime.now().subtract(const Duration(minutes: 15)))) {
       setState(() => _error = 'tpb_err_time');
       return;
     }
@@ -129,14 +143,16 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
             Text(park.name, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
             const SizedBox(height: 4),
             Text('${s.t('tpb_arrive')}: ${tirParkTime(_from)}', style: TextStyle(color: AppColors.text)),
+            Text('${s.t('tpb_stay')}: $units ${tirParkUnitLabel(s, _unit)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_trucks')}: $_trucks', style: TextStyle(color: AppColors.text)),
             const SizedBox(height: 8),
+            Text(_calc(units), key: const ValueKey('tpb-calc-confirm'), style: TextStyle(color: AppColors.text)),
             Text(
               s.t('tpb_total', {
                 'amount': money(amount, park.currency),
                 'units': '$units',
-                'unit': tirParkUnitLabel(s, park.priceUnit ?? 'hour'),
+                'unit': tirParkUnitLabel(s, _unit),
                 'trucks': '$_trucks',
               }),
               key: const ValueKey('tpb-total'),
@@ -160,21 +176,40 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
       final b = await ref.read(tirParkRepositoryProvider).book(park.id, _from, _to, _trucks);
       if (!mounted) return;
       final container = ProviderScope.containerOf(context, listen: false);
+      container.invalidate(tirParkBookingNowProvider);
       // 3) The park's own details; the driver transfers and sends the receipt.
       await showTirParkPaySheet(context, s, b);
       container.invalidate(myParkBookingsProvider);
+      container.invalidate(tirParkBookingNowProvider);
       _loadFree();
     } catch (e) {
       if (mounted) setState(() => _error = _errorKey(e));
+      if (e is TirParkRefused && e.reason == 'no_space') _loadFree();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  Widget _stepper(String label, int value, String text, String key, int min, int max, ValueChanged<int> onChanged) => Row(children: [
+        Expanded(child: Text(label, style: TextStyle(color: AppColors.text))),
+        IconButton(
+          key: ValueKey('$key-minus'),
+          onPressed: value > min && !_busy ? () => onChanged(value - 1) : null,
+          icon: const Icon(Icons.remove_circle_outline),
+        ),
+        Text(text, key: ValueKey(key), style: TextStyle(fontSize: 17, color: AppColors.text)),
+        IconButton(
+          key: ValueKey('$key-plus'),
+          onPressed: value < max && !_busy ? () => onChanged(value + 1) : null,
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+      ]);
+
   @override
   Widget build(BuildContext context) {
-    final unit = park.priceUnit ?? 'hour';
-    final units = tirParkUnits(_from, _to, unit);
+    final units = tirParkUnits(_from, _to, _unit);
+    final closed = _closed || !park.bookingOpen || (park.price ?? 0) <= 0 || park.priceUnit == null;
+    final full = _free == 0;
     final enough = _free != null && _free! >= _trucks;
     return Container(
       key: const ValueKey('tpb-section'),
@@ -187,48 +222,26 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(s.t('tpb_title'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 6),
-        Text(s.t('tpb_price', {'price': money(park.price ?? 0, park.currency), 'unit': tirParkUnitLabel(s, unit)}),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.accent)),
+        if ((park.price ?? 0) > 0)
+          Text(s.t('tpb_price', {'price': money(park.price ?? 0, park.currency), 'unit': tirParkUnitLabel(s, _unit)}),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.accent)),
         if (park.capacity != null) Text(s.t('tpb_capacity', {'n': '${park.capacity}'}), style: TextStyle(color: AppColors.text)),
         if ((park.hours ?? '').isNotEmpty) Text(s.t('tpb_hours', {'h': park.hours!}), style: TextStyle(color: AppColors.textSoft)),
         if ((park.phone ?? '').isNotEmpty) Text(s.t('tpb_phone', {'p': park.phone!}), style: TextStyle(color: AppColors.textSoft)),
         if ((park.address ?? '').isNotEmpty) Text(park.address!, style: TextStyle(color: AppColors.textSoft)),
         const SizedBox(height: 12),
-        if (_closed)
-          Text(s.t('tpb_not_open'), key: const ValueKey('tpb-closed'), style: TextStyle(color: AppColors.textSoft))
+        if (closed)
+          Text(s.t('tpb_closed'), key: const ValueKey('tpb-closed'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textSoft))
         else ...[
-          Row(children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const ValueKey('tpb-from'),
-                onPressed: _busy ? null : () => _pick(true),
-                child: Text('${s.t('tpb_arrive')}\n${tirParkTime(_from)}', textAlign: TextAlign.center),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                key: const ValueKey('tpb-to'),
-                onPressed: _busy ? null : () => _pick(false),
-                child: Text('${s.t('tpb_leave')}\n${tirParkTime(_to)}', textAlign: TextAlign.center),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: Text(s.t('tpb_trucks'), style: TextStyle(color: AppColors.text))),
-            IconButton(
-              key: const ValueKey('tpb-minus'),
-              onPressed: _trucks > 1 && !_busy ? () => setState(() => _trucks--) : null,
-              icon: const Icon(Icons.remove_circle_outline),
-            ),
-            Text('$_trucks', key: const ValueKey('tpb-trucks'), style: TextStyle(fontSize: 17, color: AppColors.text)),
-            IconButton(
-              key: const ValueKey('tpb-plus'),
-              onPressed: _trucks < 50 && !_busy ? () => setState(() => _trucks++) : null,
-              icon: const Icon(Icons.add_circle_outline),
-            ),
-          ]),
+          OutlinedButton(
+            key: const ValueKey('tpb-from'),
+            onPressed: _busy ? null : _pickArrival,
+            child: Text('${s.t('tpb_arrive')}\n${tirParkTime(_from)}', textAlign: TextAlign.center),
+          ),
+          const SizedBox(height: 6),
+          _stepper(s.t('tpb_stay'), _len, '$_len ${tirParkUnitLabel(s, _unit)}', 'tpb-len', 1, _maxLen, _setLen),
+          Text('${s.t('tpb_leave')}: ${tirParkTime(_to)}', key: const ValueKey('tpb-to'), style: TextStyle(color: AppColors.textSoft)),
+          _stepper(s.t('tpb_trucks'), _trucks, '$_trucks', 'tpb-trucks', 1, 50, (v) => setState(() => _trucks = v)),
           Text(
             _free == null ? '…' : s.t('tpb_free', {'n': '$_free'}),
             key: const ValueKey('tpb-free'),
@@ -236,31 +249,95 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
           ),
           if (units > 0) ...[
             const SizedBox(height: 4),
-            Text(
-              s.t('tpb_total', {
-                'amount': money((park.price ?? 0) * units * _trucks, park.currency),
-                'units': '$units',
-                'unit': tirParkUnitLabel(s, unit),
-                'trucks': '$_trucks',
-              }),
-              style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text),
-            ),
+            Text(_calc(units), key: const ValueKey('tpb-calc'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
           ],
           if (_error != null) ...[
             const SizedBox(height: 6),
             Text(s.t(_error!), key: const ValueKey('tpb-error'), style: TextStyle(color: AppColors.danger)),
           ],
           const SizedBox(height: 10),
-          FilledButton(
-            key: const ValueKey('tpb-book'),
-            onPressed: _busy || !enough || units <= 0 ? null : _book,
-            child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(s.t('tpb_book')),
-          ),
+          if (full)
+            Text(s.t('tpb_full'), key: const ValueKey('tpb-full'), textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.danger))
+          else
+            FilledButton(
+              key: const ValueKey('tpb-book'),
+              onPressed: _busy || !enough || units <= 0 ? null : _book,
+              child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(s.t('tpb_book')),
+            ),
           const SizedBox(height: 6),
           Text(s.t('tpb_no_money'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
         ],
       ]),
     );
+  }
+}
+
+/// "Yeri rezerv et" from a park card on the TIRPark list: the same booking
+/// part as on the park's page, in a sheet (closed by swiping down).
+Future<void> showTirParkBookSheet(BuildContext context, AppStrings s, TirPark park) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.88),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+              Text(park.name, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
+              const SizedBox(height: 10),
+              TirParkBookingSection(park: park, s: s),
+            ]),
+          ),
+        ),
+      ),
+    );
+
+/// The booking line of a park card (owner, 02.11.2026, 0081): "Boş
+/// yerlər: 6" + "Yeri rezerv et", or "Rezervasiya bağlıdır" / "Boş yer
+/// yoxdur". Only for parks with an approved manager.
+class TirParkCardBooking extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const TirParkCardBooking({super.key, required this.park, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!park.isManaged) return const SizedBox.shrink();
+    final now = ref.watch(tirParkBookingNowProvider).valueOrNull?[park.id];
+    // Before 0081 runs: the park's own fields.
+    final open = now?.open ?? park.canBook;
+    final free = now?.free;
+    final unit = park.priceUnit ?? 'hour';
+    Widget line(String text, Color color, String key) =>
+        Text(text, key: ValueKey('$key-${park.id}'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color));
+    if (!open) return line(s.t('tpb_closed'), AppColors.textSoft, 'tpc-closed');
+    if (free == 0) return line(s.t('tpb_full'), AppColors.danger, 'tpc-full');
+    return Row(children: [
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (free != null) line(s.t('tpb_free_now', {'n': '$free'}), AppColors.online, 'tpc-free'),
+          if ((park.price ?? 0) > 0)
+            Text('${money(park.price!, park.currency)} / ${tirParkUnitLabel(s, unit)}',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.accent)),
+        ]),
+      ),
+      FilledButton(
+        key: ValueKey('tpc-book-${park.id}'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 36),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          visualDensity: VisualDensity.compact,
+        ),
+        onPressed: () async {
+          await showTirParkBookSheet(context, s, park);
+          ref.invalidate(tirParkBookingNowProvider);
+        },
+        child: Text(s.t('tpb_book'), style: const TextStyle(fontSize: 13.5)),
+      ),
+    ]);
   }
 }
 
@@ -466,6 +543,12 @@ class MyParkBookingsScreen extends ConsumerWidget {
                     Text('${b.bookingNo} · ${tirParkTime(b.startAt)} → ${tirParkTime(b.endAt)} · ${b.trucks} TIR',
                         style: TextStyle(color: AppColors.textSoft)),
                     Text(money(b.amount, b.currency), style: TextStyle(color: AppColors.text)),
+                    if (b.shownStatus == 'payment_rejected')
+                      Text(
+                        (b.rejectNote ?? '').isEmpty ? s.t('tpb_rejected_plain') : s.t('tpb_rejected_end', {'note': b.rejectNote!}),
+                        key: ValueKey('tpb-rejected-${b.id}'),
+                        style: TextStyle(fontSize: 13, color: AppColors.danger),
+                      ),
                     if (b.shownStatus == 'pending_payment') ...[
                       if ((b.rejectNote ?? '').isNotEmpty)
                         Text(s.t('tpb_rejected', {'note': b.rejectNote!}), style: TextStyle(fontSize: 13, color: AppColors.danger)),

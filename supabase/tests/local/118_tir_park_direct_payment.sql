@@ -72,11 +72,19 @@ select tests.check((public.tir_park_manager_bookings((select id from ids where k
   'C2 …and sees it waiting in his list');
 select public.tir_park_booking_reject_payment((select id from ids where k='b'), 'Pul gəlməyib');
 reset role;
-select tests.check((select status = 'pending_payment' and hold_until > now() and reject_note = 'Pul gəlməyib'
+select tests.check((select status = 'cancelled' and cancel_reason = 'payment_rejected' and hold_until is null and reject_note = 'Pul gəlməyib'
                     from public.tir_park_bookings where id = (select id from ids where k='b')),
-  'C3 "Rədd et": back to the driver with a note and a new hold');
+  'C3 "Rədd et" (0081): the booking ends with the note, the space is free again');
 set role authenticated;
 select tests.login(:driver);
+select tests.check(tests.err(format($$ select public.tir_park_booking_receipt(%L, %L) $$, (select id from ids where k='b'),
+  'a0000000-0000-4000-8000-000000000021/' || (select id from ids where k='b') || '/r.jpg')) is not null,
+  'C3b no receipt on a rejected booking');
+-- A new booking for the same time, receipt, then the manager confirms.
+update ids set id = (public.tir_park_booking_create((select id from ids where k='p'), now() + interval '1 hour', now() + interval '3 hours', 1) ->> 'id')::uuid
+ where k = 'b';
+insert into storage.objects (bucket_id, name, owner)
+values ('tirpark-receipts', 'a0000000-0000-4000-8000-000000000021/' || (select id from ids where k='b') || '/r.jpg', :driver);
 select public.tir_park_booking_receipt((select id from ids where k='b'), 'a0000000-0000-4000-8000-000000000021/' || (select id from ids where k='b') || '/r.jpg');
 select tests.login(:manager);
 select tests.check((public.tir_park_booking_confirm_payment((select id from ids where k='b')) ->> 'status') = 'confirmed',
@@ -98,6 +106,6 @@ select tests.check(tests.err($$ select public.tir_park_booking_pay_details((sele
 
 -- ---- other people ---------------------------------------------------------------------
 select tests.login(:admin);
-select tests.check((select count(*) = 1 from storage.objects where bucket_id = 'tirpark-receipts'), 'O1 an admin can open receipts');
+select tests.check((select count(*) = 2 from storage.objects where bucket_id = 'tirpark-receipts'), 'O1 an admin can open receipts');
 reset role;
 select tests.summary('TIRPARK BİRBAŞA KÖÇÜRMƏ (0080)');

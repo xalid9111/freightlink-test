@@ -1687,7 +1687,6 @@
   "pay_success_booking": "Ödeme onaylandı. Rezervasyon onaylandı — giriş kodu «Park rezervasyonlarım» bölümünde.",
   "pay_success_booking_test": "Test ödemesi başarılı (sunucu onayladı). Rezervasyon onaylandı — kod «Park rezervasyonlarım» bölümünde. Test modunda gerçek para çekilmez.",
   "tpb_st_payment_review": "Ödeme kontrol ediliyor",
-  "tpb_not_open": "Bu park henüz rezervasyon kabul etmiyor.",
   "tpb_no_money": "FreightLink para almaz ve kart bilginizi istemez — ödeme doğrudan parka gider.",
   "tpb_paysheet_title": "Ödeme bilgileri",
   "tpb_pay_to": "Tutarı bu park hesabına kendiniz gönderin, sonra dekontun fotoğrafını yükleyin.",
@@ -1716,5 +1715,13 @@
   "tpm_confirm": "Ödemeyi onayla",
   "tpm_reject": "Reddet",
   "tpm_reject_q": "Para hesabınıza gelmedi mi? Sürücüye kısa bir not yazın (isteğe bağlı).",
-  "tpm_confirmed": "Ödeme onaylandı: {no}. Sürücüye kod verildi."
+  "tpm_confirmed": "Ödeme onaylandı: {no}. Sürücüye kod verildi.",
+  "tpb_calc": "{price} / {unit} × {units} {unit} × {trucks} TIR = {amount}",
+  "tpb_stay": "Kalış süresi",
+  "tpb_closed": "Rezervasyon kapalı",
+  "tpb_full": "Boş yer yok",
+  "tpb_free_now": "Boş yerler: {n}",
+  "tpb_st_payment_rejected": "Ödeme reddedildi",
+  "tpb_rejected_end": "Park ödemeyi bulamadı: {note}. Rezervasyon iptal edildi, yer boşaldı.",
+  "tpb_rejected_plain": "Park ödemeyi bulamadı. Rezervasyon iptal edildi, yer boşaldı."
 }

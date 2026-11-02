@@ -117,7 +117,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   minute hold); the driver uploads the receipt → "Ödəniş yoxlanılır";
   the manager presses "Ödənişi təsdiqlə" → booking number + code / QR.
   FreightLink takes no money, asks no card data from drivers, no card
-  checkout for bookings. "Yük əlavə et" (orange +) is on the Loads
+  checkout for bookings. Park card (owner, 02.11.2026, 0081): a managed
+  park's card on TIRPark shows "Boş yerlər: n" + "Yeri rezerv et" (or
+  "Rezervasiya bağlıdır" / "Boş yer yoxdur"); booking = arrival, stay
+  (days / hours of the park's unit), TIRs, price × units × TIRs shown
+  first; "Ödəniş yoxlanılır" keeps the space; "Rədd et" or a cancel frees
+  it. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

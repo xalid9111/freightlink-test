@@ -1687,7 +1687,6 @@
   "pay_success_booking": "付款已确认，预订已确认，入场码见“我的停车预订”。",
   "pay_success_booking_test": "测试付款成功（服务器已确认）。预订已确认，入场码见“我的停车预订”。测试模式不扣真实费用。",
   "tpb_st_payment_review": "付款核对中",
-  "tpb_not_open": "该停车场暂不接受预订。",
   "tpb_no_money": "FreightLink 不收款，也不索取您的卡信息——款项直接付给停车场。",
   "tpb_paysheet_title": "付款信息",
   "tpb_pay_to": "请自行将金额转入此停车场账户，然后上传收据照片。",
@@ -1716,5 +1715,13 @@
   "tpm_confirm": "确认收款",
   "tpm_reject": "拒绝",
   "tpm_reject_q": "款项未到账？可给司机留一句备注（可选）。",
-  "tpm_confirmed": "已确认收款：{no}，司机已获得入场码。"
+  "tpm_confirmed": "已确认收款：{no}，司机已获得入场码。",
+  "tpb_calc": "{price} / {unit} × {units} {unit} × {trucks} 辆 = {amount}",
+  "tpb_stay": "停留时长",
+  "tpb_closed": "预订已关闭",
+  "tpb_full": "没有空位",
+  "tpb_free_now": "空位：{n}",
+  "tpb_st_payment_rejected": "付款被拒绝",
+  "tpb_rejected_end": "停车场未找到付款：{note}。预订已取消，车位已释放。",
+  "tpb_rejected_plain": "停车场未找到付款。预订已取消，车位已释放。"
 }

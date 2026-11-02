@@ -222,9 +222,10 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                   const SizedBox(height: 12),
                   Text(park.note!, style: TextStyle(color: AppColors.text, height: 1.35)),
                 ],
-                // Paid space booking (owner, 01.11.2026, 0079): parks with
-                // an approved manager, open for booking.
-                if (park.canBook) ...[
+                // Space booking (owner, 01.11.2026, 0079; 02.11.2026, 0081):
+                // every park with an approved manager — open, full or
+                // "Rezervasiya bağlıdır".
+                if (park.isManaged) ...[
                   const SizedBox(height: 16),
                   TirParkBookingSection(park: park, s: s),
                 ],
