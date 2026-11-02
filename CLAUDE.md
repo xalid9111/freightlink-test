@@ -228,6 +228,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   Satışdadır / Sifarişlə (empty = in stock), wheel formula (not for
   trailers), equipment (Retarder · ADR · Kondisioner · Yataq), Vuruğu
   yoxdur / var — in the form, the filter, the ad page and on the computer.
+- Admin → "Test məlumatlarını sil" (owner, 02.11.2026, 0083): admins
+  only (server `_require_admin`, typed SİL) delete fake test profiles,
+  loads, services, TIR Bazarı sale ads and job ads for good. A user goes
+  with everything ("Hamısını sil": account + sign-in, loads, services,
+  parks he added, ads, chats and messages also with real people,
+  comments, bookings, test payments); never oneself, the founder or
+  another admin; every deletion in the Audit Log.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

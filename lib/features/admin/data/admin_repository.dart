@@ -67,6 +67,18 @@ class AdminRepository {
   Future<void> setUserActive(String id, bool active) async {
     await _c.rpc('admin_set_user_active', params: {'p_user': id, 'p_active': active});
   }
+  /// "Test məlumatlarını sil" (0083): what can be deleted for good.
+  Future<List<Map<String, dynamic>>> purgeList(String kind, String query) async {
+    final res = await _c.rpc('admin_purge_list', params: {'p_kind': kind, 'p_query': query, 'p_limit': 100});
+    return [for (final r in (res as List? ?? const [])) Map<String, dynamic>.from(r as Map)];
+  }
+
+  /// Deletes one item and everything that depends on it (server: admin
+  /// only, the typed word must be SİL).
+  Future<void> purge(String kind, String id, String confirm) async {
+    await _c.rpc('admin_purge', params: {'p_kind': kind, 'p_id': id, 'p_confirm': confirm});
+  }
+
   Future<void> deleteUser(String id, String? reason) async {
     await _c.rpc('admin_delete_user', params: {'p_user': id, 'p_reason': reason});
   }
@@ -105,6 +117,8 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) => AdminReposito
 /// Human-readable (Azerbaijani) text for an admin RPC error.
 String adminErrorText(Object e) {
   final raw = e is PostgrestException ? '${e.code ?? ''} ${e.message}' : e.toString();
+  if (raw.contains('admin_protected')) return 'Başqa admini silmək olmaz — əvvəlcə onun admin rolunu götürün.';
+  if (raw.contains('confirm_required')) return 'Təsdiq üçün SİL yazın.';
   if (raw.contains('founder_protected')) return 'Bu Founder hesabıdır — onu yalnız hesabın sahibi dəyişə bilər.';
   if (raw.contains('admin_only')) return 'Bu əməliyyat yalnız admin üçündür.';
   if (raw.contains('old_format')) return 'Köhnə formatlı (1350×300) reklam yenidən aktiv edilə bilməz.';
