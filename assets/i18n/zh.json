@@ -1723,5 +1723,8 @@
   "tpb_free_now": "空位：{n}",
   "tpb_st_payment_rejected": "付款被拒绝",
   "tpb_rejected_end": "停车场未找到付款：{note}。预订已取消，车位已释放。",
-  "tpb_rejected_plain": "停车场未找到付款。预订已取消，车位已释放。"
+  "tpb_rejected_plain": "停车场未找到付款。预订已取消，车位已释放。",
+  "tpb_plate": "车牌号",
+  "tpb_plate_hint": "例如 99-ZB-911",
+  "tpb_err_plate": "请填写车牌号（例如 99-ZB-911）。"
 }

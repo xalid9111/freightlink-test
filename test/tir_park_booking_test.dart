@@ -42,10 +42,11 @@ class _FakeRepo extends TirParkRepository {
   @override
   Future<int> freePlaces(String parkId, DateTime from, DateTime to) async => free;
   @override
-  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks) async {
-    booked.add('$parkId|$trucks');
+  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate) async {
+    booked.add('$parkId|$trucks|$plate');
     return TirParkBooking(
-        id: 'b1', bookingNo: 'TP1', parkId: parkId, trucks: trucks, units: 2, unit: 'hour', startAt: from, endAt: to, amount: 10, status: 'pending_payment');
+        id: 'b1', bookingNo: 'TP1', parkId: parkId, trucks: trucks, units: 2, unit: 'hour', startAt: from, endAt: to, amount: 10,
+        status: 'pending_payment', plate: plate);
   }
   @override
   Future<List<TirPark>> myManaged() async => managed;
@@ -115,6 +116,12 @@ void main() {
     expect(find.text('5.00 AZN / saat × 1 saat × 2 TIR = 10.00 AZN'), findsOneWidget, reason: 'the calculation before paying');
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
+    expect(find.text('Maşının dövlət nömrəsini yazın (məs. 99-ZB-911).'), findsOneWidget, reason: 'no booking without the plate');
+    expect(find.byKey(const ValueKey('tpb-terms')), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate')), ' 99 zb 911 ');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('tpb-book')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpb-terms')), findsOneWidget, reason: 'conditions shown first');
     expect(find.textContaining('FreightLink pul qəbul etmir'), findsWidgets);
     expect(repo.booked, isEmpty, reason: 'nothing is held before the driver agrees');
@@ -122,7 +129,8 @@ void main() {
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(repo.booked, ['p1|2']);
+    expect(repo.booked, ['p1|2|99-ZB-911'], reason: 'the plate goes with the booking, tidy');
+    expect(find.text('Maşının dövlət nömrəsi: 99-ZB-911'), findsOneWidget, reason: 'on the payment sheet');
     expect(find.byType(TirParkPaySheet), findsOneWidget, reason: 'after booking: where to pay');
     expect(find.text('4169 7388 1234 5678'), findsOneWidget);
     expect(find.text('AZ21NABZ00000000137010001944'), findsOneWidget);
@@ -159,7 +167,8 @@ void main() {
       ..mine = [
         TirParkBooking(
             id: 'b1', bookingNo: 'TP261102-ABC', parkId: 'p1', trucks: 1, units: 2, unit: 'hour', startAt: later,
-            endAt: later.add(const Duration(hours: 2)), amount: 10, status: 'confirmed', paidMode: 'transfer', code: 'K7M2P9QX'),
+            endAt: later.add(const Duration(hours: 2)), amount: 10, status: 'confirmed', paidMode: 'transfer', code: 'K7M2P9QX',
+            plate: '99-ZB-911'),
         TirParkBooking(
             id: 'b2', bookingNo: 'TP261102-DEF', parkId: 'p1', trucks: 1, units: 2, unit: 'hour', startAt: later,
             endAt: later.add(const Duration(hours: 2)), amount: 10, status: 'payment_review'),
@@ -175,6 +184,7 @@ void main() {
     await tester.pumpWidget(_app(const MyParkBookingsScreen(), repo));
     await tester.pumpAndSettle();
     expect(find.text('K7M2P9QX'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpb-plate-b1')), findsOneWidget, reason: 'the plate on the confirmed booking');
     expect(find.byKey(const ValueKey('tpb-qr-b1')), findsOneWidget, reason: 'QR of the entry code');
     expect(find.text('Ödəniş yoxlanılır'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpb-code-b2')), findsNothing, reason: 'no code before the park confirms');
@@ -183,6 +193,18 @@ void main() {
     expect(find.text('Ödəniş rədd edildi'), findsOneWidget, reason: '0081: "Rədd et" ends the booking');
     expect(find.byKey(const ValueKey('tpb-rejected-b4')), findsOneWidget);
     expect(find.byKey(const ValueKey('tpb-pay-b4')), findsNothing, reason: 'no paying for a rejected booking');
+  });
+
+  test('the plate is tidied like the server does (0082)', () {
+    expect(tidyTruckPlate(' 99 zb 911 '), '99-ZB-911');
+    expect(tidyTruckPlate('99.zb/911'), '99-ZB-911');
+    expect(tidyTruckPlate('99--ZB--911'), '99-ZB-911');
+    expect(tidyTruckPlate('AA 1234 BB'), 'AA-1234-BB');
+    expect(tidyTruckPlate(''), isNull);
+    expect(tidyTruckPlate('ABC'), isNull, reason: 'a plate has digits');
+    expect(tidyTruckPlate('1234567890123456'), isNull, reason: 'too long');
+    final b = TirParkBooking.fromJson({'id': 'b', 'status': 'confirmed', 'plate': '99-ZB-911'});
+    expect(b.plate, '99-ZB-911');
   });
 
   testWidgets('a day park: arrival, stay in days, TIRs → 3 AZN/gün × 2 gün × 2 TIR = 12 AZN', (tester) async {
@@ -201,8 +223,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2 gün'), findsOneWidget);
     expect(find.text('3.00 AZN / gün × 2 gün × 2 TIR = 12.00 AZN'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate')), '10-AB-123');
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
+    expect(find.text('Maşının dövlət nömrəsi: 10-AB-123'), findsOneWidget, reason: 'the plate in the summary');
     expect(find.byKey(const ValueKey('tpb-calc-confirm')), findsOneWidget, reason: 'the calculation again before anything is held');
     expect(find.textContaining('Yekun: 12.00 AZN'), findsOneWidget);
   });
@@ -257,7 +281,7 @@ void main() {
       ..parkBookings = [
         TirParkBooking(
             id: 'b9', bookingNo: 'TP9', parkId: 'p1', trucks: 1, units: 1, unit: 'hour', startAt: now, endAt: now.add(const Duration(hours: 1)),
-            amount: 5, status: 'payment_review', receiptPath: 'u/b9/r.jpg'),
+            amount: 5, status: 'payment_review', receiptPath: 'u/b9/r.jpg', plate: '99-ZB-911'),
       ];
     await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
     await tester.pumpAndSettle();
@@ -268,6 +292,7 @@ void main() {
     expect(find.byKey(const ValueKey('tpm-paydet-need-p1')), findsOneWidget, reason: 'no details yet → asked for');
     expect(find.textContaining('CVV, PIN'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpm-receipt-b9')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpm-plate-b9')), findsOneWidget, reason: 'the manager sees the truck next to the receipt');
     await tester.tap(find.byKey(const ValueKey('tpm-confirm-b9')));
     await tester.pumpAndSettle();
     expect(repo.confirmed, ['b9'], reason: 'the server makes the code');
@@ -313,6 +338,15 @@ void main() {
     expect(src('supabase/migrations/0080_tir_park_direct_payment.sql'), contains("status in ('confirmed', 'checked_in', 'payment_review')"),
         reason: 'a receipt being checked keeps its space');
     expect(src('supabase/tests/local/run_local.sh'), contains('119_tir_park_booking_card.sql'));
+    // 0082: the truck's plate.
+    final pl = src('supabase/migrations/0082_tir_park_booking_plate.sql').toLowerCase();
+    for (final bad in ['drop table', 'truncate', 'delete from', 'update tir_park_bookings set plate']) {
+      expect(pl.contains(bad), isFalse, reason: bad);
+    }
+    expect(pl, contains("if v_plate is null then raise exception 'invalid_plate'"));
+    expect(pl, contains("'plate', b.plate"), reason: 'the manager sees it');
+    expect(src('supabase/tests/local/run_local.sh'), contains('120_tir_park_booking_plate.sql'));
+    expect(src('lib/features/tirpark/data/tir_park_repository.dart'), contains("'p_plate': plate,"));
     expect(src('supabase/tests/local/run_local.sh'), contains('0081_tir_park_booking_card.sql'));
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('TirParkCardBooking(park: p, s: s)'));
     expect(src('lib/features/tirpark/presentation/tir_park_detail_screen.dart'), contains('if (park.isManaged) ...['));

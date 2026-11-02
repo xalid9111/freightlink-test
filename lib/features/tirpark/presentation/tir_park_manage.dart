@@ -124,7 +124,8 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
     try {
       final b = await ref.read(tirParkRepositoryProvider).checkIn(park.id, code);
       _code.clear();
-      _snack(s.t('tpm_checked', {'no': b.bookingNo, 'trucks': '${b.trucks}'}));
+      _snack('${s.t('tpm_checked', {'no': b.bookingNo, 'trucks': '${b.trucks}'})}'
+          '${(b.plate ?? '').isEmpty ? '' : ' · ${b.plate}'}');
       ref.invalidate(managerBookingsProvider(park.id));
     } on TirParkRefused catch (e) {
       _snack(s.t(switch (e.reason) {
@@ -269,7 +270,8 @@ class _Bookings extends ConsumerWidget {
         ListTile(
           key: ValueKey('tpm-b-${b.id}'),
           contentPadding: EdgeInsets.zero,
-          title: Text('${b.bookingNo} · ${b.trucks} TIR${(b.driver ?? '').isEmpty ? '' : ' · ${b.driver}'}'),
+          title: Text('${b.bookingNo} · ${b.trucks} TIR${(b.plate ?? '').isEmpty ? '' : ' · ${b.plate}'}'
+              '${(b.driver ?? '').isEmpty ? '' : ' · ${b.driver}'}'),
           subtitle: Text('${tirParkTime(b.startAt)} → ${tirParkTime(b.endAt)} · ${s.t('tpb_st_${b.shownStatus}')}'
               '${b.paidMode == 'test' ? ' · TEST' : ''}'),
           trailing: b.status == 'checked_in'
@@ -376,6 +378,9 @@ class _ReviewRowState extends ConsumerState<_ReviewRow> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('${b.bookingNo} · ${money(b.amount, b.currency)} · ${s.t('tpb_st_payment_review')}',
               style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
+          if ((b.plate ?? '').isNotEmpty)
+            Text('${s.t('tpb_plate')}: ${b.plate}', key: ValueKey('tpm-plate-${b.id}'),
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
           const SizedBox(height: 6),
           Wrap(spacing: 8, runSpacing: 6, children: [
             OutlinedButton.icon(

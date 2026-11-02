@@ -1723,5 +1723,8 @@
   "tpb_free_now": "Boş yerler: {n}",
   "tpb_st_payment_rejected": "Ödeme reddedildi",
   "tpb_rejected_end": "Park ödemeyi bulamadı: {note}. Rezervasyon iptal edildi, yer boşaldı.",
-  "tpb_rejected_plain": "Park ödemeyi bulamadı. Rezervasyon iptal edildi, yer boşaldı."
+  "tpb_rejected_plain": "Park ödemeyi bulamadı. Rezervasyon iptal edildi, yer boşaldı.",
+  "tpb_plate": "Aracın plakası",
+  "tpb_plate_hint": "Örn. 99-ZB-911",
+  "tpb_err_plate": "Aracın plakasını yazın (örn. 99-ZB-911)."
 }
