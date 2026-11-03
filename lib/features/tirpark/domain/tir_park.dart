@@ -326,3 +326,145 @@ class TirParkPayDetails {
         holdUntil: j['hold_until'] == null ? null : DateTime.tryParse('${j['hold_until']}')?.toLocal(),
       );
 }
+
+// ---- Owner panel, stage 1 (owner, 03.11.2026, 0086) -------------------------
+
+/// "Park işlədirəm": the request with only the park's name.
+class TirParkOwnerRequest {
+  final String id, parkName, status; // pending | approved | rejected
+  final String? parkId, note;
+  const TirParkOwnerRequest({required this.id, required this.parkName, required this.status, this.parkId, this.note});
+
+  bool get needsSetup => status == 'approved' && parkId == null;
+
+  factory TirParkOwnerRequest.fromJson(Map<String, dynamic> j) => TirParkOwnerRequest(
+        id: '${j['id']}',
+        parkName: '${j['park_name'] ?? ''}',
+        status: (j['status'] as String?) ?? 'pending',
+        parkId: j['park_id'] as String?,
+        note: j['note'] as String?,
+      );
+}
+
+double _num(Object? v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
+DateTime? _time(Object? v) => v == null ? null : DateTime.tryParse('$v')?.toLocal();
+
+/// The money a car has run up: price per 24 h × hours / 24, from the end of
+/// its paid booking (if any) — the same as the server's _tir_park_stay_amount.
+/// 3 AZN: 5 h = 0.63, 1 day 4 h = 3.50, 2 days = 6.00.
+double tirParkStayAmount(double rate, DateTime from, DateTime? paidUntil, DateTime to) {
+  final start = paidUntil != null && paidUntil.isAfter(from) ? paidUntil : from;
+  final secs = to.difference(start).inSeconds;
+  if (secs <= 0 || rate <= 0) return 0;
+  return (rate * secs / 86400 * 100).round() / 100;
+}
+
+/// A car in the park (by its plate).
+class TirParkStay {
+  final String id, plate, currency;
+  final DateTime enteredAt;
+  final double rate;
+  final DateTime? paidUntil;
+  final String? bookingNo, by;
+  const TirParkStay({
+    required this.id,
+    required this.plate,
+    required this.enteredAt,
+    required this.rate,
+    this.paidUntil,
+    this.bookingNo,
+    this.by,
+    this.currency = 'AZN',
+  });
+
+  double amountAt(DateTime now) => tirParkStayAmount(rate, enteredAt, paidUntil, now);
+
+  factory TirParkStay.fromJson(Map<String, dynamic> j) => TirParkStay(
+        id: '${j['id']}',
+        plate: '${j['plate'] ?? ''}',
+        enteredAt: _time(j['entered_at']) ?? DateTime.now(),
+        rate: _num(j['rate']),
+        paidUntil: _time(j['paid_until']),
+        bookingNo: j['booking_no'] as String?,
+        by: j['by'] as String?,
+        currency: (j['currency'] as String?) ?? 'AZN',
+      );
+}
+
+/// A paid booking expected today that has not come yet.
+class TirParkExpected {
+  final String id, plate, status;
+  final String? bookingNo;
+  final int trucks;
+  final DateTime startAt, endAt;
+  const TirParkExpected(
+      {required this.id, required this.plate, required this.status, this.bookingNo, this.trucks = 1, required this.startAt, required this.endAt});
+
+  factory TirParkExpected.fromJson(Map<String, dynamic> j) => TirParkExpected(
+        id: '${j['id']}',
+        plate: '${j['plate'] ?? ''}',
+        status: (j['status'] as String?) ?? 'confirmed',
+        bookingNo: j['booking_no'] as String?,
+        trucks: int.tryParse('${j['trucks']}') ?? 1,
+        startAt: _time(j['start_at']) ?? DateTime.now(),
+        endAt: _time(j['end_at']) ?? DateTime.now(),
+      );
+}
+
+class TirParkParked {
+  final List<TirParkStay> inPark;
+  final List<TirParkExpected> expected;
+  const TirParkParked({this.inPark = const [], this.expected = const []});
+
+  factory TirParkParked.fromJson(Map<String, dynamic> j) => TirParkParked(
+        inPark: [for (final r in (j['in'] as List? ?? const [])) TirParkStay.fromJson(Map<String, dynamic>.from(r as Map))],
+        expected: [for (final r in (j['expected'] as List? ?? const [])) TirParkExpected.fromJson(Map<String, dynamic>.from(r as Map))],
+      );
+}
+
+/// The owner's numbers: "Bu gün" = money actually taken today; "accruing" =
+/// what the cars still in the park have run up (not taken yet).
+class TirParkSummary {
+  final int capacity, inPark, reserved, free;
+  final double todayPaid, accruing;
+  final String currency;
+  final bool open;
+  const TirParkSummary({
+    this.capacity = 0,
+    this.inPark = 0,
+    this.reserved = 0,
+    this.free = 0,
+    this.todayPaid = 0,
+    this.accruing = 0,
+    this.currency = 'AZN',
+    this.open = false,
+  });
+
+  factory TirParkSummary.fromJson(Map<String, dynamic> j) => TirParkSummary(
+        capacity: int.tryParse('${j['capacity']}') ?? 0,
+        inPark: int.tryParse('${j['in_park']}') ?? 0,
+        reserved: int.tryParse('${j['reserved']}') ?? 0,
+        free: int.tryParse('${j['free']}') ?? 0,
+        todayPaid: _num(j['today_paid']),
+        accruing: _num(j['accruing']),
+        currency: (j['currency'] as String?) ?? 'AZN',
+        open: j['open'] == true,
+      );
+}
+
+/// One line of "Parkın gedişatı": in · out · booking · paid.
+class TirParkFeedItem {
+  final String kind, plate;
+  final DateTime at;
+  final double? amount;
+  final String? by;
+  const TirParkFeedItem({required this.kind, required this.plate, required this.at, this.amount, this.by});
+
+  factory TirParkFeedItem.fromJson(Map<String, dynamic> j) => TirParkFeedItem(
+        kind: (j['kind'] as String?) ?? 'in',
+        plate: '${j['plate'] ?? ''}',
+        at: _time(j['at']) ?? DateTime.now(),
+        amount: j['amount'] == null ? null : _num(j['amount']),
+        by: j['by'] as String?,
+      );
+}

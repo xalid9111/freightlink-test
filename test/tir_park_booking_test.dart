@@ -50,6 +50,34 @@ class _FakeRepo extends TirParkRepository {
   }
   @override
   Future<List<TirPark>> myManaged() async => managed;
+  // Owner panel (0086).
+  TirParkOwnerRequest? request;
+  final applied = <String>[];
+  final entered = <String>[];
+  final exited = <String>[];
+  List<TirParkStay> inPark = const [];
+  @override
+  Future<TirParkOwnerRequest?> myOwnerRequest() async => request;
+  @override
+  Future<void> ownerApply(String name) async => applied.add(name);
+  @override
+  Future<TirParkStay> stayEnter(String parkId, String plate) async {
+    entered.add('$parkId|$plate');
+    return TirParkStay(id: 'new', plate: plate, enteredAt: DateTime.now(), rate: 3);
+  }
+  @override
+  Future<double> stayExit(String stayId) async {
+    exited.add(stayId);
+    return 3.5;
+  }
+  @override
+  Future<TirParkParked> parked(String parkId) async => TirParkParked(inPark: inPark);
+  @override
+  Future<TirParkSummary> ownerSummary(String parkId) async =>
+      const TirParkSummary(capacity: 250, inPark: 184, free: 66, todayPaid: 552, accruing: 34.2, open: true);
+  @override
+  Future<List<TirParkFeedItem>> ownerFeed(String parkId) async =>
+      [TirParkFeedItem(kind: 'in', plate: '99-AC-981', at: DateTime.now())];
   List<TirParkBooking> parkBookings = const [];
   final confirmed = <String>[];
   TirParkPayDetails? details;
@@ -162,7 +190,7 @@ void main() {
     expect(find.byKey(const ValueKey('tpb-book')), findsNothing);
   });
 
-  testWidgets('my bookings: "Ödəniş yoxlanılır"; after the park confirms, the code with its QR', (tester) async {
+  testWidgets('my bookings: "Ödəniş yoxlanılır"; after the park confirms: the plate, no code / QR', (tester) async {
     tester.view.physicalSize = const Size(400, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -187,9 +215,10 @@ void main() {
       ];
     await tester.pumpWidget(_app(const MyParkBookingsScreen(), repo));
     await tester.pumpAndSettle();
-    expect(find.text('K7M2P9QX'), findsOneWidget);
+    expect(find.text('K7M2P9QX'), findsNothing, reason: 'no entry code (owner, 03.11.2026)');
+    expect(find.byKey(const ValueKey('tpb-qr-b1')), findsNothing, reason: 'no QR');
     expect(find.byKey(const ValueKey('tpb-plate-b1')), findsOneWidget, reason: 'the plate on the confirmed booking');
-    expect(find.byKey(const ValueKey('tpb-qr-b1')), findsOneWidget, reason: 'QR of the entry code');
+    expect(find.text('Təsdiqləndi. Parka gələndə maşının nömrəsini deyin: 99-ZB-911'), findsOneWidget);
     expect(find.text('Ödəniş yoxlanılır'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpb-code-b2')), findsNothing, reason: 'no code before the park confirms');
     expect(find.byKey(const ValueKey('tpb-pay-b3')), findsOneWidget, reason: 'unpaid: details and receipt again');
@@ -197,6 +226,15 @@ void main() {
     expect(find.text('Ödəniş rədd edildi'), findsOneWidget, reason: '0081: "Rədd et" ends the booking');
     expect(find.byKey(const ValueKey('tpb-rejected-b4')), findsOneWidget);
     expect(find.byKey(const ValueKey('tpb-pay-b4')), findsNothing, reason: 'no paying for a rejected booking');
+  });
+
+  test('money by the time: 3 AZN / 24 h — 5 h = 0.63, 1 day 4 h = 3.50, 2 days = 6.00; a paid booking first', () {
+    final t0 = DateTime(2026, 11, 3, 8);
+    expect(tirParkStayAmount(3, t0, null, t0.add(const Duration(hours: 5))), 0.63);
+    expect(tirParkStayAmount(3, t0, null, t0.add(const Duration(hours: 28))), 3.50);
+    expect(tirParkStayAmount(3, t0, null, t0.add(const Duration(hours: 48))), 6.00);
+    expect(tirParkStayAmount(3, t0, t0.add(const Duration(days: 2)), t0.add(const Duration(hours: 30))), 0, reason: 'inside the paid days');
+    expect(tirParkStayAmount(3, t0, t0.add(const Duration(days: 2)), t0.add(const Duration(hours: 53))), 0.63, reason: 'overstay by the hour');
   });
 
   test('the plate is tidied like the server does (0082)', () {
@@ -328,44 +366,103 @@ void main() {
     expect(find.byType(FilledButton), findsNothing);
   });
 
-  testWidgets('manager: pending waits; approved: payment details form (no provider notice), code check, "Ödənişi təsdiqlə"',
+  testWidgets('owner panel: Ümumi (numbers, receipts, gedişat) · Maşınlar (add by plate, exit with the money) · Ayarlar',
       (tester) async {
-    tester.view.physicalSize = const Size(400, 3200);
+    tester.view.physicalSize = const Size(400, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final now = DateTime.now();
     final repo = _FakeRepo()
-      ..managed = [
-        TirPark.fromJson({..._jsonOf(_park), 'id': 'p2', 'name': 'Yeni park', 'status': 'pending', 'manager_status': 'pending'}),
-        _park,
-      ]
+      ..managed = [_park]
+      ..inPark = [TirParkStay(id: 's1', plate: '99-AC-981', enteredAt: now.subtract(const Duration(hours: 28)), rate: 3)]
       ..parkBookings = [
         TirParkBooking(
-            id: 'b9', bookingNo: 'TP9', parkId: 'p1', trucks: 1, units: 1, unit: 'hour', startAt: now, endAt: now.add(const Duration(hours: 1)),
+            id: 'b9', bookingNo: 'TP9', parkId: 'p1', trucks: 1, units: 1, unit: 'day', startAt: now, endAt: now.add(const Duration(days: 1)),
             amount: 5, status: 'payment_review', receiptPath: 'u/b9/r.jpg', plate: '99-ZB-911'),
       ];
     await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
     await tester.pumpAndSettle();
-    expect(find.text('Admin təsdiqi gözləyir'), findsOneWidget);
-    expect(find.byKey(const ValueKey('tpm-code-p2')), findsNothing, reason: 'no managing before approval');
-    expect(find.textContaining('provayderi qoşulmayıb'), findsNothing, reason: 'the old notice is gone');
-    expect(find.byKey(const ValueKey('tpm-paydet-p1')), findsOneWidget);
-    expect(find.byKey(const ValueKey('tpm-paydet-need-p1')), findsOneWidget, reason: 'no details yet → asked for');
-    expect(find.textContaining('CVV, PIN'), findsOneWidget);
-    expect(find.byKey(const ValueKey('tpm-receipt-b9')), findsOneWidget);
-    expect(find.byKey(const ValueKey('tpm-plate-b9')), findsOneWidget, reason: 'the manager sees the truck next to the receipt');
-    expect(find.byKey(const ValueKey('tpm-new-payments-p1')), findsOneWidget, reason: 'new receipts at the top of the park');
-    expect(find.text('Yeni ödəniş — yoxlayın (1)'), findsOneWidget);
-    expect(find.byKey(const ValueKey('tpm-unit-p1')), findsOneWidget, reason: 'price per day only');
-    expect(find.byType(DropdownButton<String>), findsNothing, reason: 'no hour / day choice any more');
+    // Ümumi
+    expect(find.text('Sahibkar paneli'), findsOneWidget, reason: 'an approved owner goes straight to his panel');
+    expect(find.text('İşləyir'), findsOneWidget);
+    expect(find.text('250'), findsOneWidget);
+    expect(find.text('184'), findsOneWidget);
+    expect(find.text('66'), findsOneWidget);
+    expect(find.text('552.00 AZN'), findsOneWidget, reason: 'Bu gün = money taken today');
+    expect(find.textContaining('34.20 AZN (hələ alınmayıb)'), findsOneWidget, reason: 'run up in the park, shown apart');
+    expect(find.byKey(const ValueKey('tpm-new-payments-p1')), findsOneWidget, reason: 'receipts waiting');
+    expect(find.byKey(const ValueKey('tpm-plate-b9')), findsOneWidget);
+    expect(find.text('Parkın gedişatı'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('tpm-confirm-b9')));
     await tester.pumpAndSettle();
-    expect(repo.confirmed, ['b9'], reason: 'the server makes the code');
-    await tester.enterText(find.byKey(const ValueKey('tpm-code-p1')), 'k7m2p9qx');
-    await tester.tap(find.byKey(const ValueKey('tpm-checkin-p1')));
+    expect(repo.confirmed, ['b9']);
+    expect(find.text('Ödəniş təsdiqləndi: TP9.'), findsOneWidget, reason: 'no entry code any more');
+    ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
-    expect(repo.codes, ['k7m2p9qx']);
-    expect(find.text('Bu kod artıq istifadə olunub.'), findsOneWidget);
+    // Maşınlar
+    await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('Maşınlar')));
+    await tester.pumpAndSettle();
+    expect(find.text('Parkda olan maşınlar'), findsOneWidget);
+    expect(find.text('1 gün 4 saat'), findsOneWidget);
+    expect(find.text('3.50 AZN'), findsOneWidget, reason: '3 AZN / 24 h × 28 h');
+    await tester.tap(find.byKey(const ValueKey('tpo-add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('tpo-plate')), 'abc');
+    await tester.tap(find.byKey(const ValueKey('tpo-plate-go')));
+    await tester.pumpAndSettle();
+    expect(repo.entered, isEmpty, reason: 'a plate needs digits');
+    await tester.enterText(find.byKey(const ValueKey('tpo-plate')), ' 10 bb 442 ');
+    await tester.tap(find.byKey(const ValueKey('tpo-plate-go')));
+    await tester.pumpAndSettle();
+    expect(repo.entered, ['p1|10-BB-442']);
+    await tester.tap(find.byKey(const ValueKey('tpo-exit-s1')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Məbləğ: 3.50 AZN'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpo-exit-go')));
+    await tester.pumpAndSettle();
+    expect(repo.exited, ['s1']);
+    expect(find.text('Çıxdı: 99-AC-981 · 3.50 AZN'), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    // Ayarlar: price per day, payment details; no entry-code check any more.
+    await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('Ayarlar')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpm-paydet-p1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpm-unit-p1')), findsOneWidget);
+    expect(find.byType(DropdownButton<String>), findsNothing);
+    expect(find.byKey(const ValueKey('tpm-code-p1')), findsNothing, reason: 'no entry code (owner, 03.11.2026)');
+    expect(find.byKey(const ValueKey('tpm-free-p1')), findsNothing, reason: 'bookings take places from the whole capacity');
+  });
+
+  testWidgets('"Park işlədirəm": only the name → waiting for the admin → "Parkı qur"', (tester) async {
+    tester.view.physicalSize = const Size(400, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _FakeRepo();
+    await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpo-apply-name')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpm-f-phone')), findsNothing, reason: 'only the name');
+    await tester.enterText(find.byKey(const ValueKey('tpo-apply-name')), 'Göygöl TIR Park');
+    await tester.tap(find.byKey(const ValueKey('tpo-apply-send')));
+    await tester.pumpAndSettle();
+    expect(repo.applied, ['Göygöl TIR Park']);
+    repo.request = const TirParkOwnerRequest(id: 'r1', parkName: 'Göygöl TIR Park', status: 'pending');
+    await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
+    await tester.pumpAndSettle();
+    expect(find.text('«Göygöl TIR Park» — admin təsdiqi gözləyir.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpo-apply-name')), findsNothing);
+    repo.request = const TirParkOwnerRequest(id: 'r1', parkName: 'Göygöl TIR Park', status: 'approved');
+    await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpo-setup')), findsOneWidget, reason: 'approved: put the park on the map');
+    // A park applied for the old way (0079) still shows as waiting.
+    repo
+      ..request = null
+      ..managed = [TirPark.fromJson({..._jsonOf(_park), 'id': 'p2', 'name': 'Yeni park', 'status': 'pending', 'manager_status': 'pending'})];
+    await tester.pumpWidget(_app(const TirParkManageScreen(), repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Admin təsdiqi gözləyir'), findsOneWidget);
   });
 
   test('wired: server-side rules, checkout, webhook, RLS, no card data, no commission', () {
@@ -410,6 +507,15 @@ void main() {
     expect(nt, contains('null;   -- a notice never stops the receipt'));
     expect(nt.toLowerCase().contains('drop table') || nt.toLowerCase().contains('delete from'), isFalse);
     expect(src('supabase/tests/local/run_local.sh'), contains('123_tir_park_receipt_notice.sql'));
+    // 0086: owner panel — cars by plate, money by the hour, bookings from 00:00.
+    final op = src('supabase/migrations/0086_tir_park_owner_panel.sql');
+    expect(op, contains('round(coalesce(p_rate, 0) * greatest(0, extract(epoch from (p_to - greatest(p_from, coalesce(p_paid_until, p_from))))) / 86400.0, 2)'));
+    expect(op, contains("raise exception 'already_in'"));
+    expect(op, contains('public._tir_park_today_start() - interval'));
+    expect(op, contains('perform public._require_admin();'));
+    expect(op.toLowerCase().contains('drop table') || op.toLowerCase().contains('delete from'), isFalse);
+    expect(src('supabase/tests/local/run_local.sh'), contains('124_tir_park_owner_panel.sql'));
+    expect(src('lib/features/tirpark/presentation/tir_park_booking.dart').contains('QrImageView'), isFalse, reason: 'no QR');
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('ref.watch(tirParkManagerPendingProvider)'),
         reason: 'the red count on Profil → TIR parkı idarə edirəm');
     // 0082: the truck's plate.

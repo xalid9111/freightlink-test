@@ -130,7 +130,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   Mesajlar; no "Təyinat" line on the payment sheet. Days only (owner,
   03.11.2026): the driver picks the arrival day (no hour), managers set a
   price per day; a park still priced per hour shows "Rezervasiya
-  bağlıdır" until a day price is saved. "Yük əlavə et" (orange +) is on the Loads
+  bağlıdır" until a day price is saved. Owner panel (owner, 03.11.2026, 0086, stage 1):
+  "Park işlədirəm" = only the park's name → admin approves (Admin →
+  TIRPark) → "Parkı qur" once (map, capacity, price / day) → the panel
+  opens straight away: Ümumi (Tutum · Parkda · Boş · Bu gün = money taken
+  today; the money run up by cars still in the park shown apart),
+  Maşınlar (add by plate, search, time + money so far, Çıxış), Ayarlar.
+  No place numbers, no entry code / QR: a truck is known by its plate.
+  Money = price per 24 h × hours / 24 (3 AZN: 5 h 0.63, 1 day 4 h 3.50,
+  2 days 6.00), taken at the exit; a paid booking pays only the overstay.
+  A booking day starts at 00:00 (Baku); every booked day's places are
+  checked. Stage 2: workers join by an invitation they accept with their
+  own account (never automatically, no passwords made by the owner). "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.

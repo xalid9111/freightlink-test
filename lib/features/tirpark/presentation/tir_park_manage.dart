@@ -14,7 +14,7 @@ import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'tir_park_booking.dart';
-import 'tir_park_widgets.dart';
+import 'tir_park_owner_panel.dart';
 
 /// Profil → "TIR parkı idarə edirəm" (owner, 01.11.2026, 0079): my park
 /// applications and, once an admin approved them, the park's management —
@@ -27,25 +27,64 @@ class TirParkManageScreen extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     ref.watch(currentLocaleProvider);
     final async = ref.watch(myManagedParksProvider);
+    final reqAsync = ref.watch(myOwnerRequestProvider);
     final list = async.valueOrNull ?? const <TirPark>[];
+    final approved = [for (final p in list) if (p.managerStatus == 'approved') p];
+    final waiting = [for (final p in list) if (p.managerStatus != 'approved') p];
+    final req = reqAsync.valueOrNull;
+    // An approved owner goes straight to his panel (owner, 03.11.2026).
+    if (approved.isNotEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text(s.t('tpo_panel'))),
+        body: TirParkOwnerPanel(parks: approved, s: s, settings: (p) => _ManagedPark(key: ValueKey('tpm-park-${p.id}'), park: p, s: s)),
+      );
+    }
+    final loading = (async.isLoading && !async.hasValue) || (reqAsync.isLoading && !reqAsync.hasValue);
     return Scaffold(
       appBar: AppBar(title: Text(s.t('tpm_title'))),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(myManagedParksProvider),
+        onRefresh: () async {
+          ref.invalidate(myManagedParksProvider);
+          ref.invalidate(myOwnerRequestProvider);
+        },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
           children: [
-            FilledButton.icon(
-              key: const ValueKey('tpm-new'),
-              onPressed: () => context.pushOnce('/tirpark/manage/new'),
-              icon: const Icon(Icons.add),
-              label: Text(s.t('tpm_new')),
-            ),
-            const SizedBox(height: 14),
-            if (async.isLoading && !async.hasValue) const Padding(padding: EdgeInsets.all(30), child: Center(child: CircularProgressIndicator())),
+            if (loading) const Padding(padding: EdgeInsets.all(30), child: Center(child: CircularProgressIndicator())),
             if (async.error is TirParkNotReady) Text(s.t('tp_not_ready'), style: TextStyle(color: AppColors.danger)),
-            if (async.hasValue && list.isEmpty) Text(s.t('tpm_none'), style: TextStyle(color: AppColors.textSoft)),
-            for (final p in list) _ManagedPark(park: p, s: s),
+            if (!loading) ...[
+              if (req != null && req.needsSetup)
+                _Box(
+                  keyName: 'tpo-setup-box',
+                  icon: Icons.check_circle_outline,
+                  color: AppColors.online,
+                  text: s.t('tpo_setup_hint'),
+                  action: FilledButton(
+                    key: const ValueKey('tpo-setup'),
+                    onPressed: () => context.pushOnce('/tirpark/manage/new'),
+                    child: Text(s.t('tpo_setup_title')),
+                  ),
+                )
+              else if (req != null && req.status == 'pending')
+                _Box(
+                  keyName: 'tpo-pending',
+                  icon: Icons.hourglass_top,
+                  color: AppColors.promoVip,
+                  text: s.t('tpo_pending', {'name': req.parkName}),
+                )
+              else ...[
+                if (req != null && req.status == 'rejected')
+                  _Box(
+                    keyName: 'tpo-rejected',
+                    icon: Icons.block,
+                    color: AppColors.danger,
+                    text: s.t('tpo_rejected', {'name': req.parkName}) + ((req.note ?? '').isEmpty ? '' : '\n${req.note}'),
+                  ),
+                if (waiting.isEmpty) _OwnerApply(s: s),
+              ],
+              // Parks applied for the old way (0079), still waiting for the admin.
+              for (final p in waiting) _ManagedPark(park: p, s: s),
+            ],
           ],
         ),
       ),
@@ -53,10 +92,111 @@ class TirParkManageScreen extends ConsumerWidget {
   }
 }
 
+class _Box extends StatelessWidget {
+  final String keyName, text;
+  final IconData icon;
+  final Color color;
+  final Widget? action;
+  const _Box({required this.keyName, required this.icon, required this.color, required this.text, this.action});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: ValueKey(keyName),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 10),
+            Expanded(child: Text(text, style: TextStyle(color: AppColors.text, height: 1.35))),
+          ]),
+          if (action != null) ...[const SizedBox(height: 12), action!],
+        ]),
+      );
+}
+
+/// "Park işlədirəm" (owner, 03.11.2026): only the park's name; an admin
+/// approves, then the owner panel opens.
+class _OwnerApply extends ConsumerStatefulWidget {
+  final AppStrings s;
+  const _OwnerApply({required this.s});
+
+  @override
+  ConsumerState<_OwnerApply> createState() => _OwnerApplyState();
+}
+
+class _OwnerApplyState extends ConsumerState<_OwnerApply> {
+  final _name = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final s = widget.s;
+    final name = _name.text.trim();
+    if (name.length < 2) {
+      setState(() => _error = 'tpo_err_name');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(tirParkRepositoryProvider).ownerApply(name);
+      ref.invalidate(myOwnerRequestProvider);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpo_apply_sent'))));
+    } on TirParkRefused catch (e) {
+      setState(() => _error = e.reason == 'already_applied' ? 'tpo_err_already' : 'tpm_err_invalid');
+    } on TirParkNotReady {
+      setState(() => _error = 'tp_not_ready');
+    } catch (_) {
+      setState(() => _error = 'tpb_err_generic');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(s.t('tpo_apply_title'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
+      const SizedBox(height: 6),
+      Text(s.t('tpo_apply_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
+      const SizedBox(height: 12),
+      TextField(
+        key: const ValueKey('tpo-apply-name'),
+        controller: _name,
+        maxLength: 80,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(labelText: s.t('tpo_apply_name'), counterText: ''),
+      ),
+      if (_error != null) Text(s.t(_error!), key: const ValueKey('tpo-apply-error'), style: TextStyle(color: AppColors.danger)),
+      const SizedBox(height: 10),
+      FilledButton(
+        key: const ValueKey('tpo-apply-send'),
+        onPressed: _busy ? null : _send,
+        child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(s.t('tpo_apply_send')),
+      ),
+    ]);
+  }
+}
+
 class _ManagedPark extends ConsumerStatefulWidget {
   final TirPark park;
   final AppStrings s;
-  const _ManagedPark({required this.park, required this.s});
+  const _ManagedPark({super.key, required this.park, required this.s});
 
   @override
   ConsumerState<_ManagedPark> createState() => _ManagedParkState();
@@ -64,11 +204,9 @@ class _ManagedPark extends ConsumerStatefulWidget {
 
 class _ManagedParkState extends ConsumerState<_ManagedPark> {
   late final _capacity = TextEditingController(text: '${widget.park.capacity ?? ''}');
-  late final _bookable = TextEditingController(text: '${widget.park.bookable ?? ''}');
   late final _price = TextEditingController(text: widget.park.price?.toStringAsFixed(2) ?? '');
   late final _hours = TextEditingController(text: widget.park.hours ?? '');
   late final _phone = TextEditingController(text: widget.park.phone ?? '');
-  final _code = TextEditingController();
   // Days only (owner, 03.11.2026): a price per day; a park still priced
   // per hour switches to days when it is saved.
   final String _unit = 'day';
@@ -80,7 +218,7 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
 
   @override
   void dispose() {
-    for (final c in [_capacity, _bookable, _price, _hours, _phone, _code]) {
+    for (final c in [_capacity, _price, _hours, _phone]) {
       c.dispose();
     }
     super.dispose();
@@ -93,9 +231,8 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
 
   Future<void> _save() async {
     final cap = int.tryParse(_capacity.text.trim());
-    final free = int.tryParse(_bookable.text.trim());
     final price = double.tryParse(_price.text.trim().replaceAll(',', '.'));
-    if (cap == null || free == null || price == null || free > cap || _phone.text.trim().length < 5) {
+    if (cap == null || cap < 1 || price == null || price <= 0 || _phone.text.trim().length < 5) {
       _snack(s.t('tpm_err_invalid'));
       return;
     }
@@ -103,7 +240,8 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
     try {
       await ref.read(tirParkRepositoryProvider).managerUpdate(park.id,
           capacity: cap,
-          bookable: free,
+          // Bookings take places from the whole capacity (owner, 03.11.2026).
+          bookable: cap,
           price: price,
           unit: _unit,
           hours: _hours.text.trim().isEmpty ? null : _hours.text.trim(),
@@ -111,34 +249,10 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
           open: _open);
       ref.invalidate(myManagedParksProvider);
       ref.invalidate(tirParksProvider);
+      ref.invalidate(tirParkSummaryProvider(park.id));
       _snack(s.t('tpm_saved'));
     } catch (_) {
       _snack(s.t('tpm_err_invalid'));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _checkIn() async {
-    final code = _code.text.trim();
-    if (code.isEmpty) return;
-    setState(() => _busy = true);
-    try {
-      final b = await ref.read(tirParkRepositoryProvider).checkIn(park.id, code);
-      _code.clear();
-      _snack('${s.t('tpm_checked', {'no': b.bookingNo, 'trucks': '${b.trucks}'})}'
-          '${(b.plate ?? '').isEmpty ? '' : ' · ${b.plate}'}');
-      ref.invalidate(managerBookingsProvider(park.id));
-    } on TirParkRefused catch (e) {
-      _snack(s.t(switch (e.reason) {
-        'already_used' => 'tpm_err_used',
-        'not_in_time' => 'tpm_err_time',
-        'not_valid' => 'tpm_err_notvalid',
-        'too_many_attempts' => 'tpm_err_attempts',
-        _ => 'tpm_err_code',
-      }));
-    } catch (_) {
-      _snack(s.t('tpb_err_generic'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -180,14 +294,8 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
             ),
           ],
           if (approved) ...[
-            // Receipts waiting first (owner, 03.11.2026): the notice leads here.
-            _NewPayments(parkId: park.id, s: s),
             const SizedBox(height: 10),
-            Row(children: [
-              Expanded(child: _num(_capacity, s.t('tpm_capacity'), 'tpm-cap-${park.id}')),
-              const SizedBox(width: 8),
-              Expanded(child: _num(_bookable, s.t('tpm_bookable'), 'tpm-free-${park.id}')),
-            ]),
+            _num(_capacity, s.t('tpm_capacity'), 'tpm-cap-${park.id}'),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -222,22 +330,6 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
             // The park's own payment details (owner, 01.11.2026, 0080):
             // drivers transfer to them directly; FreightLink takes no money.
             _PayDetailsForm(parkId: park.id, s: s),
-            const SizedBox(height: 14),
-            Text(s.t('tpm_check'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
-            const SizedBox(height: 6),
-            Row(children: [
-              Expanded(
-                child: TextField(
-                  key: ValueKey('tpm-code-${park.id}'),
-                  controller: _code,
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [LengthLimitingTextInputFormatter(12)],
-                  style: const TextStyle(letterSpacing: 3),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(key: ValueKey('tpm-checkin-${park.id}'), onPressed: _busy ? null : _checkIn, child: Text(s.t('tpm_check_btn'))),
-            ]),
             const SizedBox(height: 14),
             Text(s.t('tpm_bookings'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
             _Bookings(parkId: park.id, s: s, onCheckOut: _checkOut),
@@ -287,10 +379,10 @@ class _Bookings extends ConsumerWidget {
 
 /// "Yeni ödəniş — yoxlayın": the receipts waiting for this park, at the top
 /// of its block, each with "Qəbzə bax · Ödənişi təsdiqlə · Rədd et".
-class _NewPayments extends ConsumerWidget {
+class TirParkNewPayments extends ConsumerWidget {
   final String parkId;
   final AppStrings s;
-  const _NewPayments({required this.parkId, required this.s});
+  const TirParkNewPayments({super.key, required this.parkId, required this.s});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -550,18 +642,14 @@ class TirParkManageFormScreen extends ConsumerStatefulWidget {
 }
 
 class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScreen> {
-  final _name = TextEditingController();
+  // "Parkı qur" (owner, 03.11.2026): after the admin approved the name, the
+  // owner puts the park on the map once — place, city, capacity, price per
+  // day, phone.
   final _phone = TextEditingController();
   final _city = TextEditingController();
-  final _address = TextEditingController();
   final _capacity = TextEditingController();
-  final _bookable = TextEditingController();
   final _price = TextEditingController();
-  final _hours = TextEditingController();
-  final _note = TextEditingController();
-  final _amenities = <String>{};
   final _map = MapController();
-  final String _unit = 'day'; // days only (owner, 03.11.2026)
   LatLng _center = kDefaultServiceCenter;
   bool _busy = false;
   String? _error;
@@ -575,18 +663,16 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
 
   @override
   void dispose() {
-    for (final c in [_name, _phone, _city, _address, _capacity, _bookable, _price, _hours, _note]) {
+    for (final c in [_phone, _city, _capacity, _price]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  Future<void> _send(AppStrings s) async {
+  Future<void> _send(AppStrings s, TirParkOwnerRequest req) async {
     final cap = int.tryParse(_capacity.text.trim());
-    final free = int.tryParse(_bookable.text.trim());
     final price = double.tryParse(_price.text.trim().replaceAll(',', '.'));
-    if (_name.text.trim().length < 2 || _phone.text.trim().length < 5 || cap == null || cap < 1 || free == null || free > cap ||
-        price == null || price <= 0) {
+    if (_phone.text.trim().length < 5 || cap == null || cap < 1 || price == null || price <= 0) {
       setState(() => _error = 'tpm_err_invalid');
       return;
     }
@@ -595,30 +681,24 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
       _error = null;
     });
     try {
-      await ref.read(tirParkRepositoryProvider).manageApply(
-            name: _name.text.trim(),
+      await ref.read(tirParkRepositoryProvider).ownerSetup(
+            requestId: req.id,
             lat: _center.latitude,
             lng: _center.longitude,
             city: _city.text.trim().isEmpty ? null : _city.text.trim(),
-            address: _address.text.trim().isEmpty ? null : _address.text.trim(),
-            phone: _phone.text.trim(),
-            amenities: [for (final a in kTirParkAmenities) if (_amenities.contains(a)) a],
             capacity: cap,
-            bookable: free,
             price: price,
-            unit: _unit,
-            hours: _hours.text.trim().isEmpty ? null : _hours.text.trim(),
-            note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+            phone: _phone.text.trim(),
           );
       ref.invalidate(myManagedParksProvider);
+      ref.invalidate(myOwnerRequestProvider);
       ref.invalidate(tirParksProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_sent'))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpo_setup_done'))));
       Navigator.of(context).maybePop();
     } on TirParkRefused catch (e) {
       setState(() => _error = switch (e.reason) {
             'duplicate_nearby' => 'tpm_err_dup',
-            'too_many' => 'tpm_err_too_many',
             _ => 'tpm_err_invalid',
           });
     } on TirParkNotReady {
@@ -634,6 +714,7 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     ref.watch(currentLocaleProvider);
+    final req = ref.watch(myOwnerRequestProvider).valueOrNull;
     Widget field(TextEditingController c, String label, String key, {TextInputType? type, int? max}) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: TextField(
@@ -645,77 +726,65 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
           ),
         );
     return Scaffold(
-      appBar: AppBar(title: Text(s.t('tpm_new'))),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-        children: [
-          field(_name, s.t('tpm_name'), 'tpm-f-name', max: 80),
-          field(_phone, s.t('tpm_phone'), 'tpm-f-phone', type: TextInputType.phone, max: 40),
-          field(_city, s.t('tpm_city'), 'tpm-f-city', max: 80),
-          field(_address, s.t('tpm_address'), 'tpm-f-address', max: 160),
-          Text(s.t('tpm_place'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: SizedBox(
-              height: 220,
-              child: Stack(children: [
-                FlutterMap(
-                  mapController: _map,
-                  options: MapOptions(
-                    initialCenter: _center,
-                    initialZoom: 14,
-                    interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-                    onPositionChanged: (camera, _) => _center = camera.center,
+      appBar: AppBar(title: Text(s.t('tpo_setup_title'))),
+      body: req == null || !req.needsSetup
+          ? Center(child: Text(s.t('tpo_setup_none'), style: TextStyle(color: AppColors.textSoft)))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              children: [
+                Text(req.parkName, key: const ValueKey('tpm-f-name'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
+                const SizedBox(height: 4),
+                Text(s.t('tpo_setup_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
+                const SizedBox(height: 12),
+                Text(s.t('tpm_place'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    height: 220,
+                    child: Stack(children: [
+                      FlutterMap(
+                        mapController: _map,
+                        options: MapOptions(
+                          initialCenter: _center,
+                          initialZoom: 14,
+                          interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                          onPositionChanged: (camera, _) => _center = camera.center,
+                        ),
+                        children: const [AppTileLayer(), AppMapAttribution()],
+                      ),
+                      IgnorePointer(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 40),
+                            child: Icon(Icons.location_on, size: 40, color: AppColors.accentFill),
+                          ),
+                        ),
+                      ),
+                    ]),
                   ),
-                  children: const [AppTileLayer(), AppMapAttribution()],
                 ),
-                IgnorePointer(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 40),
-                      child: Icon(Icons.location_on, size: 40, color: AppColors.accentFill),
-                    ),
-                  ),
+                const SizedBox(height: 12),
+                field(_city, s.t('tpm_city'), 'tpm-f-city', max: 80),
+                field(_capacity, s.t('tpm_capacity'), 'tpm-f-cap', type: TextInputType.number, max: 4),
+                Row(children: [
+                  Expanded(
+                      child: field(_price, s.t('tpm_price'), 'tpm-f-price', type: const TextInputType.numberWithOptions(decimal: true), max: 9)),
+                  const SizedBox(width: 8),
+                  Text('/ ${tirParkUnitLabel(s, 'day')}', key: const ValueKey('tpm-f-unit'), style: TextStyle(color: AppColors.text)),
+                ]),
+                field(_phone, s.t('tpm_phone'), 'tpm-f-phone', type: TextInputType.phone, max: 40),
+                if (_error != null) Text(s.t(_error!), key: const ValueKey('tpm-f-error'), style: TextStyle(color: AppColors.danger)),
+                const SizedBox(height: 10),
+                FilledButton(
+                  key: const ValueKey('tpm-f-send'),
+                  onPressed: _busy ? null : () => _send(s, req),
+                  child: _busy
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(s.t('tpo_setup_send')),
                 ),
-              ]),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: field(_capacity, s.t('tpm_capacity'), 'tpm-f-cap', type: TextInputType.number, max: 4)),
-            const SizedBox(width: 8),
-            Expanded(child: field(_bookable, s.t('tpm_bookable'), 'tpm-f-free', type: TextInputType.number, max: 4)),
-          ]),
-          Row(children: [
-            Expanded(child: field(_price, s.t('tpm_price'), 'tpm-f-price', type: const TextInputType.numberWithOptions(decimal: true), max: 9)),
-            const SizedBox(width: 8),
-            Text('/ ${tirParkUnitLabel(s, 'day')}', key: const ValueKey('tpm-f-unit'), style: TextStyle(color: AppColors.text)),
-          ]),
-          field(_hours, s.t('tpm_hours'), 'tpm-f-hours', max: 40),
-          Text(s.t('tpm_amenities'), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            for (final a in kTirParkAmenities)
-              FilterChip(
-                key: ValueKey('tpm-f-am-$a'),
-                avatar: Icon(tirParkAmenityIcon(a), size: 16),
-                label: Text(s.t('tp_am_$a')),
-                selected: _amenities.contains(a),
-                onSelected: (on) => setState(() => on ? _amenities.add(a) : _amenities.remove(a)),
-              ),
-          ]),
-          const SizedBox(height: 12),
-          field(_note, s.t('tp_note'), 'tpm-f-note', max: 500),
-          if (_error != null) Text(s.t(_error!), key: const ValueKey('tpm-f-error'), style: TextStyle(color: AppColors.danger)),
-          const SizedBox(height: 10),
-          FilledButton(
-            key: const ValueKey('tpm-f-send'),
-            onPressed: _busy ? null : () => _send(s),
-            child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(s.t('tpm_send')),
-          ),
-        ],
-      ),
     );
   }
 }
