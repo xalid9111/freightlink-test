@@ -1796,7 +1796,6 @@
   "tpo_invite": "邀请员工",
   "tpo_invite_title": "邀请码",
   "tpo_invite_how": "把此码交给员工。员工用自己的FreightLink账号在 个人 → “停车场员工” 中输入并接受后，即加入“{park}”。邀请码仅可用一次，有效期7天。",
-  "tpo_invite_share": "FreightLink：加入“{park}”工作：个人 → “停车场员工” → 邀请码：{code}",
   "tpo_invite_copy": "复制",
   "tpo_invite_until": "有效期至 {t}",
   "tpo_invites_open": "有效邀请",
