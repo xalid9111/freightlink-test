@@ -34,7 +34,6 @@ class TirParkWorkScreen extends ConsumerStatefulWidget {
 
 class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
   String? _parkId;
-  bool _join = false;
 
   Future<void> _pick(List<TirParkWorkPlace> parks) async {
     final id = await showModalBottomSheet<String>(
@@ -69,7 +68,7 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
     if (async.isLoading && !async.hasValue) {
       return Scaffold(appBar: AppBar(title: Text(s.t('tpw_title'))), body: const Center(child: CircularProgressIndicator()));
     }
-    if (parks.isEmpty || _join) {
+    if (parks.isEmpty) {
       Widget box(String key, IconData icon, Color color, String text) => Container(
             key: ValueKey(key),
             margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -85,7 +84,7 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
               Expanded(child: Text(text, style: TextStyle(color: AppColors.text, height: 1.35))),
             ]),
           );
-      final onlyWaiting = parks.isEmpty && waiting.isNotEmpty && !_join;
+      final onlyWaiting = waiting.isNotEmpty;
       return Scaffold(
         appBar: AppBar(title: Text(s.t(onlyWaiting ? 'tpw_title' : 'tpw_join_title'))),
         body: RefreshIndicator(
@@ -107,10 +106,7 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
             else
               _Join(
                 s: s,
-                onJoined: () {
-                  ref.invalidate(myWorkParksProvider);
-                  setState(() => _join = false);
-                },
+                onJoined: () => ref.invalidate(myWorkParksProvider),
               ),
           ]),
         ),
@@ -126,15 +122,9 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        // No "join another park" here (owner, 03.11.2026): an approved worker
+        // stays where the park's owner put him; only the owner takes him off.
         title: Text(s.t('tpw_title')),
-        actions: [
-          IconButton(
-            key: const ValueKey('tpw-join-more'),
-            tooltip: s.t('tpw_join_title'),
-            onPressed: () => setState(() => _join = true),
-            icon: const Icon(Icons.group_add_outlined),
-          ),
-        ],
       ),
       body: Column(children: [
         Padding(
