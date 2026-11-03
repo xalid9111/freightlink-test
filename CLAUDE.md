@@ -148,7 +148,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   cancel, take off) · Hesabat (30 days: in / out / money taken);
   the worker writes his name and surname with the code and waits; the
   owner is told (notice, Mesajlar, Profil count) and presses Təsdiqlə /
-  Rədd et (0088) — only then the worker works;
+  Rədd et (0088) — only then the worker works; the owner may name ONE
+  active worker the park's Admin (0089, İşçilər → shield): he invites,
+  approves / rejects and takes off ordinary workers (İşçilər button on
+  his worker page), never himself, the owner or the admin role, and sees
+  no money; an approved worker never joins / leaves on his own;
   Ayarlar behind the gear. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day

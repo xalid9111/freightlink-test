@@ -478,6 +478,9 @@ class TirParkWorker {
   final bool active;
   /// pending (waits for the owner, 0088) · active · rejected · removed
   final String status;
+  /// The park's admin (0089): one worker the owner named; he approves and
+  /// takes off workers.
+  final bool isAdmin;
   final DateTime? joinedAt;
   final int todayIn, todayOut;
   const TirParkWorker(
@@ -487,6 +490,7 @@ class TirParkWorker {
       this.accountName,
       this.active = true,
       this.status = 'active',
+      this.isAdmin = false,
       this.joinedAt,
       this.todayIn = 0,
       this.todayOut = 0});
@@ -500,6 +504,7 @@ class TirParkWorker {
         accountName: j['account_name'] as String?,
         active: j['active'] != false,
         status: (j['status'] as String?) ?? (j['active'] != false ? 'active' : 'removed'),
+        isAdmin: j['is_admin'] == true,
         joinedAt: _time(j['joined_at']),
         todayIn: int.tryParse('${j['today_in']}') ?? 0,
         todayOut: int.tryParse('${j['today_out']}') ?? 0,
@@ -533,10 +538,19 @@ class TirParkWorkPlace {
   final String? city;
   /// active · pending (waits for the owner, 0088) · rejected
   final String status;
-  const TirParkWorkPlace({required this.id, required this.name, this.city, this.status = 'active'});
+  /// I am this park's admin (0089) · requests waiting for me.
+  final bool isAdmin;
+  final int pending;
+  const TirParkWorkPlace(
+      {required this.id, required this.name, this.city, this.status = 'active', this.isAdmin = false, this.pending = 0});
 
   factory TirParkWorkPlace.fromJson(Map<String, dynamic> j) => TirParkWorkPlace(
-      id: '${j['id']}', name: '${j['name'] ?? ''}', city: j['city'] as String?, status: (j['status'] as String?) ?? 'active');
+      id: '${j['id']}',
+      name: '${j['name'] ?? ''}',
+      city: j['city'] as String?,
+      status: (j['status'] as String?) ?? 'active',
+      isAdmin: j['is_admin'] == true,
+      pending: int.tryParse('${j['pending']}') ?? 0);
 }
 
 /// One day of the owner's report (Baku days).

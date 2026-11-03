@@ -272,6 +272,10 @@ class TirParkRepository {
     }
   }
 
+  /// The owner names (or un-names) the park's admin (0089).
+  Future<void> workerSetAdmin(String parkId, String userId, bool on) => _run(() => _c
+      .rpc('tir_park_worker_set_admin', params: {'p_park': parkId, 'p_user': userId, 'p_on': on}).timeout(_timeout));
+
   Future<void> workerRemove(String parkId, String userId) =>
       _run(() => _c.rpc('tir_park_worker_remove', params: {'p_park': parkId, 'p_user': userId}).timeout(_timeout));
 

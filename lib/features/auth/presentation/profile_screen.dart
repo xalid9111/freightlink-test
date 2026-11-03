@@ -25,6 +25,7 @@ import '../../services/presentation/services_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../tirpark/data/tir_park_repository.dart';
+import '../../tirpark/domain/tir_park.dart';
 import '../../finance/presentation/finance_providers.dart';
 
 /// Profile (owner's design): title + settings gear, a card with photo,
@@ -164,14 +165,23 @@ class ProfileScreen extends ConsumerWidget {
                     );
                   }),
                   // A park's worker (0087): joins by the owner's invitation.
-                  _MenuRow(
-                    key: const ValueKey('pf-tirpark-work'),
-                    icon: Icons.badge_outlined,
-                    iconColor: AppColors.accent,
-                    title: strings.t('tpw_title'),
-                    subtitle: strings.t('tpw_sub'),
-                    onTap: () => context.pushOnce('/tirpark/work'),
-                  ),
+                  // The park's admin (0089): a red count of requests waiting.
+                  Consumer(builder: (context, ref, _) {
+                    final wk = [for (final p in ref.watch(myWorkParksProvider).valueOrNull ?? const <TirParkWorkPlace>[]) p.pending]
+                        .fold<int>(0, (a, b) => a + b);
+                    return _MenuRow(
+                      key: const ValueKey('pf-tirpark-work'),
+                      icon: Icons.badge_outlined,
+                      iconColor: AppColors.accent,
+                      title: strings.t('tpw_title'),
+                      subtitle: wk > 0 ? strings.t('tpo_workers_pending', {'n': '$wk'}) : strings.t('tpw_sub'),
+                      badge: wk,
+                      onTap: () async {
+                        await context.pushOnce('/tirpark/work');
+                        ref.invalidate(myWorkParksProvider);
+                      },
+                    );
+                  }),
                   _MenuRow(
                     key: const ValueKey('pf-tirpark-bookings'),
                     icon: Icons.event_available_outlined,

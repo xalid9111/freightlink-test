@@ -91,6 +91,9 @@ class _FakeRepo extends TirParkRepository {
   Future<TirParkWorkers> workers(String parkId) async => TirParkWorkers(workers: workerList);
   @override
   Future<void> workerRemove(String parkId, String userId) async => removed.add(userId);
+  final admins = <String>[];
+  @override
+  Future<void> workerSetAdmin(String parkId, String userId, bool on) async => admins.add('$userId:$on');
   final approved = <String>[];
   @override
   Future<void> workerApprove(String parkId, String userId) async => approved.add(userId);
@@ -486,6 +489,12 @@ void main() {
     ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
     expect(find.textContaining('bu gün: 2 daxil · 1 çıxış'), findsOneWidget, reason: 'each worker and what he did today');
+    // 0089: the owner names one worker the park's admin.
+    await tester.tap(find.byKey(const ValueKey('tpo-worker-admin-u7')));
+    await tester.pumpAndSettle();
+    expect(repo.admins, ['u7:true']);
+    ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tpo-invite')));
     await tester.pumpAndSettle();
     expect(repo.invited, ['p1']);
@@ -569,6 +578,52 @@ void main() {
     expect(find.byKey(const ValueKey('tpw-join-more')), findsNothing,
         reason: 'an approved worker cannot join / leave on his own; only the park owner decides (owner, 03.11.2026)');
     expect(find.byIcon(Icons.group_add_outlined), findsNothing);
+  });
+
+  testWidgets('the park\'s admin (0089): İşçilər from his worker profile; approves, takes off ordinary workers only, names nobody', (tester) async {
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _FakeRepo()
+      ..work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı', isAdmin: true, pending: 1)]
+      ..workerList = const [
+        TirParkWorker(userId: 'me', name: 'Anar Quliyev', isAdmin: true),
+        TirParkWorker(userId: 'u7', name: 'Elvin Məmmədov'),
+        TirParkWorker(userId: 'u8', name: 'Rəşad Əliyev', active: false, status: 'pending'),
+      ];
+    await tester.pumpWidget(ProviderScope(
+      key: UniqueKey(),
+      overrides: [stringsProvider.overrideWithValue(_az), tirParkRepositoryProvider.overrideWithValue(repo)],
+      child: const MaterialApp(home: TirParkWorkScreen()),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('İşçilər · 1 işçi təsdiq gözləyir'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpw-admin-workers')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpo-invite')), findsOneWidget, reason: 'the admin gives invitation codes');
+    expect(find.byKey(const ValueKey('tpo-worker-admin-u7')), findsNothing, reason: 'only the owner names the admin');
+    expect(find.byKey(const ValueKey('tpo-worker-remove-me')), findsNothing, reason: 'the admin cannot take himself off');
+    await tester.tap(find.byKey(const ValueKey('tpo-wreq-ok-u8')));
+    await tester.pumpAndSettle();
+    expect(repo.approved, ['u8']);
+    ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-invite')))).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpo-worker-remove-u7')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpo-remove-go')));
+    await tester.pumpAndSettle();
+    expect(repo.removed, ['u7']);
+  });
+
+  testWidgets('an ordinary worker has no İşçilər button', (tester) async {
+    final repo = _FakeRepo()..work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı')];
+    await tester.pumpWidget(ProviderScope(
+      key: UniqueKey(),
+      overrides: [stringsProvider.overrideWithValue(_az), tirParkRepositoryProvider.overrideWithValue(repo)],
+      child: const MaterialApp(home: TirParkWorkScreen()),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpw-admin-workers')), findsNothing);
   });
 
   test('the invitation code is found in whatever was pasted', () {
