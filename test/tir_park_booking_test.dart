@@ -675,6 +675,13 @@ void main() {
     expect(find.text('Admin təsdiqi gözləyir'), findsOneWidget);
   });
 
+  test('a new price counts for every truck still in the park (0090); the panel reads it again after Ayarlar', () {
+    final sql = src('supabase/migrations/0090_tir_park_stay_rate_follow.sql');
+    expect(sql, contains('after update of price, price_unit on public.tir_parks'));
+    expect(sql, contains('where park_id = new.id and exited_at is null'), reason: 'trucks that left keep what was taken');
+    expect(src('lib/features/tirpark/presentation/tir_park_owner_panel.dart'), contains('if (mounted) _refresh();'));
+  });
+
   test('wired: server-side rules, checkout, webhook, RLS, no card data, no commission', () {
     final sql = src('supabase/migrations/0079_tir_park_booking.sql').toLowerCase();
     for (final bad in ['drop table', 'truncate', 'card_number', 'cvv', 'iban', 'pan ']) {
