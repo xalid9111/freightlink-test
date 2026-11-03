@@ -513,6 +513,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('tpw-check')));
     await tester.pumpAndSettle();
     expect(find.text('Kod yanlışdır, istifadə olunub və ya vaxtı bitib.'), findsOneWidget);
+    // A whole pasted message (or "freightlink: …") is cut down to the code itself.
+    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'FreightLink: «UTEP» parkında işçi kimi qoşulmaq üçün Profil → «Park işçisiyəm» → kod: k7m2p9qx');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const ValueKey('tpw-code'))).controller!.text, 'K7M2P9QX');
     await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'k7m2p9qx');
     await tester.tap(find.byKey(const ValueKey('tpw-check')));
     await tester.pumpAndSettle();
@@ -520,12 +524,22 @@ void main() {
     expect(repo.accepted, isEmpty, reason: 'nothing is bound before "Qəbul et"');
     await tester.tap(find.byKey(const ValueKey('tpw-accept')));
     await tester.pumpAndSettle();
-    expect(repo.accepted, ['k7m2p9qx']);
+    expect(repo.accepted, ['K7M2P9QX']);
     expect(find.text('Park işçisiyəm'), findsOneWidget, reason: 'the worker profile opens');
     expect(find.text('UTEP TIR PARKI'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpo-add')), findsOneWidget, reason: 'Maşın əlavə et');
     expect(find.text('0.63 AZN'), findsOneWidget, reason: '5 h at 3 AZN / 24 h');
     expect(find.text('Bu gün'), findsNothing, reason: 'a worker does not see the takings');
+  });
+
+  test('the invitation code is found in whatever was pasted', () {
+    expect(tirParkInviteCode('K7M2P9QX'), 'K7M2P9QX');
+    expect(tirParkInviteCode(' k7m2p9qx '), 'K7M2P9QX');
+    expect(tirParkInviteCode('K7M2-P9QX'), 'K7M2P9QX');
+    expect(tirParkInviteCode('FreightLink: «UTEP TIR Parkı» parkında … → kod: K7M2P9QX'), 'K7M2P9QX');
+    expect(tirParkInviteCode('freightlink:'), 'FREIGHTLINK', reason: 'nothing like a code: shown as typed, the server says it is wrong');
+    expect(src('lib/features/tirpark/presentation/tir_park_owner_panel.dart'), contains('Clipboard.setData(ClipboardData(text: inv.code));'),
+        reason: '"Kopyala" copies only the code');
   });
 
   testWidgets('"Park işlədirəm": only the name → waiting for the admin → "Parkı qur"', (tester) async {

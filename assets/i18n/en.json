@@ -1796,7 +1796,6 @@
   "tpo_invite": "Invite a worker",
   "tpo_invite_title": "Invitation code",
   "tpo_invite_how": "Give this code to the worker. Signed in with his own FreightLink account he types it in Profil → \"Park worker\" and accepts — then he works at \"{park}\". The code works once, for 7 days.",
-  "tpo_invite_share": "FreightLink: to work at \"{park}\" go to Profil → \"Park worker\" → code: {code}",
   "tpo_invite_copy": "Copy",
   "tpo_invite_until": "valid until {t}",
   "tpo_invites_open": "Open invitations",

@@ -1796,7 +1796,6 @@
   "tpo_invite": "Çalışan davet et",
   "tpo_invite_title": "Davet kodu",
   "tpo_invite_how": "Bu kodu çalışana verin. Çalışan kendi FreightLink hesabıyla Profil → «Park çalışanıyım» bölümünde kodu yazıp kabul edince «{park}» parkına katılır. Kod bir kez ve 7 gün geçerlidir.",
-  "tpo_invite_share": "FreightLink: «{park}» parkına çalışan olarak katılmak için Profil → «Park çalışanıyım» → kod: {code}",
   "tpo_invite_copy": "Kopyala",
   "tpo_invite_until": "{t} tarihine kadar geçerli",
   "tpo_invites_open": "Açık davetler",

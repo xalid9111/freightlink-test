@@ -8,6 +8,18 @@ import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'tir_park_owner_panel.dart';
 
+/// The 8-character invitation code from whatever was pasted (owner,
+/// 03.11.2026): the code alone, or a whole message such as "FreightLink: …
+/// → kod: K7M2P9QX". Takes the last 8-character code-like word; otherwise
+/// the letters and digits as typed.
+String tirParkInviteCode(String raw) {
+  final up = raw.toUpperCase();
+  final words = RegExp(r'(?<![A-Z0-9])[A-Z2-9]{8}(?![A-Z0-9])').allMatches(up).map((m) => m.group(0)!).toList();
+  if (words.isNotEmpty) return words.last;
+  final plain = up.replaceAll(RegExp(r'[^A-Z0-9]'), '');
+  return plain.length > 12 ? plain.substring(plain.length - 8) : plain;
+}
+
 /// Profil → "Park işçisiyəm" (owner, 03.11.2026, 0087; picture "İşçi
 /// profili"): the parks I work at — trucks in by their plate, search,
 /// time and money so far, "Çıxış". Not working anywhere yet → join with
@@ -156,7 +168,7 @@ class _JoinState extends ConsumerState<_Join> {
       _park = null;
     });
     try {
-      final name = await ref.read(tirParkRepositoryProvider).invitePreview(_code.text.trim());
+      final name = await ref.read(tirParkRepositoryProvider).invitePreview(tirParkInviteCode(_code.text));
       if (mounted) setState(() => _park = name);
     } catch (e) {
       if (mounted) setState(() => _error = _err(e));
@@ -168,7 +180,7 @@ class _JoinState extends ConsumerState<_Join> {
   Future<void> _accept() async {
     setState(() => _busy = true);
     try {
-      final name = await ref.read(tirParkRepositoryProvider).inviteAccept(_code.text.trim());
+      final name = await ref.read(tirParkRepositoryProvider).inviteAccept(tirParkInviteCode(_code.text));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpw_joined', {'park': name}))));
       widget.onJoined();
@@ -187,8 +199,12 @@ class _JoinState extends ConsumerState<_Join> {
           key: const ValueKey('tpw-code'),
           controller: _code,
           textCapitalization: TextCapitalization.characters,
-          maxLength: 12,
-          onChanged: (_) {
+          // A pasted message is cut down to its code at once.
+          onChanged: (v) {
+            final code = tirParkInviteCode(v);
+            if (code != v && code.length == 8) {
+              _code.value = TextEditingValue(text: code, selection: TextSelection.collapsed(offset: code.length));
+            }
             if (_park != null || _error != null) {
               setState(() {
                 _park = null;

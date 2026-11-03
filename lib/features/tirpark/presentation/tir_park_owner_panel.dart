@@ -671,7 +671,8 @@ class _WorkersState extends ConsumerState<_Workers> {
           actions: [
             TextButton(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: s.t('tpo_invite_share', {'park': widget.park.name, 'code': inv.code})));
+                // Only the code (owner, 03.11.2026): it is pasted as it is.
+                Clipboard.setData(ClipboardData(text: inv.code));
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpb_copied'))));
               },
               child: Text(s.t('tpo_invite_copy')),
