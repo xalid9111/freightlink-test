@@ -138,7 +138,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   Maşınlar (add by plate, search, time + money so far, Çıxış), Ayarlar.
   No place numbers, no entry code / QR: a truck is known by its plate.
   Money = price per 24 h × hours / 24 (3 AZN: 5 h 0.63, 1 day 4 h 3.50,
-  2 days 6.00), taken at the exit; a paid booking pays only the overstay.
+  2 days 6.00), taken at the exit; a paid booking pays only the overstay;
+  a new price counts at once for every truck still in the park, old or new
+  entry (0090), trucks that left keep what was taken.
   A booking day starts at 00:00 (Baku); every booked day's places are
   checked. Stage 2 (0087): workers join by an invitation code they accept
   with their own account in Profil → "Park işçisiyəm" (never

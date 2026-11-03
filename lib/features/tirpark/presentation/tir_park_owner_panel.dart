@@ -58,12 +58,17 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
   }
 
   /// Ayarlar opens from the gear (the four tabs follow the owner's picture).
-  void _openSettings(TirPark p) => Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(s.t('tpo_tab_settings'))),
-          body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 40), children: [widget.settings(p)]),
-        ),
-      ));
+  // Back from Ayarlar: a new price already counts for the trucks in the
+  // park (0090), so their money is read again.
+  Future<void> _openSettings(TirPark p) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: Text(s.t('tpo_tab_settings'))),
+        body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 40), children: [widget.settings(p)]),
+      ),
+    ));
+    if (mounted) _refresh();
+  }
 
   Future<void> _pickPark() async {
     final id = await showModalBottomSheet<String>(
