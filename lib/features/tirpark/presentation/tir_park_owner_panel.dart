@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
@@ -50,7 +51,18 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
     ref.invalidate(tirParkFeedProvider(park.id));
     ref.invalidate(managerBookingsProvider(park.id));
     ref.invalidate(tirParkManagerPendingProvider);
+    ref.invalidate(tirParkWorkersProvider(park.id));
+    ref.invalidate(tirParkActivityProvider(park.id));
+    ref.invalidate(tirParkReportProvider(park.id));
   }
+
+  /// Ayarlar opens from the gear (the four tabs follow the owner's picture).
+  void _openSettings(TirPark p) => Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: Text(s.t('tpo_tab_settings'))),
+          body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 40), children: [widget.settings(p)]),
+        ),
+      ));
 
   Future<void> _pickPark() async {
     final id = await showModalBottomSheet<String>(
@@ -111,6 +123,13 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
                 ]),
               ),
               if (widget.parks.length > 1) Icon(Icons.chevron_right, color: AppColors.textSoft),
+              IconButton(
+                key: const ValueKey('tpo-settings'),
+                tooltip: s.t('tpo_tab_settings'),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _openSettings(p),
+                icon: Icon(Icons.settings_outlined, color: AppColors.textSoft),
+              ),
             ]),
           ),
         ),
@@ -118,11 +137,9 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
     );
     final body = switch (_tab) {
       0 => _Overview(park: p, s: s, onRefresh: _refresh),
-      1 => _Cars(park: p, s: s, onChanged: _refresh),
-      _ => RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [widget.settings(p)]),
-        ),
+      1 => TirParkCars(park: p, s: s, onChanged: _refresh),
+      2 => _Workers(park: p, s: s),
+      _ => _Report(park: p, s: s),
     };
     return Column(children: [
       header,
@@ -135,7 +152,8 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: s.t('tpo_tab_overview')),
           NavigationDestination(
               icon: const Icon(Icons.local_shipping_outlined), selectedIcon: const Icon(Icons.local_shipping), label: s.t('tpo_tab_cars')),
-          NavigationDestination(icon: const Icon(Icons.tune), label: s.t('tpo_tab_settings')),
+          NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: const Icon(Icons.groups), label: s.t('tpo_tab_workers')),
+          NavigationDestination(icon: const Icon(Icons.bar_chart), label: s.t('tpo_tab_report')),
         ],
       ),
     ]);
@@ -254,6 +272,59 @@ class _Overview extends ConsumerWidget {
             for (final e in feed.take(20)) _FeedRow(e: e, s: s),
           ]),
         ),
+        const SizedBox(height: 14),
+        _Activity(park: park, s: s),
+      ]),
+    );
+  }
+}
+
+/// "İşçi fəaliyyəti": who added / let out which truck (0087).
+class _Activity extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const _Activity({required this.park, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(tirParkActivityProvider(park.id));
+    final list = async.valueOrNull ?? const <TirParkFeedItem>[];
+    return Container(
+      key: const ValueKey('tpo-activity'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.line)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Icon(Icons.groups_outlined, color: AppColors.text),
+          const SizedBox(width: 8),
+          Text(s.t('tpo_activity'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+        ]),
+        const SizedBox(height: 6),
+        if (async.hasValue && list.isEmpty)
+          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(s.t('tpo_activity_none'), style: TextStyle(color: AppColors.textSoft))),
+        for (final e in list.take(20))
+          Container(
+            decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            child: Row(children: [
+              Icon(Icons.person_outline, size: 20, color: AppColors.text),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: e.by ?? '', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+                    TextSpan(
+                      text: ' · ${s.t(e.kind == 'out' ? 'tpo_act_out' : 'tpo_act_in', {'plate': e.plate})}',
+                      style: TextStyle(color: AppColors.text),
+                    ),
+                  ]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(_hm(e.at), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+            ]),
+          ),
       ]),
     );
   }
@@ -297,19 +368,19 @@ class _FeedRow extends StatelessWidget {
   }
 }
 
-/// Maşınlar: "+ Maşın əlavə et", search by plate, the cars in the park (time,
+/// Maşınlar (owner) and the İşçi profili (worker): "+ Maşın əlavə et", search by plate, the cars in the park (time,
 /// money so far, "Çıxış") and today's paid bookings not come yet.
-class _Cars extends ConsumerStatefulWidget {
+class TirParkCars extends ConsumerStatefulWidget {
   final TirPark park;
   final AppStrings s;
   final VoidCallback onChanged;
-  const _Cars({required this.park, required this.s, required this.onChanged});
+  const TirParkCars({super.key, required this.park, required this.s, required this.onChanged});
 
   @override
-  ConsumerState<_Cars> createState() => _CarsState();
+  ConsumerState<TirParkCars> createState() => _CarsState();
 }
 
-class _CarsState extends ConsumerState<_Cars> {
+class _CarsState extends ConsumerState<TirParkCars> {
   final _search = TextEditingController();
   Timer? _tick;
   bool _busy = false;
@@ -555,6 +626,213 @@ class _PlateDialogState extends State<_PlateDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: Text(s.t('common_cancel'))),
         FilledButton(key: const ValueKey('tpo-plate-go'), onPressed: _go, child: Text(s.t('tpo_enter_btn'))),
       ],
+    );
+  }
+}
+
+/// İşçilər (0087): invite by a one-time code (the worker accepts it with his
+/// own account — never automatically), open invitations, the workers and
+/// what each did today, take one off.
+class _Workers extends ConsumerStatefulWidget {
+  final TirPark park;
+  final AppStrings s;
+  const _Workers({required this.park, required this.s});
+
+  @override
+  ConsumerState<_Workers> createState() => _WorkersState();
+}
+
+class _WorkersState extends ConsumerState<_Workers> {
+  bool _busy = false;
+  AppStrings get s => widget.s;
+
+  void _snack(String t) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(t)));
+
+  Future<void> _invite() async {
+    setState(() => _busy = true);
+    try {
+      final inv = await ref.read(tirParkRepositoryProvider).inviteCreate(widget.park.id);
+      ref.invalidate(tirParkWorkersProvider(widget.park.id));
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(s.t('tpo_invite_title')),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            SelectableText(inv.code,
+                key: const ValueKey('tpo-invite-code'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 30, letterSpacing: 4, fontWeight: FontWeight.w600, color: AppColors.text)),
+            const SizedBox(height: 10),
+            Text(s.t('tpo_invite_how', {'park': widget.park.name}), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
+          ]),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: s.t('tpo_invite_share', {'park': widget.park.name, 'code': inv.code})));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpb_copied'))));
+              },
+              child: Text(s.t('tpo_invite_copy')),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('tpo_close'))),
+          ],
+        ),
+      );
+    } on TirParkRefused catch (e) {
+      _snack(s.t(e.reason == 'too_many' ? 'tpo_err_invites' : 'tpb_err_generic'));
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _cancel(TirParkInvite i) async {
+    try {
+      await ref.read(tirParkRepositoryProvider).inviteCancel(i.id);
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    }
+    ref.invalidate(tirParkWorkersProvider(widget.park.id));
+  }
+
+  Future<void> _remove(TirParkWorker w) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(s.t('tpo_worker_remove_q', {'name': w.name})),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.t('common_cancel'))),
+          FilledButton(
+            key: const ValueKey('tpo-remove-go'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.t('tpo_worker_remove')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(tirParkRepositoryProvider).workerRemove(widget.park.id, w.userId);
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    }
+    ref.invalidate(tirParkWorkersProvider(widget.park.id));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(tirParkWorkersProvider(widget.park.id));
+    final data = async.valueOrNull ?? const TirParkWorkers();
+    final active = [for (final w in data.workers) if (w.active) w];
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(tirParkWorkersProvider(widget.park.id)),
+      child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [
+        Text(s.t('tpo_workers_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          key: const ValueKey('tpo-invite'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          onPressed: _busy ? null : _invite,
+          icon: const Icon(Icons.person_add_alt_1),
+          label: Text(s.t('tpo_invite')),
+        ),
+        if (async.hasError) Padding(padding: const EdgeInsets.only(top: 10), child: Text(s.t('tpb_err_generic'), style: TextStyle(color: AppColors.danger))),
+        if (data.invites.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(s.t('tpo_invites_open'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+          for (final i in data.invites)
+            ListTile(
+              key: ValueKey('tpo-inv-${i.id}'),
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.mail_outline, color: AppColors.promoVip),
+              title: Text(i.code, style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.w600, color: AppColors.text)),
+              subtitle: i.expiresAt == null ? null : Text(s.t('tpo_invite_until', {'t': tirParkTime(i.expiresAt!)})),
+              trailing: TextButton(key: ValueKey('tpo-inv-cancel-${i.id}'), onPressed: () => _cancel(i), child: Text(s.t('tpb_cancel'))),
+            ),
+        ],
+        const SizedBox(height: 14),
+        Text(s.t('tpo_workers_n', {'n': '${active.length}'}), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+        if (async.hasValue && active.isEmpty)
+          Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(s.t('tpo_workers_none'), style: TextStyle(color: AppColors.textSoft))),
+        for (final w in active)
+          ListTile(
+            key: ValueKey('tpo-worker-${w.userId}'),
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.person_outline, color: AppColors.text),
+            title: Text(w.name, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
+            subtitle: Text([
+              if ((w.phone ?? '').isNotEmpty) w.phone!,
+              s.t('tpo_worker_today', {'in': '${w.todayIn}', 'out': '${w.todayOut}'}),
+            ].join(' · ')),
+            trailing: IconButton(
+              key: ValueKey('tpo-worker-remove-${w.userId}'),
+              tooltip: s.t('tpo_worker_remove'),
+              icon: Icon(Icons.person_remove_outlined, color: AppColors.danger),
+              onPressed: () => _remove(w),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
+/// Hesabat (0087): the last 30 days — trucks in / out and the money taken.
+class _Report extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const _Report({required this.park, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(tirParkReportProvider(park.id));
+    final days = async.valueOrNull ?? const <TirParkReportDay>[];
+    final total = days.fold<double>(0, (a, d) => a + d.total);
+    final ins = days.fold<int>(0, (a, d) => a + d.entries);
+    final outs = days.fold<int>(0, (a, d) => a + d.exits);
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(tirParkReportProvider(park.id)),
+      child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [
+        Text(s.t('tpo_report_title'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 8),
+        if (async.isLoading && !async.hasValue) const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())),
+        if (async.hasError) Text(s.t('tpb_err_generic'), style: TextStyle(color: AppColors.danger)),
+        if (async.hasValue) ...[
+          Row(children: [
+            Expanded(child: _Stat(icon: Icons.login, label: s.t('tpo_report_in'), value: '$ins', keyName: 'tpo-rep-in')),
+            const SizedBox(width: 6),
+            Expanded(child: _Stat(icon: Icons.logout, label: s.t('tpo_report_out'), value: '$outs', keyName: 'tpo-rep-out')),
+            const SizedBox(width: 6),
+            Expanded(
+                child: _Stat(
+                    icon: Icons.payments_outlined,
+                    label: s.t('tpo_report_paid'),
+                    value: money(total, park.currency),
+                    keyName: 'tpo-rep-total',
+                    color: AppColors.accent)),
+          ]),
+          const SizedBox(height: 12),
+          for (final d in days)
+            if (d.entries > 0 || d.exits > 0 || d.total > 0)
+              Container(
+                key: ValueKey('tpo-rep-${d.day.toIso8601String().substring(0, 10)}'),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.line))),
+                child: Row(children: [
+                  SizedBox(width: 60, child: Text(tirParkDay(d.day), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text))),
+                  Expanded(
+                    child: Text(s.t('tpo_report_row', {'in': '${d.entries}', 'out': '${d.exits}'}), style: TextStyle(color: AppColors.textSoft)),
+                  ),
+                  Text(money(d.total, park.currency), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+                ]),
+              ),
+          if (days.every((d) => d.entries == 0 && d.exits == 0 && d.total == 0))
+            Text(s.t('tpo_report_none'), style: TextStyle(color: AppColors.textSoft)),
+        ],
+      ]),
     );
   }
 }

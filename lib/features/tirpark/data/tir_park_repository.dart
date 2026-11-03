@@ -44,6 +44,8 @@ class TirParkRepository {
         'invalid_plate',
         // 0086: owner panel.
         'already_applied', 'already_in', 'already_out', 'payment_in_review', 'already_reviewed',
+        // 0087: workers.
+        'invalid_code',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -229,6 +231,50 @@ class TirParkRepository {
   Future<List<TirParkFeedItem>> ownerFeed(String parkId) => _run(() async {
         final res = await _c.rpc('tir_park_owner_feed', params: {'p_park': parkId, 'p_limit': 30}).timeout(_timeout);
         return [for (final r in (res as List? ?? const [])) TirParkFeedItem.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  // ---- Workers (0087) ------------------------------------------------------
+  Future<TirParkInvite> inviteCreate(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_invite_create', params: {'p_park': parkId}).timeout(_timeout);
+        return TirParkInvite.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<void> inviteCancel(String inviteId) => _run(() => _c.rpc('tir_park_invite_cancel', params: {'p_invite': inviteId}).timeout(_timeout));
+
+  /// The park's name for a code (throws [TirParkRefused] 'invalid_code').
+  Future<String> invitePreview(String code) => _run(() async {
+        final res = Map<String, dynamic>.from(await _c.rpc('tir_park_invite_preview', params: {'p_code': code}).timeout(_timeout) as Map);
+        if (res['error'] != null) throw TirParkRefused('${res['error']}');
+        return '${res['park_name'] ?? ''}';
+      });
+
+  Future<String> inviteAccept(String code) => _run(() async {
+        final res = Map<String, dynamic>.from(await _c.rpc('tir_park_invite_accept', params: {'p_code': code}).timeout(_timeout) as Map);
+        if (res['error'] != null) throw TirParkRefused('${res['error']}');
+        return '${res['park_name'] ?? ''}';
+      });
+
+  Future<void> workerRemove(String parkId, String userId) =>
+      _run(() => _c.rpc('tir_park_worker_remove', params: {'p_park': parkId, 'p_user': userId}).timeout(_timeout));
+
+  Future<TirParkWorkers> workers(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_workers_list', params: {'p_park': parkId}).timeout(_timeout);
+        return TirParkWorkers.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
+  Future<List<TirParkWorkPlace>> myWork() => _run(() async {
+        final res = await _c.rpc('tir_park_my_work').timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirParkWorkPlace.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<List<TirParkFeedItem>> workerActivity(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_worker_activity', params: {'p_park': parkId, 'p_limit': 30}).timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirParkFeedItem.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  Future<List<TirParkReportDay>> ownerReport(String parkId, {int days = 30}) => _run(() async {
+        final res = await _c.rpc('tir_park_owner_report', params: {'p_park': parkId, 'p_days': days}).timeout(_timeout);
+        return [for (final r in (res as List? ?? const [])) TirParkReportDay.fromJson(Map<String, dynamic>.from(r as Map))];
       });
 
   Future<List<Map<String, dynamic>>> adminOwnerRequests() => _run(() async {
@@ -430,6 +476,25 @@ final tirParkSummaryProvider =
 
 final tirParkFeedProvider =
     FutureProvider.autoDispose.family<List<TirParkFeedItem>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerFeed(parkId));
+
+final tirParkWorkersProvider =
+    FutureProvider.autoDispose.family<TirParkWorkers, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).workers(parkId));
+
+final tirParkActivityProvider = FutureProvider.autoDispose
+    .family<List<TirParkFeedItem>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).workerActivity(parkId));
+
+final tirParkReportProvider = FutureProvider.autoDispose
+    .family<List<TirParkReportDay>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerReport(parkId));
+
+/// Parks I work at (0087); empty before that SQL.
+final myWorkParksProvider = FutureProvider.autoDispose<List<TirParkWorkPlace>>((ref) async {
+  ref.watch(currentUserIdProvider);
+  try {
+    return await ref.watch(tirParkRepositoryProvider).myWork();
+  } on TirParkNotReady {
+    return const [];
+  }
+});
 
 final adminOwnerRequestsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) => ref.watch(tirParkRepositoryProvider).adminOwnerRequests());

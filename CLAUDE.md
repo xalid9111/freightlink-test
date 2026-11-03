@@ -140,8 +140,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   Money = price per 24 h × hours / 24 (3 AZN: 5 h 0.63, 1 day 4 h 3.50,
   2 days 6.00), taken at the exit; a paid booking pays only the overstay.
   A booking day starts at 00:00 (Baku); every booked day's places are
-  checked. Stage 2: workers join by an invitation they accept with their
-  own account (never automatically, no passwords made by the owner). "Yük əlavə et" (orange +) is on the Loads
+  checked. Stage 2 (0087): workers join by an invitation code they accept
+  with their own account in Profil → "Park işçisiyəm" (never
+  automatically, no passwords made by the owner; once, 7 days); a worker
+  adds trucks by plate and records exits, sees places not takings; the
+  panel's tabs: Ümumi (+ İşçi fəaliyyəti) · Maşınlar · İşçilər (invite,
+  cancel, take off) · Hesabat (30 days: in / out / money taken);
+  Ayarlar behind the gear. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
