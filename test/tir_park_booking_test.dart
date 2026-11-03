@@ -467,7 +467,15 @@ void main() {
     expect(repo.entered, ['p1|10-BB-442']);
     await tester.tap(find.byKey(const ValueKey('tpo-exit-s1')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Məbləğ: 3.50 AZN'), findsOneWidget);
+    // The exit sheet (owner's picture, 03.11.2026): the real plate on an AZ
+    // number plate, the time, the real amount in the orange panel.
+    expect(find.descendant(of: find.byKey(const ValueKey('tpo-exit-plate')), matching: find.text('99-AC-981')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const ValueKey('tpo-exit-plate')), matching: find.text('AZ')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const ValueKey('tpo-exit-amount')), matching: find.text('3.50 AZN')), findsOneWidget);
+    expect(find.text('Müddət • 1 gün 4 saat'), findsOneWidget);
+    expect(find.text('Ödənişi aldıqdan sonra çıxışı qeyd edin.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpo-exit-cancel')), findsOneWidget);
+    expect(tester.getSize(find.byKey(const ValueKey('tpo-exit-go'))).height, greaterThanOrEqualTo(48), reason: 'easy to press');
     await tester.tap(find.byKey(const ValueKey('tpo-exit-go')));
     await tester.pumpAndSettle();
     expect(repo.exited, ['s1']);

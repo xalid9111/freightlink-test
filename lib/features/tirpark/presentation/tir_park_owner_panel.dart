@@ -10,6 +10,7 @@ import '../../finance/domain/finance_models.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'tir_park_booking.dart';
+import 'tir_park_exit_dialog.dart';
 import 'tir_park_manage.dart' show TirParkNewPayments;
 
 /// "1 gün 4 saat" · "5 saat" · "35 dəq".
@@ -481,16 +482,11 @@ class _CarsState extends ConsumerState<TirParkCars> {
     final amount = st.amountAt(now);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(st.plate),
-        content: Text(
-          s.t('tpo_exit_q', {'dur': tirParkDuration(s, now.difference(st.enteredAt)), 'amount': money(amount, st.currency)}),
-          key: const ValueKey('tpo-exit-text'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.t('common_cancel'))),
-          FilledButton(key: const ValueKey('tpo-exit-go'), onPressed: () => Navigator.pop(ctx, true), child: Text(s.t('tpo_exit_btn'))),
-        ],
+      builder: (_) => TirParkExitDialog(
+        s: s,
+        plate: st.plate,
+        duration: tirParkDuration(s, now.difference(st.enteredAt)),
+        amount: money(amount, st.currency),
       ),
     );
     if (ok != true || !mounted) return;

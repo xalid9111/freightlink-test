@@ -133,6 +133,14 @@ class AppColors {
   static const Color sizeCardBg = Color(0xFF16243A);
   /// WhatsApp brand green (call sheet).
   static const Color whatsapp = Color(0xFF25D366);
+  /// Azerbaijani number plate (TIRPark exit sheet, owner 03.11.2026): a real
+  /// plate looks the same by day and night — white plate, black letters,
+  /// the flag's blue / red / green.
+  static const Color plateWhite = Color(0xFFFFFFFF);
+  static const Color plateInk = Color(0xFF111418);
+  static const Color plateFlagBlue = Color(0xFF00B5E2);
+  static const Color plateFlagRed = Color(0xFFEF3340);
+  static const Color plateFlagGreen = Color(0xFF509E2F);
   // İş Mərkəzi form banners (owner's pictures, 28.10.2026): the same
   // dusk photo in day and night, so the same colours.
   static const Color jobBannerBg = Color(0xFF0B1422);
