@@ -566,6 +566,9 @@ void main() {
     expect(find.byKey(const ValueKey('tpo-add')), findsOneWidget, reason: 'Maşın əlavə et');
     expect(find.text('0.63 AZN'), findsOneWidget, reason: '5 h at 3 AZN / 24 h');
     expect(find.text('Bu gün'), findsNothing, reason: 'a worker does not see the takings');
+    expect(find.byKey(const ValueKey('tpw-join-more')), findsNothing,
+        reason: 'an approved worker cannot join / leave on his own; only the park owner decides (owner, 03.11.2026)');
+    expect(find.byIcon(Icons.group_add_outlined), findsNothing);
   });
 
   test('the invitation code is found in whatever was pasted', () {
