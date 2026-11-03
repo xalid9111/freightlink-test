@@ -153,6 +153,28 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
             ),
           ),
         ),
+        // The park's admin (0089): approves and takes off workers.
+        if (place.isAdmin)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: OutlinedButton.icon(
+              key: const ValueKey('tpw-admin-workers'),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+              onPressed: () async {
+                await Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => Scaffold(
+                    appBar: AppBar(title: Text(s.t('tpo_tab_workers'))),
+                    body: TirParkWorkersTab(park: park, s: s, owner: false),
+                  ),
+                ));
+                ref.invalidate(myWorkParksProvider);
+              },
+              icon: Icon(Icons.admin_panel_settings, color: AppColors.accent),
+              label: Text(place.pending > 0
+                  ? '${s.t('tpo_tab_workers')} · ${s.t('tpo_workers_pending', {'n': '${place.pending}'})}'
+                  : s.t('tpo_tab_workers')),
+            ),
+          ),
         Expanded(child: TirParkCars(key: ValueKey('tpw-cars-${park.id}'), park: park, s: s, onChanged: refresh)),
       ]),
     );

@@ -138,7 +138,7 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
     final body = switch (_tab) {
       0 => _Overview(park: p, s: s, onRefresh: _refresh, onOpenWorkers: () => setState(() => _tab = 2)),
       1 => TirParkCars(park: p, s: s, onChanged: _refresh),
-      2 => _Workers(park: p, s: s),
+      2 => TirParkWorkersTab(park: p, s: s),
       _ => _Report(park: p, s: s),
     };
     return Column(children: [
@@ -674,16 +674,20 @@ class _PlateDialogState extends State<_PlateDialog> {
 /// İşçilər (0087): invite by a one-time code (the worker accepts it with his
 /// own account — never automatically), open invitations, the workers and
 /// what each did today, take one off.
-class _Workers extends ConsumerStatefulWidget {
+/// İşçilər: invitations, requests, workers. The owner sees everything and
+/// names the park's admin; the park's admin (0089, [owner] false) invites,
+/// approves and takes off ordinary workers only.
+class TirParkWorkersTab extends ConsumerStatefulWidget {
   final TirPark park;
   final AppStrings s;
-  const _Workers({required this.park, required this.s});
+  final bool owner;
+  const TirParkWorkersTab({super.key, required this.park, required this.s, this.owner = true});
 
   @override
-  ConsumerState<_Workers> createState() => _WorkersState();
+  ConsumerState<TirParkWorkersTab> createState() => _WorkersState();
 }
 
-class _WorkersState extends ConsumerState<_Workers> {
+class _WorkersState extends ConsumerState<TirParkWorkersTab> {
   bool _busy = false;
   AppStrings get s => widget.s;
 
@@ -758,6 +762,21 @@ class _WorkersState extends ConsumerState<_Workers> {
     }
     ref.invalidate(tirParkWorkersProvider(widget.park.id));
     ref.invalidate(tirParkPendingWorkersProvider);
+    ref.invalidate(myWorkParksProvider);
+  }
+
+  // The owner names / un-names the park's admin (0089); one per park.
+  Future<void> _setAdmin(TirParkWorker w, bool on) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(tirParkRepositoryProvider).workerSetAdmin(widget.park.id, w.userId, on);
+      _snack(s.t(on ? 'tpo_admin_set' : 'tpo_admin_unset', {'name': w.name}));
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    ref.invalidate(tirParkWorkersProvider(widget.park.id));
   }
 
   Future<void> _remove(TirParkWorker w) async {
@@ -794,7 +813,7 @@ class _WorkersState extends ConsumerState<_Workers> {
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(tirParkWorkersProvider(widget.park.id)),
       child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [
-        Text(s.t('tpo_workers_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
+        Text(s.t(widget.owner ? 'tpo_workers_hint' : 'tpo_admin_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
         const SizedBox(height: 10),
         FilledButton.icon(
           key: const ValueKey('tpo-invite'),
@@ -871,18 +890,33 @@ class _WorkersState extends ConsumerState<_Workers> {
           ListTile(
             key: ValueKey('tpo-worker-${w.userId}'),
             contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.person_outline, color: AppColors.text),
+            leading: Icon(w.isAdmin ? Icons.admin_panel_settings : Icons.person_outline,
+                color: w.isAdmin ? AppColors.accent : AppColors.text),
             title: Text(w.name, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
             subtitle: Text([
+              if (w.isAdmin) s.t('tpo_admin'),
               if ((w.phone ?? '').isNotEmpty) w.phone!,
               s.t('tpo_worker_today', {'in': '${w.todayIn}', 'out': '${w.todayOut}'}),
             ].join(' · ')),
-            trailing: IconButton(
-              key: ValueKey('tpo-worker-remove-${w.userId}'),
-              tooltip: s.t('tpo_worker_remove'),
-              icon: Icon(Icons.person_remove_outlined, color: AppColors.danger),
-              onPressed: () => _remove(w),
-            ),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              // Only the owner names the admin (0089).
+              if (widget.owner)
+                IconButton(
+                  key: ValueKey('tpo-worker-admin-${w.userId}'),
+                  tooltip: s.t(w.isAdmin ? 'tpo_admin_take' : 'tpo_admin_make'),
+                  icon: Icon(w.isAdmin ? Icons.admin_panel_settings : Icons.admin_panel_settings_outlined,
+                      color: w.isAdmin ? AppColors.accent : AppColors.textSoft),
+                  onPressed: _busy ? null : () => _setAdmin(w, !w.isAdmin),
+                ),
+              // The park's admin takes off ordinary workers only.
+              if (widget.owner || !w.isAdmin)
+                IconButton(
+                  key: ValueKey('tpo-worker-remove-${w.userId}'),
+                  tooltip: s.t('tpo_worker_remove'),
+                  icon: Icon(Icons.person_remove_outlined, color: AppColors.danger),
+                  onPressed: () => _remove(w),
+                ),
+            ]),
           ),
       ]),
     );

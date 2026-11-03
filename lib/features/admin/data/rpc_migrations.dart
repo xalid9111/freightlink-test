@@ -154,6 +154,7 @@ const kRpcMigration = <String, String>{
   'tir_park_worker_activity': '0087_tir_park_workers.sql',
   'tir_park_owner_report': '0087_tir_park_workers.sql',
   'tir_park_worker_approve': '0088_tir_park_worker_approval.sql',
+  'tir_park_worker_set_admin': '0089_tir_park_worker_admin.sql',
   'tir_park_worker_reject': '0088_tir_park_worker_approval.sql',
   'tir_park_owner_pending_workers': '0088_tir_park_worker_approval.sql',
   'admin_night_themes': '0076_night_theme.sql',
