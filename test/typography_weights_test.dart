@@ -14,6 +14,7 @@ const _heavyAllowed = {
   'lib/features/services/presentation/service_widgets.dart', // PRO badge
   'lib/features/market/presentation/market_brand_picker.dart', // letters in place of a logo
   'lib/features/ads/presentation/ad_creative_view.dart', // advertiser's banner design (1200×400)
+  'lib/features/tirpark/presentation/tir_park_exit_dialog.dart', // the amount + number plate on the exit sheet (owner, 03.11.2026)
 };
 
 void main() {
