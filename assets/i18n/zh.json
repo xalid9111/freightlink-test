@@ -1822,5 +1822,19 @@
   "tpw_accept": "接受",
   "tpw_joined": "您已加入“{park}”。",
   "tpw_err_code": "邀请码错误、已使用或已过期。",
-  "tpw_err_own": "这是您自己的停车场。"
+  "tpw_err_own": "这是您自己的停车场。",
+  "tpo_workers_pending": "{n} 名员工等待批准",
+  "tpo_worker_approve": "批准",
+  "tpo_worker_approved": "{name} 已获准工作。",
+  "tpo_worker_rejected": "{name} 未获批准。",
+  "tpo_worker_account": "账号：{name}",
+  "tpw_name": "姓名",
+  "tpw_name_hint": "例如 Elvin Mammadov",
+  "tpw_send": "提交——等待批准",
+  "tpw_sent": "已发送给“{park}”业主。批准后即可工作。",
+  "tpw_waiting": "等待“{park}”业主批准。批准后即可在此登记车辆。",
+  "tpw_rejected": "“{park}”业主未批准。可使用新邀请码重新申请。",
+  "tpw_refresh": "刷新",
+  "tpw_err_name": "请填写姓名（例如 Elvin Mammadov）。",
+  "tpw_err_already": "您已在该停车场工作。"
 }

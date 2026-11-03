@@ -45,7 +45,7 @@ class TirParkRepository {
         // 0086: owner panel.
         'already_applied', 'already_in', 'already_out', 'payment_in_review', 'already_reviewed',
         // 0087: workers.
-        'invalid_code',
+        'invalid_code', 'name_required', 'already_worker',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -248,11 +248,29 @@ class TirParkRepository {
         return '${res['park_name'] ?? ''}';
       });
 
-  Future<String> inviteAccept(String code) => _run(() async {
-        final res = Map<String, dynamic>.from(await _c.rpc('tir_park_invite_accept', params: {'p_code': code}).timeout(_timeout) as Map);
+  /// Sends my request with my name and surname (0088): I wait for the owner.
+  Future<String> inviteAccept(String code, String name) => _run(() async {
+        final res = Map<String, dynamic>.from(
+            await _c.rpc('tir_park_invite_accept', params: {'p_code': code, 'p_name': name}).timeout(_timeout) as Map);
         if (res['error'] != null) throw TirParkRefused('${res['error']}');
         return '${res['park_name'] ?? ''}';
       });
+
+  Future<void> workerApprove(String parkId, String userId) =>
+      _run(() => _c.rpc('tir_park_worker_approve', params: {'p_park': parkId, 'p_user': userId}).timeout(_timeout));
+
+  Future<void> workerReject(String parkId, String userId) =>
+      _run(() => _c.rpc('tir_park_worker_reject', params: {'p_park': parkId, 'p_user': userId}).timeout(_timeout));
+
+  /// Workers waiting for my approval (0088); 0 before that SQL.
+  Future<int> ownerPendingWorkers() async {
+    try {
+      final res = await _c.rpc('tir_park_owner_pending_workers').timeout(_timeout);
+      return res is num ? res.toInt() : int.tryParse('$res') ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 
   Future<void> workerRemove(String parkId, String userId) =>
       _run(() => _c.rpc('tir_park_worker_remove', params: {'p_park': parkId, 'p_user': userId}).timeout(_timeout));
@@ -479,6 +497,12 @@ final tirParkFeedProvider =
 
 final tirParkWorkersProvider =
     FutureProvider.autoDispose.family<TirParkWorkers, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).workers(parkId));
+
+/// Workers waiting for the owner's approval (Profil count, 0088).
+final tirParkPendingWorkersProvider = FutureProvider.autoDispose<int>((ref) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(tirParkRepositoryProvider).ownerPendingWorkers();
+});
 
 final tirParkActivityProvider = FutureProvider.autoDispose
     .family<List<TirParkFeedItem>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).workerActivity(parkId));

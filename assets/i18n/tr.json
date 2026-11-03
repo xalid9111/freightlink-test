@@ -1822,5 +1822,19 @@
   "tpw_accept": "Kabul et",
   "tpw_joined": "«{park}» parkına katıldınız.",
   "tpw_err_code": "Kod yanlış, kullanılmış veya süresi dolmuş.",
-  "tpw_err_own": "Bu kendi parkınız."
+  "tpw_err_own": "Bu kendi parkınız.",
+  "tpo_workers_pending": "{n} çalışan onay bekliyor",
+  "tpo_worker_approve": "Onayla",
+  "tpo_worker_approved": "{name} parka kabul edildi.",
+  "tpo_worker_rejected": "{name} kabul edilmedi.",
+  "tpo_worker_account": "hesap: {name}",
+  "tpw_name": "Ad, soyad",
+  "tpw_name_hint": "Örn. Elvin Məmmədov",
+  "tpw_send": "Gönder — onay bekle",
+  "tpw_sent": "Başvuru «{park}» sahibine gönderildi. Onaydan sonra çalışabilirsiniz.",
+  "tpw_waiting": "«{park}» sahibinin onayı bekleniyor. Onaydan sonra burada araçları alabileceksiniz.",
+  "tpw_rejected": "«{park}» sahibi başvuruyu kabul etmedi. Yeni kodla tekrar başvurabilirsiniz.",
+  "tpw_refresh": "Yenile",
+  "tpw_err_name": "Adınızı ve soyadınızı yazın (örn. Elvin Məmmədov).",
+  "tpw_err_already": "Zaten bu parkta çalışıyorsunuz."
 }

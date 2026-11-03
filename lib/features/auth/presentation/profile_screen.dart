@@ -140,17 +140,26 @@ class ProfileScreen extends ConsumerWidget {
                   // A receipt waiting (0085): a red count and "n ödəniş
                   // yoxlanılır" under the title.
                   Consumer(builder: (context, ref, _) {
-                    final n = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
+                    final pay = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
+                    // + workers waiting for approval (0088).
+                    final wk = ref.watch(tirParkPendingWorkersProvider).valueOrNull ?? 0;
+                    final n = pay + wk;
                     return _MenuRow(
                       key: const ValueKey('pf-tirpark-manage'),
                       icon: Icons.local_parking,
                       iconColor: AppColors.accent,
                       title: strings.t('tpm_title'),
-                      subtitle: n > 0 ? strings.t('tpm_pending_sub', {'n': '$n'}) : strings.t('tpm_sub'),
+                      subtitle: n > 0
+                          ? [
+                              if (pay > 0) strings.t('tpm_pending_sub', {'n': '$pay'}),
+                              if (wk > 0) strings.t('tpo_workers_pending', {'n': '$wk'}),
+                            ].join(' · ')
+                          : strings.t('tpm_sub'),
                       badge: n,
                       onTap: () async {
                         await context.pushOnce('/tirpark/manage');
                         ref.invalidate(tirParkManagerPendingProvider);
+                        ref.invalidate(tirParkPendingWorkersProvider);
                       },
                     );
                   }),

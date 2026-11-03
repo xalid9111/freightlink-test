@@ -91,6 +91,11 @@ class _FakeRepo extends TirParkRepository {
   Future<TirParkWorkers> workers(String parkId) async => TirParkWorkers(workers: workerList);
   @override
   Future<void> workerRemove(String parkId, String userId) async => removed.add(userId);
+  final approved = <String>[];
+  @override
+  Future<void> workerApprove(String parkId, String userId) async => approved.add(userId);
+  @override
+  Future<void> workerReject(String parkId, String userId) async => approved.add('no:$userId');
   @override
   Future<List<TirParkFeedItem>> workerActivity(String parkId) async =>
       [TirParkFeedItem(kind: 'in', plate: '10-BB-442', at: DateTime.now(), by: 'Elvin')];
@@ -105,9 +110,10 @@ class _FakeRepo extends TirParkRepository {
     return 'UTEP TIR Parkı';
   }
   @override
-  Future<String> inviteAccept(String code) async {
-    accepted.add(code);
-    work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı')];
+  Future<String> inviteAccept(String code, String name) async {
+    accepted.add('$code|$name');
+    // 0088: the request waits for the owner.
+    work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı', status: 'pending')];
     return 'UTEP TIR Parkı';
   }
   @override
@@ -466,8 +472,18 @@ void main() {
     ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
     // İşçilər: invite by a one-time code; the workers and what they did today.
-    repo.workerList = const [TirParkWorker(userId: 'u7', name: 'Elvin', phone: '+994501234567', todayIn: 2, todayOut: 1)];
+    repo.workerList = const [
+      TirParkWorker(userId: 'u7', name: 'Elvin', phone: '+994501234567', todayIn: 2, todayOut: 1),
+      TirParkWorker(userId: 'u8', name: 'Rəşad Əliyev', accountName: 'rashad', active: false, status: 'pending'),
+    ];
     await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('İşçilər')));
+    await tester.pumpAndSettle();
+    expect(find.text('1 işçi təsdiq gözləyir'), findsOneWidget, reason: '0088: the request with the name he wrote');
+    expect(find.text('Rəşad Əliyev'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpo-wreq-ok-u8')));
+    await tester.pumpAndSettle();
+    expect(repo.approved, ['u8'], reason: 'the owner lets him in');
+    ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
     expect(find.textContaining('bu gün: 2 daxil · 1 çıxış'), findsOneWidget, reason: 'each worker and what he did today');
     await tester.tap(find.byKey(const ValueKey('tpo-invite')));
@@ -521,10 +537,23 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('tpw-check')));
     await tester.pumpAndSettle();
     expect(find.textContaining('UTEP TIR Parkı'), findsOneWidget, reason: 'the park\'s name before accepting');
-    expect(repo.accepted, isEmpty, reason: 'nothing is bound before "Qəbul et"');
+    expect(repo.accepted, isEmpty, reason: 'nothing is sent before "Göndər"');
+    // Name AND surname (owner, 03.11.2026).
+    await tester.enterText(find.byKey(const ValueKey('tpw-name')), 'Elvin');
     await tester.tap(find.byKey(const ValueKey('tpw-accept')));
     await tester.pumpAndSettle();
-    expect(repo.accepted, ['K7M2P9QX']);
+    expect(repo.accepted, isEmpty, reason: 'a surname is needed');
+    expect(find.text('Ad və soyadınızı yazın (məs. Elvin Məmmədov).'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('tpw-name')), 'Elvin Məmmədov');
+    await tester.tap(find.byKey(const ValueKey('tpw-accept')));
+    await tester.pumpAndSettle();
+    expect(repo.accepted, ['K7M2P9QX|Elvin Məmmədov']);
+    expect(find.byKey(const ValueKey('tpw-waiting-p1')), findsOneWidget, reason: 'waits for the owner');
+    expect(find.byKey(const ValueKey('tpo-add')), findsNothing, reason: 'cannot work before the owner approves');
+    // The owner approved.
+    repo.work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı')];
+    await tester.tap(find.byKey(const ValueKey('tpw-refresh')));
+    await tester.pumpAndSettle();
     expect(find.text('Park işçisiyəm'), findsOneWidget, reason: 'the worker profile opens');
     expect(find.text('UTEP TIR PARKI'), findsOneWidget);
     expect(find.byKey(const ValueKey('tpo-add')), findsOneWidget, reason: 'Maşın əlavə et');
@@ -631,6 +660,12 @@ void main() {
     expect(wk.toLowerCase().contains('drop table') || wk.toLowerCase().contains('delete from'), isFalse);
     expect(wk.replaceAll(RegExp(r'--[^\n]*'), '').toLowerCase().contains('password'), isFalse, reason: 'no passwords made by the owner');
     expect(src('supabase/tests/local/run_local.sh'), contains('125_tir_park_workers.sql'));
+    // 0088: the owner approves; the old one-argument accept binds nobody.
+    final ap = src('supabase/migrations/0088_tir_park_worker_approval.sql');
+    expect(ap, contains("values (v_i.park_id, auth.uid(), false, 'pending', v_name"));
+    expect(ap, contains("return jsonb_build_object('error', 'name_required');"));
+    expect(ap, contains("'tirpark_worker_request'"));
+    expect(src('supabase/tests/local/run_local.sh'), contains('126_tir_park_worker_approval.sql'));
     expect(src('lib/features/tirpark/presentation/tir_park_booking.dart').contains('QrImageView'), isFalse, reason: 'no QR');
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('ref.watch(tirParkManagerPendingProvider)'),
         reason: 'the red count on Profil → TIR parkı idarə edirəm');

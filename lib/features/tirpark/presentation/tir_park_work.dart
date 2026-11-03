@@ -61,19 +61,58 @@ class _TirParkWorkScreenState extends ConsumerState<TirParkWorkScreen> {
     final s = ref.watch(stringsProvider);
     ref.watch(currentLocaleProvider);
     final async = ref.watch(myWorkParksProvider);
-    final parks = async.valueOrNull ?? const <TirParkWorkPlace>[];
+    final all = async.valueOrNull ?? const <TirParkWorkPlace>[];
+    // Only parks whose owner approved me (0088); the others wait or said no.
+    final parks = [for (final p in all) if (p.status == 'active') p];
+    final waiting = [for (final p in all) if (p.status == 'pending') p];
+    final rejected = [for (final p in all) if (p.status == 'rejected') p];
     if (async.isLoading && !async.hasValue) {
       return Scaffold(appBar: AppBar(title: Text(s.t('tpw_title'))), body: const Center(child: CircularProgressIndicator()));
     }
     if (parks.isEmpty || _join) {
+      Widget box(String key, IconData icon, Color color, String text) => Container(
+            key: ValueKey(key),
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.4)),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(icon, color: color),
+              const SizedBox(width: 10),
+              Expanded(child: Text(text, style: TextStyle(color: AppColors.text, height: 1.35))),
+            ]),
+          );
+      final onlyWaiting = parks.isEmpty && waiting.isNotEmpty && !_join;
       return Scaffold(
-        appBar: AppBar(title: Text(s.t('tpw_join_title'))),
-        body: _Join(
-          s: s,
-          onJoined: () {
-            ref.invalidate(myWorkParksProvider);
-            setState(() => _join = false);
-          },
+        appBar: AppBar(title: Text(s.t(onlyWaiting ? 'tpw_title' : 'tpw_join_title'))),
+        body: RefreshIndicator(
+          onRefresh: () async => ref.invalidate(myWorkParksProvider),
+          child: ListView(padding: EdgeInsets.zero, children: [
+            for (final p in waiting) box('tpw-waiting-${p.id}', Icons.hourglass_top, AppColors.promoVip, s.t('tpw_waiting', {'park': p.name})),
+            if (parks.isEmpty)
+              for (final p in rejected) box('tpw-rejected-${p.id}', Icons.block, AppColors.danger, s.t('tpw_rejected', {'park': p.name})),
+            if (onlyWaiting)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: OutlinedButton.icon(
+                  key: const ValueKey('tpw-refresh'),
+                  onPressed: () => ref.invalidate(myWorkParksProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(s.t('tpw_refresh')),
+                ),
+              )
+            else
+              _Join(
+                s: s,
+                onJoined: () {
+                  ref.invalidate(myWorkParksProvider);
+                  setState(() => _join = false);
+                },
+              ),
+          ]),
         ),
       );
     }
@@ -142,6 +181,8 @@ class _Join extends ConsumerStatefulWidget {
 
 class _JoinState extends ConsumerState<_Join> {
   final _code = TextEditingController();
+  // Name and surname (owner, 03.11.2026): the owner sees who asks.
+  final _name = TextEditingController();
   String? _park;
   String? _error;
   bool _busy = false;
@@ -151,12 +192,15 @@ class _JoinState extends ConsumerState<_Join> {
   @override
   void dispose() {
     _code.dispose();
+    _name.dispose();
     super.dispose();
   }
 
   String _err(Object e) => switch (e) {
         TirParkRefused(reason: 'invalid_code') => 'tpw_err_code',
         TirParkRefused(reason: 'own_park') => 'tpw_err_own',
+        TirParkRefused(reason: 'name_required') => 'tpw_err_name',
+        TirParkRefused(reason: 'already_worker') => 'tpw_err_already',
         TirParkRefused(reason: 'too_many_attempts') => 'tpm_err_attempts',
         _ => 'tpb_err_generic',
       };
@@ -177,12 +221,22 @@ class _JoinState extends ConsumerState<_Join> {
     }
   }
 
+  /// "Ad Soyad": two words at least (the server checks the same).
+  static bool fullNameOk(String v) => RegExp(r'^\S+\s+\S+').hasMatch(v.trim()) && v.trim().length >= 3 && v.trim().length <= 80;
+
   Future<void> _accept() async {
-    setState(() => _busy = true);
+    if (!fullNameOk(_name.text)) {
+      setState(() => _error = 'tpw_err_name');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
-      final name = await ref.read(tirParkRepositoryProvider).inviteAccept(tirParkInviteCode(_code.text));
+      final park = await ref.read(tirParkRepositoryProvider).inviteAccept(tirParkInviteCode(_code.text), _name.text.trim());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpw_joined', {'park': name}))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpw_sent', {'park': park}))));
       widget.onJoined();
     } catch (e) {
       if (mounted) setState(() => _error = _err(e));
@@ -192,7 +246,9 @@ class _JoinState extends ConsumerState<_Join> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 40), children: [
+  Widget build(BuildContext context) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(s.t('tpw_join_hint'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
         const SizedBox(height: 12),
         TextField(
@@ -235,11 +291,22 @@ class _JoinState extends ConsumerState<_Join> {
             child: Text(s.t('tpw_preview', {'park': _park!}), style: TextStyle(color: AppColors.text, height: 1.35)),
           ),
           const SizedBox(height: 10),
+          TextField(
+            key: const ValueKey('tpw-name'),
+            controller: _name,
+            textCapitalization: TextCapitalization.words,
+            maxLength: 80,
+            onChanged: (_) {
+              if (_error == 'tpw_err_name') setState(() => _error = null);
+            },
+            decoration: InputDecoration(labelText: s.t('tpw_name'), hintText: s.t('tpw_name_hint'), counterText: ''),
+          ),
+          const SizedBox(height: 10),
           FilledButton(
             key: const ValueKey('tpw-accept'),
             onPressed: _busy ? null : _accept,
-            child: Text(s.t('tpw_accept')),
+            child: Text(s.t('tpw_send')),
           ),
         ],
-      ]);
+      ]));
 }
