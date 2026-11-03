@@ -10,6 +10,7 @@ import 'package:freightlink/features/tirpark/data/tir_park_repository.dart';
 import 'package:freightlink/features/tirpark/domain/tir_park.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_booking.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_manage.dart';
+import 'package:freightlink/features/tirpark/presentation/tir_park_work.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 String src(String p) => File(p).readAsStringSync();
@@ -75,6 +76,40 @@ class _FakeRepo extends TirParkRepository {
   @override
   Future<TirParkSummary> ownerSummary(String parkId) async =>
       const TirParkSummary(capacity: 250, inPark: 184, free: 66, todayPaid: 552, accruing: 34.2, open: true);
+  // Workers (0087).
+  List<TirParkWorker> workerList = const [];
+  final invited = <String>[];
+  final removed = <String>[];
+  final accepted = <String>[];
+  List<TirParkWorkPlace> work = const [];
+  @override
+  Future<TirParkInvite> inviteCreate(String parkId) async {
+    invited.add(parkId);
+    return const TirParkInvite(id: 'i1', code: 'K7M2P9QX');
+  }
+  @override
+  Future<TirParkWorkers> workers(String parkId) async => TirParkWorkers(workers: workerList);
+  @override
+  Future<void> workerRemove(String parkId, String userId) async => removed.add(userId);
+  @override
+  Future<List<TirParkFeedItem>> workerActivity(String parkId) async =>
+      [TirParkFeedItem(kind: 'in', plate: '10-BB-442', at: DateTime.now(), by: 'Elvin')];
+  @override
+  Future<List<TirParkReportDay>> ownerReport(String parkId, {int days = 30}) async =>
+      [TirParkReportDay(day: DateTime(2026, 11, 3), entries: 4, exits: 3, carsPaid: 7.5, bookingsPaid: 6)];
+  @override
+  Future<List<TirParkWorkPlace>> myWork() async => work;
+  @override
+  Future<String> invitePreview(String code) async {
+    if (code.toUpperCase() != 'K7M2P9QX') throw const TirParkRefused('invalid_code');
+    return 'UTEP TIR Parkı';
+  }
+  @override
+  Future<String> inviteAccept(String code) async {
+    accepted.add(code);
+    work = const [TirParkWorkPlace(id: 'p1', name: 'UTEP TIR Parkı')];
+    return 'UTEP TIR Parkı';
+  }
   @override
   Future<List<TirParkFeedItem>> ownerFeed(String parkId) async =>
       [TirParkFeedItem(kind: 'in', plate: '99-AC-981', at: DateTime.now())];
@@ -393,6 +428,12 @@ void main() {
     expect(find.byKey(const ValueKey('tpm-new-payments-p1')), findsOneWidget, reason: 'receipts waiting');
     expect(find.byKey(const ValueKey('tpm-plate-b9')), findsOneWidget);
     expect(find.text('Parkın gedişatı'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('İşçi fəaliyyəti'), findsOneWidget);
+    expect(find.textContaining('Elvin'), findsOneWidget, reason: 'who did it');
+    await tester.drag(find.byType(ListView).first, const Offset(0, 900));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tpm-confirm-b9')));
     await tester.pumpAndSettle();
     expect(repo.confirmed, ['b9']);
@@ -424,14 +465,67 @@ void main() {
     expect(find.text('Çıxdı: 99-AC-981 · 3.50 AZN'), findsOneWidget);
     ScaffoldMessenger.of(tester.element(find.byKey(const ValueKey('tpo-nav')))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
-    // Ayarlar: price per day, payment details; no entry-code check any more.
-    await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('Ayarlar')));
+    // İşçilər: invite by a one-time code; the workers and what they did today.
+    repo.workerList = const [TirParkWorker(userId: 'u7', name: 'Elvin', phone: '+994501234567', todayIn: 2, todayOut: 1)];
+    await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('İşçilər')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('bu gün: 2 daxil · 1 çıxış'), findsOneWidget, reason: 'each worker and what he did today');
+    await tester.tap(find.byKey(const ValueKey('tpo-invite')));
+    await tester.pumpAndSettle();
+    expect(repo.invited, ['p1']);
+    expect(find.text('K7M2P9QX'), findsOneWidget, reason: 'the code to give the worker');
+    await tester.tap(find.text('Bağla'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpo-worker-remove-u7')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tpo-remove-go')));
+    await tester.pumpAndSettle();
+    expect(repo.removed, ['u7']);
+    // Hesabat: by day.
+    await tester.tap(find.descendant(of: find.byKey(const ValueKey('tpo-nav')), matching: find.text('Hesabat')));
+    await tester.pumpAndSettle();
+    expect(find.text('13.50 AZN'), findsWidgets, reason: '7.50 (exits) + 6.00 (bookings)');
+    expect(find.text('4 daxil · 3 çıxış'), findsOneWidget);
+    // Ayarlar (gear): price per day, payment details; no entry-code check any more.
+    await tester.tap(find.byKey(const ValueKey('tpo-settings')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpm-paydet-p1')), findsOneWidget);
     expect(find.byKey(const ValueKey('tpm-unit-p1')), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
     expect(find.byKey(const ValueKey('tpm-code-p1')), findsNothing, reason: 'no entry code (owner, 03.11.2026)');
     expect(find.byKey(const ValueKey('tpm-free-p1')), findsNothing, reason: 'bookings take places from the whole capacity');
+  });
+
+  testWidgets('"Park işçisiyəm": the invitation code → the park\'s name → Qəbul et → İşçi profili (trucks by plate)', (tester) async {
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _FakeRepo()
+      ..inPark = [TirParkStay(id: 's1', plate: '99-AC-981', enteredAt: DateTime.now().subtract(const Duration(hours: 5)), rate: 3)];
+    await tester.pumpWidget(ProviderScope(
+      key: UniqueKey(),
+      overrides: [stringsProvider.overrideWithValue(_az), tirParkRepositoryProvider.overrideWithValue(repo)],
+      child: const MaterialApp(home: TirParkWorkScreen()),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpw-code')), findsOneWidget, reason: 'not working anywhere: join');
+    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'AAAABBBB');
+    await tester.tap(find.byKey(const ValueKey('tpw-check')));
+    await tester.pumpAndSettle();
+    expect(find.text('Kod yanlışdır, istifadə olunub və ya vaxtı bitib.'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'k7m2p9qx');
+    await tester.tap(find.byKey(const ValueKey('tpw-check')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('UTEP TIR Parkı'), findsOneWidget, reason: 'the park\'s name before accepting');
+    expect(repo.accepted, isEmpty, reason: 'nothing is bound before "Qəbul et"');
+    await tester.tap(find.byKey(const ValueKey('tpw-accept')));
+    await tester.pumpAndSettle();
+    expect(repo.accepted, ['k7m2p9qx']);
+    expect(find.text('Park işçisiyəm'), findsOneWidget, reason: 'the worker profile opens');
+    expect(find.text('UTEP TIR PARKI'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpo-add')), findsOneWidget, reason: 'Maşın əlavə et');
+    expect(find.text('0.63 AZN'), findsOneWidget, reason: '5 h at 3 AZN / 24 h');
+    expect(find.text('Bu gün'), findsNothing, reason: 'a worker does not see the takings');
   });
 
   testWidgets('"Park işlədirəm": only the name → waiting for the admin → "Parkı qur"', (tester) async {
@@ -515,6 +609,14 @@ void main() {
     expect(op, contains('perform public._require_admin();'));
     expect(op.toLowerCase().contains('drop table') || op.toLowerCase().contains('delete from'), isFalse);
     expect(src('supabase/tests/local/run_local.sh'), contains('124_tir_park_owner_panel.sql'));
+    // 0087: workers join only by accepting an invitation.
+    final wk = src('supabase/migrations/0087_tir_park_workers.sql');
+    expect(wk, contains('public.tir_park_invite_accept(p_code text)'));
+    expect(wk, contains("'today_paid', case when not v_owner then null else"), reason: 'a worker does not see the takings');
+    expect(wk, contains('or exists (select 1 from tir_park_workers w where w.park_id = p_park and w.user_id = auth.uid() and w.active)'));
+    expect(wk.toLowerCase().contains('drop table') || wk.toLowerCase().contains('delete from'), isFalse);
+    expect(wk.replaceAll(RegExp(r'--[^\n]*'), '').toLowerCase().contains('password'), isFalse, reason: 'no passwords made by the owner');
+    expect(src('supabase/tests/local/run_local.sh'), contains('125_tir_park_workers.sql'));
     expect(src('lib/features/tirpark/presentation/tir_park_booking.dart').contains('QrImageView'), isFalse, reason: 'no QR');
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('ref.watch(tirParkManagerPendingProvider)'),
         reason: 'the red count on Profil → TIR parkı idarə edirəm');

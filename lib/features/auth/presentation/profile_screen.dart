@@ -154,6 +154,15 @@ class ProfileScreen extends ConsumerWidget {
                       },
                     );
                   }),
+                  // A park's worker (0087): joins by the owner's invitation.
+                  _MenuRow(
+                    key: const ValueKey('pf-tirpark-work'),
+                    icon: Icons.badge_outlined,
+                    iconColor: AppColors.accent,
+                    title: strings.t('tpw_title'),
+                    subtitle: strings.t('tpw_sub'),
+                    onTap: () => context.pushOnce('/tirpark/work'),
+                  ),
                   _MenuRow(
                     key: const ValueKey('pf-tirpark-bookings'),
                     icon: Icons.event_available_outlined,

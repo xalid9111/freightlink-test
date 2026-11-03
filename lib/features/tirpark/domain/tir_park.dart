@@ -468,3 +468,75 @@ class TirParkFeedItem {
         by: j['by'] as String?,
       );
 }
+
+// ---- Owner panel, stage 2: workers (owner, 03.11.2026, 0087) ----------------
+
+/// A park's worker (joined by accepting an invitation with his own account).
+class TirParkWorker {
+  final String userId, name;
+  final String? phone;
+  final bool active;
+  final DateTime? joinedAt;
+  final int todayIn, todayOut;
+  const TirParkWorker(
+      {required this.userId, required this.name, this.phone, this.active = true, this.joinedAt, this.todayIn = 0, this.todayOut = 0});
+
+  factory TirParkWorker.fromJson(Map<String, dynamic> j) => TirParkWorker(
+        userId: '${j['user_id']}',
+        name: '${j['name'] ?? ''}',
+        phone: j['phone'] as String?,
+        active: j['active'] != false,
+        joinedAt: _time(j['joined_at']),
+        todayIn: int.tryParse('${j['today_in']}') ?? 0,
+        todayOut: int.tryParse('${j['today_out']}') ?? 0,
+      );
+}
+
+/// An open invitation (a one-time code, 7 days).
+class TirParkInvite {
+  final String id, code;
+  final DateTime? expiresAt;
+  const TirParkInvite({required this.id, required this.code, this.expiresAt});
+
+  factory TirParkInvite.fromJson(Map<String, dynamic> j) =>
+      TirParkInvite(id: '${j['id']}', code: '${j['code'] ?? ''}', expiresAt: _time(j['expires_at']));
+}
+
+class TirParkWorkers {
+  final List<TirParkWorker> workers;
+  final List<TirParkInvite> invites;
+  const TirParkWorkers({this.workers = const [], this.invites = const []});
+
+  factory TirParkWorkers.fromJson(Map<String, dynamic> j) => TirParkWorkers(
+        workers: [for (final r in (j['workers'] as List? ?? const [])) TirParkWorker.fromJson(Map<String, dynamic>.from(r as Map))],
+        invites: [for (final r in (j['invites'] as List? ?? const [])) TirParkInvite.fromJson(Map<String, dynamic>.from(r as Map))],
+      );
+}
+
+/// A park I work at.
+class TirParkWorkPlace {
+  final String id, name;
+  final String? city;
+  const TirParkWorkPlace({required this.id, required this.name, this.city});
+
+  factory TirParkWorkPlace.fromJson(Map<String, dynamic> j) =>
+      TirParkWorkPlace(id: '${j['id']}', name: '${j['name'] ?? ''}', city: j['city'] as String?);
+}
+
+/// One day of the owner's report (Baku days).
+class TirParkReportDay {
+  final DateTime day;
+  final int entries, exits;
+  final double carsPaid, bookingsPaid;
+  const TirParkReportDay({required this.day, this.entries = 0, this.exits = 0, this.carsPaid = 0, this.bookingsPaid = 0});
+
+  double get total => carsPaid + bookingsPaid;
+
+  factory TirParkReportDay.fromJson(Map<String, dynamic> j) => TirParkReportDay(
+        day: DateTime.tryParse('${j['day']}') ?? DateTime.now(),
+        entries: int.tryParse('${j['entries']}') ?? 0,
+        exits: int.tryParse('${j['exits']}') ?? 0,
+        carsPaid: _num(j['cars_paid']),
+        bookingsPaid: _num(j['bookings_paid']),
+      );
+}
