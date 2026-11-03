@@ -1822,5 +1822,19 @@
   "tpw_accept": "Accept",
   "tpw_joined": "You joined \"{park}\".",
   "tpw_err_code": "The code is wrong, used or expired.",
-  "tpw_err_own": "This is your own park."
+  "tpw_err_own": "This is your own park.",
+  "tpo_workers_pending": "{n} worker(s) waiting for approval",
+  "tpo_worker_approve": "Approve",
+  "tpo_worker_approved": "{name} can work now.",
+  "tpo_worker_rejected": "{name} was not let in.",
+  "tpo_worker_account": "account: {name}",
+  "tpw_name": "Name and surname",
+  "tpw_name_hint": "E.g. Elvin Mammadov",
+  "tpw_send": "Send — wait for approval",
+  "tpw_sent": "Sent to the owner of \"{park}\". You can work once he approves.",
+  "tpw_waiting": "Waiting for the owner of \"{park}\" to approve. Then you can check trucks in here.",
+  "tpw_rejected": "The owner of \"{park}\" did not let you in. You can ask again with a new code.",
+  "tpw_refresh": "Refresh",
+  "tpw_err_name": "Write your name and surname (e.g. Elvin Mammadov).",
+  "tpw_err_already": "You already work at this park."
 }

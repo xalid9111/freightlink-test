@@ -146,6 +146,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   adds trucks by plate and records exits, sees places not takings; the
   panel's tabs: Ümumi (+ İşçi fəaliyyəti) · Maşınlar · İşçilər (invite,
   cancel, take off) · Hesabat (30 days: in / out / money taken);
+  the worker writes his name and surname with the code and waits; the
+  owner is told (notice, Mesajlar, Profil count) and presses Təsdiqlə /
+  Rədd et (0088) — only then the worker works;
   Ayarlar behind the gear. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
 - Night (dark) theme is the default and its look never changes; Day

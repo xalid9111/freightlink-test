@@ -39,11 +39,14 @@ reset role;
 select tests.check(not exists (select 1 from public.tir_park_workers), 'W8 seeing it binds nothing');
 set role authenticated;
 select tests.check(tests.err($$ select * from public.tir_park_workers $$) like '%permission denied%', 'W8b the tables are not read directly');
-select tests.check(public.tir_park_invite_accept(lower((select code from codes where k='c'))) ->> 'park_name' = 'İşçi Park',
-  'W9 he accepts with his own account');
+select tests.check(public.tir_park_invite_accept(lower((select code from codes where k='c')), 'Elvin Məmmədov') ->> 'park_name' = 'İşçi Park',
+  'W9 he accepts with his own account (0088: name and surname, then the owner approves)');
+select tests.login(:owner);
+select public.tir_park_worker_approve((select id from ids where k='p'), :worker);
+select tests.login(:worker);
 select tests.check(jsonb_array_length(public.tir_park_my_work()) = 1, 'W10 …and works at that park');
 select tests.login(:other);
-select tests.check(public.tir_park_invite_accept((select code from codes where k='c')) ->> 'error' = 'invalid_code', 'W11 a code works once');
+select tests.check(public.tir_park_invite_accept((select code from codes where k='c'), 'Başqa Adam') ->> 'error' = 'invalid_code', 'W11 a code works once');
 select tests.check(jsonb_array_length(public.tir_park_my_work()) = 0, 'W12 nobody else is bound');
 
 -- ---- the worker works: trucks by plate, places but no takings ------------------------
@@ -89,6 +92,6 @@ select tests.login(:owner);
 insert into codes select 'c2', public.tir_park_invite_create((select id from ids where k='p')) ->> 'code';
 select public.tir_park_invite_cancel((select (e ->> 'id')::uuid from jsonb_array_elements(public.tir_park_workers_list((select id from ids where k='p')) -> 'invites') e limit 1));
 select tests.login(:other);
-select tests.check(public.tir_park_invite_accept((select code from codes where k='c2')) ->> 'error' = 'invalid_code', 'W22 a cancelled invitation does not work');
+select tests.check(public.tir_park_invite_accept((select code from codes where k='c2'), 'Başqa Adam') ->> 'error' = 'invalid_code', 'W22 a cancelled invitation does not work');
 reset role;
 select tests.summary('TIRPARK İŞÇİLƏR (0087)');

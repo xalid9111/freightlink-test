@@ -136,7 +136,7 @@ class _TirParkOwnerPanelState extends ConsumerState<TirParkOwnerPanel> {
       ),
     );
     final body = switch (_tab) {
-      0 => _Overview(park: p, s: s, onRefresh: _refresh),
+      0 => _Overview(park: p, s: s, onRefresh: _refresh, onOpenWorkers: () => setState(() => _tab = 2)),
       1 => TirParkCars(park: p, s: s, onChanged: _refresh),
       2 => _Workers(park: p, s: s),
       _ => _Report(park: p, s: s),
@@ -226,7 +226,8 @@ class _Overview extends ConsumerWidget {
   final TirPark park;
   final AppStrings s;
   final VoidCallback onRefresh;
-  const _Overview({required this.park, required this.s, required this.onRefresh});
+  final VoidCallback onOpenWorkers;
+  const _Overview({required this.park, required this.s, required this.onRefresh, required this.onOpenWorkers});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -252,6 +253,8 @@ class _Overview extends ConsumerWidget {
             ]),
           ),
         ],
+        // Workers waiting for approval (0088) → İşçilər.
+        _WorkersWaiting(park: park, s: s, onOpen: onOpenWorkers),
         // Receipts waiting for "Ödənişi təsdiqlə".
         TirParkNewPayments(parkId: park.id, s: s),
         const SizedBox(height: 14),
@@ -275,6 +278,44 @@ class _Overview extends ConsumerWidget {
         const SizedBox(height: 14),
         _Activity(park: park, s: s),
       ]),
+    );
+  }
+}
+
+/// "n işçi təsdiq gözləyir" on Ümumi (0088): a tap opens İşçilər.
+class _WorkersWaiting extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  final VoidCallback onOpen;
+  const _WorkersWaiting({required this.park, required this.s, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final n = [
+      for (final w in ref.watch(tirParkWorkersProvider(park.id)).valueOrNull?.workers ?? const <TirParkWorker>[])
+        if (w.isPending) w,
+    ].length;
+    if (n == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Material(
+        color: AppColors.promoVip.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          key: const ValueKey('tpo-workers-waiting'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Icon(Icons.person_add_alt_1, color: AppColors.promoVip),
+              const SizedBox(width: 10),
+              Expanded(child: Text(s.t('tpo_workers_pending', {'n': '$n'}), style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text))),
+              Icon(Icons.chevron_right, color: AppColors.textSoft),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -699,6 +740,26 @@ class _WorkersState extends ConsumerState<_Workers> {
     ref.invalidate(tirParkWorkersProvider(widget.park.id));
   }
 
+  // A worker's request (0088): let him in or not.
+  Future<void> _decide(TirParkWorker w, bool approve) async {
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(tirParkRepositoryProvider);
+      if (approve) {
+        await repo.workerApprove(widget.park.id, w.userId);
+      } else {
+        await repo.workerReject(widget.park.id, w.userId);
+      }
+      _snack(s.t(approve ? 'tpo_worker_approved' : 'tpo_worker_rejected', {'name': w.name}));
+    } catch (_) {
+      _snack(s.t('tpb_err_generic'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    ref.invalidate(tirParkWorkersProvider(widget.park.id));
+    ref.invalidate(tirParkPendingWorkersProvider);
+  }
+
   Future<void> _remove(TirParkWorker w) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -729,6 +790,7 @@ class _WorkersState extends ConsumerState<_Workers> {
     final async = ref.watch(tirParkWorkersProvider(widget.park.id));
     final data = async.valueOrNull ?? const TirParkWorkers();
     final active = [for (final w in data.workers) if (w.active) w];
+    final pending = [for (final w in data.workers) if (w.isPending) w];
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(tirParkWorkersProvider(widget.park.id)),
       child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [
@@ -742,6 +804,52 @@ class _WorkersState extends ConsumerState<_Workers> {
           label: Text(s.t('tpo_invite')),
         ),
         if (async.hasError) Padding(padding: const EdgeInsets.only(top: 10), child: Text(s.t('tpb_err_generic'), style: TextStyle(color: AppColors.danger))),
+        // Requests waiting for the owner (0088).
+        if (pending.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(s.t('tpo_workers_pending', {'n': '${pending.length}'}),
+              key: const ValueKey('tpo-workers-pending'),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.promoVip)),
+          for (final w in pending)
+            Container(
+              key: ValueKey('tpo-wreq-${w.userId}'),
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.promoVip.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.promoVip.withValues(alpha: 0.4)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(w.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+                Text(
+                  [
+                    if ((w.accountName ?? '').isNotEmpty && w.accountName != w.name) s.t('tpo_worker_account', {'name': w.accountName!}),
+                    if ((w.phone ?? '').isNotEmpty) w.phone!,
+                  ].join(' · '),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSoft),
+                ),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(
+                    child: FilledButton(
+                      key: ValueKey('tpo-wreq-ok-${w.userId}'),
+                      onPressed: _busy ? null : () => _decide(w, true),
+                      child: Text(s.t('tpo_worker_approve')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      key: ValueKey('tpo-wreq-no-${w.userId}'),
+                      onPressed: _busy ? null : () => _decide(w, false),
+                      child: Text(s.t('tpm_reject')),
+                    ),
+                  ),
+                ]),
+              ]),
+            ),
+        ],
         if (data.invites.isNotEmpty) ...[
           const SizedBox(height: 14),
           Text(s.t('tpo_invites_open'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),

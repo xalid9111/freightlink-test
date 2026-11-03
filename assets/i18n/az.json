@@ -1822,5 +1822,19 @@
   "tpw_accept": "Qəbul et",
   "tpw_joined": "«{park}» parkına qoşuldunuz.",
   "tpw_err_code": "Kod yanlışdır, istifadə olunub və ya vaxtı bitib.",
-  "tpw_err_own": "Bu sizin öz parkınızdır."
+  "tpw_err_own": "Bu sizin öz parkınızdır.",
+  "tpo_workers_pending": "{n} işçi təsdiq gözləyir",
+  "tpo_worker_approve": "Təsdiqlə",
+  "tpo_worker_approved": "{name} parka buraxıldı.",
+  "tpo_worker_rejected": "{name} qəbul edilmədi.",
+  "tpo_worker_account": "hesab: {name}",
+  "tpw_name": "Ad, soyad",
+  "tpw_name_hint": "Məs. Elvin Məmmədov",
+  "tpw_send": "Göndər — təsdiq gözlə",
+  "tpw_sent": "Müraciət «{park}» sahibkarına göndərildi. Təsdiqdən sonra işləyə bilərsiniz.",
+  "tpw_waiting": "«{park}» sahibkarının təsdiqini gözləyir. Təsdiqdən sonra burada maşınları qəbul edə biləcəksiniz.",
+  "tpw_rejected": "«{park}» sahibkarı müraciəti qəbul etmədi. Yeni kodla yenidən müraciət edə bilərsiniz.",
+  "tpw_refresh": "Yenilə",
+  "tpw_err_name": "Ad və soyadınızı yazın (məs. Elvin Məmmədov).",
+  "tpw_err_already": "Siz artıq bu parkda işləyirsiniz."
 }

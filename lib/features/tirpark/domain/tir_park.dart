@@ -474,18 +474,32 @@ class TirParkFeedItem {
 /// A park's worker (joined by accepting an invitation with his own account).
 class TirParkWorker {
   final String userId, name;
-  final String? phone;
+  final String? phone, accountName;
   final bool active;
+  /// pending (waits for the owner, 0088) · active · rejected · removed
+  final String status;
   final DateTime? joinedAt;
   final int todayIn, todayOut;
   const TirParkWorker(
-      {required this.userId, required this.name, this.phone, this.active = true, this.joinedAt, this.todayIn = 0, this.todayOut = 0});
+      {required this.userId,
+      required this.name,
+      this.phone,
+      this.accountName,
+      this.active = true,
+      this.status = 'active',
+      this.joinedAt,
+      this.todayIn = 0,
+      this.todayOut = 0});
+
+  bool get isPending => status == 'pending';
 
   factory TirParkWorker.fromJson(Map<String, dynamic> j) => TirParkWorker(
         userId: '${j['user_id']}',
         name: '${j['name'] ?? ''}',
         phone: j['phone'] as String?,
+        accountName: j['account_name'] as String?,
         active: j['active'] != false,
+        status: (j['status'] as String?) ?? (j['active'] != false ? 'active' : 'removed'),
         joinedAt: _time(j['joined_at']),
         todayIn: int.tryParse('${j['today_in']}') ?? 0,
         todayOut: int.tryParse('${j['today_out']}') ?? 0,
@@ -517,10 +531,12 @@ class TirParkWorkers {
 class TirParkWorkPlace {
   final String id, name;
   final String? city;
-  const TirParkWorkPlace({required this.id, required this.name, this.city});
+  /// active · pending (waits for the owner, 0088) · rejected
+  final String status;
+  const TirParkWorkPlace({required this.id, required this.name, this.city, this.status = 'active'});
 
-  factory TirParkWorkPlace.fromJson(Map<String, dynamic> j) =>
-      TirParkWorkPlace(id: '${j['id']}', name: '${j['name'] ?? ''}', city: j['city'] as String?);
+  factory TirParkWorkPlace.fromJson(Map<String, dynamic> j) => TirParkWorkPlace(
+      id: '${j['id']}', name: '${j['name'] ?? ''}', city: j['city'] as String?, status: (j['status'] as String?) ?? 'active');
 }
 
 /// One day of the owner's report (Baku days).
