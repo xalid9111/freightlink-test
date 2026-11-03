@@ -525,16 +525,23 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpw-code')), findsOneWidget, reason: 'not working anywhere: join');
-    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'AAAABBBB');
+    expect(find.byKey(const ValueKey('tpw-name')), findsOneWidget, reason: 'Ad, soyad is on the form from the start (owner, 03.11.2026)');
+    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'AAAAB');
     await tester.tap(find.byKey(const ValueKey('tpw-check')));
+    await tester.pumpAndSettle();
+    expect(find.text('Kod yanlışdır, istifadə olunub və ya vaxtı bitib.'), findsOneWidget);
+    // 8 characters → checked at once, no button needed.
+    await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'AAAABBBB');
     await tester.pumpAndSettle();
     expect(find.text('Kod yanlışdır, istifadə olunub və ya vaxtı bitib.'), findsOneWidget);
     // A whole pasted message (or "freightlink: …") is cut down to the code itself.
     await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'FreightLink: «UTEP» parkında işçi kimi qoşulmaq üçün Profil → «Park işçisiyəm» → kod: k7m2p9qx');
     await tester.pump();
     expect(tester.widget<TextField>(find.byKey(const ValueKey('tpw-code'))).controller!.text, 'K7M2P9QX');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('UTEP TIR Parkı'), findsOneWidget, reason: 'pasted → the park\'s name at once');
+    expect(find.byKey(const ValueKey('tpw-name')), findsOneWidget, reason: 'Ad, soyad right after pasting');
     await tester.enterText(find.byKey(const ValueKey('tpw-code')), 'k7m2p9qx');
-    await tester.tap(find.byKey(const ValueKey('tpw-check')));
     await tester.pumpAndSettle();
     expect(find.textContaining('UTEP TIR Parkı'), findsOneWidget, reason: 'the park\'s name before accepting');
     expect(repo.accepted, isEmpty, reason: 'nothing is sent before "Göndər"');

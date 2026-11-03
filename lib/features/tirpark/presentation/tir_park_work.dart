@@ -267,19 +267,15 @@ class _JoinState extends ConsumerState<_Join> {
                 _error = null;
               });
             }
+            // A whole code pasted / typed → the park's name at once (owner, 03.11.2026).
+            if (code.length == 8 && !_busy) _check();
           },
           style: const TextStyle(letterSpacing: 3),
           decoration: InputDecoration(labelText: s.t('tpw_code'), counterText: ''),
         ),
         if (_error != null) Text(s.t(_error!), key: const ValueKey('tpw-error'), style: TextStyle(color: AppColors.danger)),
         const SizedBox(height: 10),
-        if (_park == null)
-          FilledButton(
-            key: const ValueKey('tpw-check'),
-            onPressed: _busy ? null : _check,
-            child: Text(s.t('tpw_check')),
-          )
-        else ...[
+        if (_park != null) ...[
           Container(
             key: const ValueKey('tpw-preview'),
             padding: const EdgeInsets.all(14),
@@ -291,22 +287,29 @@ class _JoinState extends ConsumerState<_Join> {
             child: Text(s.t('tpw_preview', {'park': _park!}), style: TextStyle(color: AppColors.text, height: 1.35)),
           ),
           const SizedBox(height: 10),
-          TextField(
-            key: const ValueKey('tpw-name'),
-            controller: _name,
-            textCapitalization: TextCapitalization.words,
-            maxLength: 80,
-            onChanged: (_) {
-              if (_error == 'tpw_err_name') setState(() => _error = null);
-            },
-            decoration: InputDecoration(labelText: s.t('tpw_name'), hintText: s.t('tpw_name_hint'), counterText: ''),
-          ),
-          const SizedBox(height: 10),
-          FilledButton(
-            key: const ValueKey('tpw-accept'),
-            onPressed: _busy ? null : _accept,
-            child: Text(s.t('tpw_send')),
-          ),
         ],
+        // Name and surname: always on the form, right under the code (owner, 03.11.2026).
+        TextField(
+          key: const ValueKey('tpw-name'),
+          controller: _name,
+          textCapitalization: TextCapitalization.words,
+          maxLength: 80,
+          onChanged: (_) {
+            if (_error == 'tpw_err_name') setState(() => _error = null);
+          },
+          decoration: InputDecoration(labelText: s.t('tpw_name'), hintText: s.t('tpw_name_hint'), counterText: ''),
+        ),
+        const SizedBox(height: 10),
+        FilledButton(
+          key: const ValueKey('tpw-accept'),
+          onPressed: _busy ? null : _accept,
+          child: Text(s.t('tpw_send')),
+        ),
+        if (_park == null)
+          TextButton(
+            key: const ValueKey('tpw-check'),
+            onPressed: _busy ? null : _check,
+            child: Text(s.t('tpw_check')),
+          ),
       ]));
 }
