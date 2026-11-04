@@ -1859,5 +1859,19 @@
   "tpw_rejected": "«{park}» sahibi başvuruyu kabul etmedi. Yeni kodla tekrar başvurabilirsiniz.",
   "tpw_refresh": "Yenile",
   "tpw_err_name": "Adınızı ve soyadınızı yazın (örn. Elvin Məmmədov).",
-  "tpw_err_already": "Zaten bu parkta çalışıyorsunuz."
+  "tpw_err_already": "Zaten bu parkta çalışıyorsunuz.",
+  "pp_svc_bump_body": "Servisiniz kendi konumunun çevresinde Servisler listesinde ve haritada ilk sıraya yükselecek.",
+  "pp_svc_vip_body": "Servisiniz kendi konumunun çevresinde VIP işaretiyle öne çıkacak ve her gün yeniden yükselecek.",
+  "pp_svc_premium_body": "Servisiniz kendi konumunun çevresinde Servisler listesinin ve haritanın en başında görünecek ve hizmet süresi bitene kadar orada kalacak.",
+  "pp_tp_bump_body": "Parkınız kendi konumunun çevresinde TIRPark haritasında ve listesinde ilk sıraya yükselecek.",
+  "pp_tp_vip_body": "Parkınız kendi konumunun çevresinde VIP işaretiyle öne çıkacak ve her gün yeniden yükselecek.",
+  "pp_tp_premium_body": "Parkınız kendi konumunun çevresinde TIRPark haritasının ve listesinin en başında görünecek ve hizmet süresi bitene kadar orada kalacak.",
+  "pp_area_service": "Reklam, servisin haritadaki kendi konumuna göre gösterilir: o bölgede servis arayanlar onu Servisler listesinde ve haritada öne çıkmış görür; dokununca servisin sayfası açılır. Ülke ayrıca seçilmez. Yükler sayfasında gösterilmez.",
+  "pp_area_tirpark": "Reklam, parkın haritadaki kendi konumuna göre gösterilir: o bölgede (100 km) park arayanlar onu TIRPark haritasında ve listesinde öne çıkmış görür; dokununca parkın sayfası açılır. Ülke ayrıca seçilmez. Yükler sayfasında gösterilmez.",
+  "pp_not_open_service": "Servisi öne çıkarmak için onaylanmış ve aktif olması gerekir.",
+  "pp_not_open_tirpark": "Parkı öne çıkarmak için parkın onaylanması gerekir.",
+  "pp_no_area": "Servisin haritadaki yeri seçilmemiş. Reklam servisin konumuna göre gösterildiği için önce \"Düzenle\" ile yerini haritada seçin.",
+  "pp_failed": "Sipariş oluşturulamadı. Biraz sonra tekrar deneyin.",
+  "pp_bump_left": "Öne çek aktif: {n} kez daha yükselecek.",
+  "pp_ad": "Reklam"
 }

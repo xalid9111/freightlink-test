@@ -13,6 +13,7 @@ import '../data/admin_repository.dart';
 import 'admin_widgets.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../promo/place_promo.dart';
 
 /// Badge numbers for the side menu: pending profiles + pending ownership
 /// claims + open service complaints.
@@ -50,7 +51,7 @@ class AdminServicesPage extends ConsumerStatefulWidget {
 }
 
 class _AdminServicesPageState extends ConsumerState<AdminServicesPage> with SingleTickerProviderStateMixin {
-  late final _tabs = TabController(length: 4, vsync: this);
+  late final _tabs = TabController(length: 5, vsync: this);
 
   @override
   void dispose() {
@@ -75,13 +76,21 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> with Sing
               Tab(text: 'Sahiblik${n('claims')}'),
               Tab(text: 'Şikayətlər${n('reports')}'),
               const Tab(text: 'Kateqoriyalar'),
+              const Tab(text: 'Önə çıxar qiymətləri'),
             ],
           ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabs,
-            children: const [_ProvidersTab(), _ClaimsTab(), _ReportsTab(), _CategoriesTab()],
+            children: [
+              const _ProvidersTab(),
+              const _ClaimsTab(),
+              const _ReportsTab(),
+              const _CategoriesTab(),
+              // "Önə çıxar" prices of services (owner, 04.11.2026, 0093).
+              ListView(padding: const EdgeInsets.all(12), children: const [PlacePromoPrices(PlaceTarget.service, run: runAdmin)]),
+            ],
           ),
         ),
       ],

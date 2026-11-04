@@ -22,6 +22,7 @@ import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../core/widgets/page_hero.dart';
 import '../../tirpark/presentation/map_page_banner.dart';
 import '../../tirpark/presentation/tir_park_widgets.dart';
+import '../../promo/place_promo.dart';
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
@@ -50,6 +51,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   int _zoomBucket = 11;
   bool _mapReady = false;
   List<ServiceProvider> _lastItems = const [];
+  Map<String, PlacePromo> _lastPromos = const {};
 
   @override
   void initState() {
@@ -212,7 +214,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   }
 
   /// Simple grid clustering so weak phones never draw hundreds of pins.
-  List<Marker> _markers(List<ServiceProvider> all, LatLng? me) {
+  List<Marker> _markers(List<ServiceProvider> all, LatLng? me, Map<String, PlacePromo> promos) {
     final out = <Marker>[];
     final items = [for (final p in all) if (hasRealCoords(p.lat, p.lng)) p];
     final zoom = _zoomBucket;
@@ -225,7 +227,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           height: sel ? 46 : 38,
           child: GestureDetector(
             onTap: () => _select(p),
-            child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro),
+            child: PlacePromoPin(promo: promos[p.id], pin: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro)),
           ),
         ));
       }
@@ -244,7 +246,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
               point: LatLng(p.lat, p.lng),
               width: sel ? 46 : 38,
               height: sel ? 46 : 38,
-              child: GestureDetector(onTap: () => _select(p), child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro)),
+              child: GestureDetector(
+                  onTap: () => _select(p),
+                  child: PlacePromoPin(promo: promos[p.id], pin: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro))),
             ));
           }
           continue;
@@ -312,6 +316,15 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
         ..addAll(pro)
         ..addAll(rest);
     }
+    // "Önə çıxar" (owner, 04.11.2026, 0093): promoted services around
+    // their own place stand first (Premium on top), then the rest as before.
+    final promoAsync = ref.watch(placePromoStateProvider(placePromoKey(PlaceTarget.service, items.map((p) => p.id))));
+    final promos = promoAsync.valueOrNull ?? _lastPromos;
+    if (promoAsync.hasValue) _lastPromos = promoAsync.value!;
+    final promoted = promotedFirst(List.of(items), (p) => p.id, promos);
+    items
+      ..clear()
+      ..addAll(promoted);
     // The service picked in the search keeps its real (user) distance and
     // stays visible while it is selected, even outside the loaded area.
     final picked = _picked != null && _picked!.id == _selectedId ? _picked : null;
@@ -430,7 +443,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                       strokeWidth: 4,
                     ),
                   ]),
-                MarkerLayer(markers: _markers(items, me)),
+                MarkerLayer(markers: _markers(items, me, promos)),
                 const AppMapAttribution(),
               ],
             ),
@@ -604,6 +617,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
               lang: lang,
               results: results,
               items: items,
+              promos: promos,
               selected: selected,
               route: route,
               hasGps: me != null,
@@ -726,6 +740,7 @@ class _ResultsSheet extends ConsumerWidget {
   final String lang;
   final AsyncValue<List<ServiceProvider>> results;
   final List<ServiceProvider> items;
+  final Map<String, PlacePromo> promos;
   final ServiceProvider? selected;
   final RouteInfo? route;
   final bool hasGps;
@@ -741,6 +756,7 @@ class _ResultsSheet extends ConsumerWidget {
     required this.lang,
     required this.results,
     required this.items,
+    this.promos = const {},
     required this.selected,
     required this.route,
     required this.hasGps,
@@ -872,6 +888,7 @@ class _ResultsSheet extends ConsumerWidget {
                     lang: lang,
                     categories: categories,
                     selected: isSel,
+                    promo: promos[p.id],
                     route: isSel ? route : null,
                     hasGps: hasGps,
                     onTap: () => onSelect(p),
@@ -895,6 +912,8 @@ class ServiceListCard extends StatelessWidget {
   final RouteInfo? route;
   final bool hasGps;
   final VoidCallback onTap;
+  /// "Önə çıxar" (0093): the "Reklam" mark with the crown / diamond.
+  final PlacePromo? promo;
 
   const ServiceListCard({
     super.key,
@@ -906,6 +925,7 @@ class ServiceListCard extends StatelessWidget {
     required this.route,
     required this.hasGps,
     required this.onTap,
+    this.promo,
   });
 
   String _catNames() {
@@ -975,6 +995,10 @@ class ServiceListCard extends StatelessWidget {
                             if (p.isPro) ...[
                               const SizedBox(width: 5),
                               const ServiceProBadge(compact: true),
+                            ],
+                            if (promo != null && promo!.isPromoted) ...[
+                              const SizedBox(width: 5),
+                              PlacePromoTag(s: s, promo: promo!),
                             ],
                           ],
                         ),

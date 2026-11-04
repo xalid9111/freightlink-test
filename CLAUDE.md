@@ -288,6 +288,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   Baş admin = an admin who is the finance owner (is_finance_admin) or the
   Founder (founder_ids) — other admins neither see nor open /admin; then
   "Hesab və görünüş" (text size, Ayarlar, Hesabdan çıxış).
+- Servis / TIRPark "Önə çıxar" (owner, 04.11.2026, 0093): the TIR Bazarı
+  sheets (İrəli çək · VIP · Premium), packs, currency and card checkout; own
+  prices per section (Admin → Servislər → "Önə çıxar qiymətləri", Admin →
+  TIRPark), started from the Loads prices. The area is the service's / park's
+  own place on the map (no country choice): promoted first in the Servislər
+  list + map / the TIRPark map + list (100 km), with the "Reklam" mark; a tap
+  opens the service / park page. Never shown among Loads. Only the service's
+  owner (approved, active, real map place) or the park's approved manager
+  (approved park) orders; applied only after a verified payment.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

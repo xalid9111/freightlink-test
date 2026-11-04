@@ -98,7 +98,7 @@ insert into public.ad_payments (tir_park_booking_id, user_id, amount, currency, 
 select id, :driver, amount, currency, 'card', 'test', 'test', 'tpbook-b2-001' from public.tir_park_bookings where id = (select id from ids where k='b2');
 select tests.check(tests.err($$ insert into public.ad_payments (cargo_promo_order_id, tir_park_booking_id, user_id, amount, currency, method, provider, mode, idempotency_key)
   select gen_random_uuid(), (select id from ids where k='b1'), 'a0000000-0000-4000-8000-000000000021', 1, 'AZN', 'card', 'test', 'test', 'tpbook-x-001' $$)
-  like '%ad_payments_one_target6%' or tests.err($$ insert into public.ad_payments (cargo_promo_order_id, tir_park_booking_id, user_id, amount, currency, method, provider, mode, idempotency_key)
+  like '%ad_payments_one_target%' or tests.err($$ insert into public.ad_payments (cargo_promo_order_id, tir_park_booking_id, user_id, amount, currency, method, provider, mode, idempotency_key)
   select gen_random_uuid(), (select id from ids where k='b1'), 'a0000000-0000-4000-8000-000000000021', 1, 'AZN', 'card', 'test', 'test', 'tpbook-x-001' $$) like '%foreign key%',
   'P4 a payment belongs to exactly one thing');
 create temp table t_pay as select * from public.ad_payments where idempotency_key in ('tpbook-b1-001', 'tpbook-b2-001');
