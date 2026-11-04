@@ -256,9 +256,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                               key: const ValueKey('profile-cover'),
                                               image: NetworkImage(details!.coverUrl!),
                                               framing: ImageFraming.of(details.coverUrl),
-                                              errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
+                                              errorBuilder: (_, __, ___) => const ProfileCoverPlaceholder(),
                                             )
-                                          : const _CoverPlaceholder();
+                                          : const ProfileCoverPlaceholder();
                                     }),
                                     if (isMe)
                                       Positioned(
@@ -596,8 +596,9 @@ class _MenuRow extends StatelessWidget {
   }
 }
 
-class _CoverPlaceholder extends StatelessWidget {
-  const _CoverPlaceholder();
+/// The cover before a picture is chosen (also on Profil, 04.11.2026).
+class ProfileCoverPlaceholder extends StatelessWidget {
+  const ProfileCoverPlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {

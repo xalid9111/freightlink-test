@@ -21,6 +21,7 @@ import 'package:freightlink/features/finance/presentation/finance_providers.dart
 import 'package:freightlink/features/services/presentation/services_providers.dart';
 import 'package:freightlink/features/tirpark/data/tir_park_repository.dart';
 import 'package:freightlink/features/tirpark/domain/tir_park.dart';
+import 'package:freightlink/repositories/profile_page_repository.dart';
 import 'package:freightlink/repositories/profile_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -41,6 +42,7 @@ Widget _app(Widget home, {AppUser user = _admin, bool head = false, bool finance
         stringsProvider.overrideWithValue(_az),
         authStateProvider.overrideWith((ref) => Stream.value(user)),
         publicProfileProvider.overrideWith((ref, id) async => null),
+        profileDetailsProvider.overrideWith((ref, id) async => null),
         myActivitiesProvider.overrideWith((ref) => MyActivitiesController(_NoActs(), null)),
         tirParkManagerPendingProvider.overrideWith((ref) async => tirWaiting),
         tirParkPendingWorkersProvider.overrideWith((ref) async => 0),
@@ -63,6 +65,18 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(_app(const ProfileScreen(), tirWaiting: 2));
     await tester.pumpAndSettle();
+    // The card (owner's picture, 04.11.2026): cover + photo over its edge,
+    // the account's own name and role — right on the Profil tab.
+    expect(find.byKey(const ValueKey('profile-summary')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-tab-cover-edit')), findsOneWidget, reason: 'the cover can be changed here');
+    expect(find.text('SSD'), findsOneWidget, reason: 'the signed-in user\'s name, not a fixed text');
+    expect(find.text('Administrator'), findsOneWidget);
+    final cover = tester.getRect(find.byKey(const ValueKey('profile-tab-cover-edit')));
+    final photo = tester.getRect(find.byKey(const ValueKey('profile-summary-photo')));
+    final card = tester.getRect(find.byKey(const ValueKey('profile-summary')));
+    expect(photo.top, lessThan(card.top + 120), reason: 'the photo starts on the cover');
+    expect(photo.bottom, greaterThan(card.top + 120), reason: '…and reaches below its edge');
+    expect(cover.top, greaterThan(card.top));
     expect(find.text('Şəxsi məlumatlarım'), findsOneWidget);
     expect(find.text('Ad, e-poçt, telefon və doğum tarixi'), findsOneWidget);
     expect(find.text('Mənim fəaliyyətim'), findsOneWidget);

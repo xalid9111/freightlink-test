@@ -20,6 +20,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import 'providers/auth_providers.dart';
 import '../domain/app_user.dart';
 import 'widgets/activity_buttons.dart';
+import 'widgets/profile_cover.dart';
+import '../../ads/presentation/public_profile_screen.dart' show ProfileCoverPlaceholder;
+import '../../../repositories/profile_page_repository.dart';
 import '../data/activities_repository.dart';
 import '../domain/activities.dart';
 import '../../services/presentation/services_providers.dart';
@@ -77,7 +80,8 @@ class ProfileScreen extends ConsumerWidget {
           return SafeArea(
             bottom: false,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              // Room under the last card so the bottom bar never covers it.
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 32 + MediaQuery.of(context).viewPadding.bottom),
               children: [
                 // Title + settings gear
                 Row(
@@ -739,6 +743,135 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     if (saved == true) ref.invalidate(publicProfileProvider(userId));
   }
 
+  static const double _coverHeight = 120;
+  static const double _avatarRadius = 44;
+
+  Widget _summary({
+    required AppStrings strings,
+    required String lang,
+    required PublicProfile? profile,
+    required String name,
+    required String initials,
+    required String? country,
+    required bool verified,
+  }) {
+    final cover = ref.watch(profileDetailsProvider(widget.userId)).valueOrNull?.coverUrl;
+    const avatarLeft = 14.0;
+    const textLeft = avatarLeft + _avatarRadius * 2 + 14;
+    return Container(
+      key: const ValueKey('profile-summary'),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SizedBox(
+            height: _coverHeight,
+            child: LayoutBuilder(builder: (context, c) {
+              final aspect = c.maxWidth / _coverHeight;
+              return Stack(fit: StackFit.expand, children: [
+                (cover ?? '').isNotEmpty
+                    ? FramedImage(
+                        key: const ValueKey('profile-tab-cover'),
+                        image: NetworkImage(cover!),
+                        framing: ImageFraming.of(cover),
+                        errorBuilder: (_, __, ___) => const ProfileCoverPlaceholder(),
+                      )
+                    : const ProfileCoverPlaceholder(),
+                // The existing cover editor (new picture / "Yerini düzəlt").
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: IconButton.filledTonal(
+                    key: const ValueKey('profile-tab-cover-edit'),
+                    tooltip: strings.t('profile_change_cover'),
+                    onPressed: () => editProfileCover(
+                        context: context, ref: ref, s: strings, userId: widget.userId, current: cover, aspect: aspect),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                  ),
+                ),
+              ]);
+            }),
+          ),
+          Container(height: 1, color: AppColors.line),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(textLeft, 10, 14, 14),
+            child: ConstrainedBox(
+              // Tall enough for the photo's lower half.
+              constraints: const BoxConstraints(minHeight: _avatarRadius + 4),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(name,
+                    key: const ValueKey('profile-summary-name'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
+                const SizedBox(height: 2),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  children: [
+                    if (widget.roleLabel.isNotEmpty)
+                      Text(widget.roleLabel, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                    if (country != null) ...[
+                      if (widget.roleLabel.isNotEmpty) Text('•', style: TextStyle(color: AppColors.textSoft)),
+                      Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSoft),
+                      Text(country, style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  _Badge(
+                    icon: verified ? Icons.verified : Icons.hourglass_empty,
+                    label: strings.t(verified ? 'pf_verified_account' : 'profile_unverified'),
+                    color: verified ? AppColors.blue : AppColors.textSoft,
+                  ),
+                  if (profile?.isEarlyMember == true)
+                    _Badge(icon: Icons.star_rounded, label: strings.t('badge_early_member'), color: AppColors.accent),
+                ]),
+              ]),
+            ),
+          ),
+        ]),
+        // The photo, half over the cover's edge; the camera changes it (as before).
+        Positioned(
+          left: avatarLeft,
+          top: _coverHeight - _avatarRadius,
+          child: InkWell(
+            key: const ValueKey('profile-summary-photo'),
+            customBorder: const CircleBorder(),
+            onTap: _uploading ? null : () => _photoMenu(profile?.avatarUrl),
+            child: Stack(clipBehavior: Clip.none, children: [
+              Container(
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.card, width: 3)),
+                child: UserAvatar(imageUrl: profile?.avatarUrl, initials: initials, radius: _avatarRadius),
+              ),
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardAlt,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.card, width: 2),
+                  ),
+                  child: _uploading
+                      ? Padding(padding: const EdgeInsets.all(7), child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.text))
+                      : Icon(Icons.photo_camera, size: 16, color: AppColors.text),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = widget.strings;
@@ -753,6 +886,20 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     final verified = profile?.isVerified == true;
     final birth = profile?.birthDate;
     final age = birth == null ? null : ageFromBirthDate(birth, DateTime.now());
+
+    // Profil (owner's picture, 04.11.2026): the cover on top, the photo half
+    // over its edge, name, roles, country and badges — from the account.
+    if (!widget.details) {
+      return _summary(
+        strings: strings,
+        lang: lang,
+        profile: profile,
+        name: name,
+        initials: initials,
+        country: country?.name(lang),
+        verified: verified,
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(14),
