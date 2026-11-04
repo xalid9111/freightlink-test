@@ -277,7 +277,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   parks he added, ads, chats and messages also with real people,
   comments, bookings, test payments); never oneself, the founder or
   another admin; every deletion in the Audit Log.
-- Profil (owner's two-screen design, 04.11.2026): picture card, then one
+- Profil (owner's two-screen design, 04.11.2026): the card on the Profil tab
+  itself has the cover on top (the existing profile_details.cover_url and its
+  editor) with the photo half over its edge, name, roles, country, badges; then one
   entry each — "Şəxsi məlumatlarım" (/profile/personal: name, e-mail,
   phone, birth date), "Mənim fəaliyyətim" (/profile/activity: roles 2 × 2 +
   Yüklərim · Servisim · Səhifəm və kataloqum · İş Mərkəzi · Reklam
