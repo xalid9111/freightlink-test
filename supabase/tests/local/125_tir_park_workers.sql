@@ -52,7 +52,8 @@ select tests.check(jsonb_array_length(public.tir_park_my_work()) = 0, 'W12 nobod
 -- ---- the worker works: trucks by plate, places but no takings ------------------------
 select tests.login(:worker);
 insert into ids select 's', (public.tir_park_stay_enter((select id from ids where k='p'), '10 aa 100') ->> 'id')::uuid;
-select tests.check((select count(*) = 1 from public.tir_park_stays), 'W13 the worker adds a truck (sees it)');
+select tests.check(jsonb_array_length(public.tir_park_parked((select id from ids where k='p')) -> 'in') = 1,
+  'W13 the worker adds a truck (sees it in his list; 0091: not by reading the table)');
 select tests.check((public.tir_park_owner_summary((select id from ids where k='p')) ->> 'in_park')::int = 1
                and (public.tir_park_owner_summary((select id from ids where k='p')) ->> 'today_paid') is null
                and (public.tir_park_owner_summary((select id from ids where k='p')) ->> 'accruing') is null,
