@@ -141,6 +141,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   2 days 6.00), taken at the exit; a paid booking pays only the overstay;
   a new price counts at once for every truck still in the park, old or new
   entry (0090), trucks that left keep what was taken.
+  Capacity (0091): a truck still in the park counts even after its booking
+  ended; trucks in the park now count only for times that include now (never
+  for future days); the stays table (money) is read directly only by the
+  owner and admins — workers use the server functions.
   A booking day starts at 00:00 (Baku); every booked day's places are
   checked. Stage 2 (0087): workers join by an invitation code they accept
   with their own account in Profil → "Park işçisiyəm" (never
