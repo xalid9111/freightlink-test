@@ -59,13 +59,16 @@ class VipCheckoutTarget {
   final bool promo;
   /// A TIR park booking (0079): [vipOrderId] is the booking's id.
   final bool tirParkBooking;
+  /// A Servis / TIRPark İrəli çək · VIP · Premium order (0093).
+  final bool place;
   const VipCheckoutTarget(
       {required this.vipOrderId,
       required this.amount,
       required this.currency,
       this.cargo = false,
       this.promo = false,
-      this.tirParkBooking = false});
+      this.tirParkBooking = false,
+      this.place = false});
 }
 
 class CheckoutSheet extends ConsumerStatefulWidget {
@@ -101,7 +104,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   Future<CheckoutPayment> _start(FinanceRepository repo) {
     final vip = widget.vip;
     return vip != null
-        ? (vip.tirParkBooking
+        ? (vip.place
+            ? repo.startPlacePromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
+            : vip.tirParkBooking
             ? repo.startTirParkBookingCheckout(bookingId: vip.vipOrderId, method: _method, idempotencyKey: _key)
             : vip.promo && vip.cargo
             ? repo.startCargoPromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)

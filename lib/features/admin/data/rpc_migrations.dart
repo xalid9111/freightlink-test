@@ -185,4 +185,8 @@ const kRpcMigration = <String, String>{
   'admin_clear_cargo_image': '0058_cargo_pictures_favorites.sql',
   'admin_set_cargo_vip': '0059_cargo_vip_rows.sql',
   'admin_set_cargo_vip_every': '0059_cargo_vip_rows.sql',
+  'place_promo_state': '0093_place_promotions.sql',
+  'place_promo_order_create': '0093_place_promotions.sql',
+  'admin_place_set_promo_plan': '0093_place_promotions.sql',
+  'tir_park_owner_income': '0094_tir_park_income.sql',
 };

@@ -18,6 +18,7 @@ import 'map_page_banner.dart';
 import 'tir_park_add_sheet.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
+import '../../promo/place_promo.dart';
 
 /// TIRPark (owner, 31.10.2026, picture): the banner, the map with the park
 /// pins, the search, "TIR parkı əlavə et" and the nearby parks below.
@@ -40,6 +41,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
   final _sheet = DraggableScrollableController();
   LatLng _center = kDefaultServiceCenter;
   bool _mapReady = false;
+  Map<String, PlacePromo> _lastPromos = const {};
   bool _adding = false;
   String? _selectedId;
   String _query = '';
@@ -166,16 +168,22 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     for (final p in parks) {
       if (p.id == _selectedId) selected = p;
     }
+    final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
+    // "Önə çıxar" (owner, 04.11.2026, 0093): promoted parks around their own
+    // place first (Premium on top), then the rest nearest first.
+    final promoAsync = ref.watch(placePromoStateProvider(placePromoKey(PlaceTarget.tirpark, shownOnMap.map((p) => p.id))));
+    final promos = promoAsync.valueOrNull ?? _lastPromos;
+    if (promoAsync.hasValue) _lastPromos = promoAsync.value!;
+    final ordered = promotedFirst(found, (e) => e.$1.id, promos);
     // The selected park stands first in the list.
     final list = [
-      ...found.where((e) => e.$1.id == _selectedId),
-      ...found.where((e) => e.$1.id != _selectedId),
+      ...ordered.where((e) => e.$1.id == _selectedId),
+      ...ordered.where((e) => e.$1.id != _selectedId),
     ];
     RouteInfo? route;
     if (selected != null && me != null) {
       route = ref.watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: selected.lat, bLng: selected.lng))).valueOrNull;
     }
-    final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
 
     // While a place is being chosen, "back" leaves that mode first.
     return PopScope(
@@ -239,7 +247,10 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                           width: 46,
                           height: 54,
                           alignment: Alignment.topCenter,
-                          child: GestureDetector(onTap: () => _select(p), child: TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
+                          child: GestureDetector(
+                              onTap: () => _select(p),
+                              child: PlacePromoPin(
+                                  promo: promos[p.id], pin: TirParkPin(approved: p.isApproved, selected: p.id == _selectedId))),
                         ),
                       if (me != null)
                         Marker(
@@ -398,6 +409,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                             onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
                             booking: p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
+                            badge: (promos[p.id]?.isPromoted ?? false) ? PlacePromoTag(s: s, promo: promos[p.id]!) : null,
                             footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
                           ),
                         );

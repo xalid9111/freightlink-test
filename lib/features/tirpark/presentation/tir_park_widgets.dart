@@ -118,6 +118,8 @@ class TirParkCard extends StatelessWidget {
   /// Opens the park's page (owner, 02.11.2026): a tap on the picture or the
   /// name of the selected park.
   final VoidCallback? onOpen;
+  /// "Önə çıxar" (0093): the "Reklam" mark with the crown / diamond.
+  final Widget? badge;
   const TirParkCard(
       {super.key,
       required this.park,
@@ -129,7 +131,8 @@ class TirParkCard extends StatelessWidget {
       this.onWrite,
       this.footer,
       this.booking,
-      this.onOpen});
+      this.onOpen,
+      this.badge});
 
   /// The picture and the name: on the selected park they open its page,
   /// otherwise they select it like the rest of the card.
@@ -188,6 +191,7 @@ class TirParkCard extends StatelessWidget {
                     Text(park.ratingAvg.toStringAsFixed(1), style: TextStyle(fontSize: 14, color: AppColors.text)),
                   ],
                 ]),
+                if (badge != null) ...[const SizedBox(height: 4), badge!],
                 const SizedBox(height: 4),
                 Row(children: [
                   Icon(Icons.place_outlined, size: 16, color: AppColors.textSoft),

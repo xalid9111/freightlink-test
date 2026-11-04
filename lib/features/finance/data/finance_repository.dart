@@ -77,6 +77,15 @@ class FinanceRepository {
     return CheckoutPayment.fromJson(j['payment'] as Map);
   }
 
+  /// Checkout for a Servis / TIRPark İrəli çək · VIP · Premium order (0093):
+  /// same rules, the amount comes from the order on the server.
+  Future<CheckoutPayment> startPlacePromoCheckout(
+      {required String promoOrderId, required PayMethod method, required String idempotencyKey}) async {
+    final j = await _checkout(
+        {'action': 'create', 'place_promo_order_id': promoOrderId, 'method': method.wire, 'idempotency_key': idempotencyKey});
+    return CheckoutPayment.fromJson(j['payment'] as Map);
+  }
+
   /// Checkout for a TIR park booking (0079): the amount comes from the
   /// booking on the server; only a verified provider event confirms it.
   Future<CheckoutPayment> startTirParkBookingCheckout(

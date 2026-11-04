@@ -15,6 +15,7 @@ import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
+import '../../promo/place_promo.dart';
 
 /// One park (TIRPark PR 2, 0078): pictures, rating, place · distance,
 /// amenities, the note and the comments ("Şərh yaz"). Admins add, replace
@@ -228,6 +229,12 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                 if (park.isManaged) ...[
                   const SizedBox(height: 16),
                   TirParkBookingSection(park: park, s: s),
+                ],
+                // "Önə çıxar" (owner, 04.11.2026, 0093): only the park's
+                // approved manager; shown first around the park's own place.
+                if (me != null && park.managerId == me.id && park.managerStatus == 'approved') ...[
+                  const SizedBox(height: 16),
+                  PlacePromoSection(s: s, target: PlaceTarget.tirpark, id: park.id, open: park.isApproved),
                 ],
                 const SizedBox(height: 20),
                 Row(children: [

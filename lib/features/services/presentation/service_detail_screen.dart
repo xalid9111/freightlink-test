@@ -17,6 +17,7 @@ import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../promo/place_promo.dart';
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -141,6 +142,16 @@ class ServiceDetailScreen extends ConsumerWidget {
                   _OwnerTools(p: p, s: s),
                   const SizedBox(height: 10),
                   _AdvertiseCard(s: s, serviceId: p.id),
+                  const SizedBox(height: 10),
+                  // "Önə çıxar" (owner, 04.11.2026, 0093): the TIR Bazarı
+                  // sheets; shown first around the service's own place.
+                  PlacePromoSection(
+                    s: s,
+                    target: PlaceTarget.service,
+                    id: p.id,
+                    open: p.status == 'approved' && p.isActive && hasRealCoords(p.lat, p.lng),
+                    closedKey: p.status == 'approved' && p.isActive && !hasRealCoords(p.lat, p.lng) ? 'pp_no_area' : null,
+                  ),
                 ],
                 const SizedBox(height: 18),
                 if (p.categories.isNotEmpty) ...[

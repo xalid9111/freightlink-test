@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../tirpark/data/tir_park_repository.dart';
 import '../../tirpark/domain/tir_park.dart';
+import '../../promo/place_promo.dart';
+import 'admin_widgets.dart' show runAdmin;
 
 /// Admin → TIRPark (owner, 31.10.2026, 0077): parks added by users wait
 /// here ("Təsdiq gözləyir") until an admin approves them; reject / hide
@@ -77,6 +79,13 @@ class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
       children: [
         // "Park işlədirəm" requests (owner, 03.11.2026, 0086): only a name.
         const _OwnerRequests(),
+        // "Önə çıxar" prices of parks (owner, 04.11.2026, 0093).
+        const ExpansionTile(
+          key: ValueKey('atp-promo-prices'),
+          tilePadding: EdgeInsets.zero,
+          title: Text('Önə çıxar qiymətləri (TIRPark)'),
+          children: [PlacePromoPrices(PlaceTarget.tirpark, run: runAdmin)],
+        ),
         Text('TIRPark — parklar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 4),
         Text('İstifadəçilərin əlavə etdiyi parklar təsdiqdən sonra hamıya görünür. Rədd / gizlət heç nəyi silmir.',

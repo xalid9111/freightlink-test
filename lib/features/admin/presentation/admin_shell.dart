@@ -17,7 +17,6 @@ import 'admin_ad_templates.dart';
 import 'admin_wa_verify_poc_page.dart';
 import 'admin_pages.dart';
 import 'admin_providers.dart';
-import 'head_admin.dart';
 import '../../../core/widgets/deferred_page.dart';
 import '../../market/presentation/market_module.dart' deferred as market;
 
@@ -72,15 +71,9 @@ class AdminShell extends ConsumerWidget {
         if (user.role != AppConstants.roleAdmin) {
           return const _Denied(message: 'Bu bölmə yalnız administratorlar üçündür.');
         }
-        // Owner, 04.11.2026: Admin Panel only for the Baş admin (also when
-        // opened by a direct link).
-        final head = ref.watch(isHeadAdminProvider);
-        if (!head.hasValue) {
-          return head.hasError
-              ? const _Denied(message: 'Bu bölmə yalnız Baş admin üçündür.')
-              : const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        if (head.value != true) return const _Denied(message: 'Bu bölmə yalnız Baş admin üçündür.');
+        // Every platform admin opens Admin Panel (owner, 04.11.2026: an admin
+        // the owner appoints must get in). The server checks every action
+        // (is_admin(), _require_admin()); finance stays the finance owner's.
         final key = adminSections.any((s) => s.key == section) ? section : 'dashboard';
         return _AdminLayout(section: key, adminName: user.fullName);
       },
