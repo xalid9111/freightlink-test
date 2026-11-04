@@ -277,6 +277,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   parks he added, ads, chats and messages also with real people,
   comments, bookings, test payments); never oneself, the founder or
   another admin; every deletion in the Audit Log.
+- Profil (owner's two-screen design, 04.11.2026): picture card, then one
+  entry each — "Şəxsi məlumatlarım" (/profile/personal: name, e-mail,
+  phone, birth date), "Mənim fəaliyyətim" (/profile/activity: roles 2 × 2 +
+  Yüklərim · Servisim · Səhifəm və kataloqum · İş Mərkəzi · Reklam
+  sifarişi), "TIR Parkı" (/profile/tirpark: manage, work, bookings, with the
+  red count); "Baş admin idarəetməsi" (Maliyyə, Admin Panel) only for the
+  Baş admin = an admin who is the finance owner (is_finance_admin) or the
+  Founder (founder_ids) — other admins neither see nor open /admin; then
+  "Hesab və görünüş" (text size, Ayarlar, Hesabdan çıxış).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
