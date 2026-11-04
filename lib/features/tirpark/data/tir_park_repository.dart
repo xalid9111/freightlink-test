@@ -46,6 +46,8 @@ class TirParkRepository {
         'already_applied', 'already_in', 'already_out', 'payment_in_review', 'already_reviewed',
         // 0087: workers.
         'invalid_code', 'name_required', 'already_worker',
+        // 0092: one plate per truck.
+        'duplicate_plate', 'plates_count',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
@@ -382,14 +384,29 @@ class TirParkRepository {
         };
       });
 
-  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate) => _run(() async {
-        final res = await _c.rpc('tir_park_booking_create', params: {
+  /// [plates] = one plate per truck (0092); the first is [plate]. One
+  /// truck uses the 5-argument function (works before and after 0092);
+  /// several use the 6-argument one, and fall back to the old one while
+  /// 0092 is not run yet in Supabase.
+  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate, {List<String> plates = const []}) =>
+      _run(() async {
+        final params = <String, dynamic>{
           'p_park': parkId,
           'p_from': from.toUtc().toIso8601String(),
           'p_to': to.toUtc().toIso8601String(),
           'p_trucks': trucks,
           'p_plate': plate,
-        }).timeout(_timeout);
+        };
+        Object? res;
+        if (trucks > 1 && plates.length == trucks) {
+          try {
+            res = await _c.rpc('tir_park_booking_create', params: {...params, 'p_plates': plates}).timeout(_timeout);
+          } on PostgrestException catch (e) {
+            if (e.code != 'PGRST202' && e.code != '42883') rethrow;
+            res = null;
+          }
+        }
+        res ??= await _c.rpc('tir_park_booking_create', params: params).timeout(_timeout);
         return TirParkBooking.fromJson(Map<String, dynamic>.from(res as Map));
       });
 

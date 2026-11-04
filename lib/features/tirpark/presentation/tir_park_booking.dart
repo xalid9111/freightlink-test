@@ -55,6 +55,8 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   // The truck's state number (0082), e.g. 99-ZB-911; filled in from the
   // driver's last booking.
   final _plate = TextEditingController();
+  // One plate per further truck (0092): TIR 2 … TIR n.
+  final _more = <TextEditingController>[];
   int? _free;
   bool _closed = false; // the server says the park takes no bookings now (e.g. no payment details)
   bool _busy = false;
@@ -94,6 +96,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
   @override
   void dispose() {
     _plate.dispose();
+    for (final c in _more) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -140,8 +145,46 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
         TirParkRefused(reason: 'own_park') => 'tpb_err_own',
         TirParkRefused(reason: 'not_bookable') => 'tpb_closed',
         TirParkRefused(reason: 'invalid_plate') => 'tpb_err_plate',
+        TirParkRefused(reason: 'duplicate_plate') => 'tpb_err_plate_dup',
+        TirParkRefused(reason: 'plates_count') => 'tpb_err_plate',
         _ => 'tpb_err_generic',
       };
+
+  /// As many plate fields as TIRs (the first one is [_plate]).
+  void _setTrucks(int v) {
+    setState(() {
+      _trucks = v;
+      while (_more.length < v - 1) {
+        _more.add(TextEditingController());
+      }
+      while (_more.length > v - 1) {
+        _more.removeLast().dispose();
+      }
+      if (_error == 'tpb_err_plate' || _error == 'tpb_err_plate_dup') _error = null;
+    });
+  }
+
+  /// Every truck's plate, tidied; null when one is wrong ([_error] set).
+  List<String>? _platesOrError() {
+    final out = <String>[];
+    final fields = [_plate, ..._more];
+    for (final c in fields) {
+      final p = tidyTruckPlate(c.text);
+      if (p == null) {
+        setState(() => _error = 'tpb_err_plate');
+        return null;
+      }
+      if (out.contains(p)) {
+        setState(() => _error = 'tpb_err_plate_dup');
+        return null;
+      }
+      out.add(p);
+    }
+    for (var i = 0; i < fields.length; i++) {
+      fields[i].text = out[i];
+    }
+    return out;
+  }
 
   /// "3,00 AZN / gün × 2 gün × 2 TIR = 12,00 AZN".
   String _calc(int units) => s.t('tpb_calc', {
@@ -153,12 +196,9 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
       });
 
   Future<void> _book() async {
-    final plate = tidyTruckPlate(_plate.text);
-    if (plate == null) {
-      setState(() => _error = 'tpb_err_plate');
-      return;
-    }
-    _plate.text = plate;
+    final plates = _platesOrError();
+    if (plates == null) return;
+    final plate = plates.first;
     final units = tirParkUnits(_from, _to, _unit);
     if (units <= 0 || _day.isBefore(_today())) {
       setState(() => _error = 'tpb_err_time');
@@ -183,7 +223,8 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
             Text('${s.t('tpb_stay')}: $units ${tirParkUnitLabel(s, _unit)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_leave_day')}: ${tirParkDay(_leaveDay)}', style: TextStyle(color: AppColors.text)),
             Text('${s.t('tpb_trucks')}: $_trucks', style: TextStyle(color: AppColors.text)),
-            Text('${s.t('tpb_plate')}: $plate', key: const ValueKey('tpb-plate-confirm'), style: TextStyle(color: AppColors.text)),
+            Text('${s.t(plates.length > 1 ? 'tpb_plates' : 'tpb_plate')}: ${plates.join(', ')}',
+                key: const ValueKey('tpb-plate-confirm'), style: TextStyle(color: AppColors.text)),
             const SizedBox(height: 8),
             Text(_calc(units), key: const ValueKey('tpb-calc-confirm'), style: TextStyle(color: AppColors.text)),
             Text(
@@ -211,7 +252,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
     });
     try {
       // 2) The server holds the space (atomic) and prices the booking.
-      final b = await ref.read(tirParkRepositoryProvider).book(park.id, _from, _to, _trucks, plate);
+      final b = await ref.read(tirParkRepositoryProvider).book(park.id, _from, _to, _trucks, plate, plates: plates);
       if (!mounted) return;
       final container = ProviderScope.containerOf(context, listen: false);
       container.invalidate(tirParkBookingNowProvider);
@@ -280,7 +321,7 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
           const SizedBox(height: 6),
           _stepper(s.t('tpb_stay'), _len, '$_len ${tirParkUnitLabel(s, _unit)}', 'tpb-len', 1, _maxLen, _setLen),
           Text('${s.t('tpb_leave_day')}: ${tirParkDay(_leaveDay)}', key: const ValueKey('tpb-to'), style: TextStyle(color: AppColors.textSoft)),
-          _stepper(s.t('tpb_trucks'), _trucks, '$_trucks', 'tpb-trucks', 1, 50, (v) => setState(() => _trucks = v)),
+          _stepper(s.t('tpb_trucks'), _trucks, '$_trucks', 'tpb-trucks', 1, 50, _setTrucks),
           TextField(
             key: const ValueKey('tpb-plate'),
             controller: _plate,
@@ -294,12 +335,34 @@ class _TirParkBookingSectionState extends ConsumerState<TirParkBookingSection> {
               if (_error == 'tpb_err_plate') setState(() => _error = null);
             },
             decoration: InputDecoration(
-              labelText: s.t('tpb_plate'),
+              labelText: _trucks > 1 ? s.t('tpb_plate_n', {'n': '1'}) : s.t('tpb_plate'),
               hintText: s.t('tpb_plate_hint'),
               counterText: '',
               prefixIcon: const Icon(Icons.local_shipping_outlined),
             ),
           ),
+          // TIR 2 … n: one plate each (0092), so every truck comes in on the booking.
+          for (var i = 0; i < _more.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextField(
+                key: ValueKey('tpb-plate-${i + 2}'),
+                controller: _more[i],
+                scrollPadding: const EdgeInsets.fromLTRB(20, 20, 20, 140),
+                enabled: !_busy,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 15,
+                onChanged: (_) {
+                  if (_error == 'tpb_err_plate' || _error == 'tpb_err_plate_dup') setState(() => _error = null);
+                },
+                decoration: InputDecoration(
+                  labelText: s.t('tpb_plate_n', {'n': '${i + 2}'}),
+                  hintText: s.t('tpb_plate_hint'),
+                  counterText: '',
+                  prefixIcon: const Icon(Icons.local_shipping_outlined),
+                ),
+              ),
+            ),
           const SizedBox(height: 8),
           Text(
             _free == null ? '…' : s.t('tpb_free', {'n': '$_free'}),
@@ -519,10 +582,10 @@ class _TirParkPaySheetState extends ConsumerState<TirParkPaySheet> {
             _row(s.t('tpb_bank'), d.bank, 'tpb-pay-bank'),
             _row(s.t('tpb_account'), d.account, 'tpb-pay-account'),
             _row(s.t('tpb_card'), d.card, 'tpb-pay-card'),
-            if ((b.plate ?? '').isNotEmpty)
+            if (b.allPlates.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text('${s.t('tpb_plate')}: ${b.plate}', key: const ValueKey('tpb-pay-plate'), style: TextStyle(color: AppColors.text)),
+                child: Text('${s.t(b.allPlates.length > 1 ? 'tpb_plates' : 'tpb_plate')}: ${b.platesLabel}', key: const ValueKey('tpb-pay-plate'), style: TextStyle(color: AppColors.text)),
               ),
             if ((d.note ?? '').isNotEmpty) Text(d.note!, style: TextStyle(color: AppColors.text)),
             if (d.holdUntil != null) ...[
@@ -616,8 +679,8 @@ class MyParkBookingsScreen extends ConsumerWidget {
                     Text('${b.bookingNo} · ${b.unit == 'day' ? tirParkDay(b.startAt) : tirParkTime(b.startAt)} → '
                         '${b.unit == 'day' ? tirParkDay(b.endAt) : tirParkTime(b.endAt)} · ${b.trucks} TIR',
                         style: TextStyle(color: AppColors.textSoft)),
-                    if ((b.plate ?? '').isNotEmpty)
-                      Text('${s.t('tpb_plate')}: ${b.plate}', key: ValueKey('tpb-plate-${b.id}'), style: TextStyle(color: AppColors.text)),
+                    if (b.allPlates.isNotEmpty)
+                      Text('${s.t(b.allPlates.length > 1 ? 'tpb_plates' : 'tpb_plate')}: ${b.platesLabel}', key: ValueKey('tpb-plate-${b.id}'), style: TextStyle(color: AppColors.text)),
                     Text(money(b.amount, b.currency), style: TextStyle(color: AppColors.text)),
                     if (b.shownStatus == 'payment_rejected')
                       Text(
@@ -641,7 +704,7 @@ class MyParkBookingsScreen extends ConsumerWidget {
                     if (b.status == 'confirmed')
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
-                        child: Text(s.t('tpb_confirmed_hint', {'plate': b.plate ?? ''}),
+                        child: Text(s.t('tpb_confirmed_hint', {'plate': b.platesLabel}),
                             key: ValueKey('tpb-confirmed-${b.id}'), style: TextStyle(color: AppColors.online)),
                       ),
                     if ((b.shownStatus == 'pending_payment' || b.status == 'payment_review' || b.status == 'confirmed') &&

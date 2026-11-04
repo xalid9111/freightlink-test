@@ -516,7 +516,7 @@ class _CarsState extends ConsumerState<TirParkCars> {
     final q = _search.text.trim().toUpperCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
     bool hit(String plate) => q.isEmpty || plate.toUpperCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '').contains(q);
     final list = [for (final st in data.inPark) if (hit(st.plate)) st];
-    final expected = [for (final b in data.expected) if (hit(b.plate)) b];
+    final expected = [for (final b in data.expected) if (b.allPlates.any(hit)) b];
     final now = DateTime.now();
     return RefreshIndicator(
       onRefresh: () async => widget.onChanged(),
@@ -608,7 +608,8 @@ class _CarsState extends ConsumerState<TirParkCars> {
               key: ValueKey('tpo-exp-${b.id}'),
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.event_available_outlined, color: AppColors.promoVip),
-              title: Text(b.plate, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+              // The plates still to come (0092: every truck of the booking).
+              title: Text(b.allPlates.join(', '), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
               subtitle: Text('${tirParkDay(b.startAt)} → ${tirParkDay(b.endAt)} · ${s.t('tpb_st_${b.status}')}'),
             ),
         ],

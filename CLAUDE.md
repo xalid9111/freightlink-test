@@ -145,6 +145,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   ended; trucks in the park now count only for times that include now (never
   for future days); the stays table (money) is read directly only by the
   owner and admins — workers use the server functions.
+  Plates per truck (0092): a booking for n TIRs takes n different plates
+  (one field per TIR); each plate comes in on the booking (a truck of a
+  running booking may go out and come back), the booking ends with its last
+  truck; single-truck bookings and the 5-argument call work as before.
   A booking day starts at 00:00 (Baku); every booked day's places are
   checked. Stage 2 (0087): workers join by an invitation code they accept
   with their own account in Profil → "Park işçisiyəm" (never

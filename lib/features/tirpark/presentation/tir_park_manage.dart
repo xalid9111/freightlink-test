@@ -365,7 +365,7 @@ class _Bookings extends ConsumerWidget {
         ListTile(
           key: ValueKey('tpm-b-${b.id}'),
           contentPadding: EdgeInsets.zero,
-          title: Text('${b.bookingNo} · ${b.trucks} TIR${(b.plate ?? '').isEmpty ? '' : ' · ${b.plate}'}'
+          title: Text('${b.bookingNo} · ${b.trucks} TIR${b.allPlates.isEmpty ? '' : ' · ${b.platesLabel}'}'
               '${(b.driver ?? '').isEmpty ? '' : ' · ${b.driver}'}'),
           subtitle: Text('${tirParkTime(b.startAt)} → ${tirParkTime(b.endAt)} · ${s.t('tpb_st_${b.shownStatus}')}'
               '${b.paidMode == 'test' ? ' · TEST' : ''}'),
@@ -499,8 +499,8 @@ class _ReviewRowState extends ConsumerState<_ReviewRow> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('${b.bookingNo} · ${money(b.amount, b.currency)} · ${s.t('tpb_st_payment_review')}',
               style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
-          if ((b.plate ?? '').isNotEmpty)
-            Text('${s.t('tpb_plate')}: ${b.plate}', key: ValueKey('tpm-plate-${b.id}'),
+          if (b.allPlates.isNotEmpty)
+            Text('${s.t(b.allPlates.length > 1 ? 'tpb_plates' : 'tpb_plate')}: ${b.platesLabel}', key: ValueKey('tpm-plate-${b.id}'),
                 style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
           const SizedBox(height: 6),
           Wrap(spacing: 8, runSpacing: 6, children: [

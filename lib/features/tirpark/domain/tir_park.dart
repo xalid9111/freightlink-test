@@ -125,6 +125,8 @@ class TirParkBooking {
   final String? cancelReason;
   /// The truck's state number, e.g. 99-ZB-911 (0082; old bookings: null).
   final String? plate;
+  /// Every truck's plate (0092); old bookings: [plate].
+  final List<String> plates;
 
   const TirParkBooking({
     required this.id,
@@ -148,7 +150,12 @@ class TirParkBooking {
     this.rejectNote,
     this.cancelReason,
     this.plate,
+    this.plates = const [],
   });
+
+  /// The plates to show: all of them (0092), or the one plate of an older booking.
+  List<String> get allPlates => plates.isNotEmpty ? plates : [if ((plate ?? '').isNotEmpty) plate!];
+  String get platesLabel => allPlates.join(', ');
 
   /// A payment hold whose time is over counts as expired (the server frees it).
   /// A receipt the park did not accept shows as "Ödəniş rədd edildi" (0081).
@@ -180,6 +187,7 @@ class TirParkBooking {
       rejectNote: j['reject_note'] as String?,
       cancelReason: j['cancel_reason'] as String?,
       plate: j['plate'] as String?,
+      plates: [for (final x in (j['plates'] as List? ?? const [])) if ('$x'.isNotEmpty) '$x'],
     );
   }
 }
@@ -397,12 +405,24 @@ class TirParkExpected {
   final String? bookingNo;
   final int trucks;
   final DateTime startAt, endAt;
+  /// The plates still to come (0092); older servers: [plate].
+  final List<String> plates;
   const TirParkExpected(
-      {required this.id, required this.plate, required this.status, this.bookingNo, this.trucks = 1, required this.startAt, required this.endAt});
+      {required this.id,
+      required this.plate,
+      required this.status,
+      this.bookingNo,
+      this.trucks = 1,
+      required this.startAt,
+      required this.endAt,
+      this.plates = const []});
+
+  List<String> get allPlates => plates.isNotEmpty ? plates : [if (plate.isNotEmpty) plate];
 
   factory TirParkExpected.fromJson(Map<String, dynamic> j) => TirParkExpected(
         id: '${j['id']}',
         plate: '${j['plate'] ?? ''}',
+        plates: [for (final x in (j['plates'] as List? ?? const [])) if ('$x'.isNotEmpty) '$x'],
         status: (j['status'] as String?) ?? 'confirmed',
         bookingNo: j['booking_no'] as String?,
         trucks: int.tryParse('${j['trucks']}') ?? 1,
