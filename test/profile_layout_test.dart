@@ -1,7 +1,7 @@
 // Profil (owner's two-screen design, 04.11.2026): one entry each for
-// "Şəxsi məlumatlarım", "Mənim fəaliyyətim" and "TIR Parkı"; "Baş admin
-// idarəetməsi" (Maliyyə, Admin Panel) only for the Baş admin, also behind a
-// direct /admin link.
+// "Şəxsi məlumatlarım", "Mənim fəaliyyətim" and "TIR Parkı"; Admin Panel for
+// every platform admin (an appointed admin must get in), Maliyyə only for
+// the finance owner.
 import 'dart:convert';
 import 'dart:io';
 
@@ -92,15 +92,17 @@ void main() {
     expect(find.byKey(const ValueKey('profile-text-size')), findsOneWidget, reason: 'text size stays in Profil (24.10.2026)');
   });
 
-  testWidgets('Baş admin idarəetməsi: only the Baş admin sees Maliyyə and Admin Panel', (tester) async {
+  testWidgets('Admin Panel for every platform admin; Maliyyə only for the finance owner', (tester) async {
     tester.view.physicalSize = const Size(400, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    // An ordinary administrator: nothing.
+    // An admin the owner appointed (owner, 04.11.2026): Admin Panel, no Maliyyə.
     await tester.pumpWidget(_app(const ProfileScreen()));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('pf-head-admin')), findsNothing);
-    expect(find.text('Admin Panel'), findsNothing);
+    expect(find.byKey(const ValueKey('pf-head-admin')), findsOneWidget);
+    expect(find.text('Admin idarəetməsi'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pf-admin')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pf-finance')), findsNothing);
     // A user: nothing.
     await tester.pumpWidget(_app(const ProfileScreen(), user: _driver, head: true, finance: true));
     await tester.pumpAndSettle();
@@ -115,11 +117,13 @@ void main() {
     expect(find.byKey(const ValueKey('pf-admin')), findsOneWidget);
   });
 
-  testWidgets('a direct /admin link: an ordinary administrator gets "Giriş qadağandır"', (tester) async {
-    await tester.pumpWidget(_app(const AdminShell(section: 'dashboard')));
+  testWidgets('a direct /admin link: an appointed admin gets in, a user does not', (tester) async {
+    await tester.pumpWidget(_app(const AdminShell(section: 'dashboard'), user: _driver));
     await tester.pumpAndSettle();
     expect(find.text('Giriş qadağandır'), findsOneWidget);
-    expect(find.text('Bu bölmə yalnız Baş admin üçündür.'), findsOneWidget);
+    expect(find.text('Bu bölmə yalnız administratorlar üçündür.'), findsOneWidget);
+    expect(src('lib/features/admin/presentation/admin_shell.dart'), isNot(contains('isHeadAdminProvider')),
+        reason: 'an admin is never stopped for not being the Baş admin');
   });
 
   testWidgets('Mənim fəaliyyətim: roles (2 × 2) and every activity section, as before', (tester) async {
@@ -169,6 +173,6 @@ void main() {
     final h = src('lib/features/admin/presentation/head_admin.dart');
     expect(h, contains('isFinanceAdminProvider'));
     expect(h, contains('founderIds()'));
-    expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("'Bu bölmə yalnız Baş admin üçündür.'"));
+    expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("'Bu bölmə yalnız administratorlar üçündür.'"));
   });
 }

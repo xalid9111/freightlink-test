@@ -198,7 +198,9 @@ class _Stats extends StatelessWidget {
   final TirParkSummary? sum;
   final AppStrings s;
   final bool withToday;
-  const _Stats({required this.sum, required this.s, this.withToday = false});
+  /// A tap on "Bu gün" (owner, 04.11.2026): Günlük · Aylıq · İllik.
+  final VoidCallback? onToday;
+  const _Stats({required this.sum, required this.s, this.withToday = false, this.onToday});
 
   @override
   Widget build(BuildContext context) {
@@ -209,12 +211,20 @@ class _Stats extends StatelessWidget {
       _Stat(icon: Icons.local_shipping_outlined, label: s.t('tpo_in'), value: n(v?.inPark), keyName: 'tpo-in'),
       _Stat(icon: Icons.check_circle_outline, label: s.t('tpo_free'), value: n(v?.free), keyName: 'tpo-free', color: AppColors.online),
       if (withToday)
-        _Stat(
-          icon: Icons.payments_outlined,
-          label: s.t('tpo_today'),
-          value: v == null ? '…' : money(v.todayPaid, v.currency),
-          keyName: 'tpo-today',
-          color: AppColors.accent,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey('tpo-today-open'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: onToday,
+            child: _Stat(
+              icon: Icons.payments_outlined,
+              label: s.t('tpo_today'),
+              value: v == null ? '…' : money(v.todayPaid, v.currency),
+              keyName: 'tpo-today',
+              color: AppColors.accent,
+            ),
+          ),
         ),
     ];
     return Row(children: [
@@ -243,7 +253,7 @@ class _Overview extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async => onRefresh(),
       child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 40), children: [
-        _Stats(sum: sum, s: s, withToday: true),
+        _Stats(sum: sum, s: s, withToday: true, onToday: () => showTirParkIncome(context, park, s)),
         if (sum != null) ...[
           const SizedBox(height: 8),
           Container(
@@ -283,6 +293,72 @@ class _Overview extends ConsumerWidget {
         ),
         const SizedBox(height: 14),
         _Activity(park: park, s: s),
+      ]),
+    );
+  }
+}
+
+/// Günlük · Aylıq · İllik income (owner, 04.11.2026, 0094): a tap on "Bu gün".
+Future<void> showTirParkIncome(BuildContext context, TirPark park, AppStrings s) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => TirParkIncomeSheet(park: park, s: s),
+    );
+
+class TirParkIncomeSheet extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const TirParkIncomeSheet({super.key, required this.park, required this.s});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(tirParkIncomeProvider(park.id));
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    Widget part(String key, String title, String when, TirParkIncomePart p, String cur, Color color) => Container(
+          key: ValueKey('tpo-income-$key'),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.6)),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Row(children: [
+              Expanded(child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text))),
+              Text(when, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+            ]),
+            const SizedBox(height: 6),
+            Text(money(p.total, cur),
+                key: ValueKey('tpo-income-$key-total'), style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: color)),
+            const SizedBox(height: 4),
+            Text(s.t('tpo_income_cars', {'amount': money(p.cars, cur), 'n': '${p.exits}'}),
+                style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+            Text(s.t('tpo_income_bookings', {'amount': money(p.bookings, cur)}),
+                style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
+          ]),
+        );
+    return SingleChildScrollView(
+      key: const ValueKey('tpo-income'),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(s.t('tpo_income_title'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 12),
+        if (async.isLoading && !async.hasValue)
+          const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
+        if (async.hasError && !async.hasValue)
+          Text(s.t(async.error is TirParkNotReady ? 'tpo_income_not_ready' : 'tpb_err_generic'),
+              style: TextStyle(color: AppColors.danger)),
+        if (async.valueOrNull case final v?) ...[
+          part('day', s.t('tpo_income_day'), '${two(now.day)}.${two(now.month)}.${now.year}', v.day, v.currency, AppColors.accent),
+          part('month', s.t('tpo_income_month'), '${two(now.month)}.${now.year}', v.month, v.currency, AppColors.online),
+          part('year', s.t('tpo_income_year'), '${now.year}', v.year, v.currency, AppColors.promoPremium),
+          Text(s.t('tpo_income_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+        ],
       ]),
     );
   }

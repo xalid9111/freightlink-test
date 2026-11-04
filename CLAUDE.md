@@ -284,9 +284,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   phone, birth date), "Mənim fəaliyyətim" (/profile/activity: roles 2 × 2 +
   Yüklərim · Servisim · Səhifəm və kataloqum · İş Mərkəzi · Reklam
   sifarişi), "TIR Parkı" (/profile/tirpark: manage, work, bookings, with the
-  red count); "Baş admin idarəetməsi" (Maliyyə, Admin Panel) only for the
+  red count); "Baş admin idarəetməsi" (Maliyyə, Admin Panel) for the
   Baş admin = an admin who is the finance owner (is_finance_admin) or the
-  Founder (founder_ids) — other admins neither see nor open /admin; then
+  Founder (founder_ids); every other platform admin (users.role = admin,
+  appointed by the owner) gets "Admin idarəetməsi" with Admin Panel and
+  opens /admin (owner, 04.11.2026, later the same day); Maliyyə only for the
+  finance owner; then
   "Hesab və görünüş" (text size, Ayarlar, Hesabdan çıxış).
 - Servis / TIRPark "Önə çıxar" (owner, 04.11.2026, 0093): the TIR Bazarı
   sheets (İrəli çək · VIP · Premium), packs, currency and card checkout; own

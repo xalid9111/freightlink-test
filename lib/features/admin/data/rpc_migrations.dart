@@ -188,4 +188,5 @@ const kRpcMigration = <String, String>{
   'place_promo_state': '0093_place_promotions.sql',
   'place_promo_order_create': '0093_place_promotions.sql',
   'admin_place_set_promo_plan': '0093_place_promotions.sql',
+  'tir_park_owner_income': '0094_tir_park_income.sql',
 };

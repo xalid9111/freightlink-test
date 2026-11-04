@@ -1873,5 +1873,15 @@
   "pp_no_area": "Servisin xəritədə yeri seçilməyib. Reklam servisin yerinə görə göstərildiyi üçün əvvəlcə \"Redaktə\" ilə yerini xəritədə seçin.",
   "pp_failed": "Sifariş yaradılmadı. Bir az sonra yenidən cəhd edin.",
   "pp_bump_left": "İrəli çək aktivdir: daha {n} dəfə qalxacaq.",
-  "pp_ad": "Reklam"
+  "pp_ad": "Reklam",
+  "pf_admin_group": "Admin idarəetməsi",
+  "pf_admin_only": "Yalnız adminlər",
+  "tpo_income_title": "Gəlir",
+  "tpo_income_day": "Günlük gəlir",
+  "tpo_income_month": "Aylıq gəlir",
+  "tpo_income_year": "İllik gəlir",
+  "tpo_income_cars": "Maşın çıxışlarından: {amount} ({n} çıxış)",
+  "tpo_income_bookings": "Ödənilmiş rezervasiyalar: {amount}",
+  "tpo_income_hint": "Bakı vaxtı ilə: Günlük — bu gün 00:00-dan, Aylıq — ayın 1-dən, İllik — 1 yanvardan. Parkda olan maşınların pulu çıxışda alınanda əlavə olunur.",
+  "tpo_income_not_ready": "Gəlir bölməsi hələ hazır deyil — bir az sonra yenidən baxın."
 }

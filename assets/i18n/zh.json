@@ -1873,5 +1873,15 @@
   "pp_no_area": "该服务尚未在地图上选择位置。广告按服务位置显示，请先通过“编辑”在地图上选择位置。",
   "pp_failed": "无法创建订单。请稍后再试。",
   "pp_bump_left": "置顶进行中：还剩 {n} 次。",
-  "pp_ad": "广告"
+  "pp_ad": "广告",
+  "pf_admin_group": "管理员管理",
+  "pf_admin_only": "仅限管理员",
+  "tpo_income_title": "收入",
+  "tpo_income_day": "今日收入",
+  "tpo_income_month": "本月收入",
+  "tpo_income_year": "本年收入",
+  "tpo_income_cars": "车辆离场收入：{amount}（{n} 次离场）",
+  "tpo_income_bookings": "已付预订：{amount}",
+  "tpo_income_hint": "按巴库时间：今日 — 从今天 00:00 起，本月 — 从本月 1 日起，本年 — 从 1 月 1 日起。停车场内车辆的费用在离场收取后计入。",
+  "tpo_income_not_ready": "收入功能尚未就绪，请稍后再看。"
 }

@@ -8,10 +8,10 @@ import '../data/admin_repository.dart';
 /// "Baş admin" (owner, 04.11.2026): the owner's own admin account. No new
 /// role: an admin (users.role) who is either the finance owner (0037,
 /// server is_finance_admin()) or the Founder (0045, server founder_ids()).
-/// Only he sees and opens Admin Panel and "Maliyyə və ödənişlər"; other
-/// administrators see neither and a direct /admin link shows "Giriş
-/// qadağandır". The server checks (is_admin(), _require_finance_admin())
-/// are unchanged.
+/// Only his Profil card is titled "Baş admin idarəetməsi". Every other
+/// admin (users.role = admin) also opens Admin Panel (owner, 04.11.2026:
+/// an appointed admin must get in); Maliyyə stays the finance owner's.
+/// The server checks (is_admin(), _require_finance_admin()) are unchanged.
 final isHeadAdminProvider = FutureProvider<bool>((ref) async {
   final uid = ref.watch(currentUserIdProvider);
   if (uid == null) return false;

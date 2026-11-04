@@ -1873,5 +1873,15 @@
   "pp_no_area": "Servisin haritadaki yeri seçilmemiş. Reklam servisin konumuna göre gösterildiği için önce \"Düzenle\" ile yerini haritada seçin.",
   "pp_failed": "Sipariş oluşturulamadı. Biraz sonra tekrar deneyin.",
   "pp_bump_left": "Öne çek aktif: {n} kez daha yükselecek.",
-  "pp_ad": "Reklam"
+  "pp_ad": "Reklam",
+  "pf_admin_group": "Yönetici paneli",
+  "pf_admin_only": "Yalnızca yöneticiler",
+  "tpo_income_title": "Gelir",
+  "tpo_income_day": "Günlük gelir",
+  "tpo_income_month": "Aylık gelir",
+  "tpo_income_year": "Yıllık gelir",
+  "tpo_income_cars": "Araç çıkışlarından: {amount} ({n} çıkış)",
+  "tpo_income_bookings": "Ödenmiş rezervasyonlar: {amount}",
+  "tpo_income_hint": "Bakü saatiyle: Günlük — bugün 00:00'dan, Aylık — ayın 1'inden, Yıllık — 1 Ocak'tan. Parktaki araçların ücreti çıkışta alınınca eklenir.",
+  "tpo_income_not_ready": "Gelir bölümü henüz hazır değil — biraz sonra tekrar bakın."
 }

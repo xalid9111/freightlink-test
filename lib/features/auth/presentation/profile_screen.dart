@@ -156,15 +156,14 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ]);
                 }),
-                // Baş admin only (owner, 04.11.2026): Maliyyə and Admin Panel.
+                // Every platform admin (owner, 04.11.2026 — an admin the owner
+                // appoints must get in): Admin Panel; Maliyyə only for the
+                // finance owner (server is_finance_admin()).
                 if (isAdmin)
-                  Consumer(builder: (context, ref, _) {
-                    if (ref.watch(isHeadAdminProvider).valueOrNull != true) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: _HeadAdminCard(strings: strings),
-                    );
-                  }),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _HeadAdminCard(strings: strings),
+                  ),
                 const SizedBox(height: 14),
                 _MenuCard(children: [
                   _GroupTitle(icon: Icons.settings, title: strings.t('pf_account_group')),
@@ -227,14 +226,15 @@ class _GroupTitle extends StatelessWidget {
       );
 }
 
-/// "Baş admin idarəetməsi" (owner, 04.11.2026): only for the Baş admin
-/// (isHeadAdminProvider); Maliyyə also needs the server's finance owner.
+/// "Baş admin idarəetməsi" / "Admin idarəetməsi": every platform admin
+/// (users.role = admin) gets Admin Panel; Maliyyə only the finance owner.
 class _HeadAdminCard extends ConsumerWidget {
   final AppStrings strings;
   const _HeadAdminCard({required this.strings});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final head = ref.watch(isHeadAdminProvider).valueOrNull == true;
     return Container(
       key: const ValueKey('pf-head-admin'),
       decoration: BoxDecoration(
@@ -246,11 +246,12 @@ class _HeadAdminCard extends ConsumerWidget {
         _GroupTitle(
           icon: Icons.workspace_premium,
           color: AppColors.vipGold,
-          title: strings.t('pf_head_admin'),
+          // The Baş admin keeps his title; other admins see "Admin idarəetməsi".
+          title: strings.t(head ? 'pf_head_admin' : 'pf_admin_group'),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(20)),
-            child: Text(strings.t('pf_head_admin_only'), style: const TextStyle(fontSize: 12, color: Colors.white)),
+            child: Text(strings.t(head ? 'pf_head_admin_only' : 'pf_admin_only'), style: const TextStyle(fontSize: 12, color: Colors.white)),
           ),
         ),
         Padding(

@@ -1873,5 +1873,15 @@
   "pp_no_area": "The service has no place on the map. The ad is shown by the service's place, so first choose it on the map with \"Edit\".",
   "pp_failed": "The order could not be created. Please try again a little later.",
   "pp_bump_left": "Bump is running: {n} more lifts left.",
-  "pp_ad": "Ad"
+  "pp_ad": "Ad",
+  "pf_admin_group": "Admin management",
+  "pf_admin_only": "Admins only",
+  "tpo_income_title": "Income",
+  "tpo_income_day": "Daily income",
+  "tpo_income_month": "Monthly income",
+  "tpo_income_year": "Yearly income",
+  "tpo_income_cars": "From truck exits: {amount} ({n} exits)",
+  "tpo_income_bookings": "Paid bookings: {amount}",
+  "tpo_income_hint": "Baku time: Daily — from 00:00 today, Monthly — from the 1st of the month, Yearly — from 1 January. Trucks still in the park are added when their money is taken at the exit.",
+  "tpo_income_not_ready": "Income is not ready yet — please look again a little later."
 }

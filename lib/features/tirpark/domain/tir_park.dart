@@ -590,3 +590,32 @@ class TirParkReportDay {
         bookingsPaid: _num(j['bookings_paid']),
       );
 }
+
+/// One part of the owner's income (0094): money taken at the exits and the
+/// paid bookings confirmed in that time.
+class TirParkIncomePart {
+  final double cars, bookings;
+  final int exits;
+  const TirParkIncomePart({this.cars = 0, this.bookings = 0, this.exits = 0});
+
+  double get total => cars + bookings;
+
+  factory TirParkIncomePart.fromJson(Object? j) {
+    final m = j is Map ? Map<String, dynamic>.from(j) : const <String, dynamic>{};
+    return TirParkIncomePart(cars: _num(m['cars']), bookings: _num(m['bookings']), exits: _num(m['exits']).round());
+  }
+}
+
+/// Günlük · Aylıq · İllik (owner, 04.11.2026, 0094; Baku days).
+class TirParkIncome {
+  final TirParkIncomePart day, month, year;
+  final String currency;
+  const TirParkIncome({required this.day, required this.month, required this.year, this.currency = 'AZN'});
+
+  factory TirParkIncome.fromJson(Map<String, dynamic> j) => TirParkIncome(
+        day: TirParkIncomePart.fromJson(j['day']),
+        month: TirParkIncomePart.fromJson(j['month']),
+        year: TirParkIncomePart.fromJson(j['year']),
+        currency: (j['currency'] as String?) ?? 'AZN',
+      );
+}

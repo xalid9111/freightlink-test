@@ -225,6 +225,12 @@ class TirParkRepository {
         return TirParkParked.fromJson(Map<String, dynamic>.from(res as Map));
       });
 
+  /// Günlük · Aylıq · İllik income (0094) — the owner's only.
+  Future<TirParkIncome> ownerIncome(String parkId) => _run(() async {
+        final res = await _c.rpc('tir_park_owner_income', params: {'p_park': parkId}).timeout(_timeout);
+        return TirParkIncome.fromJson(Map<String, dynamic>.from(res as Map));
+      });
+
   Future<TirParkSummary> ownerSummary(String parkId) => _run(() async {
         final res = await _c.rpc('tir_park_owner_summary', params: {'p_park': parkId}).timeout(_timeout);
         return TirParkSummary.fromJson(Map<String, dynamic>.from(res as Map));
@@ -512,6 +518,9 @@ final tirParkParkedProvider =
 
 final tirParkSummaryProvider =
     FutureProvider.autoDispose.family<TirParkSummary, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerSummary(parkId));
+
+final tirParkIncomeProvider =
+    FutureProvider.autoDispose.family<TirParkIncome, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerIncome(parkId));
 
 final tirParkFeedProvider =
     FutureProvider.autoDispose.family<List<TirParkFeedItem>, String>((ref, parkId) => ref.watch(tirParkRepositoryProvider).ownerFeed(parkId));
