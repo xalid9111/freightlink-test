@@ -403,7 +403,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           StatefulShellBranch(routes: [
-            GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+            GoRoute(
+              path: '/profile',
+              builder: (context, state) => const ProfileScreen(),
+              // Owner's design (04.11.2026): the details on their own pages.
+              routes: [
+                GoRoute(path: 'personal', builder: (context, state) => const ProfilePersonalScreen()),
+                GoRoute(path: 'activity', builder: (context, state) => const ProfileActivityScreen()),
+                GoRoute(path: 'tirpark', builder: (context, state) => const ProfileTirParkScreen()),
+              ],
+            ),
           ]),
           // Branch 5 — TIRPark (owner, 31.10.2026; was the Services tab).
           // Servislər stays in the same tab, opened from TIRPark.

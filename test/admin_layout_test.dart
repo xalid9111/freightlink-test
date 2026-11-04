@@ -14,6 +14,7 @@ import 'package:freightlink/core/site/site_access.dart';
 import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/features/auth/domain/app_user.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
+import 'package:freightlink/features/admin/presentation/head_admin.dart';
 import 'package:freightlink/features/admin/presentation/admin_shell.dart';
 import 'package:freightlink/features/admin/presentation/admin_providers.dart';
 import 'package:freightlink/features/admin/presentation/admin_services_page.dart';
@@ -58,6 +59,8 @@ Widget app(String section) => ProviderScope(
         adminAuditProvider.overrideWith((ref) => Stream.value(const [])),
         adminAdOrdersProvider.overrideWith((ref) => Stream.value(const [])),
         adminServiceCountsProvider.overrideWith((ref) async => {'pending': 2, 'claims': 1, 'reports': 0}),
+        // The Baş admin (owner, 04.11.2026) — only he opens Admin Panel.
+        isHeadAdminProvider.overrideWith((ref) async => true),
       ],
       child: MaterialApp(theme: AppTheme.dark, home: AdminShell(section: section)),
     );

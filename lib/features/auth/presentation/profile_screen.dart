@@ -18,6 +18,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import 'providers/auth_providers.dart';
+import '../domain/app_user.dart';
 import 'widgets/activity_buttons.dart';
 import '../data/activities_repository.dart';
 import '../domain/activities.dart';
@@ -27,21 +28,37 @@ import '../../../core/router/safe_navigation.dart';
 import '../../tirpark/data/tir_park_repository.dart';
 import '../../tirpark/domain/tir_park.dart';
 import '../../finance/presentation/finance_providers.dart';
+import '../../admin/presentation/head_admin.dart';
 
 /// Profile (owner's design): title + settings gear, a card with photo,
 /// name, role · country and badges, a contact card (e-mail / phone), the
 /// main links, then Settings and sign out. Language, haptic and password
 /// moved to Settings (/settings).
+String _roleLabel(AppStrings strings, String role) => switch (role) {
+      AppConstants.roleCargoOwner => strings.t('role_label_cargo_owner'),
+      AppConstants.roleCarrier => strings.t('role_label_carrier'),
+      AppConstants.roleDriver => strings.t('role_label_driver'),
+      AppConstants.roleAdmin => strings.t('role_label_admin'),
+      _ => role,
+    };
+
+/// One account: what the user does, not the old signup role (admins keep
+/// their label).
+String _roleLine(WidgetRef ref, AppStrings strings, AppUser user) => user.role == AppConstants.roleAdmin
+    ? _roleLabel(strings, user.role)
+    : activitiesWire(ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{}).map((w) => strings.t('act_$w')).join(' · ');
+
+/// Everything waiting in TIR Parkı: receipts (0085) + workers to approve
+/// (0088) + requests waiting for a park admin (0089).
+int tirParkWaitingCount(WidgetRef ref) {
+  final pay = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
+  final wk = ref.watch(tirParkPendingWorkersProvider).valueOrNull ?? 0;
+  final adm = [for (final p in ref.watch(myWorkParksProvider).valueOrNull ?? const <TirParkWorkPlace>[]) p.pending].fold<int>(0, (a, b) => a + b);
+  return pay + wk + adm;
+}
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
-
-  String _roleLabel(AppStrings strings, String role) => switch (role) {
-        AppConstants.roleCargoOwner => strings.t('role_label_cargo_owner'),
-        AppConstants.roleCarrier => strings.t('role_label_carrier'),
-        AppConstants.roleDriver => strings.t('role_label_driver'),
-        AppConstants.roleAdmin => strings.t('role_label_admin'),
-        _ => role,
-      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,133 +101,73 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                // Daşıyıcı · Yük verən · Usta / Servis · Satış (any combination).
-                ActivityButtons(s: strings),
-                const SizedBox(height: 14),
                 _ProfileCard(
                   userId: user.id,
                   fallbackName: user.fullName,
                   fallbackPhone: user.phone,
                   email: user.email,
-                  // One account: what the user does, not the old signup role
-                  // (admins keep their label).
-                  roleLabel: isAdmin
-                      ? _roleLabel(strings, user.role)
-                      : activitiesWire(ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{})
-                          .map((w) => strings.t('act_$w'))
-                          .join(' · '),
+                  roleLabel: _roleLine(ref, strings, user),
                   strings: strings,
+                  details: false,
                 ),
                 const SizedBox(height: 14),
+                // Owner's design (04.11.2026): one entry each; the details open
+                // on their own pages (/profile/personal, /profile/activity,
+                // /profile/tirpark).
                 _MenuCard(children: [
                   _MenuRow(
-                    icon: Icons.inventory_2_outlined,
-                    iconColor: AppColors.blue,
-                    title: strings.t('pf_my_loads'),
-                    subtitle: strings.t('pf_my_loads_sub'),
-                    onTap: () => context.pushOnce('/my-cargo'),
-                  ),
-                  Consumer(builder: (context, ref, _) {
-                    final mine = ref.watch(myServiceProvider).valueOrNull;
-                    return _MenuRow(
-                      icon: mine == null ? Icons.add_business_outlined : Icons.storefront,
-                      iconColor: AppColors.text,
-                      title: mine == null ? strings.t('pf_join_service') : strings.t('svc_my_service'),
-                      subtitle: mine == null ? strings.t('pf_join_service_sub') : mine.name,
-                      onTap: () => context.pushOnce(mine == null ? '/service-join' : '/service/${mine.id}'),
-                    );
-                  }),
-                  _MenuRow(
-                    icon: Icons.storefront_outlined,
+                    key: const ValueKey('pf-personal'),
+                    icon: Icons.person,
                     iconColor: AppColors.accent,
-                    title: strings.t('pf_my_page'),
-                    subtitle: strings.t('profile_my_page_sub'),
-                    onTap: () => context.pushOnce('/user/${user.id}'),
+                    title: strings.t('pf_personal'),
+                    subtitle: strings.t('pf_personal_sub'),
+                    onTap: () => context.pushOnce('/profile/personal'),
                   ),
-                  // İş Mərkəzi — SmartMatch (owner, 26.10.2026): the same page as
-                  // the icon on the Loads page.
+                ]),
+                const SizedBox(height: 12),
+                _MenuCard(children: [
                   _MenuRow(
-                    icon: Icons.handshake_outlined,
+                    key: const ValueKey('pf-activity'),
+                    icon: Icons.layers_outlined,
                     iconColor: AppColors.blue,
-                    title: strings.t('job_center'),
-                    subtitle: strings.t('job_center_profile_sub'),
-                    onTap: () => context.pushOnce('/jobs'),
+                    title: strings.t('pf_activity'),
+                    subtitle: strings.t('pf_activity_sub'),
+                    onTap: () => context.pushOnce('/profile/activity'),
                   ),
-                  // TIR parks (owner, 01.11.2026, 0079): managing a park and
-                  // one's own space bookings.
-                  // A receipt waiting (0085): a red count and "n ödəniş
-                  // yoxlanılır" under the title.
-                  Consumer(builder: (context, ref, _) {
-                    final pay = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
-                    // + workers waiting for approval (0088).
-                    final wk = ref.watch(tirParkPendingWorkersProvider).valueOrNull ?? 0;
-                    final n = pay + wk;
-                    return _MenuRow(
-                      key: const ValueKey('pf-tirpark-manage'),
+                ]),
+                const SizedBox(height: 12),
+                // TIR Parkı: park management, workers, bookings — one entry with
+                // the red count of everything waiting (0085, 0088, 0089).
+                Consumer(builder: (context, ref, _) {
+                  final n = tirParkWaitingCount(ref);
+                  return _MenuCard(children: [
+                    _MenuRow(
+                      key: const ValueKey('pf-tirpark'),
                       icon: Icons.local_parking,
                       iconColor: AppColors.accent,
-                      title: strings.t('tpm_title'),
-                      subtitle: n > 0
-                          ? [
-                              if (pay > 0) strings.t('tpm_pending_sub', {'n': '$pay'}),
-                              if (wk > 0) strings.t('tpo_workers_pending', {'n': '$wk'}),
-                            ].join(' · ')
-                          : strings.t('tpm_sub'),
+                      title: strings.t('pf_tirpark'),
+                      subtitle: strings.t('pf_tirpark_sub'),
                       badge: n,
-                      onTap: () async {
-                        await context.pushOnce('/tirpark/manage');
-                        ref.invalidate(tirParkManagerPendingProvider);
-                        ref.invalidate(tirParkPendingWorkersProvider);
-                      },
-                    );
-                  }),
-                  // A park's worker (0087): joins by the owner's invitation.
-                  // The park's admin (0089): a red count of requests waiting.
+                      onTap: () => context.pushOnce('/profile/tirpark'),
+                    ),
+                  ]);
+                }),
+                // Baş admin only (owner, 04.11.2026): Maliyyə and Admin Panel.
+                if (isAdmin)
                   Consumer(builder: (context, ref, _) {
-                    final wk = [for (final p in ref.watch(myWorkParksProvider).valueOrNull ?? const <TirParkWorkPlace>[]) p.pending]
-                        .fold<int>(0, (a, b) => a + b);
-                    return _MenuRow(
-                      key: const ValueKey('pf-tirpark-work'),
-                      icon: Icons.badge_outlined,
-                      iconColor: AppColors.accent,
-                      title: strings.t('tpw_title'),
-                      subtitle: wk > 0 ? strings.t('tpo_workers_pending', {'n': '$wk'}) : strings.t('tpw_sub'),
-                      badge: wk,
-                      onTap: () async {
-                        await context.pushOnce('/tirpark/work');
-                        ref.invalidate(myWorkParksProvider);
-                      },
+                    if (ref.watch(isHeadAdminProvider).valueOrNull != true) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: _HeadAdminCard(strings: strings),
                     );
                   }),
-                  _MenuRow(
-                    key: const ValueKey('pf-tirpark-bookings'),
-                    icon: Icons.event_available_outlined,
-                    iconColor: AppColors.accent,
-                    title: strings.t('tpb_my'),
-                    subtitle: strings.t('tpb_my_sub'),
-                    onTap: () => context.pushOnce('/tirpark/bookings'),
-                  ),
-                  // Shown while the admin's "Reklam ver" switch is on, or
-                  // when this user already has ad orders (to pay / follow).
-                  Consumer(builder: (context, ref, _) {
-                    final on = ref.watch(adsOrderingEnabledProvider).valueOrNull ?? false;
-                    final hasOrders = (ref.watch(myAdOrdersProvider).valueOrNull ?? const []).isNotEmpty;
-                    if (!on && !hasOrders) return const SizedBox.shrink();
-                    return _MenuRow(
-                      icon: Icons.campaign_outlined,
-                      iconColor: AppColors.accent,
-                      title: strings.t('pf_ads'),
-                      subtitle: strings.t('pf_ads_sub'),
-                      onTap: () => context.pushOnce('/ads'),
-                    );
-                  }),
-                ]),
                 const SizedBox(height: 14),
-                // Text size 1—5 for everyone (owner, 24.10.2026), right in Profil.
                 _MenuCard(children: [
+                  _GroupTitle(icon: Icons.settings, title: strings.t('pf_account_group')),
+                  // Text size 1—5 for everyone (owner, 24.10.2026), right in Profil.
                   Padding(
                     key: const ValueKey('profile-text-size'),
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                       Row(children: [
                         Icon(Icons.format_size, size: 20, color: AppColors.accent),
@@ -222,29 +179,6 @@ class ProfileScreen extends ConsumerWidget {
                       const TextSizePicker(),
                     ]),
                   ),
-                ]),
-                const SizedBox(height: 14),
-                _MenuCard(children: [
-                  // Only the finance owner (server decides; 0037).
-                  if (isAdmin)
-                    Consumer(builder: (context, ref, _) {
-                      if (ref.watch(isFinanceAdminProvider).valueOrNull != true) return const SizedBox.shrink();
-                      return _MenuRow(
-                        icon: Icons.account_balance_wallet_outlined,
-                        iconColor: AppColors.accent,
-                        title: strings.t('pf_finance'),
-                        subtitle: strings.t('pf_finance_sub'),
-                        onTap: () => context.pushOnce('/finance'),
-                      );
-                    }),
-                  if (isAdmin)
-                    _MenuRow(
-                      icon: Icons.admin_panel_settings_outlined,
-                      iconColor: AppColors.accent,
-                      title: strings.t('admin_panel_title'),
-                      subtitle: strings.t('admin_panel_subtitle'),
-                      onTap: () => context.go('/admin'),
-                    ),
                   _MenuRow(
                     icon: Icons.settings,
                     iconColor: AppColors.text,
@@ -269,6 +203,264 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+/// A titled group inside a card ("Hesab və görünüş", "Fəaliyyət rollarım").
+class _GroupTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color? color;
+  final Widget? trailing;
+  const _GroupTitle({required this.icon, required this.title, this.color, this.trailing});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+        child: Row(children: [
+          Icon(icon, size: 24, color: color ?? AppColors.text),
+          const SizedBox(width: 12),
+          Expanded(child: Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text))),
+          if (trailing != null) trailing!,
+        ]),
+      );
+}
+
+/// "Baş admin idarəetməsi" (owner, 04.11.2026): only for the Baş admin
+/// (isHeadAdminProvider); Maliyyə also needs the server's finance owner.
+class _HeadAdminCard extends ConsumerWidget {
+  final AppStrings strings;
+  const _HeadAdminCard({required this.strings});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      key: const ValueKey('pf-head-admin'),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.accent, width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _GroupTitle(
+          icon: Icons.workspace_premium,
+          color: AppColors.vipGold,
+          title: strings.t('pf_head_admin'),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(20)),
+            child: Text(strings.t('pf_head_admin_only'), style: const TextStyle(fontSize: 12, color: Colors.white)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+          child: _MenuCard(children: [
+            Consumer(builder: (context, ref, _) {
+              if (ref.watch(isFinanceAdminProvider).valueOrNull != true) return const SizedBox.shrink();
+              return _MenuRow(
+                key: const ValueKey('pf-finance'),
+                icon: Icons.account_balance_wallet_outlined,
+                iconColor: AppColors.accent,
+                title: strings.t('pf_finance'),
+                subtitle: strings.t('pf_finance_sub'),
+                onTap: () => context.pushOnce('/finance'),
+              );
+            }),
+            _MenuRow(
+              key: const ValueKey('pf-admin'),
+              icon: Icons.admin_panel_settings_outlined,
+              iconColor: AppColors.accent,
+              title: strings.t('admin_panel_title'),
+              subtitle: strings.t('admin_panel_subtitle'),
+              onTap: () => context.go('/admin'),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// A page under Profil with a back arrow and a title.
+class _ProfileSubPage extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const _ProfileSubPage({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: children),
+        ),
+      );
+}
+
+/// Profil → "Şəxsi məlumatlarım": name, e-mail, phone and birth date edited
+/// in one place (the same editors as before).
+class ProfilePersonalScreen extends ConsumerWidget {
+  const ProfilePersonalScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(stringsProvider);
+    final user = ref.watch(authStateProvider).valueOrNull;
+    return _ProfileSubPage(title: strings.t('pf_personal'), children: [
+      if (user == null)
+        Center(child: Text(strings.t('profile_not_logged_in')))
+      else
+        _ProfileCard(
+          userId: user.id,
+          fallbackName: user.fullName,
+          fallbackPhone: user.phone,
+          email: user.email,
+          roleLabel: _roleLine(ref, strings, user),
+          strings: strings,
+        ),
+    ]);
+  }
+}
+
+/// Profil → "Mənim fəaliyyətim": the roles (Daşıyıcı · Yük verən · Usta /
+/// Servis · Satış) and the activity sections, as before, on one page.
+class ProfileActivityScreen extends ConsumerWidget {
+  const ProfileActivityScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(stringsProvider);
+    final user = ref.watch(authStateProvider).valueOrNull;
+    return _ProfileSubPage(title: strings.t('pf_activity'), children: [
+      _MenuCard(children: [
+        _GroupTitle(icon: Icons.layers_outlined, color: AppColors.blue, title: strings.t('pf_activity_roles')),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          child: ActivityButtons(s: strings, grid: true),
+        ),
+      ]),
+      const SizedBox(height: 14),
+      _MenuCard(children: [
+        _GroupTitle(icon: Icons.grid_view_rounded, color: AppColors.blue, title: strings.t('pf_activity_sections')),
+        _MenuRow(
+          icon: Icons.inventory_2_outlined,
+          iconColor: AppColors.blue,
+          title: strings.t('pf_my_loads'),
+          subtitle: strings.t('pf_my_loads_sub'),
+          onTap: () => context.pushOnce('/my-cargo'),
+        ),
+        Consumer(builder: (context, ref, _) {
+          final mine = ref.watch(myServiceProvider).valueOrNull;
+          return _MenuRow(
+            icon: mine == null ? Icons.add_business_outlined : Icons.storefront,
+            iconColor: AppColors.text,
+            title: mine == null ? strings.t('pf_join_service') : strings.t('svc_my_service'),
+            subtitle: mine == null ? strings.t('pf_join_service_sub') : mine.name,
+            onTap: () => context.pushOnce(mine == null ? '/service-join' : '/service/${mine.id}'),
+          );
+        }),
+        if (user != null)
+          _MenuRow(
+            icon: Icons.storefront_outlined,
+            iconColor: AppColors.accent,
+            title: strings.t('pf_my_page'),
+            subtitle: strings.t('profile_my_page_sub'),
+            onTap: () => context.pushOnce('/user/${user.id}'),
+          ),
+        // İş Mərkəzi — SmartMatch (owner, 26.10.2026): the same page as
+        // the icon on the Loads page.
+        _MenuRow(
+          icon: Icons.handshake_outlined,
+          iconColor: AppColors.blue,
+          title: strings.t('job_center'),
+          subtitle: strings.t('job_center_profile_sub'),
+          onTap: () => context.pushOnce('/jobs'),
+        ),
+        // Shown while the admin's "Reklam ver" switch is on, or
+        // when this user already has ad orders (to pay / follow).
+        Consumer(builder: (context, ref, _) {
+          final on = ref.watch(adsOrderingEnabledProvider).valueOrNull ?? false;
+          final hasOrders = (ref.watch(myAdOrdersProvider).valueOrNull ?? const []).isNotEmpty;
+          if (!on && !hasOrders) return const SizedBox.shrink();
+          return _MenuRow(
+            icon: Icons.campaign_outlined,
+            iconColor: AppColors.accent,
+            title: strings.t('pf_ads'),
+            subtitle: strings.t('pf_ads_sub'),
+            onTap: () => context.pushOnce('/ads'),
+          );
+        }),
+      ]),
+    ]);
+  }
+}
+
+/// Profil → "TIR Parkı": managing a park, working at a park (invitations,
+/// the park admin's İşçilər) and one's own space bookings — the same
+/// entries and red counts as before (0079 – 0089).
+class ProfileTirParkScreen extends ConsumerWidget {
+  const ProfileTirParkScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(stringsProvider);
+    return _ProfileSubPage(title: strings.t('pf_tirpark'), children: [
+      _MenuCard(children: [
+        // A receipt waiting (0085): a red count and "n ödəniş
+        // yoxlanılır" under the title.
+        Consumer(builder: (context, ref, _) {
+          final pay = ref.watch(tirParkManagerPendingProvider).valueOrNull ?? 0;
+          // + workers waiting for approval (0088).
+          final wk = ref.watch(tirParkPendingWorkersProvider).valueOrNull ?? 0;
+          final n = pay + wk;
+          return _MenuRow(
+            key: const ValueKey('pf-tirpark-manage'),
+            icon: Icons.local_parking,
+            iconColor: AppColors.accent,
+            title: strings.t('tpm_title'),
+            subtitle: n > 0
+                ? [
+                    if (pay > 0) strings.t('tpm_pending_sub', {'n': '$pay'}),
+                    if (wk > 0) strings.t('tpo_workers_pending', {'n': '$wk'}),
+                  ].join(' · ')
+                : strings.t('tpm_sub'),
+            badge: n,
+            onTap: () async {
+              await context.pushOnce('/tirpark/manage');
+              ref.invalidate(tirParkManagerPendingProvider);
+              ref.invalidate(tirParkPendingWorkersProvider);
+            },
+          );
+        }),
+        // A park's worker (0087): joins by the owner's invitation.
+        // The park's admin (0089): a red count of requests waiting.
+        Consumer(builder: (context, ref, _) {
+          final wk = [for (final p in ref.watch(myWorkParksProvider).valueOrNull ?? const <TirParkWorkPlace>[]) p.pending]
+              .fold<int>(0, (a, b) => a + b);
+          return _MenuRow(
+            key: const ValueKey('pf-tirpark-work'),
+            icon: Icons.badge_outlined,
+            iconColor: AppColors.accent,
+            title: strings.t('tpw_title'),
+            subtitle: wk > 0 ? strings.t('tpo_workers_pending', {'n': '$wk'}) : strings.t('tpw_sub'),
+            badge: wk,
+            onTap: () async {
+              await context.pushOnce('/tirpark/work');
+              ref.invalidate(myWorkParksProvider);
+            },
+          );
+        }),
+        _MenuRow(
+          key: const ValueKey('pf-tirpark-bookings'),
+          icon: Icons.event_available_outlined,
+          iconColor: AppColors.accent,
+          title: strings.t('tpb_my'),
+          subtitle: strings.t('tpb_my_sub'),
+          onTap: () => context.pushOnce('/tirpark/bookings'),
+        ),
+      ]),
+    ]);
+  }
+}
+
 /// Photo (tap to change), name + pencil, role · country, badges, and the
 /// e-mail / phone box (tap to add or change the phone).
 class _ProfileCard extends ConsumerStatefulWidget {
@@ -278,6 +470,9 @@ class _ProfileCard extends ConsumerStatefulWidget {
   final String email;
   final String roleLabel;
   final AppStrings strings;
+  /// false on the Profil page (picture, name, role, badges); true on
+  /// "Şəxsi məlumatlarım" (+ name, e-mail, phone, birth date to edit).
+  final bool details;
   const _ProfileCard({
     required this.userId,
     required this.fallbackName,
@@ -285,6 +480,7 @@ class _ProfileCard extends ConsumerStatefulWidget {
     required this.email,
     required this.roleLabel,
     required this.strings,
+    this.details = true,
   });
 
   @override
@@ -612,6 +808,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
+                        if (widget.details)
                         IconButton(
                           tooltip: strings.t('profile_name_edit'),
                           visualDensity: VisualDensity.compact,
@@ -651,6 +848,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
               ),
             ],
           ),
+          if (widget.details) ...[
           const SizedBox(height: 14),
           // E-mail and phone; tap to add / change the phone.
           InkWell(
@@ -729,6 +927,7 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
               ]),
             ),
           ),
+          ],
         ],
       ),
     );

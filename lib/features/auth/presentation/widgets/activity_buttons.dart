@@ -21,7 +21,9 @@ IconData activityIcon(Activity a) => switch (a) {
 /// off. Off never deletes anything (offers, chats, service stay).
 class ActivityButtons extends ConsumerWidget {
   final AppStrings s;
-  const ActivityButtons({super.key, required this.s});
+  /// Two in a row, larger (the "Mənim fəaliyyətim" page, owner 04.11.2026).
+  final bool grid;
+  const ActivityButtons({super.key, required this.s, this.grid = false});
 
   Future<void> _tap(BuildContext context, WidgetRef ref, Activity a) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -48,6 +50,29 @@ class ActivityButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final on = ref.watch(myActivitiesProvider).valueOrNull ?? const <Activity>{};
+    Widget button(Activity a) => _ActivityButton(
+          key: ValueKey('act-${a.wire}'),
+          icon: activityIcon(a),
+          label: s.t(a.labelKey),
+          selected: on.contains(a),
+          large: grid,
+          onTap: () => _tap(context, ref, a),
+        );
+    if (grid) {
+      const all = Activity.values;
+      return Column(children: [
+        for (var i = 0; i < all.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: 10),
+          IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Expanded(child: button(all[i])),
+              const SizedBox(width: 10),
+              Expanded(child: i + 1 < all.length ? button(all[i + 1]) : const SizedBox.shrink()),
+            ]),
+          ),
+        ],
+      ]);
+    }
     // Same height for all four; a larger text size makes them taller
     // instead of cutting the label.
     return IntrinsicHeight(
@@ -76,8 +101,10 @@ class _ActivityButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final bool large;
   final VoidCallback onTap;
-  const _ActivityButton({super.key, required this.icon, required this.label, required this.selected, required this.onTap});
+  const _ActivityButton(
+      {super.key, required this.icon, required this.label, required this.selected, required this.onTap, this.large = false});
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +121,7 @@ class _ActivityButton extends StatelessWidget {
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            constraints: const BoxConstraints(minHeight: 68),
+            constraints: BoxConstraints(minHeight: large ? 82 : 68),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
@@ -103,14 +130,14 @@ class _ActivityButton extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 22, color: fg),
+                Icon(icon, size: large ? 28 : 22, color: fg),
                 const SizedBox(height: 4),
                 Text(
                   label,
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.5, height: 1.1, fontWeight: FontWeight.w500, color: fg),
+                  style: TextStyle(fontSize: large ? 15 : 11.5, height: 1.1, fontWeight: FontWeight.w500, color: fg),
                 ),
               ],
             ),
