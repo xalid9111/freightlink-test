@@ -191,7 +191,7 @@ class _AdminBookings extends ConsumerWidget {
           ListTile(
             key: ValueKey('atp-b-${b.id}'),
             contentPadding: EdgeInsets.zero,
-            title: Text('${b.bookingNo} · ${b.trucks} TIR${(b.plate ?? '').isEmpty ? '' : ' · ${b.plate}'} · '
+            title: Text('${b.bookingNo} · ${b.trucks} TIR${b.allPlates.isEmpty ? '' : ' · ${b.platesLabel}'} · '
                 '${b.amount.toStringAsFixed(2)} ${b.currency}${b.paidMode == 'test' ? ' · TEST' : ''}'),
             subtitle: Text('${b.startAt.toString().substring(0, 16)} → ${b.endAt.toString().substring(0, 16)} · '
                 '${_bookingLabel[b.shownStatus] ?? b.shownStatus}'),

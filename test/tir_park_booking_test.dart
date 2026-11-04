@@ -43,11 +43,11 @@ class _FakeRepo extends TirParkRepository {
   @override
   Future<int> freePlaces(String parkId, DateTime from, DateTime to) async => free;
   @override
-  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate) async {
-    booked.add('$parkId|$trucks|$plate');
+  Future<TirParkBooking> book(String parkId, DateTime from, DateTime to, int trucks, String plate, {List<String> plates = const []}) async {
+    booked.add('$parkId|$trucks|$plate${plates.length > 1 ? '|${plates.join(',')}' : ''}');
     return TirParkBooking(
         id: 'b1', bookingNo: 'TP1', parkId: parkId, trucks: trucks, units: 2, unit: 'hour', startAt: from, endAt: to, amount: 10,
-        status: 'pending_payment', plate: plate);
+        status: 'pending_payment', plate: plate, plates: plates.length > 1 ? plates : const []);
   }
   @override
   Future<List<TirPark>> myManaged() async => managed;
@@ -194,17 +194,32 @@ void main() {
     expect(find.byKey(const ValueKey('tpb-terms')), findsNothing);
     await tester.enterText(find.byKey(const ValueKey('tpb-plate')), ' 99 zb 911 ');
     await tester.pump();
+    // 2 TIRs: a plate for each (0092).
+    expect(find.byKey(const ValueKey('tpb-plate-2')), findsOneWidget, reason: 'a 2nd plate field for the 2nd TIR');
+    await tester.tap(find.byKey(const ValueKey('tpb-book')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpb-terms')), findsNothing, reason: 'the 2nd TIR has no plate yet');
+    expect(find.text('Maşının dövlət nömrəsini yazın (məs. 99-ZB-911).'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate-2')), '99-ZB-911');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('tpb-book')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hər TIR-in nömrəsi fərqli olmalıdır.'), findsOneWidget, reason: 'the same plate twice');
+    expect(find.byKey(const ValueKey('tpb-terms')), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate-2')), '10 aa 002');
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpb-terms')), findsOneWidget, reason: 'conditions shown first');
+    expect(find.text('Maşınların nömrələri: 99-ZB-911, 10-AA-002'), findsOneWidget, reason: 'every plate in the summary');
     expect(find.textContaining('FreightLink pul qəbul etmir'), findsWidgets);
     expect(repo.booked, isEmpty, reason: 'nothing is held before the driver agrees');
     await tester.tap(find.byKey(const ValueKey('tpb-go')));
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(repo.booked, ['p1|2|99-ZB-911'], reason: 'the plate goes with the booking, tidy');
-    expect(find.text('Maşının dövlət nömrəsi: 99-ZB-911'), findsOneWidget, reason: 'on the payment sheet');
+    expect(repo.booked, ['p1|2|99-ZB-911|99-ZB-911,10-AA-002'], reason: 'one tidy plate per TIR goes with the booking');
+    expect(find.text('Maşınların nömrələri: 99-ZB-911, 10-AA-002'), findsOneWidget, reason: 'on the payment sheet');
     expect(find.byType(TirParkPaySheet), findsOneWidget, reason: 'after booking: where to pay');
     expect(find.text('4169 7388 1234 5678'), findsOneWidget);
     expect(find.text('AZ21NABZ00000000137010001944'), findsOneWidget);
@@ -334,9 +349,10 @@ void main() {
     expect(find.text('2 gün'), findsOneWidget);
     expect(find.text('3.00 AZN / gün × 2 gün × 2 TIR = 12.00 AZN'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('tpb-plate')), '10-AB-123');
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate-2')), '10-AB-124');
     await tester.tap(find.byKey(const ValueKey('tpb-book')));
     await tester.pumpAndSettle();
-    expect(find.text('Maşının dövlət nömrəsi: 10-AB-123'), findsOneWidget, reason: 'the plate in the summary');
+    expect(find.text('Maşınların nömrələri: 10-AB-123, 10-AB-124'), findsOneWidget, reason: 'the plates in the summary');
     expect(find.byKey(const ValueKey('tpb-calc-confirm')), findsOneWidget, reason: 'the calculation again before anything is held');
     expect(find.textContaining('Yekun: 12.00 AZN'), findsOneWidget);
   });
@@ -680,6 +696,62 @@ void main() {
     expect(sql, contains('after update of price, price_unit on public.tir_parks'));
     expect(sql, contains('where park_id = new.id and exited_at is null'), reason: 'trucks that left keep what was taken');
     expect(src('lib/features/tirpark/presentation/tir_park_owner_panel.dart'), contains('if (mounted) _refresh();'));
+  });
+
+  testWidgets('one plate field per TIR (0092): 1 TIR = 1 field; fewer TIRs remove the extra fields', (tester) async {
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final day = TirPark.fromJson({..._jsonOf(_park), 'price': 3, 'price_unit': 'day', 'bookable': 6});
+    final repo = _FakeRepo()..free = 6;
+    await tester.pumpWidget(_app(Scaffold(body: SingleChildScrollView(child: TirParkBookingSection(park: day, s: _az))), repo));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tpb-plate')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tpb-plate-2')), findsNothing, reason: 'one TIR: one plate, as before');
+    expect(find.text('Maşının dövlət nömrəsi'), findsOneWidget);
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byKey(const ValueKey('tpb-trucks-plus')));
+      await tester.pump();
+    }
+    expect(find.byKey(const ValueKey('tpb-plate-3')), findsOneWidget);
+    expect(find.text('TIR 1 — dövlət nömrəsi'), findsOneWidget);
+    expect(find.text('TIR 3 — dövlət nömrəsi'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpb-trucks-minus')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('tpb-plate-3')), findsNothing);
+    expect(find.byKey(const ValueKey('tpb-plate-2')), findsOneWidget);
+    // A single TIR books with the one plate (the old 5-argument call).
+    await tester.tap(find.byKey(const ValueKey('tpb-trucks-minus')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const ValueKey('tpb-plate')), '10-AB-123');
+    await tester.tap(find.byKey(const ValueKey('tpb-book')));
+    await tester.pumpAndSettle();
+    expect(find.text('Maşının dövlət nömrəsi: 10-AB-123'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tpb-go')));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(repo.booked, ['p1|1|10-AB-123']);
+  });
+
+  test('bookings show every plate (0092); an old booking shows its one plate', () {
+    final many = TirParkBooking.fromJson({
+      'id': 'b', 'booking_no': 'TP1', 'park_id': 'p', 'trucks': 2, 'units': 1, 'unit': 'day', 'amount': 6,
+      'status': 'confirmed', 'plate': '10-AA-001', 'plates': ['10-AA-001', '10-AA-002'],
+    });
+    expect(many.allPlates, ['10-AA-001', '10-AA-002']);
+    expect(many.platesLabel, '10-AA-001, 10-AA-002');
+    final old = TirParkBooking.fromJson({'id': 'b', 'trucks': 1, 'status': 'confirmed', 'plate': '99-ZB-911'});
+    expect(old.allPlates, ['99-ZB-911']);
+    final none = TirParkBooking.fromJson({'id': 'b', 'status': 'confirmed'});
+    expect(none.allPlates, isEmpty);
+    final exp = TirParkExpected.fromJson({'id': 'e', 'plate': '10-AA-003', 'plates': ['10-AA-003'], 'status': 'checked_in'});
+    expect(exp.allPlates, ['10-AA-003']);
+    final sql = src('supabase/migrations/0092_tir_park_booking_plates.sql');
+    expect(sql, contains('p_plate text, p_plates text[])'), reason: 'the 6-argument booking; the 5-argument one is kept');
+    expect(sql, contains("raise exception 'duplicate_plate'"));
+    expect(sql, contains("raise exception 'plates_count'"));
+    expect(sql.toLowerCase().contains('drop table') || sql.toLowerCase().contains('drop function'), isFalse);
   });
 
   test('wired: server-side rules, checkout, webhook, RLS, no card data, no commission', () {
