@@ -175,6 +175,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   Colours only via `AppColors` / `ChatColors` (palette getters, see
   `app_theme.dart`), never hard-coded. App font: Arial (Liberation
   Sans). 6 languages: az, tr, en, ru, ka, zh — every new text in all six.
+  The chosen language is also kept on the account (users.preferred_lang,
+  owner 04.11.2026): a signed-in user gets it in every browser / the Home
+  Screen app; a new choice is written to both; zh stays on the device.
   Font weights (owner, 25.10.2026, Turbo.az-like): text, names, routes,
   cities, dates, technical data, filters w400; buttons / active choices
   w500; prices and main headings w600; w700+ only for VIP / PRO badges and
