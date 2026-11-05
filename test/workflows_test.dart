@@ -18,5 +18,7 @@ void main() {
     expect(f.contains(r'${{ secrets.SUPABASE_ACCESS_TOKEN }}'), isTrue);
     expect(RegExp(r'sbp_[A-Za-z0-9]{10,}').hasMatch(f), isFalse);
     expect(f.contains('supabase functions deploy "\${{ inputs.function }}" --project-ref jqdqtfmxnqezlsetelpi'), isTrue);
+    // Newer Supabase CLIs ask before deploying; a GitHub run cannot answer (05.11.2026).
+    expect(RegExp(r'functions deploy .* --yes\s*$', multiLine: true).hasMatch(f), isTrue);
   });
 }

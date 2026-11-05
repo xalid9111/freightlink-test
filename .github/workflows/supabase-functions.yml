@@ -50,4 +50,5 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         # verify_jwt per function comes from supabase/config.toml.
-        run: supabase functions deploy "${{ inputs.function }}" --project-ref jqdqtfmxnqezlsetelpi
+        # --yes: newer CLIs ask before deploying and stop when nobody can answer (05.11.2026).
+        run: supabase functions deploy "${{ inputs.function }}" --project-ref jqdqtfmxnqezlsetelpi --yes
