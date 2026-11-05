@@ -1883,5 +1883,7 @@
   "tpo_income_cars": "From truck exits: {amount} ({n} exits)",
   "tpo_income_bookings": "Paid bookings: {amount}",
   "tpo_income_hint": "Baku time: Daily — from 00:00 today, Monthly — from the 1st of the month, Yearly — from 1 January. Trucks still in the park are added when their money is taken at the exit.",
-  "tpo_income_not_ready": "Income is not ready yet — please look again a little later."
+  "tpo_income_not_ready": "Income is not ready yet — please look again a little later.",
+  "tpo_promo_title": "Promote the park — advertise",
+  "tpo_promo_sub": "Bump · VIP · Premium — show your park first on the TIRPark map and list"
 }

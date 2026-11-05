@@ -187,6 +187,18 @@ void main() {
     expect(promo, contains('place: true'));
     expect(src('lib/features/finance/presentation/card_checkout.dart'), contains('startPlacePromoCheckout'));
     expect(src('supabase/functions/payments-checkout/index.ts'), contains('place_promo_order_id'));
+    // The park owner's panel (owner, 05.11.2026): "Reklam ver" whenever he wants.
+    final panel = src('lib/features/tirpark/presentation/tir_park_owner_panel.dart');
+    expect(panel, contains("ValueKey('tpo-promo')"));
+    expect(panel, contains('showPromoChooser(context, s, PlacePromoTarget(PlaceTarget.tirpark, park.id, promo))'));
+    expect(panel, contains('_ParkPromoCard(park: park, s: s)'));
+    // 0095: every pack available, admin prices kept, API reloaded.
+    final act = src('supabase/migrations/0095_place_promo_activate.sql');
+    expect(act, contains('on conflict (target, kind, qty) do nothing'));
+    expect(act, contains("notify pgrst, 'reload schema'"));
+    for (final pack in ["('vip', 30, 40)", "('premium', 30, 60)", "('bump', 10, 15)"]) {
+      expect(act, contains(pack), reason: pack);
+    }
     // Never among Loads.
     for (final f in Directory('lib/features/cargo').listSync(recursive: true).whereType<File>()) {
       expect(f.readAsStringSync(), isNot(contains('place_promo')), reason: f.path);

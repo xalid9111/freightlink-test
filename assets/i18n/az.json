@@ -1883,5 +1883,7 @@
   "tpo_income_cars": "Maşın çıxışlarından: {amount} ({n} çıxış)",
   "tpo_income_bookings": "Ödənilmiş rezervasiyalar: {amount}",
   "tpo_income_hint": "Bakı vaxtı ilə: Günlük — bu gün 00:00-dan, Aylıq — ayın 1-dən, İllik — 1 yanvardan. Parkda olan maşınların pulu çıxışda alınanda əlavə olunur.",
-  "tpo_income_not_ready": "Gəlir bölməsi hələ hazır deyil — bir az sonra yenidən baxın."
+  "tpo_income_not_ready": "Gəlir bölməsi hələ hazır deyil — bir az sonra yenidən baxın.",
+  "tpo_promo_title": "Parkı önə çıxar — reklam ver",
+  "tpo_promo_sub": "İrəli çək · VIP · Premium — parkınız TIRPark xəritəsində və siyahısında birinci görünsün"
 }

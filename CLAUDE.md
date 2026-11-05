@@ -299,7 +299,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   list + map / the TIRPark map + list (100 km), with the "Reklam" mark; a tap
   opens the service / park page. Never shown among Loads. Only the service's
   owner (approved, active, real map place) or the park's approved manager
-  (approved park) orders; applied only after a verified payment.
+  (approved park) orders; applied only after a verified payment. The park
+  owner's panel has "Parkı önə çıxar — reklam ver" on Ümumi (owner,
+  05.11.2026); 0095 adds any missing pack with the standard Loads prices
+  (never changes an admin's price) and reloads the API.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

@@ -12,6 +12,9 @@ import '../domain/tir_park.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_exit_dialog.dart';
 import 'tir_park_manage.dart' show TirParkNewPayments;
+import '../../market/domain/market_models.dart' show MarketPromoKind;
+import '../../market/presentation/market_promo.dart';
+import '../../promo/place_promo.dart';
 
 /// "1 gün 4 saat" · "5 saat" · "35 dəq".
 String tirParkDuration(AppStrings s, Duration d) {
@@ -269,6 +272,8 @@ class _Overview extends ConsumerWidget {
             ]),
           ),
         ],
+        // "Reklam ver" (owner, 05.11.2026, 0093): the park's Önə çıxar.
+        _ParkPromoCard(park: park, s: s),
         // Workers waiting for approval (0088) → İşçilər.
         _WorkersWaiting(park: park, s: s, onOpen: onOpenWorkers),
         // Receipts waiting for "Ödənişi təsdiqlə".
@@ -360,6 +365,64 @@ class TirParkIncomeSheet extends ConsumerWidget {
           Text(s.t('tpo_income_hint'), style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
         ],
       ]),
+    );
+  }
+}
+
+/// "Parkı önə çıxar" on Ümumi (owner, 05.11.2026): İrəli çək · VIP ·
+/// Premium for this park whenever the owner wants (the same sheets and
+/// checkout as on the park page); what runs now is shown on the card.
+class _ParkPromoCard extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const _ParkPromoCard({required this.park, required this.s});
+
+  String _date(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final promo = watchPlacePromos(ref, PlaceTarget.tirpark, [park.id])[park.id];
+    final String sub;
+    if (promo != null && promo.isVip) {
+      sub = s.t('mk_promo_paid_until', {'date': _date((promo.isPremium ? promo.premiumUntil : promo.vipUntil ?? promo.premiumUntil)!)});
+    } else if (promo?.bumpLeft != null) {
+      sub = s.t('pp_bump_left', {'n': '${promo!.bumpLeft}'});
+    } else {
+      sub = s.t('tpo_promo_sub');
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Material(
+        color: AppColors.promoPremium.withValues(alpha: AppColors.isDay ? 0.10 : 0.12),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.promoPremium.withValues(alpha: 0.6))),
+        child: InkWell(
+          key: const ValueKey('tpo-promo'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => showPromoChooser(context, s, PlacePromoTarget(PlaceTarget.tirpark, park.id, promo)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              const MarketPromoIcon(MarketPromoKind.premium, size: 34),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Flexible(
+                      child: Text(s.t('tpo_promo_title'),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+                    ),
+                    if (promo != null && promo.isPromoted) ...[const SizedBox(width: 6), PlacePromoTag(s: s, promo: promo)],
+                  ]),
+                  const SizedBox(height: 2),
+                  Text(sub, key: const ValueKey('tpo-promo-sub'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                ]),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.textSoft),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }
