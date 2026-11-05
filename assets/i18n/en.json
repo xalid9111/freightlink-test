@@ -1895,5 +1895,6 @@
   "cover_upload_sub": "Choose a picture from your device",
   "cover_error": "The background was not changed. Please try again.",
   "cover_logo_change": "Change profile picture",
-  "tp_photos_title": "Photos"
+  "tp_photos_title": "Photos",
+  "tp_shops": "Shops"
 }

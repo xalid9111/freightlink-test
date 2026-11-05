@@ -440,7 +440,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 GoRoute(path: 'work', builder: (context, state) => const TirParkWorkScreen()),
               ],
             ),
-            GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),
+            GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),
           ]),
           // Branch 6 — TIR Bazarı: a separate part of the app, downloaded
           // only when the tab is opened (deferred).

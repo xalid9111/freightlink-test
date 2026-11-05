@@ -317,6 +317,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   edit, Aktiv / Passiv, delete (profiles keep a deleted template); server
   checks + Audit Log. On TIRPark a tap on a park's name or picture opens its
   page (owner, 05.11.2026); the rest of the card selects it.
+- Premium map markers (owner, 05.11.2026): promoted (0093) parks, services
+  and shops get the owner's gold icons (assets/images/premium: park, service,
+  shop = a service selling spare parts, category spare_parts), 20 % bigger
+  than ordinary markers (which stay as they were), never clustered, "Premium"
+  label for the Premium tier. 1 s after the map is ready they drop once onto
+  their own coordinates (short fall, squash, one small bounce), one after
+  another; moving the map never replays it. The switch on both maps is
+  Parklar | Servislər | Mağazalar (Mağazalar = the services map filtered to
+  spare_parts, /services?shops=1). TIR Bazarı has no map.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

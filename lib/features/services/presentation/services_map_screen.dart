@@ -23,19 +23,27 @@ import '../../../core/widgets/page_hero.dart';
 import '../../tirpark/presentation/map_page_banner.dart';
 import '../../tirpark/presentation/tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
+import '../../promo/premium_pin.dart';
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
 /// tow trucks, with category chips, filters, a results sheet and
 /// Call / Message / Route on every card.
+/// The shops' category (spare parts sales, 0043).
+const kShopCategory = 'spare_parts';
+
 class ServicesMapScreen extends ConsumerStatefulWidget {
-  const ServicesMapScreen({super.key});
+  /// "Mağazalar" (owner, 05.11.2026): the shops — services that sell spare
+  /// parts ("Ehtiyat hissələri satışı", 0043) — with the same map and list.
+  final bool shops;
+  const ServicesMapScreen({super.key, this.shops = false});
 
   @override
   ConsumerState<ServicesMapScreen> createState() => _ServicesMapScreenState();
 }
 
-class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
+class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
+    with SingleTickerProviderStateMixin, PremiumDropHost<ServicesMapScreen> {
   final _map = MapController();
   final _sheet = DraggableScrollableController();
   final _searchCtrl = TextEditingController();
@@ -56,6 +64,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.shops) _query = _query.copyWith(category: () => kShopCategory);
     _searchFocus.addListener(_onFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
   }
@@ -65,7 +74,21 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant ServicesMapScreen old) {
+    super.didUpdateWidget(old);
+    // Servislər ↔ Mağazalar from the switch (the address says which).
+    if (old.shops != widget.shops) {
+      setState(() {
+        _query = _query.copyWith(category: () => widget.shops ? kShopCategory : null);
+        _selectedId = null;
+        _picked = null;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    disposePremium();
     _searchFocus.removeListener(_onFocus);
     _searchCtrl.dispose();
     _searchFocus.dispose();
@@ -214,9 +237,14 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
   }
 
   /// Simple grid clustering so weak phones never draw hundreds of pins.
-  List<Marker> _markers(List<ServiceProvider> all, LatLng? me, Map<String, PlacePromo> promos) {
+  /// A promoted service / shop: the premium marker (owner, 05.11.2026).
+  bool _premium(ServiceProvider p, Map<String, PlacePromo> promos) => promos[p.id]?.isPromoted ?? false;
+
+  List<Marker> _markers(List<ServiceProvider> all, LatLng? me, Map<String, PlacePromo> promos, String premiumLabel) {
     final out = <Marker>[];
-    final items = [for (final p in all) if (hasRealCoords(p.lat, p.lng)) p];
+    // Promoted places are never put into a cluster; they get the premium
+    // marker below (on top of the others).
+    final items = [for (final p in all) if (hasRealCoords(p.lat, p.lng) && !_premium(p, promos)) p];
     final zoom = _zoomBucket;
     if (zoom >= 14 || items.length <= 25) {
       for (final p in items) {
@@ -227,7 +255,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           height: sel ? 46 : 38,
           child: GestureDetector(
             onTap: () => _select(p),
-            child: PlacePromoPin(promo: promos[p.id], pin: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro)),
+            child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro),
           ),
         ));
       }
@@ -248,7 +276,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
               height: sel ? 46 : 38,
               child: GestureDetector(
                   onTap: () => _select(p),
-                  child: PlacePromoPin(promo: promos[p.id], pin: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro))),
+                  child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro)),
             ));
           }
           continue;
@@ -274,6 +302,32 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
           ),
         ));
       }
+    }
+    // Premium: the shop (spare parts) or service icon, 20 % bigger, its tip
+    // on the place's own point, dropped in once after the map.
+    for (final p in all) {
+      if (!_premium(p, promos) || !hasRealCoords(p.lat, p.lng)) continue;
+      final size = p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize;
+      out.add(Marker(
+        key: ValueKey('svc-premium-${p.id}'),
+        point: LatLng(p.lat, p.lng),
+        width: size,
+        height: size,
+        alignment: Alignment.topCenter,
+        child: GestureDetector(
+          onTap: () => _select(p),
+          child: PremiumDropIn(
+            clock: premiumClock,
+            started: premiumStarted,
+            index: premiumIndex(p.id),
+            child: PremiumMarker(
+              kind: premiumKindOfService(p.categories),
+              size: size,
+              label: promos[p.id]!.isPremium ? premiumLabel : null,
+            ),
+          ),
+        ),
+      ));
     }
     if (me != null) {
       out.add(Marker(
@@ -322,6 +376,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
     final promos = promoAsync.valueOrNull ?? _lastPromos;
     if (promoAsync.hasValue) _lastPromos = promoAsync.value!;
     final promoted = promotedFirst(List.of(items), (p) => p.id, promos);
+    premiumMaybeStart(promoAsync.hasValue ? [for (final p in promoted) if (_premium(p, promos)) p.id] : null);
     items
       ..clear()
       ..addAll(promoted);
@@ -406,6 +461,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                 interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                 onMapReady: () {
                   _mapReady = true;
+                  premiumMapReady();
                   final p = ref.read(userLocationProvider).point;
                   if (p != null) _moveMap(p, 12);
                 },
@@ -443,7 +499,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                       strokeWidth: 4,
                     ),
                   ]),
-                MarkerLayer(markers: _markers(items, me, promos)),
+                MarkerLayer(markers: _markers(items, me, promos, s.t('mk_promo_premium'))),
                 const AppMapAttribution(),
               ],
             ),
@@ -514,7 +570,13 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: ParksServicesSwitch(parks: false, s: s, onParks: () => context.go('/tirpark'), onServices: () {}),
+                    child: ParksServicesSwitch(
+                        parks: false,
+                        shops: _query.category == kShopCategory,
+                        s: s,
+                        onParks: () => context.go('/tirpark'),
+                        onServices: () => context.go('/services'),
+                        onShops: () => context.go('/services?shops=1')),
                   ),
                   if (_searchFocus.hasFocus && _searchCtrl.text.trim().length >= 2)
                     TextFieldTapRegion(

@@ -19,6 +19,7 @@ import 'tir_park_add_sheet.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
+import '../../promo/premium_pin.dart';
 
 /// TIRPark (owner, 31.10.2026, picture): the banner, the map with the park
 /// pins, the search, "TIR parkı əlavə et" and the nearby parks below.
@@ -34,7 +35,7 @@ class TirParkScreen extends ConsumerStatefulWidget {
 /// Nearby list radius (owner's picture: "5 park · 100 km").
 const kTirParkRadiusKm = 100.0;
 
-class _TirParkScreenState extends ConsumerState<TirParkScreen> {
+class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTickerProviderStateMixin, PremiumDropHost<TirParkScreen> {
   final _map = MapController();
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
@@ -55,6 +56,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
 
   @override
   void dispose() {
+    disposePremium();
     _search.dispose();
     _searchFocus.dispose();
     _sheet.dispose();
@@ -155,6 +157,9 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
         ChatLocation(url: 'https://maps.google.com/?q=${p.lat},${p.lng}', lat: p.lat, lng: p.lng),
       );
 
+  /// A promoted, approved park: the premium marker (0093 / 05.11.2026).
+  bool _premium(TirPark p, Map<String, PlacePromo> promos) => p.isApproved && (promos[p.id]?.isPromoted ?? false);
+
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
@@ -175,6 +180,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
     final promos = promoAsync.valueOrNull ?? _lastPromos;
     if (promoAsync.hasValue) _lastPromos = promoAsync.value!;
     final ordered = promotedFirst(found, (e) => e.$1.id, promos);
+    premiumMaybeStart(promoAsync.hasValue ? [for (final p in ordered) if (_premium(p.$1, promos)) p.$1.id, for (final p in shownOnMap) if (_premium(p, promos)) p.id] : null);
     // The selected park stands first in the list.
     final list = [
       ...ordered.where((e) => e.$1.id == _selectedId),
@@ -221,6 +227,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                     interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                     onMapReady: () {
                       _mapReady = true;
+                      premiumMapReady();
                       if (me != null) _move(me, 11);
                     },
                     onTap: (_, __) {
@@ -241,17 +248,40 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                       ]),
                     MarkerLayer(markers: [
                       for (final p in shownOnMap)
-                        Marker(
-                          key: ValueKey('tp-pin-${p.id}'),
-                          point: LatLng(p.lat, p.lng),
-                          width: 46,
-                          height: 54,
-                          alignment: Alignment.topCenter,
-                          child: GestureDetector(
+                        if (!_premium(p, promos))
+                          Marker(
+                            key: ValueKey('tp-pin-${p.id}'),
+                            point: LatLng(p.lat, p.lng),
+                            width: 46,
+                            height: 54,
+                            alignment: Alignment.topCenter,
+                            child: GestureDetector(
+                                onTap: () => _select(p), child: TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
+                          ),
+                      // Promoted parks (owner, 05.11.2026): the premium icon,
+                      // 20 % bigger, on top, dropped in once after the map.
+                      for (final p in shownOnMap)
+                        if (_premium(p, promos))
+                          Marker(
+                            key: ValueKey('tp-premium-${p.id}'),
+                            point: LatLng(p.lat, p.lng),
+                            width: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                            height: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                            alignment: Alignment.topCenter,
+                            child: GestureDetector(
                               onTap: () => _select(p),
-                              child: PlacePromoPin(
-                                  promo: promos[p.id], pin: TirParkPin(approved: p.isApproved, selected: p.id == _selectedId))),
-                        ),
+                              child: PremiumDropIn(
+                                clock: premiumClock,
+                                started: premiumStarted,
+                                index: premiumIndex(p.id),
+                                child: PremiumMarker(
+                                  kind: PremiumPinKind.park,
+                                  size: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                                  label: promos[p.id]!.isPremium ? s.t('mk_promo_premium') : null,
+                                ),
+                              ),
+                            ),
+                          ),
                       if (me != null)
                         Marker(
                           point: me,
@@ -326,7 +356,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: ParksServicesSwitch(parks: true, s: s, onParks: () {}, onServices: () => context.go('/services')),
+                    child: ParksServicesSwitch(
+                        parks: true,
+                        s: s,
+                        onParks: () {},
+                        onServices: () => context.go('/services'),
+                        onShops: () => context.go('/services?shops=1')),
                   ),
                 ]),
               ),

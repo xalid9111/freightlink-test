@@ -1895,5 +1895,6 @@
   "cover_upload_sub": "Cihazından resim seç",
   "cover_error": "Arka plan değiştirilemedi. Tekrar deneyin.",
   "cover_logo_change": "Profil resmini değiştir",
-  "tp_photos_title": "Fotoğraflar"
+  "tp_photos_title": "Fotoğraflar",
+  "tp_shops": "Mağazalar"
 }

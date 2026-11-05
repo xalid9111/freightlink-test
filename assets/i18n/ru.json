@@ -1895,5 +1895,6 @@
   "cover_upload_sub": "Выберите фото на устройстве",
   "cover_error": "Не удалось сменить фон. Попробуйте ещё раз.",
   "cover_logo_change": "Сменить фото профиля",
-  "tp_photos_title": "Фото"
+  "tp_photos_title": "Фото",
+  "tp_shops": "Магазины"
 }
