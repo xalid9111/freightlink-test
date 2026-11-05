@@ -1896,5 +1896,12 @@
   "cover_error": "The background was not changed. Please try again.",
   "cover_logo_change": "Change profile picture",
   "tp_photos_title": "Photos",
-  "tp_shops": "Shops"
+  "tp_shops": "Shops",
+  "job_tab_need": "Driver wanted",
+  "job_tab_need_sub": "(Employer looking for a driver)",
+  "job_tab_seek": "Looking for work",
+  "job_tab_seek_sub": "(Driver looking for work)",
+  "job_tab_locked_seek": "With your driver profile you see the employers' vacancies (\"Driver wanted\").",
+  "job_tab_locked_need": "As an employer you see the drivers looking for work (\"Looking for work\").",
+  "job_tile_exp": "Experience: {n} yrs"
 }

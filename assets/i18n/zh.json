@@ -1896,5 +1896,12 @@
   "cover_error": "背景未能更换，请重试。",
   "cover_logo_change": "更换头像",
   "tp_photos_title": "照片",
-  "tp_shops": "商店"
+  "tp_shops": "商店",
+  "job_tab_need": "招聘司机",
+  "job_tab_need_sub": "（雇主招聘司机）",
+  "job_tab_seek": "求职",
+  "job_tab_seek_sub": "（司机求职）",
+  "job_tab_locked_seek": "使用司机资料时，您看到的是雇主的职位（“招聘司机”）。",
+  "job_tab_locked_need": "作为雇主，您看到的是求职司机（“求职”）。",
+  "job_tile_exp": "经验：{n} 年"
 }

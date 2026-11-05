@@ -1896,5 +1896,12 @@
   "cover_error": "Fon şəkli dəyişdirilmədi. Yenidən cəhd edin.",
   "cover_logo_change": "Profil şəklini dəyiş",
   "tp_photos_title": "Şəkillər",
-  "tp_shops": "Mağazalar"
+  "tp_shops": "Mağazalar",
+  "job_tab_need": "Sürücü axtarılır",
+  "job_tab_need_sub": "(İşəgötürən – sürücü axtarır)",
+  "job_tab_seek": "İş axtarıram",
+  "job_tab_seek_sub": "(Sürücü – iş axtarır)",
+  "job_tab_locked_seek": "Sürücü profilinizlə sahibkarların vakansiyaları göstərilir (\"Sürücü axtarılır\").",
+  "job_tab_locked_need": "Sahibkar kimi sürücülərin iş axtarışı elanları göstərilir (\"İş axtarıram\").",
+  "job_tile_exp": "Təcrübə: {n} il"
 }

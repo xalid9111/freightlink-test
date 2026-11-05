@@ -154,3 +154,89 @@ class JobFeedCard extends StatelessWidget {
     );
   }
 }
+
+/// One square-ish card of "Elanlar" on the home page (owner's picture,
+/// 05.11.2026): the truck / briefcase square, the title, Təcrübə, the place
+/// and one chip (İş rejimi or salary) — all from the ad itself.
+class JobFeedTile extends StatelessWidget {
+  final JobFeedItem item;
+  final AppStrings s;
+  final String lang;
+  final List<JobCatalogItem> specs;
+  /// Orange / blue icon square, in turns (chessboard, as in the picture).
+  final bool warm;
+  /// Square-ish: the row gives its width × 0.85 (never shorter; taller when
+  /// the text needs it).
+  final double minHeight;
+  const JobFeedTile(
+      {super.key, required this.item, required this.s, required this.lang, required this.specs, this.warm = true, this.minHeight = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = warm ? AppColors.accent : AppColors.blue;
+    final exp = item.experience;
+    final where = jobFeedWhere(item, lang, s);
+    final schedules = item.isVacancy ? item.vacancy!.allSchedules : item.seeker!.allSchedules;
+    final salary = jobFeedSalary(item, s);
+    final chip = item.isVacancy
+        ? (salary ?? (schedules.isEmpty ? null : s.t('job_sch_${schedules.first}')))
+        : (schedules.isEmpty ? salary : s.t('job_sch_${schedules.first}'));
+    Widget fact(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Row(children: [
+            Icon(icon, size: 17, color: AppColors.textSoft),
+            const SizedBox(width: 6),
+            Expanded(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: AppColors.text))),
+          ]),
+        );
+    return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: minHeight),
+        child: Material(
+          color: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+          child: InkWell(
+            key: ValueKey('job-feed-${item.isVacancy ? 'v' : 'd'}-${item.id}'),
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => context.pushOnce(item.route),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: c.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
+                    child: Icon(item.isVacancy ? Icons.work : Icons.local_shipping, color: c, size: 26),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(jobFeedTitle(s, item, specs),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.2, color: AppColors.text)),
+                  ),
+                ]),
+                const SizedBox(height: 4),
+                if (exp != null && exp > 0) fact(Icons.work_history_outlined, s.t('job_tile_exp', {'n': '$exp'})),
+                if (where != null) fact(Icons.place_outlined, where),
+                const Spacer(),
+                if (chip != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    key: const ValueKey('job-tile-chip'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                    child: Text(chip,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13, color: AppColors.blue)),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+        ),
+      );
+  }
+}

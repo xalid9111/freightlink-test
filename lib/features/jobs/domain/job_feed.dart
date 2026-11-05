@@ -127,3 +127,44 @@ List<JobSuggestion> jobSuggestions({
   out.sort((a, b) => (b.match.percent ?? 0).compareTo(a.match.percent ?? 0));
   return out.take(limit).toList();
 }
+
+// ---- "Elanlar" on the home page (owner's picture, 05.11.2026) --------------
+
+/// Truck work: TIR, fura and lorry drivers ("İş axtarıram" shows only these;
+/// bus and machine-only drivers are left out). "other" and an empty list
+/// stay (a driver who did not pick a type).
+const kJobTruckSpecialties = {'tent', 'ref', 'container', 'dump', 'tanker', 'open', 'car_carrier', 'tow', 'other'};
+
+bool isTruckSeeker(JobSeeker p) => p.specialties.isEmpty || p.specialties.any(kJobTruckSpecialties.contains);
+
+/// The home feed: [buildJobFeed] with only truck drivers among the drivers.
+List<JobFeedItem> homeJobFeed(List<JobVacancy> vacancies, List<JobSeeker> seekers, {JobFeedFilter filter = const JobFeedFilter()}) =>
+    buildJobFeed(vacancies, [for (final p in seekers) if (isTruckSeeker(p)) p], filter: filter);
+
+/// Which side of "Elanlar" my role sees (owner, 05.11.2026): a driver
+/// (driver profile, no vacancy) only the employers' vacancies ("Sürücü
+/// axtarılır"), an employer (a vacancy, no driver profile) only the drivers
+/// looking for work ("İş axtarıram"); both sides or none yet: both.
+class JobFeedRoles {
+  final bool driver, employer;
+  const JobFeedRoles({required this.driver, required this.employer});
+
+  bool get onlyVacancies => driver && !employer;
+  bool get onlyDrivers => employer && !driver;
+
+  bool allows(JobFeedKind k) => switch (k) {
+        JobFeedKind.vacancies => !onlyDrivers,
+        JobFeedKind.drivers => !onlyVacancies,
+        JobFeedKind.all => !onlyVacancies && !onlyDrivers,
+      };
+
+  /// The side shown first: the one my role looks for.
+  JobFeedKind preferred(JobFeedKind fallback) =>
+      onlyVacancies ? JobFeedKind.vacancies : (onlyDrivers ? JobFeedKind.drivers : fallback);
+
+  /// [k] if my role may see it, else my side.
+  JobFeedKind clamp(JobFeedKind k) => allows(k) ? k : preferred(JobFeedKind.vacancies);
+}
+
+JobFeedRoles jobFeedRoles({required bool hasDriverProfile, required bool hasVacancies}) =>
+    JobFeedRoles(driver: hasDriverProfile, employer: hasVacancies);
