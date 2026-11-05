@@ -189,4 +189,9 @@ const kRpcMigration = <String, String>{
   'place_promo_order_create': '0093_place_promotions.sql',
   'admin_place_set_promo_plan': '0093_place_promotions.sql',
   'tir_park_owner_income': '0094_tir_park_income.sql',
+  'tir_park_set_cover': '0096_profile_covers.sql',
+  'tir_park_set_logo': '0096_profile_covers.sql',
+  'service_set_cover': '0096_profile_covers.sql',
+  'admin_cover_template_save': '0096_profile_covers.sql',
+  'admin_cover_template_delete': '0096_profile_covers.sql',
 };

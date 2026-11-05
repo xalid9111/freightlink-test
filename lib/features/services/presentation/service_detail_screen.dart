@@ -18,6 +18,8 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../promo/place_promo.dart';
+import '../../covers/profile_covers.dart';
+import '../../ads/presentation/public_profile_screen.dart' show ProfileCoverPlaceholder;
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -67,26 +69,14 @@ class ServiceDetailScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
               children: [
-                if (p.photos.isNotEmpty) ...[
-                  _Photos(urls: p.photos),
-                  const SizedBox(height: 14),
-                ],
-                if (p.isPro) ...[
-                  _ProBanner(s: s),
-                  const SizedBox(height: 10),
-                ],
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(width: 44, height: 44, child: ServicePin(type: p.markerType, active: p.isActive, selected: true, pro: p.isPro)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(p.name, style: AppFonts.display(size: 24, color: AppColors.text)),
-                          const SizedBox(height: 4),
-                          Wrap(
+                // The owner's design (05.11.2026, 0096): the background with
+                // the service's sign over its edge; "Fon şəklini dəyiş" for
+                // the owner only. The pictures below stay as they were.
+                _ServiceHeader(
+                  p: p,
+                  s: s,
+                  owner: isOwner,
+                  subtitle: Wrap(
                             spacing: 8,
                             runSpacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -99,11 +89,15 @@ class ServiceDetailScreen extends ConsumerWidget {
                                 Text('· ${s.t('svc_mobile_service')}', style: TextStyle(color: AppColors.accent, fontSize: 13)),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
+                if (p.isPro) ...[
+                  const SizedBox(height: 10),
+                  _ProBanner(s: s),
+                ],
+                if (p.photos.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _Photos(urls: p.photos),
+                ],
                 // The owner's FreightLink page (catalog of work, about…).
                 if (p.ownerId != null) ...[
                   const SizedBox(height: 10),
@@ -719,6 +713,50 @@ class _ClaimButtonState extends ConsumerState<_ClaimButton> {
         icon: const Icon(Icons.how_to_reg_outlined),
         label: Text(widget.s.t(_sent ? 'svc_claim_sent_short' : 'svc_claim_button')),
       ),
+    );
+  }
+}
+
+/// The background + the service's sign + the name (0096): the owner
+/// changes the background (templates / own picture); nothing else.
+class _ServiceHeader extends ConsumerWidget {
+  final ServiceProvider p;
+  final AppStrings s;
+  final bool owner;
+  final Widget subtitle;
+  const _ServiceHeader({required this.p, required this.s, required this.owner, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = (CoverSection.service, p.id);
+    final media = ref.watch(placeMediaProvider(key)).valueOrNull ?? const PlaceMedia();
+    final repo = ref.read(coverRepositoryProvider);
+    return PlaceCoverHeader(
+      coverUrl: media.cover,
+      fallback: const ProfileCoverPlaceholder(),
+      avatar: Container(
+        color: AppColors.card,
+        padding: const EdgeInsets.all(18),
+        child: ServicePin(type: p.markerType, active: p.isActive, selected: true, pro: p.isPro),
+      ),
+      name: p.name,
+      subtitle: subtitle,
+      changeLabel: s.t('cover_change'),
+      onChangeCover: owner
+          ? () async {
+              final ok = await changeCover(
+                context: context,
+                ref: ref,
+                s: s,
+                section: CoverSection.service,
+                current: media.cover,
+                aspect: kPlaceCoverAspect,
+                upload: (b, t) => repo.upload('service-${p.id}', b, contentType: t),
+                save: (url) => repo.setServiceCover(p.id, url),
+              );
+              if (ok) ref.invalidate(placeMediaProvider(key));
+            }
+          : null,
     );
   }
 }

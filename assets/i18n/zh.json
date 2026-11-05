@@ -1885,5 +1885,15 @@
   "tpo_income_hint": "按巴库时间：今日 — 从今天 00:00 起，本月 — 从本月 1 日起，本年 — 从 1 月 1 日起。停车场内车辆的费用在离场收取后计入。",
   "tpo_income_not_ready": "收入功能尚未就绪，请稍后再看。",
   "tpo_promo_title": "推广停车场 — 投放广告",
-  "tpo_promo_sub": "置顶 · VIP · Premium — 让您的停车场在 TIRPark 地图和列表中排在首位"
+  "tpo_promo_sub": "置顶 · VIP · Premium — 让您的停车场在 TIRPark 地图和列表中排在首位",
+  "cover_change": "更换背景",
+  "cover_pick_title": "选择背景",
+  "cover_pick_sub": "更换您的资料背景 — 从管理员准备的模板中选择，或上传您自己的图片。",
+  "cover_templates": "从模板中选择",
+  "cover_templates_none": "暂无模板。",
+  "cover_upload": "上传自己的图片",
+  "cover_upload_sub": "从设备中选择图片",
+  "cover_error": "背景未能更换，请重试。",
+  "cover_logo_change": "更换头像",
+  "tp_photos_title": "照片"
 }

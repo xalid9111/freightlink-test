@@ -1885,5 +1885,15 @@
   "tpo_income_hint": "Baku time: Daily — from 00:00 today, Monthly — from the 1st of the month, Yearly — from 1 January. Trucks still in the park are added when their money is taken at the exit.",
   "tpo_income_not_ready": "Income is not ready yet — please look again a little later.",
   "tpo_promo_title": "Promote the park — advertise",
-  "tpo_promo_sub": "Bump · VIP · Premium — show your park first on the TIRPark map and list"
+  "tpo_promo_sub": "Bump · VIP · Premium — show your park first on the TIRPark map and list",
+  "cover_change": "Change background",
+  "cover_pick_title": "Choose a background",
+  "cover_pick_sub": "Change your profile background — pick one of the templates prepared by the admin or upload your own picture.",
+  "cover_templates": "Pick a template",
+  "cover_templates_none": "No templates yet.",
+  "cover_upload": "Upload your own picture",
+  "cover_upload_sub": "Choose a picture from your device",
+  "cover_error": "The background was not changed. Please try again.",
+  "cover_logo_change": "Change profile picture",
+  "tp_photos_title": "Photos"
 }

@@ -3,16 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/phone_countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/presence/online_users.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/gif.dart';
 import '../../../core/widgets/framed_image.dart';
-import '../../../core/widgets/image_frame_editor.dart';
+import '../../covers/profile_covers.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_page_repository.dart';
 import '../../../repositories/profile_repository.dart';
@@ -78,89 +76,16 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('profile_link_copied'))));
   }
 
-  /// The camera on the cover: a new picture, or — when there is one —
-  /// "Yerini düzəlt" to move / zoom it in the cover's frame (owner, 29.10.2026).
-  Future<void> _coverMenu(AppStrings s, String? current) async {
-    if (current == null || current.isEmpty) return _changeCover(s);
-    final pick = await showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            key: const ValueKey('cover-new'),
-            leading: const Icon(Icons.photo_library_outlined),
-            title: Text(s.t('photo_new')),
-            onTap: () => Navigator.of(ctx).pop('new'),
-          ),
-          ListTile(
-            key: const ValueKey('cover-adjust'),
-            leading: const Icon(Icons.crop_free),
-            title: Text(s.t('photo_adjust')),
-            onTap: () => Navigator.of(ctx).pop('adjust'),
-          ),
-        ]),
-      ),
-    );
-    if (pick == 'new') return _changeCover(s);
-    if (pick != 'adjust' || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final f = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
-      fullscreenDialog: true,
-      builder: (_) => ImageFrameEditorScreen(
-        image: NetworkImage(ImageFraming.baseOf(current)),
-        initial: ImageFraming.of(current),
-        aspect: _coverAspect(),
-        circle: false,
-        title: s.t('profile_change_cover'),
-        s: s,
-      ),
-    ));
-    if (f == null) return;
-    try {
-      await ref.read(profilePageRepositoryProvider).setCoverFraming(current, f);
-      ref.invalidate(profileDetailsProvider(widget.userId));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(s.t('profile_photo_error'))));
-    }
-  }
+  /// "Fon şəklini dəyiş" (owner, 05.11.2026, 0096): admin templates of
+  /// the shop section or an own picture, previewed in the cover's frame;
+  /// "Yerini düzəlt" stays in the same sheet.
+  Future<void> _coverMenu(AppStrings s, String? current) => changeShopCover(
+      context: context, ref: ref, s: s, userId: widget.userId, current: current, aspect: _coverAspect());
 
   /// Same shape as the cover on this screen (its width × [_coverHeight]).
   double? _coverWidth;
   double _coverAspect() => (_coverWidth ?? MediaQuery.of(context).size.width - 32) / _coverHeight;
 
-  Future<void> _changeCover(AppStrings s) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2000, maxHeight: 2000, imageQuality: 85);
-      if (file == null || !mounted) return;
-      final picked = await file.readAsBytes();
-      if (!mounted) return;
-      // A GIF goes up as it is, so it stays animated (owner, 29.10.2026).
-      final gif = isGifBytes(picked);
-      if (gif && picked.length > kGifMaxBytes) {
-        messenger.showSnackBar(SnackBar(content: Text(s.t('profile_gif_too_big'))));
-        return;
-      }
-      // The whole picture is kept; the frame chooses which part shows.
-      final framing = await Navigator.of(context, rootNavigator: true).push<ImageFraming>(MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ImageFrameEditorScreen(
-          image: MemoryImage(picked),
-          aspect: _coverAspect(),
-          circle: false,
-          title: s.t('profile_change_cover'),
-          s: s,
-        ),
-      ));
-      if (framing == null) return;
-      await ref
-          .read(profilePageRepositoryProvider)
-          .uploadCover(picked, contentType: gif ? 'image/gif' : (file.mimeType ?? 'image/jpeg'), framing: framing);
-      ref.invalidate(profileDetailsProvider(widget.userId));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(s.t('profile_photo_error'))));
-    }
-  }
 
 
   Future<void> _editInfo(AppStrings s, ProfileDetails? d) async {
@@ -262,12 +187,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                     }),
                                     if (isMe)
                                       Positioned(
-                                        right: 8,
-                                        top: 8,
-                                        child: IconButton.filledTonal(
-                                          tooltip: s.t('profile_change_cover'),
-                                          onPressed: () => _coverMenu(s, details?.coverUrl),
-                                          icon: const Icon(Icons.photo_camera_outlined),
+                                        right: 10,
+                                        bottom: 10,
+                                        child: CoverChangeButton(
+                                          label: s.t('cover_change'),
+                                          onTap: () => _coverMenu(s, details?.coverUrl),
                                         ),
                                       ),
                                   ],

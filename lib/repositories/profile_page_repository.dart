@@ -99,6 +99,18 @@ class ProfilePageRepository {
     }, onConflict: 'user_id');
   }
 
+  /// The shop's background (0096): a template or my own uploaded picture,
+  /// with its place / zoom. The bucket rule of profile_details holds (0031).
+  Future<void> setCoverUrl(String url) async {
+    final uid = _uid;
+    if (uid == null) throw StateError('not_signed_in');
+    await _client.from('profile_details').upsert({
+      'user_id': uid,
+      'cover_url': url,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'user_id');
+  }
+
   /// "Yerini düzəlt" for the cover: same picture, another place / zoom.
   Future<void> setCoverFraming(String currentUrl, ImageFraming framing) async {
     final uid = _uid;

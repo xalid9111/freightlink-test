@@ -1885,5 +1885,15 @@
   "tpo_income_hint": "Bakü saatiyle: Günlük — bugün 00:00'dan, Aylık — ayın 1'inden, Yıllık — 1 Ocak'tan. Parktaki araçların ücreti çıkışta alınınca eklenir.",
   "tpo_income_not_ready": "Gelir bölümü henüz hazır değil — biraz sonra tekrar bakın.",
   "tpo_promo_title": "Parkı öne çıkar — reklam ver",
-  "tpo_promo_sub": "Öne çek · VIP · Premium — parkınız TIRPark haritasında ve listesinde ilk sırada görünsün"
+  "tpo_promo_sub": "Öne çek · VIP · Premium — parkınız TIRPark haritasında ve listesinde ilk sırada görünsün",
+  "cover_change": "Arka planı değiştir",
+  "cover_pick_title": "Arka plan seç",
+  "cover_pick_sub": "Profilinizin arka planını değiştirin — yöneticinin hazırladığı şablonlardan seçin veya kendi resminizi yükleyin.",
+  "cover_templates": "Şablonlardan seç",
+  "cover_templates_none": "Henüz şablon yok.",
+  "cover_upload": "Kendi resmini yükle",
+  "cover_upload_sub": "Cihazından resim seç",
+  "cover_error": "Arka plan değiştirilemedi. Tekrar deneyin.",
+  "cover_logo_change": "Profil resmini değiştir",
+  "tp_photos_title": "Fotoğraflar"
 }

@@ -101,8 +101,11 @@ void main() {
     expect(prof, contains('uploadAvatar(bytes, contentType: gif ? \'image/gif\' : file.mimeType, framing: framing)'));
     expect(prof, contains('setAvatarFraming(current, f)'));
     final pub = src('lib/features/ads/presentation/public_profile_screen.dart');
-    expect(pub, contains('onPressed: () => _coverMenu(s, details?.coverUrl),'));
-    expect(pub, contains('setCoverFraming(current, f)'));
+    expect(pub, contains('onTap: () => _coverMenu(s, details?.coverUrl),'));
+    // "Yerini düzəlt" is in the shared background sheet (0096, 05.11.2026).
+    final covers = src('lib/features/covers/profile_covers.dart');
+    expect(covers, contains("ValueKey('cover-adjust')"));
+    expect(covers, contains('url = framing.applyTo(current!);'));
     expect(pub, contains('framing: ImageFraming.of(details.coverUrl),'));
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
       final m = jsonDecode(src('assets/i18n/$lang.json')) as Map;

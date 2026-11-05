@@ -1190,6 +1190,9 @@ Future<void> showReportDetail(BuildContext context, String id) {
 // =====================================================================
 
 const _actionLabels = {
+  'cover.template_add': 'Fon şablonu əlavə edildi',
+  'cover.template_edit': 'Fon şablonu dəyişdirildi',
+  'cover.template_delete': 'Fon şablonu silindi',
   'cargo.update': 'Yük redaktə edildi',
   'cargo.hide': 'Yük gizlədildi',
   'cargo.unhide': 'Yük aktivləşdirildi',

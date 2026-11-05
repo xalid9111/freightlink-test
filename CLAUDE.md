@@ -303,6 +303,20 @@ files to the owner separately (they are run by hand in the SQL editor).
   owner's panel has "Parkı önə çıxar — reklam ver" on Ümumi (owner,
   05.11.2026); 0095 adds any missing pack with the standard Loads prices
   (never changes an admin's price) and reloads the API.
+- Profile backgrounds (owner, 05.11.2026, 0096): Park, Servis and Mağaza
+  (the seller's page, profile_details.cover_url) share one flow — "Fon
+  şəklini dəyiş" on the background for the owner only (park: its approved
+  manager; service: its owner) → a bottom sheet "Fon şəklini seç":
+  "Şablonlardan seç" (active admin templates of that section) or "Öz şəklini
+  yüklə" (+ "Yerini düzəlt") → the frame preview (move / zoom) → saved. The
+  park page (owner's design): background, round park picture half over its
+  edge (tir_parks.logo_url, the manager's own picture, separate), name,
+  "Şəkillər · n/10" (gallery stays admin-only), amenities, Yer
+  rezervasiyası (unchanged), phone card (Zəng et), route card (Marşrut).
+  Admin → "Fon şablonları": add (picture, name, Park / Servis / Mağaza),
+  edit, Aktiv / Passiv, delete (profiles keep a deleted template); server
+  checks + Audit Log. On TIRPark a tap on a park's name or picture opens its
+  page (owner, 05.11.2026); the rest of the card selects it.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
