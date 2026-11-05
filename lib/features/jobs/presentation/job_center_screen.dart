@@ -51,7 +51,12 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
         hasVacancies: (ref.watch(myVacanciesProvider).valueOrNull ?? const <JobVacancy>[]).isNotEmpty,
       );
 
-  JobFeedKind get _kind => _roles.clamp(_tabChosen ? _tab : _roles.preferred(_tab));
+  /// The side shown: never both at once (owner, 05.11.2026 — "bir-birinə
+  /// qarışmasın"): İş axtarıram = drivers only, Sürücü axtarılır = vacancies.
+  JobFeedKind get _kind {
+    final k = _roles.clamp(_tabChosen ? _tab : _roles.preferred(_tab));
+    return k == JobFeedKind.all ? JobFeedKind.drivers : k;
+  }
 
   JobFeedFilter get _feedFilter =>
       JobFeedFilter(kind: _kind, specialty: _filter.specialty, licence: _filter.licence, country: _filter.country);
@@ -66,17 +71,17 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
     );
     if (f != null) {
       setState(() {
-        _tab = f.kind;
-        _tabChosen = true;
+        // Never mixed (owner, 05.11.2026): "Hamısı" in the filter keeps the side.
+        if (f.kind != JobFeedKind.all) {
+          _tab = f.kind;
+          _tabChosen = true;
+        }
         _filter = JobFeedFilter(specialty: f.specialty, licence: f.licence, country: f.country);
       });
     }
   }
 
-  void _reset() => setState(() {
-        _filter = const JobFeedFilter();
-        _tab = JobFeedKind.all;
-      });
+  void _reset() => setState(() => _filter = const JobFeedFilter());
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +148,10 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
                 title: s.t('job_home_ads'),
                 linkKey: 'job-feed-all',
                 link: s.t('catalog_see_all'),
+                // All ads of the chosen side only — drivers and employers are
+                // never mixed (owner, 05.11.2026).
                 onLink: () => setState(() {
-                  _tab = JobFeedKind.all;
+                  _tab = _kind;
                   _tabChosen = true;
                   _feedLimit = kJobFeedStep;
                 }),
@@ -313,7 +320,7 @@ class _KindTabs extends ConsumerWidget {
             filter: JobFeedFilter(kind: k, specialty: filter.specialty, licence: filter.licence, country: filter.country))
         .length;
     Widget one(JobFeedKind k, IconData icon, String title, String sub) {
-      final on = tab == k || tab == JobFeedKind.all;
+      final on = tab == k;
       final locked = !roles.allows(k);
       return Expanded(
         child: Opacity(

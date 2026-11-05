@@ -235,7 +235,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   choices — left "Sürücü axtarılır" (employers' vacancies), right "İş
   axtarıram" (drivers looking for work; only truck work: TIR / fura / lorry,
   no bus- or machine-only profiles) — with counts, then two-column
-  square-ish cards (4 on the home page; Hamısına bax / Daha 20 as before).
+  square-ish cards (4 on the home page; Hamısına bax / Daha 20 = all of the
+  chosen side — drivers and employers are never mixed, owner 05.11.2026).
   By role (client view): a driver (profile, no vacancy) sees only
   vacancies, an employer (vacancy, no profile) only drivers; both or none:
   both. The role cards and Uyğun təklif stay as they were.

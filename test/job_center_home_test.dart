@@ -186,7 +186,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsNothing, reason: 'locked for a driver');
 
-    // No role yet: both sides; "Hamısına bax" = both; the filter picks the tab.
+    // No role yet: both sides, never mixed (owner, 05.11.2026): "Hamısına bax"
+    // = all of the chosen side only; the filter picks the tab.
     await tester.pumpWidget(ProviderScope(key: UniqueKey(), overrides: overrides(), child: const MaterialApp(home: JobCenterScreen())));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('job-tab-vacancies')));
@@ -194,8 +195,15 @@ void main() {
     expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('job-feed-all')));
     await tester.pumpAndSettle();
-    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsOneWidget);
     expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v2'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsNothing,
+        reason: 'drivers never under Sürücü axtarılır');
+    await tester.tap(find.byKey(const ValueKey('job-tab-drivers')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-d-d1'))), findsOneWidget);
+    expect(find.descendant(of: feed, matching: find.byKey(const ValueKey('job-feed-v-v1'))), findsNothing,
+        reason: 'vacancies never under İş axtarıram');
     await tester.tap(find.byKey(const ValueKey('job-filter-top')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('job-f-kind-drivers')));
@@ -251,11 +259,11 @@ void main() {
     expect(cards, findsNWidgets(20));
     final more = find.byKey(const ValueKey('job-feed-more'));
     await tester.scrollUntilVisible(more, 300, scrollable: find.byType(Scrollable).first);
-    expect(find.text('Daha 7'), findsOneWidget, reason: '25 drivers + 2 vacancies = 27');
+    expect(find.text('Daha 5'), findsOneWidget, reason: '25 drivers only — the 2 vacancies stay under Sürücü axtarılır');
     tester.widget<TextButton>(more).onPressed!();
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('job-feed')), matching: find.byType(JobFeedTile, skipOffstage: false), skipOffstage: false),
-        findsNWidgets(27));
+        findsNWidgets(25));
     expect(find.byKey(const ValueKey('job-feed-more'), skipOffstage: false), findsNothing);
   });
 
