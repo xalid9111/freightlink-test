@@ -1903,5 +1903,11 @@
   "job_tab_seek_sub": "(Driver looking for work)",
   "job_tab_locked_seek": "With your driver profile you see the employers' vacancies (\"Driver wanted\").",
   "job_tab_locked_need": "As an employer you see the drivers looking for work (\"Looking for work\").",
-  "job_tile_exp": "Experience: {n} yrs"
+  "job_tile_exp": "Experience: {n} yrs",
+  "svc_add_shop": "Add a shop",
+  "svc_search_shop_hint": "Search a city, address or shop…",
+  "svc_found_shops": "{n} shops · {km} km",
+  "svc_my_shop": "My shop",
+  "svc_none_here_shops": "No shops found in this area.",
+  "svc_shop": "Shop"
 }

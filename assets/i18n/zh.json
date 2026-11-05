@@ -1903,5 +1903,11 @@
   "job_tab_seek_sub": "（司机求职）",
   "job_tab_locked_seek": "使用司机资料时，您看到的是雇主的职位（“招聘司机”）。",
   "job_tab_locked_need": "作为雇主，您看到的是求职司机（“求职”）。",
-  "job_tile_exp": "经验：{n} 年"
+  "job_tile_exp": "经验：{n} 年",
+  "svc_add_shop": "添加商店",
+  "svc_search_shop_hint": "搜索城市、地址或商店…",
+  "svc_found_shops": "{n} 家商店 · {km} 公里",
+  "svc_my_shop": "我的商店",
+  "svc_none_here_shops": "该区域未找到商店。",
+  "svc_shop": "商店"
 }

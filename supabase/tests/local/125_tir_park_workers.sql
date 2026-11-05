@@ -74,10 +74,14 @@ select tests.login(:owner);
 select tests.check((select count(*) = 2 from jsonb_array_elements(public.tir_park_worker_activity((select id from ids where k='p'), 30)) e
                      where e ->> 'by' = 'Unrelated user' and e ->> 'plate' = '10-AA-100'),
   'W17 İşçi fəaliyyəti: who added and who let out which truck');
-select tests.check((select (e ->> 'cars_paid')::numeric = 0.63 and (e ->> 'entries')::int = 1 and (e ->> 'exits')::int = 1
+-- The entry was moved 5 h back: between 00:00 and 05:00 Baku it falls on
+-- yesterday, so the entry is counted on its own day (any day of the report).
+select tests.check((select (e ->> 'cars_paid')::numeric = 0.63 and (e ->> 'exits')::int = 1
                       from jsonb_array_elements(public.tir_park_owner_report((select id from ids where k='p'), 7)) e
-                     where (e ->> 'day')::date = (now() at time zone 'Asia/Baku')::date),
-  'W18 Hesabat: today 1 in, 1 out, 0.63 taken');
+                     where (e ->> 'day')::date = (now() at time zone 'Asia/Baku')::date)
+                   and (select sum((e ->> 'entries')::int) = 1
+                          from jsonb_array_elements(public.tir_park_owner_report((select id from ids where k='p'), 7)) e),
+  'W18 Hesabat: 1 in (on its own day), today 1 out, 0.63 taken');
 select tests.check((public.tir_park_workers_list((select id from ids where k='p')) -> 'workers' -> 0 ->> 'today_out')::int = 1,
   'W19 the owner sees each worker and what he did today');
 select public.tir_park_worker_remove((select id from ids where k='p'), :worker);

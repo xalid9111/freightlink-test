@@ -110,4 +110,18 @@ void main() {
     expect(host, contains('if (premiumStarted || !_dropReady || promotedIds == null) return;'), reason: 'once per visit');
     expect(src('lib/core/router/app_router.dart'), contains("ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')"));
   });
+
+  test('Mağazalar: no service parts on the shops map; "Mağaza əlavə et" (owner, 05.11.2026)', () {
+    final svc = src('lib/features/services/presentation/services_map_screen.dart');
+    expect(svc, contains("label: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),"));
+    expect(svc, contains('if (!widget.shops) SizedBox('), reason: 'no Təkər təmiri / Akkumulyator … chips');
+    expect(svc, contains('categories: widget.shops ? const [] : cats,'), reason: 'no service categories in the search either');
+    expect(svc, contains('if (!shops) ...[\n                    const SizedBox(height: 4),\n                    ServiceLegend(s: s),'),
+        reason: 'no Usta / Servis / Evakuator legend');
+    expect(svc, contains("s.t(shops ? 'svc_found_shops' : 'svc_found'"));
+    expect(svc, contains('if (!widget.shops) title(\'svc_filter_kind\'),'), reason: 'no Usta / Servis choice in the filter');
+    expect(svc, contains('res.copyWith(category: () => kShopCategory)'), reason: 'the filter keeps the shops');
+    final az = jsonDecode(src('assets/i18n/az.json')) as Map;
+    expect(az['svc_add_shop'], 'Mağaza əlavə et');
+  });
 }

@@ -1903,5 +1903,11 @@
   "job_tab_seek_sub": "(Şoför – iş arıyor)",
   "job_tab_locked_seek": "Şoför profilinizle işverenlerin ilanları gösterilir (\"Şoför aranıyor\").",
   "job_tab_locked_need": "İşveren olarak şoförlerin iş arama ilanları gösterilir (\"İş arıyorum\").",
-  "job_tile_exp": "Deneyim: {n} yıl"
+  "job_tile_exp": "Deneyim: {n} yıl",
+  "svc_add_shop": "Mağaza ekle",
+  "svc_search_shop_hint": "Şehir, adres veya mağaza ara…",
+  "svc_found_shops": "{n} mağaza · {km} km",
+  "svc_my_shop": "Mağazam",
+  "svc_none_here_shops": "Bu bölgede mağaza bulunamadı.",
+  "svc_shop": "Mağaza"
 }
