@@ -171,12 +171,12 @@ void main() {
   test('wired: Servislər + TIRPark lists / maps / pages, admin prices, checkout; not on Loads', () {
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     expect(svc, contains('promotedFirst(List.of(items)'));
-    expect(svc, contains('PlacePromoPin(promo: promos[p.id]'));
+    expect(svc, contains('PremiumMarker('), reason: 'promoted: the premium marker (05.11.2026)');
     expect(svc, contains('PlacePromoTag(s: s, promo: promo!)'));
     expect(svc, contains("context.pushOnce('/service/\${p.id}')"), reason: 'a tap opens the service page');
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     expect(tp, contains('promotedFirst(found'));
-    expect(tp, contains('PlacePromoPin('));
+    expect(tp, contains('PremiumMarker('), reason: 'promoted: the premium marker (05.11.2026)');
     expect(tp, contains("context.pushOnce('/tirpark/p/\${p.id}')"), reason: 'a tap opens the park page');
     expect(src('lib/features/services/presentation/service_detail_screen.dart'), contains('PlaceTarget.service'));
     expect(src('lib/features/tirpark/presentation/tir_park_detail_screen.dart'),

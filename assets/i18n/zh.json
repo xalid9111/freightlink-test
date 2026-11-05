@@ -1895,5 +1895,6 @@
   "cover_upload_sub": "从设备中选择图片",
   "cover_error": "背景未能更换，请重试。",
   "cover_logo_change": "更换头像",
-  "tp_photos_title": "照片"
+  "tp_photos_title": "照片",
+  "tp_shops": "商店"
 }

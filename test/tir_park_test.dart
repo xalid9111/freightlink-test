@@ -295,11 +295,14 @@ void main() {
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: '/tirpark',"));
     expect(router, contains('builder: (context, state) => const TirParkScreen(),'));
-    expect(router, contains("GoRoute(path: '/services', builder: (context, state) => const ServicesMapScreen()),"), reason: 'Servislər kept');
+    expect(router, contains("GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),"),
+        reason: 'Servislər kept (+ Mağazalar, 05.11.2026)');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onServices: () => context.go('/services')"));
     // The same switch on Servislər, back to the parks, and "Servis əlavə et" there (owner, 31.10.2026).
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
-    expect(svc, contains("ParksServicesSwitch(parks: false, s: s, onParks: () => context.go('/tirpark'), onServices: () {}),"));
+    expect(svc, contains('ParksServicesSwitch(\n                        parks: false,'));
+    expect(svc, contains("onParks: () => context.go('/tirpark'),"));
+    expect(svc, contains("onShops: () => context.go('/services?shops=1')"), reason: 'Mağazalar (05.11.2026)');
     expect(svc, contains("buttonKey: 'svc-add',"));
     // Natural map colours on both pages (no night dimming), and "Servis
     // əlavə et" at the bottom of the map like "TIR parkı əlavə et"

@@ -277,13 +277,17 @@ class TirParkCard extends StatelessWidget {
   }
 }
 
-/// "Parklar | Servislər" (owner, 31.10.2026): the same switch on the
-/// TIRPark map and on the Servislər map, so either one is one tap away.
+/// "Parklar | Servislər | Mağazalar" (owner, 31.10.2026; Mağazalar 05.11.2026):
+/// the same switch on the TIRPark map and on the Servislər map, so each one
+/// is one tap away. Mağazalar = the services map with the shops (spare parts).
 class ParksServicesSwitch extends StatelessWidget {
   final bool parks;
+  final bool shops;
   final AppStrings s;
   final VoidCallback onParks, onServices;
-  const ParksServicesSwitch({super.key, required this.parks, required this.s, required this.onParks, required this.onServices});
+  final VoidCallback? onShops;
+  const ParksServicesSwitch(
+      {super.key, required this.parks, required this.s, required this.onParks, required this.onServices, this.shops = false, this.onShops});
 
   @override
   Widget build(BuildContext context) {
@@ -309,10 +313,14 @@ class ParksServicesSwitch extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.line),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), parks, onParks),
-        seg('tp-tab-services', Icons.home_repair_service_outlined, s.t('nav_services'), !parks, onServices),
-      ]),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), parks, onParks),
+          seg('tp-tab-services', Icons.home_repair_service_outlined, s.t('nav_services'), !parks && !shops, onServices),
+          if (onShops != null) seg('tp-tab-shops', Icons.storefront_outlined, s.t('tp_shops'), shops, onShops!),
+        ]),
+      ),
     );
   }
 }
