@@ -134,12 +134,12 @@ class TirParkCard extends StatelessWidget {
       this.onOpen,
       this.badge});
 
-  /// The picture and the name: on the selected park they open its page,
-  /// otherwise they select it like the rest of the card.
+  /// The picture and the name open the park's page (owner, 05.11.2026 —
+  /// on any park, selected or not); the rest of the card selects it.
   Widget _opens(String key, Widget child) => GestureDetector(
         key: ValueKey('$key-${park.id}'),
         behavior: HitTestBehavior.opaque,
-        onTap: selected && onOpen != null ? onOpen : onTap,
+        onTap: onOpen ?? onTap,
         child: child,
       );
 

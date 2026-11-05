@@ -16,6 +16,11 @@ import '../domain/tir_park.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
+import '../../covers/profile_covers.dart';
+import '../../chat/presentation/widgets/location_message.dart' show ChatLocation, showNavigationPicker;
+import '../../../services/geo_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:latlong2/latlong.dart';
 
 /// One park (TIRPark PR 2, 0078): pictures, rating, place · distance,
 /// amenities, the note and the comments ("Şərh yaz"). Admins add, replace
@@ -186,6 +191,11 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
               children: [
+                // The owner's design (05.11.2026): the background, the round
+                // picture over its edge, the name; "Fon şəklini dəyiş" for
+                // the park's approved manager only (0096).
+                _ParkHeader(park: park, s: s, here: here, owner: me != null && park.managerId == me.id && park.managerStatus == 'approved'),
+                const SizedBox(height: 14),
                 _Photos(
                   park: park,
                   canEdit: canEdit,
@@ -193,23 +203,6 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                   s: s,
                   onAdd: () => _addPhoto(park, s),
                   onEdit: (i) => _photoMenu(park, i, s),
-                ),
-                const SizedBox(height: 14),
-                Row(children: [
-                  Expanded(child: Text(park.name, style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: AppColors.text))),
-                  if (park.ratingCount > 0) ...[
-                    Icon(Icons.star_rounded, color: AppColors.promoPremium),
-                    const SizedBox(width: 3),
-                    Text(park.ratingAvg.toStringAsFixed(1), key: const ValueKey('tp-rating'), style: TextStyle(fontSize: 17, color: AppColors.text)),
-                  ],
-                ]),
-                const SizedBox(height: 4),
-                Text(
-                  [
-                    if ((park.city ?? '').isNotEmpty) park.city!,
-                    if (here != null) distanceLabel(distanceKm(here.latitude, here.longitude, park.lat, park.lng)),
-                  ].join(' · '),
-                  style: TextStyle(color: AppColors.textSoft),
                 ),
                 if (park.isPending) ...[
                   const SizedBox(height: 6),
@@ -230,6 +223,13 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                   const SizedBox(height: 16),
                   TirParkBookingSection(park: park, s: s),
                 ],
+                // Əlaqə and Marşrut cards (owner's design, 05.11.2026).
+                if ((park.phone ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PhoneCard(phone: park.phone!, s: s),
+                ],
+                const SizedBox(height: 12),
+                _RouteCard(park: park, s: s),
                 // "Önə çıxar" (owner, 04.11.2026, 0093): only the park's
                 // approved manager; shown first around the park's own place.
                 if (me != null && park.managerId == me.id && park.managerStatus == 'approved') ...[
@@ -285,28 +285,37 @@ class _Photos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final urls = park.photoUrls;
+    if (urls.isEmpty && !canEdit) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: AspectRatio(
-          aspectRatio: 16 / 10,
-          child: urls.isEmpty
-              ? Container(
-                  color: AppColors.cardAlt,
-                  child: Icon(Icons.local_parking, size: 64, color: AppColors.textSoft),
-                )
-              : PageView(
-                  key: const ValueKey('tp-photos'),
-                  children: [
-                    for (final u in urls)
-                      Image.network(u, fit: BoxFit.cover, cacheWidth: 1200,
-                          errorBuilder: (_, __, ___) => Container(color: AppColors.cardAlt)),
-                  ],
-                ),
-        ),
+      Text.rich(
+        key: const ValueKey('tp-photos'),
+        TextSpan(children: [
+          TextSpan(text: s.t('tp_photos_title'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+          TextSpan(text: '  ·  ${urls.length}/$kTirParkMaxPhotos', style: TextStyle(fontSize: 14, color: AppColors.textSoft)),
+        ]),
       ),
+      const SizedBox(height: 8),
+      if (!canEdit)
+        SizedBox(
+          height: 84,
+          child: MouseDragScroll(child: ListView(scrollDirection: Axis.horizontal, children: [
+            for (var i = 0; i < urls.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: InkWell(
+                  key: ValueKey('tp-view-$i'),
+                  onTap: () => showParkPhotos(context, urls, i),
+                  borderRadius: BorderRadius.circular(12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(urls[i], width: 104, height: 84, fit: BoxFit.cover, cacheWidth: 312,
+                        errorBuilder: (_, __, ___) => Container(width: 104, color: AppColors.cardAlt)),
+                  ),
+                ),
+              ),
+          ])),
+        ),
       if (canEdit) ...[
-        const SizedBox(height: 10),
         SizedBox(
           height: 64,
           child: MouseDragScroll(child: ListView(scrollDirection: Axis.horizontal, children: [
@@ -484,6 +493,206 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// The pictures full screen, swiped through (visitors).
+Future<void> showParkPhotos(BuildContext context, List<String> urls, int start) => showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Stack(children: [
+        PageView(
+          key: const ValueKey('tp-photo-viewer'),
+          controller: PageController(initialPage: start),
+          children: [
+            for (final u in urls)
+              InteractiveViewer(child: Center(child: Image.network(u, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const SizedBox()))),
+          ],
+        ),
+        Positioned(
+          top: 12,
+          right: 12,
+          child: SafeArea(
+            child: IconButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              icon: const Icon(Icons.close, color: Colors.white),
+            ),
+          ),
+        ),
+      ]),
+    );
+
+/// The background + round picture + name (0096). The manager changes the
+/// background (templates / own picture) and the round picture; the gallery
+/// above stays the admins'.
+class _ParkHeader extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  final LatLng? here;
+  final bool owner;
+  const _ParkHeader({required this.park, required this.s, required this.here, required this.owner});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = (CoverSection.park, park.id);
+    final media = ref.watch(placeMediaProvider(key)).valueOrNull ?? const PlaceMedia();
+    final repo = ref.read(coverRepositoryProvider);
+    final urls = park.photoUrls;
+    return PlaceCoverHeader(
+      coverUrl: media.cover,
+      fallback: Image.asset('assets/images/tirpark/banner.jpg', fit: BoxFit.cover),
+      avatar: roundPicture(
+        media.logo,
+        Container(
+          color: AppColors.accentFill,
+          alignment: Alignment.center,
+          child: const Icon(Icons.local_parking, color: Colors.white, size: 52),
+        ),
+      ),
+      name: park.name,
+      changeLabel: s.t('cover_change'),
+      subtitle: Wrap(spacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Icon(Icons.place_outlined, size: 18, color: AppColors.textSoft),
+        Text(
+          [
+            if ((park.city ?? '').isNotEmpty) park.city!,
+            if (here != null) distanceLabel(distanceKm(here!.latitude, here!.longitude, park.lat, park.lng)),
+          ].join(' · '),
+          style: TextStyle(color: AppColors.textSoft, fontSize: 15),
+        ),
+        if (park.ratingCount > 0) ...[
+          Icon(Icons.star_rounded, size: 18, color: AppColors.promoPremium),
+          Text(park.ratingAvg.toStringAsFixed(1), key: const ValueKey('tp-rating'), style: TextStyle(fontSize: 15, color: AppColors.text)),
+        ],
+      ]),
+      onChangeCover: owner
+          ? () async {
+              final ok = await changeCover(
+                context: context,
+                ref: ref,
+                s: s,
+                section: CoverSection.park,
+                current: media.cover,
+                aspect: kPlaceCoverAspect,
+                upload: (b, t) => repo.upload('park-${park.id}', b, contentType: t),
+                save: (url) => repo.setParkCover(park.id, url),
+              );
+              if (ok) ref.invalidate(placeMediaProvider(key));
+            }
+          : null,
+      onAvatarEdit: owner
+          ? () async {
+              final ok = await changeRoundPicture(
+                context: context,
+                s: s,
+                upload: (b, t) => repo.upload('park-logo-${park.id}', b, contentType: t),
+                save: (url) => repo.setParkLogo(park.id, url),
+              );
+              if (ok) ref.invalidate(placeMediaProvider(key));
+            }
+          : null,
+      badge: urls.isEmpty
+          ? null
+          : Material(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: const StadiumBorder(),
+              child: InkWell(
+                key: const ValueKey('tp-cover-count'),
+                customBorder: const StadiumBorder(),
+                onTap: () => showParkPhotos(context, urls, 0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.image_outlined, color: Colors.white, size: 18),
+                    const SizedBox(width: 6),
+                    Text('1/${urls.length}', style: const TextStyle(color: Colors.white)),
+                  ]),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+/// "Əlaqə": the park's phone and "Zəng et".
+class _PhoneCard extends StatelessWidget {
+  final String phone;
+  final AppStrings s;
+  const _PhoneCard({required this.phone, required this.s});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('tp-phone-card'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.line)),
+        child: Row(children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(color: AppColors.online.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.phone, color: AppColors.online),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(phone, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: AppColors.text))),
+          OutlinedButton.icon(
+            key: const ValueKey('tp-call'),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.accent, side: BorderSide(color: AppColors.accent)),
+            onPressed: () => launchUrl(Uri(scheme: 'tel', path: phone.replaceAll(' ', ''))),
+            icon: const Icon(Icons.call_outlined, size: 18),
+            label: Text(s.t('svc_call')),
+          ),
+        ]),
+      );
+}
+
+/// "Marşrut": the way there from here, and the navigation apps.
+class _RouteCard extends ConsumerWidget {
+  final TirPark park;
+  final AppStrings s;
+  const _RouteCard({required this.park, required this.s});
+
+  String _duration(double minutes) {
+    final h = minutes ~/ 60;
+    final m = (minutes % 60).round();
+    return h > 0 ? s.t('map_duration_hm', {'h': '$h', 'm': '$m'}) : s.t('map_duration_m', {'m': '$m'});
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(userLocationProvider).point;
+    final r = me == null
+        ? null
+        : ref.watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: park.lat, bLng: park.lng))).valueOrNull;
+    final text = me == null
+        ? s.t('svc_route_need_gps')
+        : r == null
+            ? s.t('svc_route_loading')
+            : r.isRoad
+                ? s.t('svc_route_info', {'km': fmtKm(r.distanceKm), 'time': r.durationMin == null ? '—' : _duration(r.durationMin!)})
+                : s.t('svc_route_straight', {'km': fmtKm(r.distanceKm)});
+    return Container(
+      key: const ValueKey('tp-route-card'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.line)),
+      child: Row(children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(color: AppColors.routeSoft, borderRadius: BorderRadius.circular(12)),
+          child: Icon(Icons.route, color: AppColors.route),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: TextStyle(color: AppColors.text, height: 1.3))),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          key: const ValueKey('tp-navigate'),
+          onPressed: () => showNavigationPicker(
+              context, s, ChatLocation(url: 'https://maps.google.com/?q=${park.lat},${park.lng}', lat: park.lat, lng: park.lng)),
+          icon: const Icon(Icons.near_me, size: 18),
+          label: Text(s.t('svc_route')),
+        ),
+      ]),
     );
   }
 }

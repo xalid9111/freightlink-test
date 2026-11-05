@@ -1885,5 +1885,15 @@
   "tpo_income_hint": "Bakı vaxtı ilə: Günlük — bu gün 00:00-dan, Aylıq — ayın 1-dən, İllik — 1 yanvardan. Parkda olan maşınların pulu çıxışda alınanda əlavə olunur.",
   "tpo_income_not_ready": "Gəlir bölməsi hələ hazır deyil — bir az sonra yenidən baxın.",
   "tpo_promo_title": "Parkı önə çıxar — reklam ver",
-  "tpo_promo_sub": "İrəli çək · VIP · Premium — parkınız TIRPark xəritəsində və siyahısında birinci görünsün"
+  "tpo_promo_sub": "İrəli çək · VIP · Premium — parkınız TIRPark xəritəsində və siyahısında birinci görünsün",
+  "cover_change": "Fon şəklini dəyiş",
+  "cover_pick_title": "Fon şəklini seç",
+  "cover_pick_sub": "Profilinizin fon şəklini dəyişin — admin tərəfindən hazırlanmış şablonlardan seçin və ya öz şəklinizi yükləyin.",
+  "cover_templates": "Şablonlardan seç",
+  "cover_templates_none": "Hələ şablon yoxdur.",
+  "cover_upload": "Öz şəklini yüklə",
+  "cover_upload_sub": "Cihazından şəkil seç",
+  "cover_error": "Fon şəkli dəyişdirilmədi. Yenidən cəhd edin.",
+  "cover_logo_change": "Profil şəklini dəyiş",
+  "tp_photos_title": "Şəkillər"
 }

@@ -13,6 +13,7 @@ import 'admin_design_page.dart';
 import 'admin_tir_parks_page.dart';
 import 'admin_purge_page.dart';
 import 'admin_services_page.dart';
+import 'admin_cover_templates_page.dart';
 import 'admin_ad_templates.dart';
 import 'admin_wa_verify_poc_page.dart';
 import 'admin_pages.dart';
@@ -40,6 +41,7 @@ const adminSections = <AdminSection>[
   AdminSection('ads', 'Reklamlar', Icons.campaign_outlined),
   AdminSection('ad_templates', 'Reklam şablonları', Icons.dashboard_customize_outlined),
   AdminSection('service_templates', 'Servis şablonları', Icons.photo_library_outlined),
+  AdminSection('cover_templates', 'Fon şablonları', Icons.wallpaper_outlined),
   AdminSection('services', 'Servislər', Icons.home_repair_service_outlined),
   AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking),
   AdminSection('market', 'TIR Bazarı (satış elanları)', Icons.storefront_outlined),
@@ -141,6 +143,8 @@ class _AdminLayout extends ConsumerWidget {
       case 'service_templates':
         return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 40), children: const [AdminTemplatesPanel(audience: 'service')]);
+      case 'cover_templates':
+        return const AdminCoverTemplatesPage();
       case 'services':
         return const AdminServicesPage();
       case 'tirpark':

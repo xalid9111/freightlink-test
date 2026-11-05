@@ -23,9 +23,14 @@ void main() {
     expect(prof, contains("contentType: gif ? 'image/gif' : file.mimeType"));
     expect(prof, contains("strings.t('profile_gif_too_big')"));
     expect(prof, contains('maxWidth: 1024,'), reason: 'photos are still made small (room for the zoom)');
+    // The cover goes through the shared background sheet (0096, 05.11.2026).
     final pub = src('lib/features/ads/presentation/public_profile_screen.dart');
-    expect(pub, contains("contentType: gif ? 'image/gif'"), reason: 'the GIF goes up as it is');
-    expect(pub.contains('CoverCropScreen('), isFalse, reason: 'the frame editor keeps the whole picture (GIF too)');
+    expect(pub, contains('changeShopCover('));
+    final covers = src('lib/features/covers/profile_covers.dart');
+    expect(covers, contains("isGifBytes(bytes) ? 'image/gif'"), reason: 'the GIF goes up as it is');
+    expect(covers, contains("s.t('profile_gif_too_big')"));
+    expect(pub.contains('CoverCropScreen(') || covers.contains('CoverCropScreen('), isFalse,
+        reason: 'the frame editor keeps the whole picture (GIF too)');
     expect(src('supabase/migrations/0031_profile_catalog_message_delete.sql'), contains("'image/gif'"),
         reason: 'the cover bucket accepts GIF — no new SQL');
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {

@@ -132,20 +132,24 @@ void main() {
 
   });
 
-  testWidgets('the selected card: a tap on the name or the picture opens the park page', (tester) async {
+  testWidgets('a tap on the name or the picture opens the park page (any card); the rest selects', (tester) async {
     var taps = 0, opens = 0;
     Future<void> show(bool selected) => tester.pumpWidget(MaterialApp(
           home: Scaffold(
             body: TirParkCard(park: _park, km: 2.5, s: _az, selected: selected, onTap: () => taps++, onOpen: () => opens++),
           ),
         ));
+    // Owner, 05.11.2026: the name opens the page too, not only the picture.
     await show(false);
     await tester.tap(find.byKey(const ValueKey('tp-name-p1')));
-    expect((taps, opens), (1, 0), reason: 'first tap selects the park (route), as before');
+    await tester.tap(find.byKey(const ValueKey('tp-photo-p1')));
+    expect((taps, opens), (0, 2), reason: 'not selected: name and picture open the page');
     await show(true);
     await tester.tap(find.byKey(const ValueKey('tp-name-p1')));
     await tester.tap(find.byKey(const ValueKey('tp-photo-p1')));
-    expect((taps, opens), (1, 2), reason: 'selected: name and picture open the page');
+    expect((taps, opens), (0, 4), reason: 'selected: the same');
+    await tester.tapAt(tester.getBottomRight(find.byKey(const ValueKey('tp-card-p1'))) - const Offset(8, 8));
+    expect(taps, 1, reason: 'the rest of the card selects the park (route)');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onOpen: () => context.pushOnce('/tirpark/p/\${p.id}')"));
   });
 
