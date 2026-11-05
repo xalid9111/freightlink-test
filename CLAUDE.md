@@ -231,6 +231,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   ("Hamısına bax" = both, all); "Mənim elanlarım" is one card ("n aktiv
   elan") that opens /jobs/mine with all the controls (on / off, edit,
   delete, applications).
+  "Elanlar" (owner's picture, 05.11.2026): under the heading two side-by-side
+  choices — left "Sürücü axtarılır" (employers' vacancies), right "İş
+  axtarıram" (drivers looking for work; only truck work: TIR / fura / lorry,
+  no bus- or machine-only profiles) — with counts, then two-column
+  square-ish cards (4 on the home page; Hamısına bax / Daha 20 as before).
+  By role (client view): a driver (profile, no vacancy) sees only
+  vacancies, an employer (vacancy, no profile) only drivers; both or none:
+  both. The role cards and Uyğun təklif stay as they were.
   PR 2 (owner, 28.10.2026): "Müraciət et" on a vacancy, "İş təklif et" on a
   driver, "Müraciətlər və təkliflər" (/jobs/applications: Göndərildi ·
   Baxıldı · Danışıq gedir · İşə qəbul edildi only when BOTH confirm ·

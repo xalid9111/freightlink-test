@@ -23,6 +23,8 @@ import 'jobs_providers.dart';
 /// ads keep edit, on / off and delete (26.10.2026).
 /// Cards added by each "Daha 20" in "Elanlar".
 const kJobFeedStep = 20;
+/// Cards of "Elanlar" on the home page (two rows of two).
+const kJobHomeCards = 4;
 
 class JobCenterScreen extends ConsumerStatefulWidget {
   const JobCenterScreen({super.key});
@@ -35,12 +37,24 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
   /// Transport / licence / country; what (drivers / vacancies) is [_tab].
   JobFeedFilter _filter = const JobFeedFilter();
   JobFeedKind _tab = JobFeedKind.drivers;
-  /// Cards shown in "Elanlar": 3 on the home page, after "Hamısına bax"
-  /// 20 more at a time (never hundreds of cards at once on a phone).
-  int _feedLimit = 3;
+  /// Cards shown in "Elanlar": 4 (two rows of two) on the home page, after
+  /// "Hamısına bax" 20 more at a time (never hundreds of cards at once).
+  int _feedLimit = kJobHomeCards;
+  /// The tab was chosen by the user (else it follows the role).
+  bool _tabChosen = false;
+
+  /// What my side may see (owner, 05.11.2026): a driver only the employers'
+  /// vacancies, an employer only the drivers looking for work; both sides
+  /// (or none yet) see both.
+  JobFeedRoles get _roles => jobFeedRoles(
+        hasDriverProfile: ref.watch(myJobProfileProvider).valueOrNull != null,
+        hasVacancies: (ref.watch(myVacanciesProvider).valueOrNull ?? const <JobVacancy>[]).isNotEmpty,
+      );
+
+  JobFeedKind get _kind => _roles.clamp(_tabChosen ? _tab : _roles.preferred(_tab));
 
   JobFeedFilter get _feedFilter =>
-      JobFeedFilter(kind: _tab, specialty: _filter.specialty, licence: _filter.licence, country: _filter.country);
+      JobFeedFilter(kind: _kind, specialty: _filter.specialty, licence: _filter.licence, country: _filter.country);
 
   Future<void> _openFilter() async {
     final s = ref.read(stringsProvider);
@@ -53,6 +67,7 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
     if (f != null) {
       setState(() {
         _tab = f.kind;
+        _tabChosen = true;
         _filter = JobFeedFilter(specialty: f.specialty, licence: f.licence, country: f.country);
       });
     }
@@ -130,18 +145,28 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
                 link: s.t('catalog_see_all'),
                 onLink: () => setState(() {
                   _tab = JobFeedKind.all;
+                  _tabChosen = true;
                   _feedLimit = kJobFeedStep;
                 }),
               ),
               const SizedBox(height: 10),
-              _Tabs(s: s, tab: _tab, filter: _filter, onTab: (k) => setState(() => _tab = k)),
+              _KindTabs(
+                s: s,
+                tab: _kind,
+                roles: _roles,
+                filter: _filter,
+                onTab: (k) => setState(() {
+                  _tab = k;
+                  _tabChosen = true;
+                }),
+              ),
               const SizedBox(height: 12),
               _Feed(
                 s: s,
                 filter: _feedFilter,
                 limit: _feedLimit,
                 onReset: _reset,
-                onMore: _feedLimit > 3 ? () => setState(() => _feedLimit += kJobFeedStep) : null,
+                onMore: _feedLimit > kJobHomeCards ? () => setState(() => _feedLimit += kJobFeedStep) : null,
               ),
               _MyAdsCard(s: s),
             ],
@@ -269,66 +294,72 @@ class _SectionHead extends StatelessWidget {
       ]);
 }
 
-/// Sürücülər (n) · Vakansiyalar (n); the counts follow the filter.
-class _Tabs extends ConsumerWidget {
+/// "Sürücü axtarılır" (employers' vacancies, left) · "İş axtarıram" (drivers
+/// looking for work, right) — owner's picture, 05.11.2026. The counts follow
+/// the filter; a side my role may not see is shown locked.
+class _KindTabs extends ConsumerWidget {
   final AppStrings s;
   final JobFeedKind tab;
+  final JobFeedRoles roles;
   final JobFeedFilter filter;
   final ValueChanged<JobFeedKind> onTab;
-  const _Tabs({required this.s, required this.tab, required this.filter, required this.onTab});
+  const _KindTabs({required this.s, required this.tab, required this.roles, required this.filter, required this.onTab});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vs = ref.watch(jobVacanciesProvider).valueOrNull ?? const <JobVacancy>[];
     final ps = ref.watch(jobSeekersProvider).valueOrNull ?? const <JobSeeker>[];
-    int n(JobFeedKind k) =>
-        buildJobFeed(vs, ps, filter: JobFeedFilter(kind: k, specialty: filter.specialty, licence: filter.licence, country: filter.country))
-            .length;
-    Widget one(JobFeedKind k, IconData icon, String label) {
-      final on = tab == k;
+    int n(JobFeedKind k) => homeJobFeed(vs, ps,
+            filter: JobFeedFilter(kind: k, specialty: filter.specialty, licence: filter.licence, country: filter.country))
+        .length;
+    Widget one(JobFeedKind k, IconData icon, String title, String sub) {
+      final on = tab == k || tab == JobFeedKind.all;
+      final locked = !roles.allows(k);
       return Expanded(
-        child: Material(
-          color: on ? AppColors.blue.withValues(alpha: 0.28) : Colors.transparent,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), side: BorderSide(color: on ? AppColors.blue : Colors.transparent, width: 1.2)),
-          child: InkWell(
-            key: ValueKey('job-tab-${k.name}'),
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => onTab(k),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(icon, size: 20, color: on ? AppColors.text : AppColors.textSoft),
-                const SizedBox(width: 8),
-                Flexible(
-                  // Whole word on a narrow phone, a little smaller.
-                  child: FittedBox(
+        child: Opacity(
+          opacity: locked ? 0.5 : 1,
+          child: Material(
+            color: on && !locked ? AppColors.blue.withValues(alpha: AppColors.isDay ? 0.10 : 0.22) : AppColors.card,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14), side: BorderSide(color: on && !locked ? AppColors.blue : AppColors.line, width: on ? 1.5 : 1)),
+            child: InkWell(
+              key: ValueKey('job-tab-${k.name}'),
+              borderRadius: BorderRadius.circular(14),
+              onTap: locked
+                  ? () => ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(s.t(k == JobFeedKind.drivers ? 'job_tab_locked_seek' : 'job_tab_locked_need'))))
+                  : () => onTab(k),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('$label (${n(k)})',
-                        maxLines: 1,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                            color: on ? AppColors.text : AppColors.textSoft)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(locked ? Icons.lock_outline : icon, size: 22, color: on && !locked ? AppColors.blue : AppColors.text),
+                      const SizedBox(width: 8),
+                      Text('$title (${n(k)})',
+                          maxLines: 1,
+                          style: TextStyle(fontSize: 16, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: AppColors.text)),
+                    ]),
                   ),
-                ),
-              ]),
+                  const SizedBox(height: 2),
+                  Text(sub,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: TextStyle(fontSize: 12.5, color: on && !locked ? AppColors.blue : AppColors.textSoft)),
+                ]),
+              ),
             ),
           ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(children: [
-        one(JobFeedKind.drivers, Icons.people_outline, s.t('job_filter_drivers')),
-        one(JobFeedKind.vacancies, Icons.work_outline, s.t('job_filter_vacancies')),
+    return IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        one(JobFeedKind.vacancies, Icons.local_shipping_outlined, s.t('job_tab_need'), s.t('job_tab_need_sub')),
+        const SizedBox(width: 10),
+        one(JobFeedKind.drivers, Icons.person_outline, s.t('job_tab_seek'), s.t('job_tab_seek_sub')),
       ]),
     );
   }
@@ -755,7 +786,6 @@ class _Feed extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final specs = ref.watch(jobSpecialtiesProvider).valueOrNull ?? kJobSpecialties;
-    final skills = ref.watch(jobSkillsProvider).valueOrNull ?? kJobSkills;
     final vs = ref.watch(jobVacanciesProvider);
     final ps = ref.watch(jobSeekersProvider);
     final err = vs.error ?? ps.error;
@@ -769,7 +799,7 @@ class _Feed extends ConsumerWidget {
     if (vs.isLoading || ps.isLoading) {
       return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
     }
-    final items = buildJobFeed(vs.value ?? const [], ps.value ?? const [], filter: filter);
+    final items = homeJobFeed(vs.value ?? const [], ps.value ?? const [], filter: filter);
     if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -782,11 +812,25 @@ class _Feed extends ConsumerWidget {
     }
     final shown = limit == null ? items : items.take(limit!);
     final rest = limit == null ? 0 : items.length - limit!;
-    return Column(key: const ValueKey('job-feed'), children: [
-      for (final it in shown)
+    // Two columns of square-ish cards (owner's picture, 05.11.2026); a row
+    // grows with the text size so nothing is cut.
+    final list = shown.toList();
+    return LayoutBuilder(builder: (context, box) {
+      final tileH = (box.maxWidth - 10) / 2 * 0.85;
+      return Column(key: const ValueKey('job-feed'), children: [
+      for (var i = 0; i < list.length; i += 2)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: JobFeedCard(item: it, s: s, lang: lang, specs: specs, skills: skills),
+          child: IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Expanded(child: JobFeedTile(item: list[i], s: s, lang: lang, specs: specs, warm: (i ~/ 2).isEven, minHeight: tileH)),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: i + 1 < list.length
+                      ? JobFeedTile(item: list[i + 1], s: s, lang: lang, specs: specs, warm: (i ~/ 2).isOdd, minHeight: tileH)
+                      : const SizedBox()),
+            ]),
+          ),
         ),
       if (onMore != null && rest > 0)
         TextButton(
@@ -796,6 +840,7 @@ class _Feed extends ConsumerWidget {
           child: Text(s.t('job_more', {'n': '${rest < kJobFeedStep ? rest : kJobFeedStep}'})),
         ),
     ]);
+    });
   }
 }
 
