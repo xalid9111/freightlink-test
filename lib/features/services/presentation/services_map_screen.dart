@@ -231,9 +231,10 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (_) => _FilterSheet(query: _query, s: s),
+      builder: (_) => _FilterSheet(query: _query, s: s, shops: widget.shops),
     );
-    if (res != null && mounted) setState(() => _query = res);
+    // Mağazalar stays on the shops (owner, 05.11.2026).
+    if (res != null && mounted) setState(() => _query = widget.shops ? res.copyWith(category: () => kShopCategory) : res);
   }
 
   /// Simple grid clustering so weak phones never draw hundreds of pins.
@@ -531,7 +532,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               isDense: true,
-                              hintText: s.t('svc_search_place_hint'),
+                              hintText: s.t(widget.shops ? 'svc_search_shop_hint' : 'svc_search_place_hint'),
                               prefixIcon: const Icon(Icons.search, size: 20),
                               suffixIcon: _geocoding
                                   ? const Padding(
@@ -572,7 +573,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
                     alignment: Alignment.centerLeft,
                     child: ParksServicesSwitch(
                         parks: false,
-                        shops: _query.category == kShopCategory,
+                        shops: widget.shops,
                         s: s,
                         onParks: () => context.go('/tirpark'),
                         onServices: () => context.go('/services'),
@@ -584,14 +585,18 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
                         s: s,
                         lang: lang,
                         query: _searchCtrl.text.trim(),
-                        categories: cats,
+                        // Mağazalar: no service categories, only shops (owner, 05.11.2026).
+                        categories: widget.shops ? const [] : cats,
+                        shopsOnly: widget.shops,
                         onPlace: _pickPlace,
                         onService: _pickService,
                         onCategory: _pickCategory,
                       ),
                     ),
-                  const SizedBox(height: 8),
-                  SizedBox(
+                  // Service categories (Təkər təmiri, Akkumulyator …) only on
+                  // Servislər — never on Mağazalar (owner, 05.11.2026).
+                  if (!widget.shops) const SizedBox(height: 8),
+                  if (!widget.shops) SizedBox(
                     height: 34,
                     child: MouseDragScroll(child: ListView(
                       scrollDirection: Axis.horizontal,
@@ -658,7 +663,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
             gap: 10,
             child: MapAddButton(
               buttonKey: 'svc-add',
-              label: s.t('svc_add'),
+              label: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),
               onTap: () {
                 final id = ref.read(myServiceProvider).valueOrNull?.id;
                 context.pushOnce(id != null ? '/service/$id' : '/service-join');
@@ -685,6 +690,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               hasGps: me != null,
               query: _query,
               categories: cats,
+              shops: widget.shops,
               onSelect: _select,
               onRetry: () => ref.invalidate(serviceNearbyProvider(_query)),
               onWiden: () => setState(() => _query = _query.copyWith(radiusKm: math.min(_query.radiusKm * 2.5, 1000))),
@@ -808,6 +814,8 @@ class _ResultsSheet extends ConsumerWidget {
   final bool hasGps;
   final ServiceQuery query;
   final List<ServiceCategory> categories;
+  /// Mağazalar: shop words, no Usta / Servis / Evakuator legend.
+  final bool shops;
   final ValueChanged<ServiceProvider> onSelect;
   final VoidCallback onRetry;
   final VoidCallback onWiden;
@@ -824,6 +832,7 @@ class _ResultsSheet extends ConsumerWidget {
     required this.hasGps,
     required this.query,
     required this.categories,
+    this.shops = false,
     required this.onSelect,
     required this.onRetry,
     required this.onWiden,
@@ -870,7 +879,7 @@ class _ResultsSheet extends ConsumerWidget {
                         child: Text(
                           results.isLoading && items.isEmpty
                               ? s.t('svc_searching')
-                              : s.t('svc_found', {'n': '${items.length}', 'km': query.radiusKm.round().toString()}),
+                              : s.t(shops ? 'svc_found_shops' : 'svc_found', {'n': '${items.length}', 'km': query.radiusKm.round().toString()}),
                           style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14.5),
                         ),
                       ),
@@ -878,12 +887,15 @@ class _ResultsSheet extends ConsumerWidget {
                         onPressed: () => context.pushOnce(hasMine ? '/service/${mine.valueOrNull!.id}' : '/service-join'),
                         style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), visualDensity: VisualDensity.compact),
                         icon: Icon(hasMine ? Icons.storefront : Icons.add_business, size: 18),
-                        label: Text(s.t(hasMine ? 'svc_my_service' : 'svc_join_short'), style: const TextStyle(fontSize: 12.5)),
+                        label: Text(s.t(hasMine ? (shops ? 'svc_my_shop' : 'svc_my_service') : (shops ? 'svc_add_shop' : 'svc_join_short')),
+                            style: const TextStyle(fontSize: 12.5)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  ServiceLegend(s: s),
+                  if (!shops) ...[
+                    const SizedBox(height: 4),
+                    ServiceLegend(s: s),
+                  ],
                   if (!hasMine && pendingKind != null && mine.hasValue) ...[
                     const SizedBox(height: 10),
                     Material(
@@ -928,7 +940,7 @@ class _ResultsSheet extends ConsumerWidget {
                   children: [
                     Icon(Icons.search_off, size: 36, color: AppColors.textSoft),
                     const SizedBox(height: 8),
-                    Text(s.t('svc_none_here'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+                    Text(s.t(shops ? 'svc_none_here_shops' : 'svc_none_here'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
                     const SizedBox(height: 10),
                     if (query.radiusKm < 1000) OutlinedButton(onPressed: onWiden, child: Text(s.t('svc_widen'))),
                   ],
@@ -951,6 +963,7 @@ class _ResultsSheet extends ConsumerWidget {
                     categories: categories,
                     selected: isSel,
                     promo: promos[p.id],
+                    shop: shops,
                     route: isSel ? route : null,
                     hasGps: hasGps,
                     onTap: () => onSelect(p),
@@ -976,6 +989,8 @@ class ServiceListCard extends StatelessWidget {
   final VoidCallback onTap;
   /// "Önə çıxar" (0093): the "Reklam" mark with the crown / diamond.
   final PlacePromo? promo;
+  /// Mağazalar: "Mağaza" instead of Usta / Servis (owner, 05.11.2026).
+  final bool shop;
 
   const ServiceListCard({
     super.key,
@@ -988,6 +1003,7 @@ class ServiceListCard extends StatelessWidget {
     required this.hasGps,
     required this.onTap,
     this.promo,
+    this.shop = false,
   });
 
   String _catNames() {
@@ -1066,7 +1082,7 @@ class ServiceListCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          [s.t(serviceMarkerLabelKey(type)), if (cats.isNotEmpty) cats].join(' · '),
+                          [s.t(shop ? 'svc_shop' : serviceMarkerLabelKey(type)), if (cats.isNotEmpty) cats].join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 12, color: AppColors.textSoft),
@@ -1157,6 +1173,8 @@ class _SearchSuggestions extends ConsumerWidget {
   final ValueChanged<PlaceSuggestion> onPlace;
   final ValueChanged<ServiceProvider> onService;
   final ValueChanged<ServiceCategory> onCategory;
+  /// Mağazalar: only shops among the services found.
+  final bool shopsOnly;
 
   const _SearchSuggestions({
     required this.s,
@@ -1166,6 +1184,7 @@ class _SearchSuggestions extends ConsumerWidget {
     required this.onPlace,
     required this.onService,
     required this.onCategory,
+    this.shopsOnly = false,
   });
 
   @override
@@ -1174,7 +1193,10 @@ class _SearchSuggestions extends ConsumerWidget {
     final services = ref.watch(serviceTextSearchProvider(key));
     final places = ref.watch(placeSuggestionsProvider(key));
     final cats = [for (final c in categories) if (categoryMatches(query, c.names.values)) c].take(3).toList();
-    final serviceList = (services.valueOrNull ?? const <ServiceProvider>[]).take(6).toList();
+    final serviceList = [
+      for (final p in services.valueOrNull ?? const <ServiceProvider>[])
+        if (!shopsOnly || p.categories.contains(kShopCategory)) p
+    ].take(6).toList();
     final placeList = (places.valueOrNull ?? const <PlaceSuggestion>[]).take(4).toList();
     final loading = services.isLoading || places.isLoading;
 
@@ -1292,7 +1314,8 @@ class _Meta extends StatelessWidget {
 class _FilterSheet extends StatefulWidget {
   final ServiceQuery query;
   final AppStrings s;
-  const _FilterSheet({required this.query, required this.s});
+  final bool shops;
+  const _FilterSheet({required this.query, required this.s, this.shops = false});
 
   @override
   State<_FilterSheet> createState() => _FilterSheetState();
@@ -1358,8 +1381,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                   ),
               ],
             ),
-            title('svc_filter_kind'),
-            Wrap(
+            if (!widget.shops) title('svc_filter_kind'),
+            if (!widget.shops) Wrap(
               spacing: 6,
               runSpacing: 6,
               children: [

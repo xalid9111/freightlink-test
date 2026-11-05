@@ -1903,5 +1903,11 @@
   "job_tab_seek_sub": "(Sürücü – iş axtarır)",
   "job_tab_locked_seek": "Sürücü profilinizlə sahibkarların vakansiyaları göstərilir (\"Sürücü axtarılır\").",
   "job_tab_locked_need": "Sahibkar kimi sürücülərin iş axtarışı elanları göstərilir (\"İş axtarıram\").",
-  "job_tile_exp": "Təcrübə: {n} il"
+  "job_tile_exp": "Təcrübə: {n} il",
+  "svc_add_shop": "Mağaza əlavə et",
+  "svc_search_shop_hint": "Şəhər, ünvan və ya mağaza axtar…",
+  "svc_found_shops": "{n} mağaza · {km} km",
+  "svc_my_shop": "Mağazam",
+  "svc_none_here_shops": "Bu ərazidə mağaza tapılmadı.",
+  "svc_shop": "Mağaza"
 }

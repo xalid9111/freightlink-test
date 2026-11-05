@@ -334,7 +334,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   their own coordinates (short fall, squash, one small bounce), one after
   another; moving the map never replays it. The switch on both maps is
   Parklar | Servislər | Mağazalar (Mağazalar = the services map filtered to
-  spare_parts, /services?shops=1). TIR Bazarı has no map.
+  spare_parts, /services?shops=1). TIR Bazarı has no map. On Mağazalar no
+  service parts show (owner, 05.11.2026): no category chips, no Usta /
+  Servis / Evakuator legend or filter, shop words ("n mağaza", "Mağazam"),
+  the + reads "Mağaza əlavə et"; the filter keeps the shops.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
