@@ -1963,7 +1963,6 @@
   "promo_places_total": "总计：{sum}",
   "promo_cross_loads": "Premium 货物",
   "promo_places_missing": "此期限无法同时选择两个位置：货物板块没有该 Premium 套餐——请选择一个位置或其他期限。",
-  "promo_cross_places": "Premium · TIR 停车场、服务和商店",
   "promo_place_kind_park": "TIR 停车场",
   "promo_place_kind_service": "服务",
   "promo_place_kind_shop": "商店",

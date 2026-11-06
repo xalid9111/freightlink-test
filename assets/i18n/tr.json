@@ -1963,7 +1963,6 @@
   "promo_places_total": "Toplam tutar: {sum}",
   "promo_cross_loads": "Premium yükler",
   "promo_places_missing": "Bu süre için ikisi birlikte alınamıyor: Yükler bölümünde böyle bir Premium paketi yok — bir yer veya başka bir süre seçin.",
-  "promo_cross_places": "Premium · TIR park, servis ve mağazalar",
   "promo_place_kind_park": "TIR park",
   "promo_place_kind_service": "Servis",
   "promo_place_kind_shop": "Mağaza",

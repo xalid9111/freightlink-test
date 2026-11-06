@@ -207,10 +207,11 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       onFilters: () => _openFilters(context, s, filter),
                     ),
                     const SizedBox(height: 16),
+                    // The ad card of the parks, services and shops whose Premium
+                    // chose TIR Bazarı (owner's picture, 07.11.2026, 0103).
+                    PlaceCrossStrip(s: s, place: 'market'),
                     // Loads whose Premium chose TIR Bazarı (owner, 07.11.2026, 0101).
                     CrossPremiumLoadsStrip(s: s),
-                    // Parks, services and shops whose Premium chose TIR Bazarı (owner, 07.11.2026, 0103).
-                    PlaceCrossStrip(s: s, place: 'market'),
                     Row(
                       children: [
                         Expanded(
