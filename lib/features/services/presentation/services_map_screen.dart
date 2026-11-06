@@ -976,7 +976,9 @@ class _ResultsSheet extends ConsumerWidget {
                     shop: shops,
                     route: isSel ? route : null,
                     hasGps: hasGps,
-                    onTap: () => onSelect(p),
+                    // The card opens the profile (owner, 07.11.2026); its
+                    // buttons (Zəng et, Mesaj yaz, Marşrut, rəy) keep theirs.
+                    onTap: () => context.pushOnce('/service/${p.id}'),
                   );
                 },
               ),

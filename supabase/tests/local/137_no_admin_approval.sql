@@ -25,12 +25,16 @@ select tests.check((select status = 'approved' from public.service_providers whe
 select tests.check(exists (select 1 from jsonb_array_elements(public.nearby_services(40.6, 49.9, 20)) e where e->>'name' = 'Yeni Servis 2'),
   'N6 on the map right away');
 
--- Parking spot: at once.
-insert into ids values ('s', public.tir_park_add('Ələt dayanacağı', 39.95, 49.40, null, '{}', null));
-select tests.check((select status = 'approved' from public.tir_parks where id = (select id from ids where k='s')),
-  'N7 "Dayanacaq əlavə et": shown at once');
+-- Parking spots are no longer added by users (0100); one made before it.
+select tests.check(tests.err($$ select public.tir_park_add('Ələt dayanacağı', 39.95, 49.40, null, '{}', null) $$) like '%not_available%',
+  'N7 a user cannot add a parking spot any more (0100)');
+reset role;  -- users no longer add parks (0100): the park is made directly
+with n as (insert into public.tir_parks (name, lat, lng, city, amenities, created_by, status)
+           values ('Ələt dayanacağı', 39.95, 49.40, null, '{}', :user, 'approved') returning id)
+insert into ids select 's', id from n;
+set role authenticated;
 select tests.login(:owner2);
-select tests.check(exists (select 1 from public.tir_parks where id = (select id from ids where k='s')), 'N8 everybody sees it');
+select tests.check(exists (select 1 from public.tir_parks where id = (select id from ids where k='s')), 'N8 an approved spot made before stays visible');
 
 -- The admin still takes one down.
 select tests.login(:admin);

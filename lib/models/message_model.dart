@@ -5,6 +5,12 @@ class ConversationModel {
   final String cargoOwnerId;
   final String carrierUserId;
   final DateTime createdAt;
+  /// The service / shop page the chat started from (0100, set only by the
+  /// server); null = a person-to-person or load chat.
+  final String? serviceId;
+  final String? serviceName;
+  /// 'service' | 'shop'.
+  final String? serviceKind;
 
   ConversationModel({
     required this.id,
@@ -13,7 +19,12 @@ class ConversationModel {
     required this.cargoOwnerId,
     required this.carrierUserId,
     DateTime? createdAt,
+    this.serviceId,
+    this.serviceName,
+    this.serviceKind,
   }) : createdAt = createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+  bool get isPageChat => serviceId != null || (serviceName ?? '').isNotEmpty;
 
   /// The other participant's user id, from [me]'s point of view.
   String otherParticipant(String me) => me == cargoOwnerId ? carrierUserId : cargoOwnerId;
@@ -25,6 +36,9 @@ class ConversationModel {
         cargoOwnerId: j['cargo_owner_id'] as String,
         carrierUserId: j['carrier_user_id'] as String,
         createdAt: j['created_at'] is String ? DateTime.tryParse(j['created_at'] as String) : null,
+        serviceId: j['service_id'] as String?,
+        serviceName: j['service_name'] as String?,
+        serviceKind: j['service_kind'] as String?,
       );
 }
 

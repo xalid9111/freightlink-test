@@ -409,8 +409,9 @@ class ProfileActivityScreen extends ConsumerWidget {
 }
 
 /// Profil → "TIR Parkı": managing a park, working at a park (invitations,
-/// the park admin's İşçilər) and "Dayanacaq əlavə et" — the same entries
-/// and red counts as before (0079 – 0089); the bookings moved to Profil.
+/// the park admin's İşçilər) — the same entries and red counts as before
+/// (0079 – 0089); the bookings are on Profil. Users do not add parking
+/// spots (owner, 07.11.2026).
 class ProfileTirParkScreen extends ConsumerWidget {
   const ProfileTirParkScreen({super.key});
 
@@ -463,17 +464,6 @@ class ProfileTirParkScreen extends ConsumerWidget {
             },
           );
         }),
-        // "Dayanacaq əlavə et" (owner, 06.11.2026) in place of the bookings
-        // (now on Profil itself): the TIRPark map opens in "place a spot"
-        // mode — a plain parking spot, not a managed park.
-        _MenuRow(
-          key: const ValueKey('pf-tirpark-stop'),
-          icon: Icons.add_location_alt_outlined,
-          iconColor: AppColors.accent,
-          title: strings.t('tp_stop_add'),
-          subtitle: strings.t('tp_stop_add_sub'),
-          onTap: () => context.go('/tirpark?add=${DateTime.now().millisecondsSinceEpoch}'),
-        ),
       ]),
     ]);
   }

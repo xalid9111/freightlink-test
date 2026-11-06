@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/localization/app_strings.dart';
@@ -15,7 +13,6 @@ import 'service_search_logic.dart' show hasRealCoords;
 import 'service_widgets.dart';
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
-import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../promo/place_promo.dart';
 import '../../covers/profile_covers.dart';
@@ -43,7 +40,9 @@ class ServiceDetailScreen extends ConsumerWidget {
         leading: context.canPop()
             ? null
             : IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/services')),
-        title: Text(s.t('svc_profile_title')),
+        // A shop is shown as a shop (owner, 07.11.2026) — the same rule as
+        // the Mağazalar map (ServiceProvider.isShop).
+        title: Text(s.t(async.valueOrNull?.isShop == true ? 'shop_profile_title' : 'svc_profile_title')),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -82,7 +81,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                             children: [
                               ServiceTrustBadge(p: p, s: s),
                               if (p.isPro) const ServiceProBadge(),
-                              Text(s.t(p.isCenter ? 'svc_kind_center' : 'svc_kind_individual'),
+                              Text(s.t(p.isShop ? 'svc_shop' : (p.isCenter ? 'svc_kind_center' : 'svc_kind_individual')),
                                   style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
                               if (p.isMobile)
                                 Text('· ${s.t('svc_mobile_service')}', style: TextStyle(color: AppColors.accent, fontSize: 13)),
@@ -186,28 +185,8 @@ class ServiceDetailScreen extends ConsumerWidget {
                         mode: LaunchMode.externalApplication),
                   ),
                 const SizedBox(height: 10),
-                // Mini map only with a real position (no pin at 0,0).
-                if (hasRealCoords(p.lat, p.lng))
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: SizedBox(
-                    height: 170,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(p.lat, p.lng),
-                        initialZoom: 14,
-                        backgroundColor: AppColors.hero,
-                        interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                      ),
-                      children: [
-                        const AppTileLayer(),
-                        MarkerLayer(markers: [
-                          Marker(point: LatLng(p.lat, p.lng), width: 44, height: 44, child: ServicePin(type: p.markerType, selected: true, pro: p.isPro)),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ),
+                // No mini map on the page (owner, 07.11.2026): the address
+                // stays; "Marşrut" above opens the navigation apps.
                 const SizedBox(height: 22),
                 _Reviews(p: p, s: s, isOwner: isOwner, autoWrite: write),
                 const SizedBox(height: 16),

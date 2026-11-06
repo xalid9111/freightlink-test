@@ -16,16 +16,17 @@ abstract class AuthRepository {
 
   Future<AppUser> signIn({required String email, required String password});
 
-  /// Google/Apple sign-in — architecture placeholders per brief §5
-  /// ("gələcəkdə Google/Apple login üçün arxitektura hazır olsun").
-  /// Left unimplemented on purpose: wiring these up needs native
-  /// platform configuration (Google Cloud OAuth client, Apple Developer
-  /// Sign in with Apple capability + entitlements) that can't be set up
-  /// or tested from this sandbox. The interface and call sites exist now
-  /// so adding the real implementation later touches one file, not the
-  /// UI.
-  Future<AppUser> signInWithGoogle();
-  Future<AppUser> signInWithApple();
+  /// Google / Apple sign-in through Supabase OAuth (07.11.2026). Opens the
+  /// provider's page (on the web the page itself goes there and comes back
+  /// with the session; [authStateChanges] then loads the public.users row).
+  /// True = the provider's page was opened. Throws AppException
+  /// 'oauth_not_configured' while the provider is off in Supabase.
+  Future<bool> signInWithGoogle();
+  Future<bool> signInWithApple();
+
+  /// The OAuth providers switched on in the Supabase project (e.g.
+  /// {'google'}); empty when unknown (offline) or none.
+  Future<Set<String>> oauthProviders();
 
   Future<void> signOut();
 

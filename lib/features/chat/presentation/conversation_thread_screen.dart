@@ -150,6 +150,8 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
   /// "🇦🇿 Azərbaycan → 🇬🇪 Gürcüstan" for a load chat, "Şəxsi söhbət" for
   /// the direct chat.
   String _topicLabel(ConversationWithCargo t, AppStrings strings, String lang) {
+    final page = chatPageLabel(t.conversation, strings);
+    if (page != null) return page;
     if (t.conversation.cargoId == null) return strings.t('chat_direct');
     final c = t.cargo;
     if (c == null) return strings.t('chat_load_topic');
@@ -352,6 +354,10 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
       body: SafeArea(
         child: Column(
           children: [
+            // The service / shop page this chat is about (0100) — for both
+            // sides; a tap opens the page.
+            if (topicById[target]?.conversation case final c? when c.isPageChat)
+              ChatPageBanner(conversation: c, strings: strings),
             Expanded(
               child: ChatWallpaper(
                 child: loading
@@ -567,4 +573,51 @@ class _MessageBubble extends StatelessWidget {
 /// The "Köhnə mesajlar" row at the top of a long chat.
 class _LoadOlder {
   const _LoadOlder();
+}
+
+/// "Mağaza: Avto Hissə" / "Servis: Usta Elvin" for a chat started from a
+/// page (0100); null for other chats.
+String? chatPageLabel(ConversationModel c, AppStrings strings) {
+  if (!c.isPageChat) return null;
+  final name = (c.serviceName ?? '').trim();
+  return strings.t(c.serviceKind == 'shop' ? 'chat_ctx_shop' : 'chat_ctx_service', {'name': name.isEmpty ? '—' : name});
+}
+
+/// The page a chat started from, over the messages; a tap opens it.
+class ChatPageBanner extends StatelessWidget {
+  final ConversationModel conversation;
+  final AppStrings strings;
+  const ChatPageBanner({super.key, required this.conversation, required this.strings});
+
+  @override
+  Widget build(BuildContext context) {
+    final shop = conversation.serviceKind == 'shop';
+    final id = conversation.serviceId;
+    return Material(
+      color: AppColors.card,
+      child: InkWell(
+        key: const ValueKey('chat-page-banner'),
+        onTap: id == null ? null : () => context.pushOnce('/service/$id'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.line))),
+          child: Row(children: [
+            Icon(shop ? Icons.storefront_outlined : Icons.home_repair_service_outlined, color: AppColors.accent, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(chatPageLabel(conversation, strings) ?? '',
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text)),
+                Text(strings.t('chat_ctx_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              ]),
+            ),
+            if (id != null) ...[
+              Text(strings.t('chat_ctx_open'), style: TextStyle(fontSize: 13, color: AppColors.accent)),
+              Icon(Icons.chevron_right, color: AppColors.accent, size: 18),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
 }

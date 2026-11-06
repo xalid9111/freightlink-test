@@ -80,32 +80,13 @@ void main() {
       child: const MaterialApp(home: TirParkScreen()),
     ));
     await tester.pump(const Duration(milliseconds: 300));
-    for (final t in ['TIR', 'Park', 'Yolda özünə uyğun', 'park tap', 'Parklar', 'Servislər', 'TIR parkı əlavə et', 'Yaxınlıqdakı TIR parkları', '2 park · 100 km']) {
+    for (final t in ['TIR', 'Park', 'Yolda özünə uyğun', 'park tap', 'Parklar', 'Servislər', 'Yaxınlıqdakı TIR parkları', '2 park · 100 km']) {
       expect(find.text(t), findsWidgets, reason: t);
     }
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
-    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tp-add')), findsNothing, reason: 'users add no parks (0100)');
     expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
-  });
-
-  testWidgets('"Dayanacaq əlavə et" (?add=…): the place pin and "Bu yeri seç", Ləğv et back to the map', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        stringsProvider.overrideWithValue(_az),
-        tirParksProvider.overrideWith((ref) async => const [_utep]),
-      ],
-      child: const MaterialApp(home: TirParkScreen(addRequest: '1')),
-    ));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const ValueKey('tp-add-here')), findsOneWidget);
-    expect(find.text('Bu yeri seç'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('tp-add-cancel')));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
   });
 
   testWidgets('a park opens first, then the way there: route row and "Marşrut" with the map apps (owner, 01.11.2026)', (tester) async {
@@ -258,8 +239,6 @@ void main() {
     expect(det, contains("closeKey: 'tp-review-close'"));
     expect(svc, contains("closeKey: 'svc-filter-close'"));
     expect(src('lib/features/tirpark/presentation/tir_park_add_sheet.dart'), contains("closeKey: 'tp-add-close'"));
-    expect(tp, contains('canPop: !_adding,'));
-    expect(tp, contains('if (!didPop && _adding) setState(() => _adding = false);'));
     expect(det, contains('return EdgeSwipeBack('));
   });
 
@@ -307,7 +286,7 @@ void main() {
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: '/tirpark',"));
-    expect(router, contains("builder: (context, state) => TirParkScreen(addRequest: state.uri.queryParameters['add']),"));
+    expect(router, contains('builder: (context, state) => const TirParkScreen(),'));
     expect(router, contains("GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),"),
         reason: 'Servislər kept (+ Mağazalar, 05.11.2026)');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onServices: () => context.go('/services')"));
@@ -330,7 +309,6 @@ void main() {
     // above the list on any phone.
     expect(svc.lastIndexOf('gap: 10,', add), greaterThan(svc.lastIndexOf('gap: 76,', add)));
     expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
-    expect(tp, contains('sheet: _adding ? 0 : 0.26,'));
     expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
     // One form for both pages: the same banner, sheet and button places;
     // only the names change (owner, 31.10.2026).
@@ -340,12 +318,11 @@ void main() {
     expect(svc, contains('sheet: 0.26,'));
     for (final page in [svc, tp]) {
       expect(page, contains('MapPageBanner('));
-      expect(page, contains('gap: 76,'), reason: 'locate button above the add button');
     }
+    expect(svc, contains('gap: 76,'), reason: 'locate button above the add button');
     // Each map its own "+" (owner, 06.11.2026): Servislər → registration,
     // Mağazalar → the shop form, Parklar → the TIR Parkı page.
     expect(svc, contains('onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),'));
-    expect(tp, contains("onTap: () => context.pushOnce('/profile/tirpark'),"));
     expect(router, contains("shop: state.uri.queryParameters['shop'] == '1'"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));
     final sql = src('supabase/migrations/0077_tir_parks.sql').toLowerCase();

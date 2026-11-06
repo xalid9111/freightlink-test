@@ -528,7 +528,7 @@
   "pf_activity_roles": "我的业务角色",
   "pf_activity_sections": "我的业务板块",
   "pf_tirpark": "TIR停车场",
-  "pf_tirpark_sub": "我的停车场、员工邀请和添加停车点",
+  "pf_tirpark_sub": "我的停车场和员工邀请",
   "pf_head_admin": "总管理员",
   "pf_head_admin_only": "仅限总管理员",
   "pf_account_group": "账户与显示",
@@ -1947,5 +1947,14 @@
   "svc_profile_save": "保存服务资料",
   "svc_full_address": "详细地址",
   "svc_24h_two_lines": "24/7\n(全天营业)",
-  "media_hint": "用相机按钮添加标志和封面照片"
+  "media_hint": "用相机按钮添加标志和封面照片",
+  "chat_ctx_service": "服务：{name}",
+  "chat_ctx_shop": "商店：{name}",
+  "chat_ctx_hint": "此对话从该页面发起",
+  "chat_ctx_open": "查看页面",
+  "shop_profile_title": "商店",
+  "oauth_google_off": "Google 登录尚未启用——请使用邮箱和密码。",
+  "oauth_apple_off": "Apple 登录尚未启用——请使用邮箱和密码。",
+  "error_oauth_not_configured": "此登录方式尚未启用。",
+  "error_oauth_failed": "登录失败，请重试。"
 }

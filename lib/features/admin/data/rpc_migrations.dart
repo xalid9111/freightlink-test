@@ -193,6 +193,7 @@ const kRpcMigration = <String, String>{
   'tir_park_set_logo': '0096_profile_covers.sql',
   'service_set_cover': '0096_profile_covers.sql',
   'service_set_logo': '0097_service_shop_profile.sql',
+  'get_or_create_service_conversation': '0100_no_user_spots_service_chat_context.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
 };

@@ -8,7 +8,11 @@ create temp table ids (k text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
 set role authenticated;
 select tests.login(:user1);
-insert into ids values ('p', public.tir_park_add('Utep TIR Parkı', 40.4560, 49.7300, 'Xırdalan', array['secure']));
+reset role;  -- users no longer add parks (0100): the park is made directly
+with n as (insert into public.tir_parks (name, lat, lng, city, amenities, created_by, status)
+           values ('Utep TIR Parkı', 40.4560, 49.7300, 'Xırdalan', array['secure'], :user1, 'approved') returning id)
+insert into ids select 'p', id from n;
+set role authenticated;
 -- Pictures: admins only (owner, 31.10.2026), only profile-media links, at most 10.
 select tests.check(tests.err($$ select public.tir_park_set_photos((select id from ids where k='p'),
   array['https://x.supabase.co/storage/v1/object/public/profile-media/u/1.jpg']) $$) like '%admin_only%',

@@ -82,7 +82,7 @@ void main() {
     expect(find.text('Mənim fəaliyyətim'), findsOneWidget);
     expect(find.text('Rollarım, yüklərim və xidmətlərim'), findsOneWidget);
     expect(find.text('TIR Parkı'), findsOneWidget);
-    expect(find.text('Parkım, işçi dəvətləri və dayanacaq əlavə et'), findsOneWidget);
+    expect(find.text('Parkım və işçi dəvətləri'), findsOneWidget);
     // "Park rezervasiyalarım" right under "TIR Parkı" (owner, 06.11.2026).
     expect(find.text('Park rezervasiyalarım'), findsOneWidget);
     expect(find.text('Rezervasiyalar və statuslar'), findsOneWidget);
@@ -156,17 +156,16 @@ void main() {
     expect(find.text('Reklam sifarişi'), findsNothing);
   });
 
-  testWidgets('TIR Parkı: park management, work at a park, "Dayanacaq əlavə et" (bookings moved to Profil)', (tester) async {
+  testWidgets('TIR Parkı: park management and work at a park; no "Dayanacaq əlavə et" (0100); bookings on Profil', (tester) async {
     await tester.pumpWidget(_app(const ProfileTirParkScreen()));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('pf-tirpark-manage')), findsOneWidget);
     expect(find.byKey(const ValueKey('pf-tirpark-work')), findsOneWidget);
-    expect(find.byKey(const ValueKey('pf-tirpark-stop')), findsOneWidget);
-    expect(find.text('Dayanacaq əlavə et'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pf-tirpark-stop')), findsNothing);
+    expect(find.text('Dayanacaq əlavə et'), findsNothing);
     expect(find.byKey(const ValueKey('pf-tirpark-bookings')), findsNothing);
-    expect(find.text('Park rezervasiyalarım'), findsNothing);
     final p = src('lib/features/auth/presentation/profile_screen.dart');
-    expect(p, contains("onTap: () => context.go('/tirpark?add=\${DateTime.now().millisecondsSinceEpoch}'),"));
+    expect(p.contains('/tirpark?add='), isFalse);
     expect(p, contains("key: const ValueKey('pf-bookings'),"));
     expect(p, contains("onTap: () => context.pushOnce('/tirpark/bookings'),"), reason: 'the same bookings screen');
   });

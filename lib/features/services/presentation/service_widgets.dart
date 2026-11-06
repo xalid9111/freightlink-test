@@ -150,7 +150,9 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
     if (owner == null) return;
     setState(() => _opening = true);
     try {
-      final conv = await ref.read(groupRepositoryProvider).openDirect(owner);
+      // The chat remembers this page (0100): both sides see which service /
+      // shop it is about.
+      final conv = await ref.read(groupRepositoryProvider).openServicePage(widget.p.id, owner);
       ref.invalidate(conversationByIdProvider(conv.id));
       if (mounted) context.pushOnce('/chat/${conv.id}');
     } catch (_) {

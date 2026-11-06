@@ -1,4 +1,9 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/app_base_url_stub.dart' if (dart.library.js_interop) '../../../core/config/app_base_url_web.dart';
+import '../../../core/config/env.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../domain/app_user.dart';
@@ -129,19 +134,39 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signInWithGoogle() {
-    throw const AppException(
-      'Google ilə giriş hələ qoşulmayıb. Email/şifrə istifadə edin.',
-      code: 'not_implemented',
-    );
+  Future<Set<String>> oauthProviders() async {
+    // Supabase tells which providers are on (no secret involved: the public
+    // client key only). Unknown / offline = none, so a button never offers
+    // a sign-in that cannot work.
+    try {
+      final res = await http.get(Uri.parse('${Env.supabaseUrl}/auth/v1/settings'),
+          headers: {'apikey': Env.supabaseAnonKey}).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return const {};
+      return oauthProvidersFromSettings(res.body);
+    } catch (_) {
+      return const {};
+    }
   }
 
   @override
-  Future<AppUser> signInWithApple() {
-    throw const AppException(
-      'Apple ilə giriş hələ qoşulmayıb. Email/şifrə istifadə edin.',
-      code: 'not_implemented',
-    );
+  Future<bool> signInWithGoogle() => _oauth(OAuthProvider.google, 'google');
+
+  @override
+  Future<bool> signInWithApple() => _oauth(OAuthProvider.apple, 'apple');
+
+  Future<bool> _oauth(OAuthProvider provider, String name) async {
+    if (!(await oauthProviders()).contains(name)) {
+      throw AppException('$name sign-in is not switched on in Supabase.', code: 'oauth_not_configured');
+    }
+    try {
+      // On the web the page goes to the provider and comes back to the
+      // app's own address with the session (supabase_flutter reads it);
+      // the public.users row is made by handle_new_auth_user (new
+      // account) or already exists (same e-mail, linked by Supabase).
+      return await _client.auth.signInWithOAuth(provider, redirectTo: appBaseUrl());
+    } on AuthException catch (e) {
+      throw AppException(_friendlyAuthMessage(e), code: 'oauth_failed');
+    }
   }
 
   @override
@@ -211,5 +236,17 @@ class AuthRepositoryImpl implements AuthRepository {
       default:
         return 'auth_generic';
     }
+  }
+}
+
+/// The providers switched on in a Supabase /auth/v1/settings answer
+/// ({"external": {"google": true, "apple": false, …}}).
+Set<String> oauthProvidersFromSettings(String body) {
+  try {
+    final ext = (jsonDecode(body) as Map)['external'];
+    if (ext is! Map) return const {};
+    return {for (final e in ext.entries) if (e.value == true) '${e.key}'};
+  } catch (_) {
+    return const {};
   }
 }

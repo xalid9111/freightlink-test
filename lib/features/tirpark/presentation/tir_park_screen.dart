@@ -15,7 +15,6 @@ import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
 import 'map_page_banner.dart';
-import 'tir_park_add_sheet.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
@@ -26,10 +25,10 @@ import '../../promo/premium_pin.dart';
 /// "Servislər" (the former tab) opens from here. Approved parks for
 /// everybody; one's own parks waiting for approval are shown grey.
 class TirParkScreen extends ConsumerStatefulWidget {
-  /// "Dayanacaq əlavə et" (owner, 06.11.2026): Profil → TIR Parkı opens the
-  /// map with `?add=<stamp>`; a new stamp starts placing a parking spot.
-  final String? addRequest;
-  const TirParkScreen({super.key, this.addRequest});
+  // Users no longer add parking spots on the map (owner, 07.11.2026): no
+  // "TIR parkı əlavə et" / "Dayanacaq əlavə et" — parks come only through
+  // "Park işlədirəm" (admin approval) and the admins.
+  const TirParkScreen({super.key});
 
   @override
   ConsumerState<TirParkScreen> createState() => _TirParkScreenState();
@@ -46,7 +45,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   LatLng _center = kDefaultServiceCenter;
   bool _mapReady = false;
   Map<String, PlacePromo> _lastPromos = const {};
-  bool _adding = false;
   String? _selectedId;
   String _query = '';
   Set<String> _needs = const {};
@@ -54,14 +52,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _adding = widget.addRequest != null;
     WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
-  }
-
-  @override
-  void didUpdateWidget(covariant TirParkScreen old) {
-    super.didUpdateWidget(old);
-    if (widget.addRequest != null && widget.addRequest != old.addRequest) _adding = true;
   }
 
   @override
@@ -132,24 +123,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     if (picked != null) setState(() => _needs = picked);
   }
 
-  Future<void> _confirmPlace(AppStrings s) async {
-    final c = _mapReady ? _map.camera.center : _center;
-    final added = await showModalBottomSheet<bool>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => TirParkAddSheet(lat: c.latitude, lng: c.longitude, s: s),
-    );
-    if (!mounted) return;
-    if (added == true) {
-      setState(() => _adding = false);
-      ref.invalidate(tirParksProvider);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tp_stop_sent'))));
-    }
-  }
-
   /// A pin or a card: the park opens first (its card on top of the list,
   /// the list raised), then the way there is drawn and "Marşrut" offers
   /// the navigation apps (owner, 01.11.2026 — like Servislər).
@@ -201,12 +174,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
       route = ref.watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: selected.lat, bLng: selected.lng))).valueOrNull;
     }
 
-    // While a place is being chosen, "back" leaves that mode first.
     return PopScope(
-      canPop: !_adding,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _adding) setState(() => _adding = false);
-      },
       child: Scaffold(
       body: SafeArea(
         bottom: false,
@@ -310,16 +278,6 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                   ],
                 ),
               ),
-              // Choosing the place of a new park: a fixed pin in the middle.
-              if (_adding)
-                IgnorePointer(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 54),
-                      child: Icon(Icons.location_on, size: 54, color: AppColors.accentFill),
-                    ),
-                  ),
-                ),
               // Search · filter, and Parklar | Servislər.
               Positioned(
                 left: 12,
@@ -376,59 +334,13 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                 ]),
               ),
               // My position.
-              if (!_adding)
-                AboveSheet(
+              AboveSheet(
                 sheet: 0.26,
-                gap: 76,
+                gap: 10,
                 child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
               ),
-              // "TIR parkı əlavə et +" / choosing the place.
-              AboveSheet(
-                left: _adding ? 12 : null,
-                // While choosing the place the panel sits low, so the pin in
-                // the middle of the map stays in view.
-                sheet: _adding ? 0 : 0.26,
-                gap: _adding ? 16 : 10,
-                child: _adding
-                    ? Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.line),
-                        ),
-                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                          Text(s.t('tp_pick_place'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.text)),
-                          const SizedBox(height: 10),
-                          Row(children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                key: const ValueKey('tp-add-cancel'),
-                                onPressed: () => setState(() => _adding = false),
-                                child: Text(s.t('common_cancel')),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: FilledButton(
-                                key: const ValueKey('tp-add-here'),
-                                onPressed: () => _confirmPlace(s),
-                                child: Text(s.t('tp_pick_here')),
-                              ),
-                            ),
-                          ]),
-                        ]),
-                      )
-                    : MapAddButton(
-                        buttonKey: 'tp-add',
-                        label: s.t('tp_add'),
-                        // The TIR Parkı page (manage / work / dayanacaq), owner 06.11.2026.
-                        onTap: () => context.pushOnce('/profile/tirpark'),
-                      ),
-              ),
               // Nearby parks.
-              if (!_adding)
-                DraggableScrollableSheet(
+              DraggableScrollableSheet(
                   controller: _sheet,
                   initialChildSize: 0.26,
                   minChildSize: 0.12,
