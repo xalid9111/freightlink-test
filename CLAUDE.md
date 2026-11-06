@@ -324,7 +324,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   Premium price, both = + the Yüklər Premium price for the same days (no
   such pack = blocked, no made-up price); after a verified payment TIR
   Bazarı / Yüklər show it as the ad card (owner's picture, 07.11.2026):
-  one big card across the page with an orange glow — picture left (its
+  one low card across the page (the owner's size: about a quarter of its
+  width tall; grows only with the text size) with an orange glow — picture left (its
   photo / background / logo, else the default picture), "REKLAM", the
   kind's icon + name, one line about it (description / specialty, a park's
   amenities; nothing made up), 📍 city · km (km only when the user's place
