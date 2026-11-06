@@ -139,6 +139,11 @@ class ServiceProvider {
 
   bool get isCenter => kind == 'center';
   bool get isTow => categories.contains('tow');
+  /// A shop (owner, 06.11.2026): sells spare parts and offers no service
+  /// kind (only spare_parts and the shop's product kinds shop_*). A shop is
+  /// shown only on Mağazalar, a service only on Servislər.
+  bool get isShop =>
+      categories.contains('spare_parts') && categories.every((c) => c == 'spare_parts' || c.startsWith('shop_'));
   bool get isVisible => status == 'pending' || status == 'approved';
   bool get isUnclaimed => ownerId == null;
 

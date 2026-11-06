@@ -366,7 +366,12 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
     final cats = [for (final c in ref.watch(serviceCategoriesProvider).valueOrNull ?? const <ServiceCategory>[]) if (!c.isShopKind) c];
     // Keep showing the previous pins while a new search loads.
     // PRO services first, then by distance (server order).
-    final items = [...(results.valueOrNull ?? _lastItems)];
+    // Each map its own places (owner, 06.11.2026): shops only on
+    // Mağazalar, services only on Servislər (parks have their own map).
+    final items = [
+      for (final p in results.valueOrNull ?? _lastItems)
+        if (widget.shops == p.isShop) p,
+    ];
     if (results.hasValue) _lastItems = results.value!;
     if (items.any((p) => p.isPro)) {
       final pro = items.where((p) => p.isPro).toList();
@@ -1200,7 +1205,7 @@ class _SearchSuggestions extends ConsumerWidget {
     final cats = [for (final c in categories) if (categoryMatches(query, c.names.values)) c].take(3).toList();
     final serviceList = [
       for (final p in services.valueOrNull ?? const <ServiceProvider>[])
-        if (!shopsOnly || p.categories.contains(kShopCategory)) p
+        if (shopsOnly == p.isShop) p
     ].take(6).toList();
     final placeList = (places.valueOrNull ?? const <PlaceSuggestion>[]).take(4).toList();
     final loading = services.isLoading || places.isLoading;
