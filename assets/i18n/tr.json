@@ -1946,5 +1946,6 @@
   "shop_save": "Mağazayı kaydet",
   "svc_profile_save": "Servis profilini kaydet",
   "svc_full_address": "Tam adres",
-  "svc_24h_two_lines": "7/24\n(sürekli açık)"
+  "svc_24h_two_lines": "7/24\n(sürekli açık)",
+  "media_hint": "Logo ve kapak fotoğrafını kamera düğmeleriyle ekleyin"
 }

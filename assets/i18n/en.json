@@ -1946,5 +1946,6 @@
   "shop_save": "Save the shop",
   "svc_profile_save": "Save the service profile",
   "svc_full_address": "Full address",
-  "svc_24h_two_lines": "24/7\n(always open)"
+  "svc_24h_two_lines": "24/7\n(always open)",
+  "media_hint": "Add the logo and cover photo with the camera buttons"
 }

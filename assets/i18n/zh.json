@@ -1946,5 +1946,6 @@
   "shop_save": "保存商店",
   "svc_profile_save": "保存服务资料",
   "svc_full_address": "详细地址",
-  "svc_24h_two_lines": "24/7\n(全天营业)"
+  "svc_24h_two_lines": "24/7\n(全天营业)",
+  "media_hint": "用相机按钮添加标志和封面照片"
 }

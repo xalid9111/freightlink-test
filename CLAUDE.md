@@ -369,6 +369,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   the map, Telefon | WhatsApp and İş saatları | 24/7 side by side, the
   open-now row and the orange save button. The web build reads the texts
   (assets/i18n) fresh ("no-cache"), so a new version never shows raw keys.
+  Logo + background as on the Profil card (owner, 06.11.2026): the
+  background on top with a camera button, the round logo half over its
+  lower edge with a small camera, the name beside it. Never empty: until
+  the owner puts his own, the default pictures (assets/images/profile —
+  abstract waves, orange for Servis, blue for Mağaza; no text / logo /
+  watermark) show on the form and on the service / shop page.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

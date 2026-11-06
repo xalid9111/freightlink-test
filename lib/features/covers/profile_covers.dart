@@ -583,6 +583,12 @@ Future<bool> changeShopCover({
   return ok;
 }
 
+/// The default pictures of a service / shop profile (owner, 06.11.2026:
+/// never an empty box; the owner may put his own any time). No text, no
+/// logo, no watermark — only the app's own abstract waves.
+String defaultServiceCover({required bool shop}) => 'assets/images/profile/cover_${shop ? 'shop' : 'service'}.jpg';
+String defaultServiceLogo({required bool shop}) => 'assets/images/profile/logo_${shop ? 'shop' : 'service'}.jpg';
+
 /// Width / height of a place's background.
 const double kPlaceCoverAspect = 2.6;
 

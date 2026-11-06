@@ -94,7 +94,7 @@ void main() {
     expect(name.controller!.text, isEmpty, reason: 'no sample name');
     expect(name.decoration!.hintText, 'Mağaza adı');
     for (final t in ['Mağazanın adı', 'Məhsul kateqoriyaları', 'Təsvir', 'Şəhər', 'Tam ünvan', 'Xəritədə yeri seç', 'Telefon', 'WhatsApp', 'İş saatları',
-      'Mağaza indi açıqdır', 'Mağazanı yadda saxla', 'Loqo əlavə et', 'Fon şəkli əlavə et']) {
+      'Mağaza indi açıqdır', 'Mağazanı yadda saxla', 'Loqo və fon şəklini kamera düymələri ilə əlavə edin']) {
       expect(find.textContaining(t, findRichText: true), findsWidgets, reason: t);
     }
     await tester.tap(_chip('Yeni ehtiyat hissələri'));
@@ -128,8 +128,16 @@ void main() {
       for (var i = 1; i < ys.length; i++) {
         expect(ys[i], greaterThan(ys[i - 1]), reason: '${keys[i - 1]} before ${keys[i]} (shop: $shop)');
       }
-      expect(tester.getTopLeft(find.byKey(const ValueKey('svc-cover'))).dy, tester.getTopLeft(find.byKey(const ValueKey('svc-logo'))).dy,
-          reason: 'logo and background side by side');
+      // As on the Profil card: the background on top, the round logo half over its lower edge.
+      final cover = tester.getRect(find.byKey(const ValueKey('svc-cover')));
+      final logo = tester.getRect(find.byKey(const ValueKey('svc-logo')));
+      expect(logo.top, lessThan(cover.bottom));
+      expect(logo.bottom, greaterThan(cover.bottom));
+      expect(logo.width, closeTo(logo.height, 0.01), reason: 'round');
+      expect(find.byKey(const ValueKey('svc-cover-edit')), findsOneWidget, reason: 'the camera on the background');
+      // Never empty: the default pictures until the owner puts his own.
+      expect(find.byKey(const ValueKey('svc-default-cover')), findsOneWidget);
+      expect(find.byKey(const ValueKey('svc-default-logo')), findsOneWidget);
       expect(tester.takeException(), isNull, reason: 'nothing overflows on a 390 pt phone');
     }
   });
@@ -201,7 +209,11 @@ void main() {
     expect(edit, contains('class _MapPlacePicker'));
     expect(edit.contains('_name.text = me!.fullName'), isFalse, reason: 'no name filled in for the user');
     expect(src('lib/features/services/presentation/services_map_screen.dart'), contains('if (!c.isShopKind) c'));
-    expect(src('lib/features/services/presentation/service_detail_screen.dart'), contains('avatar: roundPicture(\n        media.logo,'));
+    expect(src('lib/features/services/presentation/service_detail_screen.dart'),
+        contains('avatar: roundPicture(media.logo, Image.asset(defaultServiceLogo(shop: shop), fit: BoxFit.cover)),'));
+    for (final f in ['cover_service.jpg', 'cover_shop.jpg', 'logo_service.jpg', 'logo_shop.jpg']) {
+      expect(File('assets/images/profile/$f').existsSync(), isTrue, reason: f);
+    }
     final sql = src('supabase/migrations/0097_service_shop_profile.sql');
     expect(sql, contains('on conflict (id) do nothing'));
     expect(sql, contains("public._place_cover_ok(p_url, 'service', false)"));
