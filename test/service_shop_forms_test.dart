@@ -194,6 +194,19 @@ void main() {
     expect(_ticked(tester, 'Ehtiyat hissələri satışı'), isTrue);
   });
 
+  test('each map its own places: a shop only on Mağazalar, a service only on Servislər', () {
+    expect(_svc(['spare_parts']).isShop, isTrue);
+    expect(_svc(['spare_parts', 'shop_new', 'shop_used']).isShop, isTrue);
+    expect(_svc(['tyres']).isShop, isFalse);
+    expect(_svc(['tyres', 'spare_parts']).isShop, isFalse, reason: 'a service that also sells parts stays a service');
+    final m = src('lib/features/services/presentation/services_map_screen.dart');
+    expect(m, contains('if (widget.shops == p.isShop) p,'));
+    expect(m, contains('if (shopsOnly == p.isShop) p'));
+    final sql = src('supabase/migrations/0098_services_publish_without_admin.sql');
+    expect(sql, contains("new.status := case when old.status = 'pending' then 'approved' else old.status end;"));
+    expect(sql.toLowerCase().contains('update public.service_providers set'), isFalse, reason: 'no row changed by running it');
+  });
+
   test('the texts always match the app: the web build reads them fresh, never an old cached copy', () {
     final l = src('lib/core/localization/localization_service.dart');
     expect(l, contains("import 'fresh_text_stub.dart' if (dart.library.js_interop) 'fresh_text_web.dart' as fresh;"));

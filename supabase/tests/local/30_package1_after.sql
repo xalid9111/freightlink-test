@@ -138,7 +138,9 @@ update public.service_providers set status = 'approved', is_verified = true, rat
        added_by_admin = true, owner_id = :other, created_at = '2000-01-01'
  where id = :p2;
 select set_config('app.service_rating_sync', 'off', true);
-select tests.check((select status = 'pending' and not is_verified and rating_avg = 0 and rating_count = 0
+-- 0098 (owner, 06.11.2026): the owner's save publishes a profile still
+-- waiting from before 0028 ('pending' → 'approved'); nothing else moves.
+select tests.check((select status = 'approved' and not is_verified and rating_avg = 0 and rating_count = 0
                            and not added_by_admin and owner_id = 'a0000000-0000-4000-8000-000000000012'
                            and created_at > '2001-01-01'
                       from public.service_providers where id = :p2),
