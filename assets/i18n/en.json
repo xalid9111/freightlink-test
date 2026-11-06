@@ -1963,7 +1963,6 @@
   "promo_places_total": "Total: {sum}",
   "promo_cross_loads": "Premium loads",
   "promo_places_missing": "Both places are not offered for this period: Loads has no such Premium pack — choose one place or another period.",
-  "promo_cross_places": "Premium · TIR parks, services and shops",
   "promo_place_kind_park": "TIR park",
   "promo_place_kind_service": "Service",
   "promo_place_kind_shop": "Shop",

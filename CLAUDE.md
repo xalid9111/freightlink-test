@@ -323,7 +323,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   (one or both; nothing chosen = no order); price: one place = its own
   Premium price, both = + the Yüklər Premium price for the same days (no
   such pack = blocked, no made-up price); after a verified payment TIR
-  Bazarı / Yüklər show it in a "Premium" strip (a tap opens its page).
+  Bazarı / Yüklər show it as the ad card (owner's picture, 07.11.2026):
+  one big card across the page with an orange glow — picture left (its
+  photo / background / logo, else the default picture), "REKLAM", the
+  kind's icon + name, one line about it (description / specialty, a park's
+  amenities; nothing made up), 📍 city · km (km only when the user's place
+  is already known; no GPS asked) and an orange "Profilə bax ›"; several =
+  swiped with dots; on TIR Bazarı under the search box, on Yüklər above the
+  tiles; a tap opens its page.
   TIR Bazarı ads never pick Yüklər; İrəli çək / VIP unchanged.
 - Profile backgrounds (owner, 05.11.2026, 0096): Park, Servis and Mağaza
   (the seller's page, profile_details.cover_url) share one flow — "Fon

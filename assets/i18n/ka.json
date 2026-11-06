@@ -1963,7 +1963,6 @@
   "promo_places_total": "ჯამი: {sum}",
   "promo_cross_loads": "Premium ტვირთები",
   "promo_places_missing": "ამ ვადით ორივე ადგილი არ იყიდება: ტვირთების განყოფილებაში ასეთი Premium პაკეტი არ არის — აირჩიეთ ერთი ადგილი ან სხვა ვადა.",
-  "promo_cross_places": "Premium · TIR პარკები, სერვისები და მაღაზიები",
   "promo_place_kind_park": "TIR პარკი",
   "promo_place_kind_service": "სერვისი",
   "promo_place_kind_shop": "მაღაზია",

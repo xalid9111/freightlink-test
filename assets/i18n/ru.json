@@ -1963,7 +1963,6 @@
   "promo_places_total": "Итого: {sum}",
   "promo_cross_loads": "Premium-грузы",
   "promo_places_missing": "Оба места на этот срок недоступны: в разделе «Грузы» нет такого пакета Premium — выберите одно место или другой срок.",
-  "promo_cross_places": "Premium · TIR-парки, сервисы и магазины",
   "promo_place_kind_park": "TIR-парк",
   "promo_place_kind_service": "Сервис",
   "promo_place_kind_shop": "Магазин",

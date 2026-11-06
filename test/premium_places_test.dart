@@ -17,7 +17,11 @@ import 'package:freightlink/features/finance/presentation/card_checkout.dart';
 import 'package:freightlink/features/finance/presentation/finance_providers.dart';
 import 'package:freightlink/features/market/domain/market_models.dart';
 import 'package:freightlink/features/market/presentation/market_promo.dart';
+import 'package:freightlink/features/covers/profile_covers.dart';
 import 'package:freightlink/features/promo/promo_cross.dart';
+import 'package:freightlink/features/services/presentation/services_providers.dart' show serviceByIdProvider;
+import 'package:freightlink/models/service_models.dart';
+import 'package:go_router/go_router.dart';
 
 String src(String p) => File(p).readAsStringSync();
 final _az = AppStrings(Map<String, String>.from(jsonDecode(src('assets/i18n/az.json')) as Map));
@@ -174,6 +178,59 @@ void main() {
     expect(it('service').route, '/service/x1');
     expect(_az.t(it('service', shop: true).labelKey()), 'Mağaza');
     expect(_az.t(it('tirpark').labelKey()), 'TIR park');
+  });
+
+  test('the ad card\'s place line: city · distance, only what is known', () {
+    expect(placeAdWhere('Bakı', 5), 'Bakı · 5.0 km');
+    expect(placeAdWhere('Bakı', 23.4), 'Bakı · 23 km');
+    expect(placeAdWhere('Bakı', null), 'Bakı');
+    expect(placeAdWhere(null, null), '');
+    expect(firstLine('\n  24/7 təmir və texniki yardım\nikinci'), '24/7 təmir və texniki yardım');
+    expect(firstLine('  '), isNull);
+  });
+
+  testWidgets('the ad card (owner\'s picture): REKLAM, name, about, city, "Profilə bax" opens the page; swiped with dots', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const svc = ServiceProvider(
+      id: 's1', ownerId: 'u9', kind: 'center', name: 'Yolüstü TIR Servisi', categories: ['engine'], lat: 40.4, lng: 49.8,
+      isMobile: false, is24h: true, isActive: true, status: 'approved', isVerified: false, addedByAdmin: false,
+      photos: [], ratingAvg: 0, ratingCount: 0, description: '24/7 təmir və texniki yardım',
+    );
+    final router = GoRouter(routes: [
+      GoRoute(path: '/', builder: (c, st) => Scaffold(body: ListView(children: [PlaceCrossStrip(s: _az, place: 'market')]))),
+      GoRoute(path: '/service/:id', builder: (c, st) => Text('page ${st.pathParameters['id']}')),
+    ]);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        placeCrossProvider('market').overrideWith((ref) async => const [
+              PlaceCrossItem(kind: 'service', id: 's1', name: 'Yolüstü TIR Servisi', city: 'Bakı'),
+              PlaceCrossItem(kind: 'service', id: 's2', name: 'Hissə Mağazası', city: 'Sumqayıt', shop: true),
+            ]),
+        serviceByIdProvider('s1').overrideWith((ref) async => svc),
+        serviceByIdProvider('s2').overrideWith((ref) async => null),
+        placeMediaProvider((CoverSection.service, 's1')).overrideWith((ref) async => const PlaceMedia()),
+        placeMediaProvider((CoverSection.service, 's2')).overrideWith((ref) async => const PlaceMedia()),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('REKLAM'), findsOneWidget);
+    expect(find.text('Yolüstü TIR Servisi'), findsOneWidget);
+    expect(find.text('24/7 təmir və texniki yardım'), findsOneWidget);
+    expect(find.text('Bakı'), findsOneWidget, reason: 'no GPS asked here: the city only');
+    expect(find.text('Profilə bax'), findsOneWidget);
+    final card = tester.getRect(find.byKey(const ValueKey('place-ad-s1')));
+    expect(card.width, greaterThan(350), reason: 'one big card across the page');
+    await tester.drag(find.byKey(const ValueKey('place-ad-s1')), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Hissə Mağazası'), findsOneWidget, reason: 'the next ad is swiped in');
+    await tester.drag(find.byKey(const ValueKey('place-ad-s2')), const Offset(300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('place-ad-open-s1')));
+    await tester.pumpAndSettle();
+    expect(find.text('page s1'), findsOneWidget);
   });
 
   test('wired: places to the server, strips on TIR Bazarı and Yüklər (not on the maps), SQL 0103', () {

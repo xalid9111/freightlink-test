@@ -12,6 +12,10 @@ import '../../core/widgets/mouse_drag_scroll.dart';
 import '../auth/presentation/providers/auth_providers.dart';
 import '../cargo/presentation/providers/cargo_providers.dart';
 import '../market/presentation/market_promo.dart' show MarketPromoIcon;
+import 'package:latlong2/latlong.dart';
+import '../covers/profile_covers.dart';
+import '../services/presentation/services_providers.dart' show serviceByIdProvider, userLocationProvider;
+import '../tirpark/data/tir_park_repository.dart' show tirParksProvider;
 import '../market/domain/market_models.dart' show MarketPromoKind;
 
 /// Loads whose Premium chose TIR Bazarı (owner, 07.11.2026, 0101; paid
@@ -20,7 +24,8 @@ import '../market/domain/market_models.dart' show MarketPromoKind;
 final promoCrossProvider = FutureProvider.autoDispose.family<List<String>, String>((ref, place) async {
   ref.watch(currentUserIdProvider);
   try {
-    final res = await SupabaseConfig.client.rpc('promo_cross_latest', params: {'p_place': place, 'p_limit': 12}).timeout(const Duration(seconds: 15));
+    final res = await SupabaseConfig.client
+        .rpc('promo_cross_latest', params: {'p_place': place, 'p_limit': 12}).timeout(const Duration(seconds: 15));
     return [for (final r in (res as List? ?? const [])) '${(r as Map)['source_id']}'];
   } on PostgrestException {
     return const [];
@@ -159,31 +164,236 @@ final placeCrossProvider = FutureProvider.autoDispose.family<List<PlaceCrossItem
   }
 });
 
-/// TIR Bazarı / Yüklər: "Premium" — parks, services and shops whose Premium
-/// chose this section (owner, 07.11.2026, 0103); a tap opens the page.
-class PlaceCrossStrip extends ConsumerWidget {
+/// What the ad card shows of a park / service / shop: its picture, one line
+/// about it and its place (from the existing service / park data).
+class PlaceAdInfo {
+  final String? photo; // a network picture; null = the default picture
+  final String? about;
+  final double? lat, lng;
+  const PlaceAdInfo({this.photo, this.about, this.lat, this.lng});
+}
+
+/// The first line of a text (no made-up words: empty → null).
+String? firstLine(String? t) {
+  final l = (t ?? '').split('\n').map((x) => x.trim()).firstWhere((x) => x.isNotEmpty, orElse: () => '');
+  return l.isEmpty ? null : l;
+}
+
+/// "Bakı · 5 km": the city and, when the user's place is known, the distance.
+String placeAdWhere(String? city, double? km) => [
+      if ((city ?? '').trim().isNotEmpty) city!.trim(),
+      if (km != null) '${km < 10 ? km.toStringAsFixed(1) : km.round()} km',
+    ].join(' · ');
+
+final _servicePlaceAdProvider = FutureProvider.autoDispose.family<PlaceAdInfo, String>((ref, id) async {
+  final p = await ref.watch(serviceByIdProvider(id).future);
+  final media = await ref.watch(placeMediaProvider((CoverSection.service, id)).future).catchError((_) => const PlaceMedia());
+  return PlaceAdInfo(
+    photo: p?.photos.firstOrNull ?? media.cover ?? media.logo,
+    about: firstLine(p?.description) ?? firstLine(p?.specialty),
+    lat: p?.lat,
+    lng: p?.lng,
+  );
+});
+
+final _parkPlaceAdProvider = FutureProvider.autoDispose.family<PlaceAdInfo, (String, AppStrings)>((ref, k) async {
+  final parks = await ref.watch(tirParksProvider.future);
+  final p = parks.where((x) => x.id == k.$1).firstOrNull;
+  final media = await ref.watch(placeMediaProvider((CoverSection.park, k.$1)).future).catchError((_) => const PlaceMedia());
+  final am = p == null ? const <String>[] : [for (final a in p.amenities.take(3)) k.$2.t('tp_am_$a')];
+  return PlaceAdInfo(
+    photo: p?.photoUrls.firstOrNull ?? media.cover ?? media.logo,
+    about: am.isNotEmpty ? am.join(' · ') : firstLine(p?.note),
+    lat: p?.lat,
+    lng: p?.lng,
+  );
+});
+
+/// TIR Bazarı / Yüklər: the ad card of the parks, services and shops whose
+/// Premium chose this section (owner's picture, 07.11.2026; 0103): the
+/// picture, "REKLAM", the kind's icon + name, one line about it, the city ·
+/// distance and "Profilə bax". Several = swiped left / right with dots.
+class PlaceCrossStrip extends ConsumerStatefulWidget {
   final AppStrings s;
   final String place;
   const PlaceCrossStrip({super.key, required this.s, required this.place});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(placeCrossProvider(place)).valueOrNull ?? const <PlaceCrossItem>[];
+  ConsumerState<PlaceCrossStrip> createState() => _PlaceCrossStripState();
+}
+
+class _PlaceCrossStripState extends ConsumerState<PlaceCrossStrip> {
+  final _page = PageController();
+  int _at = 0;
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = ref.watch(placeCrossProvider(widget.place)).valueOrNull ?? const <PlaceCrossItem>[];
     if (items.isEmpty) return const SizedBox.shrink();
+    // Grows with the text size (Profil → 1…5), so nothing is cut.
+    final h = 150 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: _StripFrame(
-        stripKey: 'place-cross-$place',
-        title: s.t('promo_cross_places'),
-        children: [
-          for (final it in items)
-            _card(
-              key: ValueKey('place-cross-${it.id}'),
-              onTap: () => context.pushOnce(it.route),
-              title: it.name,
-              line: [s.t(it.labelKey()), if ((it.city ?? '').trim().isNotEmpty) it.city!.trim()].join(' · '),
+      key: ValueKey('place-cross-${widget.place}'),
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          height: h + 8,
+          child: MouseDragScroll(child: PageView.builder(
+              scrollDirection: Axis.horizontal,
+              controller: _page,
+              itemCount: items.length,
+              onPageChanged: (i) => setState(() => _at = i),
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                child: PlaceAdCard(s: widget.s, item: items[i]),
+              ),
             ),
+          ),
+        ),
+        if (items.length > 1) ...[
+          const SizedBox(height: 6),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (var i = 0; i < items.length; i++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: i == _at ? 16 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: i == _at ? AppColors.accent : AppColors.line,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+          ]),
         ],
+      ]),
+    );
+  }
+}
+
+/// One ad card (the owner's picture).
+class PlaceAdCard extends ConsumerWidget {
+  final AppStrings s;
+  final PlaceCrossItem item;
+  const PlaceAdCard({super.key, required this.s, required this.item});
+
+  IconData get _icon => item.isPark ? Icons.local_parking : (item.shop ? Icons.storefront : Icons.build);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = (item.isPark ? ref.watch(_parkPlaceAdProvider((item.id, s))) : ref.watch(_servicePlaceAdProvider(item.id))).valueOrNull ??
+        const PlaceAdInfo();
+    final me = ref.watch(userLocationProvider).point;
+    final km = me == null || info.lat == null || info.lng == null
+        ? null
+        : const Distance().as(LengthUnit.Meter, me, LatLng(info.lat!, info.lng!)) / 1000;
+    final where = placeAdWhere(item.city, km);
+    void open() => context.pushOnce(item.route);
+    final c = AppColors.accent;
+    final fallback = Image.asset(defaultServiceCover(shop: item.shop), fit: BoxFit.cover);
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        key: ValueKey('place-ad-${item.id}'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: open,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: c.withValues(alpha: 0.75), width: 1.4),
+            boxShadow: [BoxShadow(color: c.withValues(alpha: 0.22), blurRadius: 14, spreadRadius: 0.5)],
+          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            // The picture (left).
+            Expanded(
+              flex: 9,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child:
+                    info.photo == null ? fallback : Image.network(info.photo!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 11,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(
+                  key: const ValueKey('place-ad-badge'),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(6)),
+                  child: Text(s.t('pp_ad').toUpperCase(),
+                      style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+                ),
+                const SizedBox(height: 6),
+                Row(children: [
+                  Icon(_icon, size: 18, color: c),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                ]),
+                if (info.about != null) ...[
+                  const SizedBox(height: 3),
+                  Text(info.about!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.25)),
+                ],
+                const Spacer(),
+                Row(children: [
+                  if (where.isNotEmpty) ...[
+                    Icon(Icons.place_outlined, size: 15, color: AppColors.textSoft),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      flex: 2,
+                      child: Text(where,
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                    ),
+                  ] else
+                    const Spacer(),
+                  const SizedBox(width: 6),
+                  // Shrinks on a narrow phone / big text instead of overflowing.
+                  Flexible(
+                    flex: 3,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: FilledButton(
+                          key: ValueKey('place-ad-open-${item.id}'),
+                          onPressed: open,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accentFill,
+                            foregroundColor: Colors.white,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            minimumSize: const Size(0, 34),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Text(s.t('job_view_profile'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                            const Icon(Icons.chevron_right, size: 18),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
       ),
     );
   }
