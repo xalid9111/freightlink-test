@@ -93,8 +93,9 @@ void main() {
     final name = tester.widget<TextField>(find.descendant(of: find.byKey(const ValueKey('svc-name')), matching: find.byType(TextField)));
     expect(name.controller!.text, isEmpty, reason: 'no sample name');
     expect(name.decoration!.hintText, 'Mağaza adı');
-    for (final t in ['Satılan ehtiyat hissələri', 'Mağaza haqqında', 'Ünvan', 'Əlaqə', 'İş saatları', 'Mağazanı yadda saxla', 'Loqo əlavə et', 'Fon şəkli əlavə et']) {
-      expect(find.text(t), findsWidgets, reason: t);
+    for (final t in ['Mağazanın adı', 'Məhsul kateqoriyaları', 'Təsvir', 'Şəhər', 'Tam ünvan', 'Xəritədə yeri seç', 'Telefon', 'WhatsApp', 'İş saatları',
+      'Mağaza indi açıqdır', 'Mağazanı yadda saxla', 'Loqo əlavə et', 'Fon şəkli əlavə et']) {
+      expect(find.textContaining(t, findRichText: true), findsWidgets, reason: t);
     }
     await tester.tap(_chip('Yeni ehtiyat hissələri'));
     await tester.pump();
@@ -107,6 +108,14 @@ void main() {
       expect(find.text(t), findsNothing, reason: t);
     }
     expect(find.byType(SegmentedButton<String>), findsNothing);
+    // The kinds in the owner's order, new parts first.
+    final xs = [for (final id in ['shop_new', 'shop_used', 'shop_engine', 'shop_other']) tester.getTopLeft(find.byKey(ValueKey('svc-kind-$id')))];
+    for (var i = 1; i < xs.length; i++) {
+      expect(xs[i].dy > xs[i - 1].dy || (xs[i].dy == xs[i - 1].dy && xs[i].dx > xs[i - 1].dx), isTrue, reason: 'order $i');
+    }
+    // Telefon | WhatsApp and İş saatları | 24/7 side by side.
+    expect(tester.getTopLeft(find.text('WhatsApp', findRichText: true)).dy, tester.getTopLeft(find.text('Telefon *', findRichText: true)).dy);
+    expect(tester.getCenter(find.byKey(const ValueKey('svc-24h'))).dx, greaterThan(250));
   });
 
   testWidgets('both forms follow the same order, top to bottom', (tester) async {
@@ -175,6 +184,13 @@ void main() {
     expect(find.text('Profili redaktə et'), findsOneWidget, reason: 'a service that also sells parts stays a service');
     expect(_ticked(tester, 'Təkər təmiri'), isTrue);
     expect(_ticked(tester, 'Ehtiyat hissələri satışı'), isTrue);
+  });
+
+  test('the texts always match the app: the web build reads them fresh, never an old cached copy', () {
+    final l = src('lib/core/localization/localization_service.dart');
+    expect(l, contains("import 'fresh_text_stub.dart' if (dart.library.js_interop) 'fresh_text_web.dart' as fresh;"));
+    expect(l, contains('await fresh.fetchFreshText(path) ?? await rootBundle.loadString(path)'));
+    expect(src('lib/core/localization/fresh_text_web.dart'), contains("RequestInit(cache: 'no-cache')"));
   });
 
   test('wired: logo / background saved with the profile, map picker, 10 photos, shop kinds off the Servislər chips, SQL 0097', () {

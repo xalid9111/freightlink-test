@@ -1924,9 +1924,7 @@
   "shop_name": "Shop name",
   "shop_name_hint": "Shop name",
   "svc_name_hint": "Service name",
-  "shop_kinds": "Spare parts sold",
-  "shop_kinds_sub": "You can choose several together",
-  "svc_categories_sub": "Choose the services you offer",
+  "shop_kinds": "Product categories",
   "shop_pick_kind": "Choose at least one product kind.",
   "shop_kind_new": "New spare parts",
   "shop_kind_used": "Used spare parts",
@@ -1936,10 +1934,7 @@
   "shop_kind_oils": "Oils",
   "shop_kind_accessories": "Accessories",
   "shop_kind_other": "Other",
-  "shop_about": "About the shop",
   "shop_about_hint": "Write about your shop and what you sell",
-  "svc_about": "About the service",
-  "svc_address_title": "Address",
   "svc_address_hint": "Enter the full address",
   "map_pick_place": "Pick the place on the map",
   "map_pick_confirm": "Choose this place",
@@ -1949,5 +1944,7 @@
   "svc_photos_title": "Service photos",
   "photo_add": "Add photo",
   "shop_save": "Save the shop",
-  "svc_profile_save": "Save the service profile"
+  "svc_profile_save": "Save the service profile",
+  "svc_full_address": "Full address",
+  "svc_24h_two_lines": "24/7\n(always open)"
 }

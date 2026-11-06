@@ -363,6 +363,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   extra frames). Logo = service_providers.logo_url (service_set_logo,
   owner only, own picture); shown round on the service / shop page. No
   ready names, logos, texts or watermarks on backgrounds.
+  Look (owner's picture 2, 06.11.2026): small labels over the fields
+  ("Mağazanın adı *", "Məhsul kateqoriyaları *", "Təsvir", "Şəhər", "Tam
+  ünvan"), fields with icons, dashed "add" boxes, "Xəritədə yeri seç" on
+  the map, Telefon | WhatsApp and İş saatları | 24/7 side by side, the
+  open-now row and the orange save button. The web build reads the texts
+  (assets/i18n) fresh ("no-cache"), so a new version never shows raw keys.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

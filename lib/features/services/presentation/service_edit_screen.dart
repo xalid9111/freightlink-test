@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -416,12 +417,17 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
     final title = shop
         ? (_existing == null ? 'shop_create_title' : 'shop_edit_title')
         : (_existing == null ? 'svc_profile_create_title' : 'svc_edit_title');
-    // The kinds of this form only: shop products on the Mağaza form, the
-    // service kinds (spare_parts included, as before) on the Servis form.
-    final kinds = [
-      for (final c in cats.valueOrNull ?? const <ServiceCategory>[])
-        if (shop ? c.isShopKind : !c.isShopKind) c,
-    ];
+    final all = cats.valueOrNull ?? const <ServiceCategory>[];
+    // The kinds of this form only. The shop's kinds in their fixed order
+    // (shown even before SQL 0097, which stores them); the service kinds
+    // (spare_parts included, as before) from the server.
+    final kinds = shop
+        ? [
+            for (final id in kShopKindOrder)
+              all.firstWhere((c) => c.id == id,
+                  orElse: () => ServiceCategory(id: id, names: const {}, icon: 'parts', sortOrder: 0, isActive: true)),
+          ]
+        : [for (final c in all) if (!c.isShopKind) c];
 
     return Scaffold(
       appBar: AppBar(
@@ -437,7 +443,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                 key: _form,
                 child: ListView(
                   key: const ValueKey('svc-form'),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
                   children: [
                     // One service per owner: the shop is added to it.
                     if (widget.shop && _existing != null && !_existing!.categories.contains(kShopCategory))
@@ -460,7 +466,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                       }),
                     ),
                     if (!shop) ...[
-                      _Section(icon: Icons.handyman_outlined, title: s.t('svc_kind')),
+                      _FieldLabel(s.t('svc_kind')),
                       SegmentedButton<String>(
                         segments: [
                           ButtonSegment(value: 'individual', icon: const Icon(Icons.handyman_outlined, size: 18), label: Text(s.t('svc_kind_individual'))),
@@ -470,36 +476,31 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                         onSelectionChanged: (v) => setState(() => _kind = v.first),
                       ),
                     ],
-                    _Section(
-                      icon: shop ? Icons.storefront_outlined : Icons.home_repair_service_outlined,
-                      title: s.t(shop ? 'shop_name' : (_kind == 'center' ? 'svc_name_center' : 'svc_name_individual')),
-                      required: true,
-                    ),
+                    _FieldLabel(s.t(shop ? 'shop_name' : (_kind == 'center' ? 'svc_name_center' : 'svc_name_individual')), required: true),
                     TextFormField(
                       key: const ValueKey('svc-name'),
                       controller: _name,
                       maxLength: 120,
                       textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(hintText: s.t(shop ? 'shop_name_hint' : 'svc_name_hint'), counterText: ''),
+                      decoration: InputDecoration(
+                        hintText: s.t(shop ? 'shop_name_hint' : 'svc_name_hint'),
+                        counterText: '',
+                        prefixIcon: Icon(shop ? Icons.storefront_outlined : Icons.home_repair_service_outlined),
+                      ),
                       validator: (v) => (v == null || v.trim().length < 2) ? s.t('field_required') : null,
                     ),
                     if (!shop) ...[
-                      const SizedBox(height: 12),
+                      _FieldLabel(s.t('svc_specialty')),
                       TextFormField(
                         controller: _specialty,
                         maxLength: 200,
-                        decoration: InputDecoration(labelText: s.t('svc_specialty'), hintText: s.t('svc_specialty_hint'), counterText: ''),
+                        decoration: InputDecoration(hintText: s.t('svc_specialty_hint'), counterText: ''),
                       ),
                     ],
-                    _Section(
-                      icon: shop ? Icons.inventory_2_outlined : Icons.build_outlined,
-                      title: s.t(shop ? 'shop_kinds' : 'svc_categories'),
-                      sub: s.t(shop ? 'shop_kinds_sub' : 'svc_categories_sub'),
-                      required: true,
-                    ),
-                    if (cats.isLoading && !cats.hasValue)
+                    _FieldLabel(s.t(shop ? 'shop_kinds' : 'svc_categories'), required: true),
+                    if (!shop && cats.isLoading && !cats.hasValue)
                       const LinearProgressIndicator()
-                    else if (cats.hasError && !cats.hasValue)
+                    else if (!shop && cats.hasError && !cats.hasValue)
                       Text(s.t('svc_load_failed'))
                     else
                       Wrap(
@@ -510,14 +511,16 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                           for (final c in kinds)
                             FilterChip(
                               key: ValueKey('svc-kind-${c.id}'),
-                              avatar: Icon(shop ? shopKindIcon(c.id) : serviceCategoryIcon(c.icon), size: 18),
+                              avatar: Icon(shop ? shopKindIcon(c.id) : serviceCategoryIcon(c.icon), size: 18, color: AppColors.accent),
                               label: Text(shop ? s.t('shop_kind_${c.id.substring(5)}') : c.name(lang), style: const TextStyle(fontSize: 14)),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                               selected: _cats.contains(c.id),
+                              selectedColor: AppColors.accent.withValues(alpha: 0.22),
                               onSelected: (v) => setState(() => v ? _cats.add(c.id) : _cats.remove(c.id)),
                             ),
                         ],
                       ),
-                    _Section(icon: Icons.description_outlined, title: s.t(shop ? 'shop_about' : 'svc_about')),
+                    _FieldLabel(s.t('svc_description')),
                     TextFormField(
                       controller: _description,
                       maxLength: 2000,
@@ -525,80 +528,111 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                       maxLines: 6,
                       decoration: InputDecoration(hintText: s.t(shop ? 'shop_about_hint' : 'svc_description_hint')),
                     ),
-                    _Section(icon: Icons.place_outlined, title: s.t('svc_address_title')),
-                    OutlinedButton.icon(
+                    _FieldLabel(s.t('svc_city')),
+                    InkWell(
                       key: const ValueKey('svc-city'),
-                      onPressed: _pickCity,
-                      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-                      icon: Text(_place?.flag ?? '📍'),
-                      label: Align(
-                        alignment: Alignment.centerLeft,
+                      onTap: _pickCity,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(left: 14, right: 8),
+                            child: Text(_place?.flag ?? '📍', style: const TextStyle(fontSize: 22)),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                        ),
                         child: Text(
                           _place == null ? s.t('svc_city_pick') : '${_place!.cityLabel(lang)}, ${_place!.countryLabel(lang)}',
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 16, color: _place == null ? AppColors.textSoft : AppColors.text),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    _FieldLabel(s.t('svc_full_address')),
                     TextFormField(
                       controller: _address,
                       maxLength: 300,
-                      decoration: InputDecoration(labelText: s.t('svc_address'), hintText: s.t('svc_address_hint'), counterText: ''),
+                      decoration: InputDecoration(
+                        hintText: s.t('svc_address_hint'),
+                        counterText: '',
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       child: SizedBox(
-                        height: 200,
-                        child: FlutterMap(
-                          mapController: _mapCtrl,
-                          options: MapOptions(
-                            initialCenter: _point ?? kDefaultServiceCenter,
-                            initialZoom: _point == null ? 10 : 15,
-                            backgroundColor: AppColors.hero,
-                            interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-                            onTap: (_, p) => setState(() => _point = p),
-                          ),
-                          children: [
-                            const AppTileLayer(),
-                            if (_point != null)
-                              MarkerLayer(markers: [
-                                Marker(
-                                  point: _point!,
-                                  width: 44,
-                                  height: 44,
-                                  child: ServicePin(
-                                    type: _cats.contains('tow')
-                                        ? ServiceMarkerType.tow
-                                        : (_kind == 'center' ? ServiceMarkerType.center : ServiceMarkerType.mobile),
-                                    selected: true,
+                        height: 210,
+                        child: Stack(children: [
+                          FlutterMap(
+                            mapController: _mapCtrl,
+                            options: MapOptions(
+                              initialCenter: _point ?? kDefaultServiceCenter,
+                              initialZoom: _point == null ? 10 : 15,
+                              backgroundColor: AppColors.hero,
+                              interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                              onTap: (_, p) => setState(() => _point = p),
+                            ),
+                            children: [
+                              const AppTileLayer(),
+                              if (_point != null)
+                                MarkerLayer(markers: [
+                                  Marker(
+                                    point: _point!,
+                                    width: 44,
+                                    height: 44,
+                                    child: ServicePin(
+                                      type: _cats.contains('tow')
+                                          ? ServiceMarkerType.tow
+                                          : (_kind == 'center' ? ServiceMarkerType.center : ServiceMarkerType.mobile),
+                                      selected: true,
+                                    ),
                                   ),
+                                ]),
+                            ],
+                          ),
+                          // "Xəritədə yeri seç" on the map (owner's picture).
+                          Positioned(
+                            left: 12,
+                            bottom: 12,
+                            child: Material(
+                              color: AppColors.card.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(14),
+                              child: InkWell(
+                                key: const ValueKey('svc-map-pick'),
+                                onTap: _pickOnMap,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(Icons.my_location, size: 20, color: AppColors.accent),
+                                    const SizedBox(width: 8),
+                                    Text(s.t('map_pick_place'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.text)),
+                                  ]),
                                 ),
-                              ]),
-                          ],
-                        ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 10,
+                            top: 10,
+                            child: Material(
+                              color: AppColors.card.withValues(alpha: 0.92),
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                key: const ValueKey('svc-gps'),
+                                tooltip: s.t('svc_use_gps'),
+                                onPressed: _locating ? null : _useGps,
+                                icon: _locating
+                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : Icon(Icons.gps_fixed, color: AppColors.accent),
+                              ),
+                            ),
+                          ),
+                        ]),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      Expanded(
-                        child: FilledButton.tonalIcon(
-                          key: const ValueKey('svc-map-pick'),
-                          onPressed: _pickOnMap,
-                          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                          icon: const Icon(Icons.my_location),
-                          label: Text(s.t('map_pick_place')),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton.icon(
-                        onPressed: _locating ? null : _useGps,
-                        icon: _locating
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.gps_fixed, size: 18),
-                        label: Text(s.t('svc_use_gps')),
-                      ),
-                    ]),
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
@@ -628,48 +662,58 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                           },
                         ),
                     ],
-                    _Section(icon: Icons.call_outlined, title: s.t('svc_contacts')),
-                    TextFormField(
-                      key: const ValueKey('svc-phone'),
-                      controller: _phone,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: '${s.t('svc_phone')} *',
-                        hintText: '+994 50 123 45 67',
-                        prefixIcon: const Icon(Icons.phone_outlined),
+                    // Telefon | WhatsApp side by side.
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          _FieldLabel(s.t('svc_phone'), required: true),
+                          TextFormField(
+                            key: const ValueKey('svc-phone'),
+                            controller: _phone,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: '+994 50 123 45 67',
+                              prefixIcon: Icon(Icons.phone, color: AppColors.accent),
+                            ),
+                            validator: (v) => (v ?? '').replaceAll(RegExp(r'[^0-9]'), '').length < 7 ? s.t('profile_phone_invalid') : null,
+                          ),
+                        ]),
                       ),
-                      validator: (v) => (v ?? '').replaceAll(RegExp(r'[^0-9]'), '').length < 7 ? s.t('profile_phone_invalid') : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _whatsapp,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'WhatsApp', prefixIcon: Icon(Icons.chat_outlined)),
-                    ),
-                    _Section(icon: Icons.schedule_outlined, title: s.t('svc_hours')),
-                    if (!_is24h)
-                      TextFormField(
-                        controller: _hours,
-                        maxLength: 300,
-                        decoration: InputDecoration(hintText: s.t('svc_hours_hint'), counterText: ''),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          const _FieldLabel('WhatsApp'),
+                          TextFormField(
+                            controller: _whatsapp,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: '+994 …',
+                              prefixIcon: Icon(Icons.chat_outlined, color: AppColors.online),
+                            ),
+                          ),
+                        ]),
                       ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(s.t('svc_24h')),
-                      value: _is24h,
-                      onChanged: (v) => setState(() => _is24h = v),
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(s.t(shop ? 'shop_open_now' : 'svc_available_now')),
-                      subtitle: Text(s.t(shop ? 'shop_open_now_sub' : 'svc_available_now_sub'), style: const TextStyle(fontSize: 12)),
-                      value: _active,
-                      onChanged: (v) => setState(() => _active = v),
-                    ),
-                    _Section(
-                      icon: Icons.photo_library_outlined,
-                      title: '${s.t(shop ? 'shop_photos' : 'svc_photos_title')} (${_photos.length}/$_maxPhotos)',
-                    ),
+                    ]),
+                    // İş saatları | 24/7 side by side.
+                    _FieldLabel(s.t('svc_hours')),
+                    Row(children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _hours,
+                          enabled: !_is24h,
+                          maxLength: 300,
+                          decoration: InputDecoration(
+                            hintText: s.t('svc_hours_hint'),
+                            counterText: '',
+                            prefixIcon: const Icon(Icons.schedule),
+                          ),
+                        ),
+                      ),
+                      Container(width: 1, height: 40, margin: const EdgeInsets.symmetric(horizontal: 12), color: AppColors.line),
+                      Text(s.t('svc_24h_two_lines'), style: TextStyle(fontSize: 13, color: AppColors.text, height: 1.2)),
+                      Switch(key: const ValueKey('svc-24h'), value: _is24h, onChanged: (v) => setState(() => _is24h = v)),
+                    ]),
+                    _FieldLabel('${s.t(shop ? 'shop_photos' : 'svc_photos_title')} (${_photos.length}/$_maxPhotos)'),
                     if (_photos.length > 1)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -695,33 +739,51 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                           ? InkWell(
                               key: const ValueKey('svc-photo-add'),
                               onTap: _addPhoto,
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                width: 84,
-                                height: 84,
-                                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(10)),
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
-                                  const SizedBox(height: 4),
-                                  Text(s.t('photo_add'), textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
-                                ]),
+                              borderRadius: BorderRadius.circular(12),
+                              child: CustomPaint(
+                                painter: _DashedBox(color: AppColors.online.withValues(alpha: 0.7), radius: 12),
+                                child: SizedBox(
+                                  width: 84,
+                                  height: 84,
+                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                    Icon(Icons.add_photo_alternate_outlined, color: AppColors.accent),
+                                    const SizedBox(height: 4),
+                                    Text(s.t('photo_add'), textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: AppColors.text)),
+                                  ]),
+                                ),
                               ),
                             )
                           : null,
+                    ),
+                    const SizedBox(height: 16),
+                    // Open now (shown "qeyri-aktiv" on the map when off).
+                    Container(
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.line)),
+                      child: SwitchListTile(
+                        key: const ValueKey('svc-active'),
+                        secondary: Icon(Icons.location_on_outlined, color: AppColors.text),
+                        title: Text(s.t(shop ? 'shop_open_now' : 'svc_available_now')),
+                        subtitle: Text(s.t(shop ? 'shop_open_now_sub' : 'svc_available_now_sub'), style: const TextStyle(fontSize: 12)),
+                        value: _active,
+                        onChanged: (v) => setState(() => _active = v),
+                      ),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),
                       Text(_error!, key: const ValueKey('svc-error'), style: TextStyle(color: AppColors.danger)),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     FilledButton.icon(
                       key: const ValueKey('svc-save'),
                       onPressed: _saving ? null : _save,
-                      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54)),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
                       icon: _saving
                           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : Icon(shop ? Icons.storefront_outlined : Icons.home_repair_service_outlined),
-                      label: Text(s.t(shop ? 'shop_save' : 'svc_profile_save'), style: const TextStyle(fontSize: 16)),
+                      label: Text(s.t(shop ? 'shop_save' : 'svc_profile_save'), style: const TextStyle(fontSize: 17)),
                     ),
                     if (_existing != null) ...[
                       const SizedBox(height: 10),
@@ -740,6 +802,9 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
   }
 }
 
+/// The shop's product kinds in the owner's order (0097).
+const kShopKindOrder = ['shop_new', 'shop_used', 'shop_engine', 'shop_electric', 'shop_tyres', 'shop_oils', 'shop_accessories', 'shop_other'];
+
 /// The icon of a shop's product kind (0097).
 IconData shopKindIcon(String id) => switch (id) {
       'shop_new' => Icons.settings_outlined,
@@ -752,30 +817,19 @@ IconData shopKindIcon(String id) => switch (id) {
       _ => Icons.more_horiz,
     };
 
-/// A section heading: icon, title (w600), "*" when required, a hint under it.
-class _Section extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? sub;
+/// A small label over a field (owner's picture): "Mağazanın adı *".
+class _FieldLabel extends StatelessWidget {
+  final String text;
   final bool required;
-  const _Section({required this.icon, required this.title, this.sub, this.required = false});
+  const _FieldLabel(this.text, {this.required = false});
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 26, bottom: 10),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(icon, size: 22, color: AppColors.accent),
-            const SizedBox(width: 10),
-            Flexible(child: Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text))),
-            if (required) Text(' *', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.accent)),
-          ]),
-          if (sub != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 32),
-              child: Text(sub!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-            ),
-        ]),
+        padding: const EdgeInsets.only(top: 18, bottom: 8, left: 2),
+        child: Text.rich(TextSpan(children: [
+          TextSpan(text: text, style: TextStyle(fontSize: 15, color: AppColors.text)),
+          if (required) TextSpan(text: ' *', style: TextStyle(fontSize: 15, color: AppColors.accent)),
+        ])),
       );
 }
 
@@ -792,7 +846,31 @@ class _Note extends StatelessWidget {
       );
 }
 
-/// Logo (square, left) and background (right), as in the owner's picture.
+/// A dashed rounded frame (the "add" boxes of the owner's picture).
+class _DashedBox extends CustomPainter {
+  final Color color;
+  final double radius;
+  const _DashedBox({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final path = ui.Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    for (final m in path.computeMetrics()) {
+      for (double d = 0; d < m.length; d += 9) {
+        canvas.drawPath(m.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBox old) => old.color != color || old.radius != radius;
+}
+
+/// Logo (dashed box, left) and background (right), as in the owner's picture.
 class _MediaRow extends StatelessWidget {
   final String? logoUrl, coverUrl;
   final String logoLabel, coverLabel;
@@ -810,13 +888,12 @@ class _MediaRow extends StatelessWidget {
   });
 
   Widget _empty(IconData icon, String label) => Container(
-        color: AppColors.card,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(8),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: AppColors.accent, size: 28),
-          const SizedBox(height: 6),
-          Text(label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 12.5, color: AppColors.text)),
+          Icon(icon, color: AppColors.accent, size: 30),
+          const SizedBox(height: 8),
+          Text(label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 13, color: AppColors.text)),
         ]),
       );
 
@@ -836,7 +913,7 @@ class _MediaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const h = 112.0;
+    const h = 120.0;
     return SizedBox(
       height: h,
       child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -847,10 +924,12 @@ class _MediaRow extends StatelessWidget {
               key: const ValueKey('svc-logo'),
               onTap: onLogo,
               borderRadius: BorderRadius.circular(16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: roundPicture(logoUrl, _empty(Icons.add_a_photo_outlined, logoLabel)),
-              ),
+              child: logoUrl == null
+                  ? CustomPaint(
+                      painter: _DashedBox(color: AppColors.online.withValues(alpha: 0.7), radius: 16),
+                      child: _empty(Icons.photo_camera_outlined, logoLabel),
+                    )
+                  : ClipRRect(borderRadius: BorderRadius.circular(16), child: roundPicture(logoUrl, _empty(Icons.photo_camera_outlined, logoLabel))),
             ),
             if (logoUrl != null) _clear(onLogoClear, 'svc-logo-clear'),
           ]),
@@ -865,15 +944,22 @@ class _MediaRow extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: (coverUrl ?? '').isEmpty
-                    ? _empty(Icons.add_photo_alternate_outlined, coverLabel)
+                    ? Container(color: AppColors.card, child: _empty(Icons.add_photo_alternate_outlined, coverLabel))
                     : FramedImage(
                         image: NetworkImage(coverUrl!),
                         framing: ImageFraming.of(coverUrl),
-                        errorBuilder: (_, __, ___) => _empty(Icons.add_photo_alternate_outlined, coverLabel),
+                        errorBuilder: (_, __, ___) => Container(color: AppColors.card, child: _empty(Icons.add_photo_alternate_outlined, coverLabel)),
                       ),
               ),
             ),
-            if (coverUrl != null) _clear(onCoverClear, 'svc-cover-clear'),
+            if (coverUrl != null) ...[
+              _clear(onCoverClear, 'svc-cover-clear'),
+              Positioned(
+                right: 10,
+                bottom: 10,
+                child: IgnorePointer(child: CoverChangeButton(label: coverLabel, onTap: () {})),
+              ),
+            ],
           ]),
         ),
       ]),

@@ -1924,9 +1924,7 @@
   "shop_name": "Mağazanın adı",
   "shop_name_hint": "Mağaza adı",
   "svc_name_hint": "Servis adı",
-  "shop_kinds": "Satılan ehtiyat hissələri",
-  "shop_kinds_sub": "Bir neçəsini birlikdə seçə bilərsiniz",
-  "svc_categories_sub": "Göstərdiyiniz xidmətlərdən bir neçəsini seçin",
+  "shop_kinds": "Məhsul kateqoriyaları",
   "shop_pick_kind": "Ən azı bir məhsul növü seçin.",
   "shop_kind_new": "Yeni ehtiyat hissələri",
   "shop_kind_used": "İşlənmiş ehtiyat hissələri",
@@ -1936,10 +1934,7 @@
   "shop_kind_oils": "Yağlar",
   "shop_kind_accessories": "Aksesuarlar",
   "shop_kind_other": "Digər",
-  "shop_about": "Mağaza haqqında",
   "shop_about_hint": "Mağazanız və satdığınız məhsullar haqqında yazın",
-  "svc_about": "Servis haqqında",
-  "svc_address_title": "Ünvan",
   "svc_address_hint": "Tam ünvanı daxil edin",
   "map_pick_place": "Xəritədə yeri seç",
   "map_pick_confirm": "Bu yeri seç",
@@ -1949,5 +1944,7 @@
   "svc_photos_title": "Servis fotoları",
   "photo_add": "Foto əlavə et",
   "shop_save": "Mağazanı yadda saxla",
-  "svc_profile_save": "Servis profilini yadda saxla"
+  "svc_profile_save": "Servis profilini yadda saxla",
+  "svc_full_address": "Tam ünvan",
+  "svc_24h_two_lines": "24/7\n(davamlı açıq)"
 }

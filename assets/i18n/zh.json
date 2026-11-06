@@ -1924,9 +1924,7 @@
   "shop_name": "商店名称",
   "shop_name_hint": "商店名称",
   "svc_name_hint": "服务名称",
-  "shop_kinds": "销售的配件",
-  "shop_kinds_sub": "可同时选择多项",
-  "svc_categories_sub": "选择您提供的服务",
+  "shop_kinds": "商品类别",
   "shop_pick_kind": "请至少选择一种商品类别。",
   "shop_kind_new": "新配件",
   "shop_kind_used": "二手配件",
@@ -1936,10 +1934,7 @@
   "shop_kind_oils": "油品",
   "shop_kind_accessories": "配饰",
   "shop_kind_other": "其他",
-  "shop_about": "关于商店",
   "shop_about_hint": "介绍您的商店和所售商品",
-  "svc_about": "关于服务",
-  "svc_address_title": "地址",
   "svc_address_hint": "输入完整地址",
   "map_pick_place": "在地图上选择位置",
   "map_pick_confirm": "选择此位置",
@@ -1949,5 +1944,7 @@
   "svc_photos_title": "服务照片",
   "photo_add": "添加照片",
   "shop_save": "保存商店",
-  "svc_profile_save": "保存服务资料"
+  "svc_profile_save": "保存服务资料",
+  "svc_full_address": "详细地址",
+  "svc_24h_two_lines": "24/7\n(全天营业)"
 }

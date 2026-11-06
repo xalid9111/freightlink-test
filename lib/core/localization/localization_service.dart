@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart' show Locale;
 import 'app_strings.dart';
+import 'fresh_text_stub.dart' if (dart.library.js_interop) 'fresh_text_web.dart' as fresh;
 
 /// Loads every supported language's JSON file ONCE at app startup (see
 /// main.dart) into memory. After that, reading a translation is a plain
@@ -29,7 +30,9 @@ class LocalizationService {
     // waits for one round trip instead of seven (owner, 24.10.2026).
     Future<Map<String, String>> read(String code) async {
       try {
-        final raw = await rootBundle.loadString('assets/i18n/$code.json');
+        final path = 'assets/i18n/$code.json';
+        // Web: the file as the server has it now (never an old cached one).
+        final raw = await fresh.fetchFreshText(path) ?? await rootBundle.loadString(path);
         return (json.decode(raw) as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
       } catch (_) {
         return const {};
