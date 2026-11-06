@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
-import '../../cargo/presentation/providers/cargo_media_providers.dart' show cargoPromoPlansProvider;
 import '../../finance/domain/finance_models.dart';
 import '../../finance/presentation/card_checkout.dart';
 import '../../finance/presentation/finance_providers.dart';
@@ -75,16 +74,20 @@ abstract class PromoTarget {
   DateTime? paidUntil(MarketPromoKind kind);
 
   /// An order on the server (it sets the price) → what the checkout pays.
-  /// [places]: Premium's places (0101), null = the own section only.
+  /// [places]: Premium's places (0102), null = the own section only.
   Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places});
 
-  /// The section this item belongs to (a load: Yüklər, an ad: TIR Bazarı);
-  /// null = no choice of places (services / parks).
+  /// The section this item belongs to (a park: Parklar, a service:
+  /// Servislər, a shop: Mağazalar); null = no choice of places (TIR Bazarı).
   PromoPlace? get home => null;
 
-  /// The OTHER section's Premium packs (the price of "both places" adds
-  /// them, owner 07.11.2026).
-  ProviderListenable<AsyncValue<List<MarketPromoPlan>>>? otherPremiumPlans() => null;
+  /// The sections Premium may be shown in (owner, 07.11.2026, 0102); fewer
+  /// than two = no choice.
+  List<PromoPlace> get placeChoices => const [];
+
+  /// The Premium packs of another section (the price of several places
+  /// adds them up).
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>>? premiumPlansAt(PromoPlace place) => null;
 
   /// After the checkout: show the new state.
   void refresh(ProviderContainer c);
@@ -112,21 +115,13 @@ class MarketPromoTarget extends PromoTarget {
       };
 
   @override
-  PromoPlace get home => PromoPlace.market;
-
-  @override
-  ProviderListenable<AsyncValue<List<MarketPromoPlan>>> otherPremiumPlans() =>
-      cargoPromoPlansProvider((MarketPromoKind.premium, true));
-
-  @override
   Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places}) async {
     final repo = ref.read(marketRepositoryProvider);
     if (kind == MarketPromoKind.vip) {
       final o = await repo.createVipOrder(l.id, qty);
       return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency);
     }
-    final o = await repo.createPromoOrder(l.id, kind, qty,
-        places: kind == MarketPromoKind.premium && places != null ? promoPlacesWire(places) : null);
+    final o = await repo.createPromoOrder(l.id, kind, qty);
     return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, promo: true);
   }
 
@@ -289,7 +284,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
   AppStrings get s => widget.s;
   MarketPromoKind get kind => widget.kind;
 
-  /// Premium's places (owner, 07.11.2026); starts with the own section.
+  /// Premium's places (owner, 07.11.2026, 0102); starts with the own section.
   Set<PromoPlace>? _places;
 
   Future<void> _pay(MarketPromoPlan plan, CheckoutAvailability av, List<PayMethod> methods) async {
@@ -322,7 +317,8 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
     }
   }
 
-  bool get _choosesPlaces => kind == MarketPromoKind.premium && widget.target.home != null;
+  bool get _choosesPlaces =>
+      kind == MarketPromoKind.premium && widget.target.home != null && widget.target.placeChoices.length > 1;
 
   String _date(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 
@@ -342,7 +338,12 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
     final until = widget.target.paidUntil(kind);
     final home = widget.target.home;
     if (_choosesPlaces) _places ??= {home!};
-    final other = _choosesPlaces ? ref.watch(widget.target.otherPremiumPlans()!).valueOrNull : null;
+    final choices = widget.target.placeChoices;
+    final others = <PromoPlace, List<MarketPromoPlan>>{
+      if (_choosesPlaces)
+        for (final p in choices)
+          if (p != home) p: ref.watch(widget.target.premiumPlansAt(p)!).valueOrNull ?? const [],
+    };
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(18, 0, 18, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
@@ -393,7 +394,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
               data: (list) {
                 if (list.isEmpty) return Text(s.t('mk_vip_no_plans'), style: TextStyle(color: AppColors.textSoft));
                 final chosen = list.firstWhere((p) => p.qty == _qty, orElse: () => list.first);
-                final total = _choosesPlaces ? premiumPlacesPrice(home: home!, places: _places!, own: chosen, other: other ?? const []) : null;
+                final total = _choosesPlaces ? premiumPlacesPrice(home: home!, places: _places!, own: chosen, others: others) : null;
                 final blocked = _choosesPlaces && (total == null);
                 final price = total ?? (amount: chosen.price, currency: chosen.currency);
                 return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -417,11 +418,12 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
                     const SizedBox(height: 16),
                     PromoPlacesPicker(
                       s: s,
+                      choices: choices,
                       places: _places!,
                       onChanged: _busy ? null : (v) => setState(() => _places = v),
                     ),
                     const SizedBox(height: 10),
-                    PromoPlacesSummary(s: s, places: _places!, total: total, bothMissing: _places!.length == 2 && total == null),
+                    PromoPlacesSummary(s: s, places: _places!, total: total, missing: _places!.isNotEmpty && total == null),
                   ],
                   const SizedBox(height: 16),
                   if (canPay)
@@ -493,41 +495,52 @@ class _PackTile extends StatelessWidget {
   }
 }
 
-/// Where a Premium is shown (owner, 07.11.2026, 0101).
-enum PromoPlace { loads, market }
+/// Where a park's / service's / shop's Premium is shown (owner, 07.11.2026,
+/// 0102): Parklar (the TIRPark map), Servislər, Mağazalar.
+enum PromoPlace { parks, services, shops }
 
 /// The places in the server's words, in a fixed order.
 List<String> promoPlacesWire(Set<PromoPlace> places) => [for (final p in PromoPlace.values) if (places.contains(p)) p.name];
 
-/// The Premium price for [places]: one place = the item's own price
-/// ([own]); both = [own] + the other section's pack for the same days
-/// (owner's choice "a"). Null = nothing chosen, or "both" without a pack /
-/// with another currency there (no made-up price).
+/// The Premium price for [places]: every chosen section's Premium pack for
+/// the same days, added up — the own section ([home]) with [own], the
+/// others from [others]. Null = nothing chosen, or a section without that
+/// pack / with another currency (no made-up price).
 ({double amount, String currency})? premiumPlacesPrice({
   required PromoPlace home,
   required Set<PromoPlace> places,
   required MarketPromoPlan own,
-  required List<MarketPromoPlan> other,
+  required Map<PromoPlace, List<MarketPromoPlan>> others,
 }) {
   if (places.isEmpty) return null;
-  if (places.length == 1) return (amount: own.price, currency: own.currency);
-  final o = other.where((p) => p.qty == own.qty).firstOrNull;
-  if (o == null || o.currency.toUpperCase() != own.currency.toUpperCase()) return null;
-  return (amount: own.price + o.price, currency: own.currency);
+  var sum = 0.0;
+  for (final p in PromoPlace.values.where(places.contains)) {
+    final plan = p == home ? own : (others[p] ?? const <MarketPromoPlan>[]).where((x) => x.qty == own.qty).firstOrNull;
+    if (plan == null || plan.currency.toUpperCase() != own.currency.toUpperCase()) return null;
+    sum += plan.price;
+  }
+  return (amount: sum, currency: own.currency);
 }
 
-/// The two place cards side by side: Yüklər bölməsi · TIR Bazarı; one or
-/// both can be chosen.
+/// The place cards side by side (Parklar · Servislər · Mağazalar); one or
+/// more can be chosen.
 class PromoPlacesPicker extends StatelessWidget {
   final AppStrings s;
+  final List<PromoPlace> choices;
   final Set<PromoPlace> places;
   final ValueChanged<Set<PromoPlace>>? onChanged;
-  const PromoPlacesPicker({super.key, required this.s, required this.places, required this.onChanged});
+  const PromoPlacesPicker({super.key, required this.s, required this.choices, required this.places, required this.onChanged});
+
+  static IconData iconOf(PromoPlace p) => switch (p) {
+        PromoPlace.parks => Icons.local_parking,
+        PromoPlace.services => Icons.home_repair_service_outlined,
+        PromoPlace.shops => Icons.storefront_outlined,
+      };
 
   @override
   Widget build(BuildContext context) {
     final c = marketPromoColor(MarketPromoKind.premium);
-    Widget card(PromoPlace p, IconData icon) {
+    Widget card(PromoPlace p) {
       final on = places.contains(p);
       return Expanded(
         child: InkWell(
@@ -535,20 +548,23 @@ class PromoPlacesPicker extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: onChanged == null ? null : () => onChanged!(on ? ({...places}..remove(p)) : {...places, p}),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
             decoration: BoxDecoration(
               color: on ? c.withValues(alpha: 0.14) : AppColors.cardAlt,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: on ? c : AppColors.line, width: on ? 1.6 : 1),
             ),
-            child: Row(children: [
-              Icon(icon, color: on ? c : AppColors.textSoft, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(s.t('promo_place_${p.name}'),
-                    maxLines: 2, style: TextStyle(color: AppColors.text, fontWeight: on ? FontWeight.w500 : FontWeight.w400)),
-              ),
-              Icon(on ? Icons.check_circle : Icons.circle_outlined, color: on ? c : AppColors.textSoft, size: 20),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(iconOf(p), color: on ? c : AppColors.textSoft, size: 22),
+                const SizedBox(width: 4),
+                Icon(on ? Icons.check_circle : Icons.circle_outlined, color: on ? c : AppColors.textSoft, size: 18),
+              ]),
+              const SizedBox(height: 6),
+              Text(s.t('promo_place_${p.name}'),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(color: AppColors.text, fontWeight: on ? FontWeight.w500 : FontWeight.w400)),
             ]),
           ),
         ),
@@ -561,9 +577,10 @@ class PromoPlacesPicker extends StatelessWidget {
       // Side by side, the same height.
       IntrinsicHeight(
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          card(PromoPlace.loads, Icons.local_shipping_outlined),
-          const SizedBox(width: 10),
-          card(PromoPlace.market, Icons.storefront_outlined),
+          for (var i = 0; i < choices.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            card(choices[i]),
+          ],
         ]),
       ),
     ]);
@@ -575,16 +592,16 @@ class PromoPlacesSummary extends StatelessWidget {
   final AppStrings s;
   final Set<PromoPlace> places;
   final ({double amount, String currency})? total;
-  final bool bothMissing;
-  const PromoPlacesSummary({super.key, required this.s, required this.places, required this.total, required this.bothMissing});
+  final bool missing;
+  const PromoPlacesSummary({super.key, required this.s, required this.places, required this.total, required this.missing});
 
   @override
   Widget build(BuildContext context) {
     if (places.isEmpty) {
       return Text(s.t('promo_places_none'), key: const ValueKey('promo-places-none'), style: TextStyle(color: AppColors.danger));
     }
-    if (bothMissing) {
-      return Text(s.t('promo_places_both_missing'), key: const ValueKey('promo-places-both-missing'), style: TextStyle(color: AppColors.danger));
+    if (missing) {
+      return Text(s.t('promo_places_missing'), key: const ValueKey('promo-places-missing'), style: TextStyle(color: AppColors.danger));
     }
     final names = [for (final p in PromoPlace.values) if (places.contains(p)) s.t('promo_place_${p.name}')].join(' + ');
     return Container(

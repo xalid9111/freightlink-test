@@ -13,13 +13,10 @@ import '../auth/presentation/providers/auth_providers.dart';
 import '../cargo/presentation/providers/cargo_providers.dart';
 import '../market/presentation/market_promo.dart' show MarketPromoIcon;
 import '../market/domain/market_models.dart' show MarketPromoKind;
-import '../market/presentation/market_providers.dart';
 
-/// Premium of an item in the OTHER section (owner, 07.11.2026, 0101): the
-/// loads whose Premium chose TIR Bazarı ([PromoPlace.market] → 'market') and
-/// the TIR Bazarı ads whose Premium chose Yüklər ('loads'). Ids only, newest
-/// first; the items themselves come from their own providers. Empty before
-/// SQL 0101.
+/// Loads whose Premium chose TIR Bazarı (owner, 07.11.2026, 0101; paid
+/// before 0102, they run to their end — Yüklər takes no advertising any
+/// more). Ids only, newest first; the loads come from their own provider.
 final promoCrossProvider = FutureProvider.autoDispose.family<List<String>, String>((ref, place) async {
   ref.watch(currentUserIdProvider);
   try {
@@ -120,30 +117,81 @@ class CrossPremiumLoadsStrip extends ConsumerWidget {
   }
 }
 
-/// Yüklər: "Premium · TIR Bazarı" — TIR Bazarı ads whose Premium chose
-/// Yüklər; a tap opens the ad.
-class CrossPremiumMarketStrip extends ConsumerWidget {
+/// One park / service / shop of another section whose Premium chose this
+/// section (owner, 07.11.2026, 0102).
+class PlaceCrossItem {
+  final String kind; // 'service' | 'tirpark'
+  final String id;
+  final String name;
+  final String? city;
+  final bool shop;
+  const PlaceCrossItem({required this.kind, required this.id, required this.name, this.city, this.shop = false});
+
+  factory PlaceCrossItem.fromJson(Map<String, dynamic> j) => PlaceCrossItem(
+        kind: '${j['source_kind']}',
+        id: '${j['source_id']}',
+        name: '${j['name'] ?? ''}',
+        city: j['city'] as String?,
+        shop: j['shop'] == true,
+      );
+
+  bool get isPark => kind == 'tirpark';
+
+  /// The item's own page.
+  String get route => isPark ? '/tirpark/p/$id' : '/service/$id';
+
+  /// Park · Servis · Mağaza.
+  String labelKey() => isPark ? 'promo_place_kind_park' : (shop ? 'promo_place_kind_shop' : 'promo_place_kind_service');
+}
+
+/// Key: the section ('parks' | 'services' | 'shops') and the map's centre
+/// (rounded, so small moves keep the same list).
+typedef PlaceCrossKey = (String, double, double);
+
+PlaceCrossKey placeCrossKey(String place, double lat, double lng) =>
+    (place, (lat * 10).roundToDouble() / 10, (lng * 10).roundToDouble() / 10);
+
+/// The other sections' Premium for this section around the map's centre
+/// (100 km, newest first). Empty before SQL 0102, signed out or offline.
+final placeCrossProvider = FutureProvider.autoDispose.family<List<PlaceCrossItem>, PlaceCrossKey>((ref, k) async {
+  ref.watch(currentUserIdProvider);
+  if (SupabaseConfig.client.auth.currentUser == null) return const [];
+  try {
+    final res = await SupabaseConfig.client.rpc('place_cross_latest',
+        params: {'p_place': k.$1, 'p_lat': k.$2, 'p_lng': k.$3, 'p_limit': 12}).timeout(const Duration(seconds: 15));
+    return [for (final r in (res as List? ?? const [])) PlaceCrossItem.fromJson(Map<String, dynamic>.from(r as Map))];
+  } catch (_) {
+    return const [];
+  }
+});
+
+/// Parklar / Servislər / Mağazalar: "Premium" — parks, services and shops of
+/// the other sections whose Premium chose this one; a tap opens the page.
+class PlaceCrossStrip extends ConsumerWidget {
   final AppStrings s;
-  const CrossPremiumMarketStrip({super.key, required this.s});
+  final String place;
+  final double lat, lng;
+  const PlaceCrossStrip({super.key, required this.s, required this.place, required this.lat, required this.lng});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ids = ref.watch(promoCrossProvider('loads')).valueOrNull ?? const <String>[];
-    final cards = <Widget>[
-      for (final id in ids)
-        if (ref.watch(marketListingProvider(id)).valueOrNull case final l?)
-          _card(
-            key: ValueKey('cross-ad-${l.id}'),
-            onTap: () => context.pushOnce('/market/l/${l.id}'),
-            title: [l.brand, l.model].whereType<String>().where((x) => x.trim().isNotEmpty).join(' '),
-            line: [if (l.year != null) '${l.year}', if ((l.city ?? '').isNotEmpty) l.city!].join(' · '),
-            price: l.price == null ? null : '${l.price!.toStringAsFixed(0)} ${l.currency}',
-          ),
-    ];
-    if (cards.isEmpty) return const SizedBox.shrink();
+    final items = ref.watch(placeCrossProvider(placeCrossKey(place, lat, lng))).valueOrNull ?? const <PlaceCrossItem>[];
+    if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: _StripFrame(stripKey: 'cross-premium-ads', title: s.t('promo_cross_ads'), children: cards),
+      child: _StripFrame(
+        stripKey: 'place-cross-$place',
+        title: s.t('promo_cross_places'),
+        children: [
+          for (final it in items)
+            _card(
+              key: ValueKey('place-cross-${it.id}'),
+              onTap: () => context.pushOnce(it.route),
+              title: it.name,
+              line: [s.t(it.labelKey()), if ((it.city ?? '').trim().isNotEmpty) it.city!.trim()].join(' · '),
+            ),
+        ],
+      ),
     );
   }
 }

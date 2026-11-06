@@ -1958,12 +1958,16 @@
   "error_oauth_not_configured": "此登录方式尚未启用。",
   "error_oauth_failed": "登录失败，请重试。",
   "promo_places_title": "展示位置",
-  "promo_place_loads": "货物板块",
-  "promo_place_market": "TIR 市场",
   "promo_places_none": "请至少选择一个位置。",
-  "promo_places_both_missing": "此期限不支持同时选择两个位置：另一板块没有该 Premium 套餐。",
   "promo_places_chosen": "已选位置：{places}",
   "promo_places_total": "总计：{sum}",
   "promo_cross_loads": "Premium 货物",
-  "promo_cross_ads": "Premium · TIR 市场"
+  "promo_place_parks": "停车场",
+  "promo_place_services": "服务",
+  "promo_place_shops": "商店",
+  "promo_places_missing": "所选板块之一没有该期限的 Premium 套餐——请移除该板块或选择其他期限。",
+  "promo_cross_places": "Premium",
+  "promo_place_kind_park": "TIR 停车场",
+  "promo_place_kind_service": "服务",
+  "promo_place_kind_shop": "商店"
 }

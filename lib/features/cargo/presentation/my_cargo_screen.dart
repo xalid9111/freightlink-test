@@ -9,9 +9,6 @@ import '../../../models/cargo_model.dart';
 import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import 'widgets/cargo_card.dart';
-import '../../market/domain/market_models.dart';
-import '../../market/presentation/market_promo.dart';
-import 'widgets/cargo_promo.dart';
 import '../../../core/router/safe_navigation.dart';
 
 /// "My loads" (Profile → My loads): every load the signed-in owner has
@@ -88,15 +85,7 @@ class MyCargoScreen extends ConsumerWidget {
                               icon: const Icon(Icons.pause_circle_outline, size: 18),
                               label: Text(strings.t('cargo_deactivate')),
                             ),
-                          // "Önə çıxar" on my listed load (owner, 25.10.2026,
-                          // 0067): İrəli çək · VIP · Premium, as TIR Bazarı.
-                          if (open && listed)
-                            TextButton.icon(
-                              key: ValueKey('my-cargo-promo-${c.id}'),
-                              onPressed: () => showPromoChooser(context, strings, CargoPromoTarget(c)),
-                              icon: const MarketPromoIcon(MarketPromoKind.bump, size: 18),
-                              label: Text(strings.t('mk_promo_title')),
-                            ),
+                          // No "Önə çıxar" on a load any more (owner, 07.11.2026).
                           if (open && !listed)
                             TextButton.icon(
                               key: ValueKey('my-cargo-on-${c.id}'),
