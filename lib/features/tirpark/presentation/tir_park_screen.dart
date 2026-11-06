@@ -25,9 +25,9 @@ import '../../promo/premium_pin.dart';
 /// "Servislər" (the former tab) opens from here. Approved parks for
 /// everybody; one's own parks waiting for approval are shown grey.
 class TirParkScreen extends ConsumerStatefulWidget {
-  // Users no longer add parking spots on the map (owner, 07.11.2026): no
-  // "TIR parkı əlavə et" / "Dayanacaq əlavə et" — parks come only through
-  // "Park işlədirəm" (admin approval) and the admins.
+  // Users no longer place parking spots (owner, 07.11.2026): no "Dayanacaq
+  // əlavə et" — parks come only through "Park işlədirəm" (admin approval)
+  // and the admins. The map's "TIR parkı əlavə et +" opens that page.
   const TirParkScreen({super.key});
 
   @override
@@ -336,8 +336,19 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
               // My position.
               AboveSheet(
                 sheet: 0.26,
-                gap: 10,
+                gap: 76,
                 child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
+              ),
+              // "TIR parkı əlavə et +" (owner, 07.11.2026: kept on the map) —
+              // opens the TIR Parkı page: Park işlədirəm · Park işçisiyəm.
+              AboveSheet(
+                sheet: 0.26,
+                gap: 10,
+                child: MapAddButton(
+                  buttonKey: 'tp-add',
+                  label: s.t('tp_add'),
+                  onTap: () => context.pushOnce('/profile/tirpark'),
+                ),
               ),
               // Nearby parks.
               DraggableScrollableSheet(

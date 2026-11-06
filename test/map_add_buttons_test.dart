@@ -51,19 +51,27 @@ void main() {
         child: MaterialApp.router(routerConfig: r),
       );
 
-  testWidgets('Parklar: users add no parks / spots any more — no "+" on the map, an old ?add= link does nothing (0100)', (tester) async {
+  testWidgets('Parklar: "TIR parkı əlavə et +" stays on the map and opens the TIR Parkı page; no spot placing, an old ?add= link does nothing (0100)', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final repo = _FakeParks();
     await tester.pumpWidget(app(router('/tirpark?add=1'), repo));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const ValueKey('tp-add')), findsNothing);
-    expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
-    expect(find.text('TIR parkı əlavə et'), findsNothing);
+    expect(find.byKey(const ValueKey('tp-add-here')), findsNothing, reason: 'no "place a spot" mode');
     expect(find.byKey(const ValueKey('tp-list')), findsOneWidget, reason: 'the parks list stays');
+    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
+    expect(find.text('TIR parkı əlavə et'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('tp-add')));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 5));
+    expect(find.text('TIR Parkı page'), findsOneWidget);
     expect(repo.added, isEmpty);
-    await tester.pump(const Duration(seconds: 1));
+  });
+
+  test('Profil → TIR Parkı: no "Dayanacaq əlavə et" (owner, 07.11.2026)', () {
+    final p = src('lib/features/auth/presentation/profile_screen.dart');
+    expect(p.contains('pf-tirpark-stop'), isFalse);
+    expect(p.contains("'tp_stop_add'"), isFalse);
   });
 
   test('server: tir_park_add refuses everybody (0100); the park owner and manager flows stay', () {
@@ -74,7 +82,7 @@ void main() {
     expect(sql.toLowerCase().contains('delete from'), isFalse, reason: 'nothing is deleted');
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     expect(tp.contains('TirParkAddSheet'), isFalse);
-    expect(tp.contains("buttonKey: 'tp-add'"), isFalse);
+    expect(tp, contains("onTap: () => context.pushOnce('/profile/tirpark'),"), reason: 'the map + opens the TIR Parkı page');
     expect(src('lib/core/router/app_router.dart'), contains('builder: (context, state) => const TirParkScreen(),'));
   });
 

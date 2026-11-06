@@ -344,9 +344,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   spare_parts ticked; an existing service gets the category added).
   "Park rezervasiyalarım" (Rezervasiyalar və statuslar) stands on Profil
   right under "TIR Parkı"; its screen unchanged.
-  Users add NO parks / parking spots (owner, 07.11.2026, 0100): no "TIR
-  parkı əlavə et" on the map, no "Dayanacaq əlavə et" in Profil → TIR
-  Parkı, no /tirpark?add= mode; tir_park_add refuses every call
+  Users add NO parking spots (owner, 07.11.2026, 0100): no "Dayanacaq
+  əlavə et" in Profil → TIR Parkı, no /tirpark?add= mode; the map's
+  "TIR parkı əlavə et +" stays and opens Profil → TIR Parkı (Park
+  işlədirəm · Park işçisiyəm); tir_park_add refuses every call
   ('not_available'); users never had a direct INSERT on tir_parks. Parks
   come only from "Park işlədirəm" (admin approval), manager applications
   and the admins; spots added before stay (nothing deleted).
