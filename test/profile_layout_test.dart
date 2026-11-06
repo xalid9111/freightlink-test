@@ -82,7 +82,14 @@ void main() {
     expect(find.text('Mənim fəaliyyətim'), findsOneWidget);
     expect(find.text('Rollarım, yüklərim və xidmətlərim'), findsOneWidget);
     expect(find.text('TIR Parkı'), findsOneWidget);
-    expect(find.text('Parkım, işçi dəvətləri və rezervasiyalar'), findsOneWidget);
+    expect(find.text('Parkım, işçi dəvətləri və dayanacaq əlavə et'), findsOneWidget);
+    // "Park rezervasiyalarım" right under "TIR Parkı" (owner, 06.11.2026).
+    expect(find.text('Park rezervasiyalarım'), findsOneWidget);
+    expect(find.text('Rezervasiyalar və statuslar'), findsOneWidget);
+    final tir = tester.getRect(find.byKey(const ValueKey('pf-tirpark')));
+    final book = tester.getRect(find.byKey(const ValueKey('pf-bookings')));
+    expect(book.top, greaterThanOrEqualTo(tir.bottom - 1), reason: 'directly under TIR Parkı');
+    expect(book.top - tir.bottom, lessThan(4), reason: 'nothing in between');
     expect(find.byKey(const ValueKey('pf-badge')), findsOneWidget, reason: 'the TIR count still shows on Profil');
     expect(find.byKey(const ValueKey('act-carrier')), findsNothing, reason: 'the roles moved to "Mənim fəaliyyətim"');
     expect(find.text('Yüklərim'), findsNothing);
@@ -146,12 +153,19 @@ void main() {
     }
   });
 
-  testWidgets('TIR Parkı: park management, work at a park, bookings', (tester) async {
+  testWidgets('TIR Parkı: park management, work at a park, "Dayanacaq əlavə et" (bookings moved to Profil)', (tester) async {
     await tester.pumpWidget(_app(const ProfileTirParkScreen()));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('pf-tirpark-manage')), findsOneWidget);
     expect(find.byKey(const ValueKey('pf-tirpark-work')), findsOneWidget);
-    expect(find.byKey(const ValueKey('pf-tirpark-bookings')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pf-tirpark-stop')), findsOneWidget);
+    expect(find.text('Dayanacaq əlavə et'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pf-tirpark-bookings')), findsNothing);
+    expect(find.text('Park rezervasiyalarım'), findsNothing);
+    final p = src('lib/features/auth/presentation/profile_screen.dart');
+    expect(p, contains("onTap: () => context.go('/tirpark?add=\${DateTime.now().millisecondsSinceEpoch}'),"));
+    expect(p, contains("key: const ValueKey('pf-bookings'),"));
+    expect(p, contains("onTap: () => context.pushOnce('/tirpark/bookings'),"), reason: 'the same bookings screen');
   });
 
   testWidgets('Şəxsi məlumatlarım: name, e-mail, phone and birth date in one place', (tester) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +12,10 @@ import 'tir_park_widgets.dart';
 /// amenities, a note. Before saving, the parks around the place are shown
 /// (the same park is not added twice); closer than 60 m is refused.
 /// Returns true when the park was sent (it then waits for approval).
+/// Since 06.11.2026 this is "Dayanacaq əlavə et" (Profil → TIR Parkı): a
+/// plain parking spot drivers show each other — the same pending row with
+/// no manager, so no booking, capacity or owner panel until a park owner
+/// applies for it. A park already there opens with a tap.
 class TirParkAddSheet extends ConsumerStatefulWidget {
   final double lat, lng;
   final AppStrings s;
@@ -99,7 +104,7 @@ class _TirParkAddSheetState extends ConsumerState<TirParkAddSheet> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-            SheetTitle(title: s.t('tp_add_title'), s: s, closeKey: 'tp-add-close'),
+            SheetTitle(title: s.t('tp_stop_title'), s: s, closeKey: 'tp-add-close'),
             const SizedBox(height: 4),
             Text('${widget.lat.toStringAsFixed(5)}, ${widget.lng.toStringAsFixed(5)}',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
@@ -121,11 +126,27 @@ class _TirParkAddSheetState extends ConsumerState<TirParkAddSheet> {
                       style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.text)),
                   const SizedBox(height: 6),
                   for (final p in nearby.take(5))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '• ${p.name} — ${p.distanceM} m${p.status == 'pending' ? ' (${s.t('tp_pending')})' : ''}',
-                        style: TextStyle(fontSize: 13.5, color: AppColors.textSoft),
+                    InkWell(
+                      key: ValueKey('tp-nearby-${p.id}'),
+                      // An approved one opens its page (the existing one is shown).
+                      onTap: p.status == 'approved'
+                          ? () {
+                              final router = GoRouter.of(context);
+                              Navigator.of(context).pop(false);
+                              router.push('/tirpark/p/${p.id}');
+                            }
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(children: [
+                          Expanded(
+                            child: Text(
+                              '• ${p.name} — ${p.distanceM} m${p.status == 'pending' ? ' (${s.t('tp_pending')})' : ''}',
+                              style: TextStyle(fontSize: 13.5, color: AppColors.textSoft),
+                            ),
+                          ),
+                          if (p.status == 'approved') Icon(Icons.chevron_right, size: 18, color: AppColors.textSoft),
+                        ]),
                       ),
                     ),
                 ]),
@@ -172,7 +193,7 @@ class _TirParkAddSheetState extends ConsumerState<TirParkAddSheet> {
                 child: Text(_error!, key: const ValueKey('tp-error'), style: TextStyle(color: AppColors.danger)),
               ),
             const SizedBox(height: 14),
-            Text(s.t('tp_add_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+            Text(s.t('tp_stop_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
             const SizedBox(height: 10),
             FilledButton(
               key: const ValueKey('tp-save'),

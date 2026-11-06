@@ -528,7 +528,7 @@
   "pf_activity_roles": "Faaliyet rollerim",
   "pf_activity_sections": "Faaliyet bölümlerim",
   "pf_tirpark": "TIR Parkı",
-  "pf_tirpark_sub": "Parkım, çalışan davetleri ve rezervasyonlar",
+  "pf_tirpark_sub": "Parkım, çalışan davetleri ve park yeri ekle",
   "pf_head_admin": "Baş yönetici paneli",
   "pf_head_admin_only": "Yalnız Baş yönetici",
   "pf_account_group": "Hesap ve görünüm",
@@ -1909,5 +1909,11 @@
   "svc_found_shops": "{n} mağaza · {km} km",
   "svc_my_shop": "Mağazam",
   "svc_none_here_shops": "Bu bölgede mağaza bulunamadı.",
-  "svc_shop": "Mağaza"
+  "svc_shop": "Mağaza",
+  "tp_stop_add": "Park yeri ekle",
+  "tp_stop_add_sub": "Haritada yeri gösterin — sürücüler birbirine park yeri göstersin",
+  "tp_stop_title": "Yeni park yeri",
+  "tp_stop_hint": "Bu basit bir park yeridir: rezervasyon, kapasite ve sahip yönetimi yoktur. Yönetici kontrolünden sonra herkese görünür, o zamana kadar yalnızca siz görürsünüz.",
+  "tp_stop_sent": "Park yeri gönderildi. Yönetici kontrolünden sonra herkes görecek.",
+  "svc_shop_note": "Her hesabın bir servis profili vardır. \"Yedek parça satışı\" kategorisi servisinize eklendi — kaydedin, Mağazalar haritasında görünecek."
 }

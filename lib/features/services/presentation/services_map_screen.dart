@@ -32,6 +32,10 @@ import '../../promo/premium_pin.dart';
 /// The shops' category (spare parts sales, 0043).
 const kShopCategory = 'spare_parts';
 
+/// Where the "+" on each map goes (owner, 06.11.2026).
+const kServiceAddRoute = '/service-join';
+const kShopAddRoute = '/service-edit?kind=center&shop=1';
+
 class ServicesMapScreen extends ConsumerStatefulWidget {
   /// "Mağazalar" (owner, 05.11.2026): the shops — services that sell spare
   /// parts ("Ehtiyat hissələri satışı", 0043) — with the same map and list.
@@ -664,10 +668,10 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
             child: MapAddButton(
               buttonKey: 'svc-add',
               label: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),
-              onTap: () {
-                final id = ref.read(myServiceProvider).valueOrNull?.id;
-                context.pushOnce(id != null ? '/service/$id' : '/service-join');
-              },
+              // Each section its own form (owner, 06.11.2026): Servislər →
+              // the registration page (master / service centre), Mağazalar →
+              // the shop form (spare_parts ticked).
+              onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),
             ),
           ),
           // Results sheet.

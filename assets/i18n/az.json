@@ -528,7 +528,7 @@
   "pf_activity_roles": "Fəaliyyət rollarım",
   "pf_activity_sections": "Fəaliyyət bölmələrim",
   "pf_tirpark": "TIR Parkı",
-  "pf_tirpark_sub": "Parkım, işçi dəvətləri və rezervasiyalar",
+  "pf_tirpark_sub": "Parkım, işçi dəvətləri və dayanacaq əlavə et",
   "pf_head_admin": "Baş admin idarəetməsi",
   "pf_head_admin_only": "Yalnız Baş admin",
   "pf_account_group": "Hesab və görünüş",
@@ -1909,5 +1909,11 @@
   "svc_found_shops": "{n} mağaza · {km} km",
   "svc_my_shop": "Mağazam",
   "svc_none_here_shops": "Bu ərazidə mağaza tapılmadı.",
-  "svc_shop": "Mağaza"
+  "svc_shop": "Mağaza",
+  "tp_stop_add": "Dayanacaq əlavə et",
+  "tp_stop_add_sub": "Xəritədə yer göstər — sürücülər bir-birinə dayanacaq göstərsin",
+  "tp_stop_title": "Yeni dayanacaq",
+  "tp_stop_hint": "Bu, sadə dayanacaqdır: rezervasiya, tutum və sahib idarəsi yoxdur. Admin yoxladıqdan sonra hamıya görünəcək, o vaxta qədər yalnız siz görürsünüz.",
+  "tp_stop_sent": "Dayanacaq göndərildi. Admin yoxladıqdan sonra hamı görəcək.",
+  "svc_shop_note": "Hər hesabın bir servis profili var. \"Ehtiyat hissələri satışı\" kateqoriyası servisinizə əlavə edildi — yadda saxlayın, Mağazalar xəritəsində görünəcək."
 }
