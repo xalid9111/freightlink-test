@@ -528,7 +528,7 @@
   "pf_activity_roles": "Faaliyet rollerim",
   "pf_activity_sections": "Faaliyet bölümlerim",
   "pf_tirpark": "TIR Parkı",
-  "pf_tirpark_sub": "Parkım, çalışan davetleri ve park yeri ekle",
+  "pf_tirpark_sub": "Parkım ve çalışan davetleri",
   "pf_head_admin": "Baş yönetici paneli",
   "pf_head_admin_only": "Yalnız Baş yönetici",
   "pf_account_group": "Hesap ve görünüm",
@@ -1947,5 +1947,14 @@
   "svc_profile_save": "Servis profilini kaydet",
   "svc_full_address": "Tam adres",
   "svc_24h_two_lines": "7/24\n(sürekli açık)",
-  "media_hint": "Logo ve kapak fotoğrafını kamera düğmeleriyle ekleyin"
+  "media_hint": "Logo ve kapak fotoğrafını kamera düğmeleriyle ekleyin",
+  "chat_ctx_service": "Servis: {name}",
+  "chat_ctx_shop": "Mağaza: {name}",
+  "chat_ctx_hint": "Sohbet bu sayfadan başladı",
+  "chat_ctx_open": "Sayfaya bak",
+  "shop_profile_title": "Mağaza",
+  "oauth_google_off": "Google ile giriş henüz aktif değil — e-posta ve şifre ile girin.",
+  "oauth_apple_off": "Apple ile giriş henüz aktif değil — e-posta ve şifre ile girin.",
+  "error_oauth_not_configured": "Bu giriş yöntemi henüz aktif değil.",
+  "error_oauth_failed": "Giriş yapılamadı. Tekrar deneyin."
 }

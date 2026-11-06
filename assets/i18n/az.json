@@ -528,7 +528,7 @@
   "pf_activity_roles": "Fəaliyyət rollarım",
   "pf_activity_sections": "Fəaliyyət bölmələrim",
   "pf_tirpark": "TIR Parkı",
-  "pf_tirpark_sub": "Parkım, işçi dəvətləri və dayanacaq əlavə et",
+  "pf_tirpark_sub": "Parkım və işçi dəvətləri",
   "pf_head_admin": "Baş admin idarəetməsi",
   "pf_head_admin_only": "Yalnız Baş admin",
   "pf_account_group": "Hesab və görünüş",
@@ -1947,5 +1947,14 @@
   "svc_profile_save": "Servis profilini yadda saxla",
   "svc_full_address": "Tam ünvan",
   "svc_24h_two_lines": "24/7\n(davamlı açıq)",
-  "media_hint": "Loqo və fon şəklini kamera düymələri ilə əlavə edin"
+  "media_hint": "Loqo və fon şəklini kamera düymələri ilə əlavə edin",
+  "chat_ctx_service": "Servis: {name}",
+  "chat_ctx_shop": "Mağaza: {name}",
+  "chat_ctx_hint": "Söhbət bu səhifədən başlayıb",
+  "chat_ctx_open": "Səhifəyə bax",
+  "shop_profile_title": "Mağaza",
+  "oauth_google_off": "Google ilə giriş hələ aktiv deyil — e-poçt və şifrə ilə daxil olun.",
+  "oauth_apple_off": "Apple ilə giriş hələ aktiv deyil — e-poçt və şifrə ilə daxil olun.",
+  "error_oauth_not_configured": "Bu giriş üsulu hələ aktiv deyil.",
+  "error_oauth_failed": "Giriş alınmadı. Yenidən cəhd edin."
 }

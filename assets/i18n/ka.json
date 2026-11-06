@@ -528,7 +528,7 @@
   "pf_activity_roles": "ჩემი როლები",
   "pf_activity_sections": "ჩემი განყოფილებები",
   "pf_tirpark": "TIR პარკი",
-  "pf_tirpark_sub": "ჩემი პარკი, თანამშრომლების მოწვევები და სადგომის დამატება",
+  "pf_tirpark_sub": "ჩემი პარკი და თანამშრომლების მოწვევები",
   "pf_head_admin": "მთავარი ადმინი",
   "pf_head_admin_only": "მხოლოდ მთავარი ადმინი",
   "pf_account_group": "ანგარიში და ხედი",
@@ -1947,5 +1947,14 @@
   "svc_profile_save": "სერვისის პროფილის შენახვა",
   "svc_full_address": "სრული მისამართი",
   "svc_24h_two_lines": "24/7\n(მუდმივად ღია)",
-  "media_hint": "დაამატეთ ლოგო და ფონი კამერის ღილაკებით"
+  "media_hint": "დაამატეთ ლოგო და ფონი კამერის ღილაკებით",
+  "chat_ctx_service": "სერვისი: {name}",
+  "chat_ctx_shop": "მაღაზია: {name}",
+  "chat_ctx_hint": "საუბარი ამ გვერდიდან დაიწყო",
+  "chat_ctx_open": "გახსნა",
+  "shop_profile_title": "მაღაზია",
+  "oauth_google_off": "Google-ით შესვლა ჯერ აქტიური არ არის — გამოიყენეთ ელფოსტა და პაროლი.",
+  "oauth_apple_off": "Apple-ით შესვლა ჯერ აქტიური არ არის — გამოიყენეთ ელფოსტა და პაროლი.",
+  "error_oauth_not_configured": "შესვლის ეს გზა ჯერ აქტიური არ არის.",
+  "error_oauth_failed": "შესვლა ვერ მოხერხდა. სცადეთ თავიდან."
 }

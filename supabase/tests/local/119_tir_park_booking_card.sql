@@ -18,7 +18,11 @@ select tests.login(:manager);
 insert into ids values ('p', public.tir_park_manage_apply(null, 'Kart Park', 40.9000, 47.5000, 'Şəki', null,
   '+994501234567', '{}', 10, 6, 3, 'day', '24/7', null));
 -- A plain park without a manager.
-insert into ids values ('q', public.tir_park_add('Sadə park', 40.1000, 46.9000, null, '{}', null));
+reset role;  -- users no longer add parks (0100): the park is made directly
+with n as (insert into public.tir_parks (name, lat, lng, city, amenities, created_by, status)
+           values ('Sadə park', 40.1000, 46.9000, null, '{}', auth.uid(), 'pending') returning id)
+insert into ids select 'q', id from n;
+set role authenticated;
 select tests.login(:admin);
 select public.admin_tir_park_manager_set((select id from ids where k='p'), 'approved');
 select public.admin_tir_park_set_status((select id from ids where k='q'), 'approved');

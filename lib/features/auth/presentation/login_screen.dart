@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'change_password_screen.dart' show ForgotPasswordButton;
 import 'providers/auth_providers.dart';
@@ -159,10 +160,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-/// Google/Apple buttons are present (per brief §5 architecture
-/// requirement) but call the still-unimplemented repository methods,
-/// which surface a clear "not connected yet" message rather than
-/// silently doing nothing — see AuthRepositoryImpl.signInWithGoogle/Apple.
+/// Google / Apple through Supabase OAuth (07.11.2026). A button is active
+/// only when its provider is switched on in Supabase; otherwise it is greyed
+/// out with a plain note, so nobody is offered a sign-in that cannot work.
 class _OAuthRow extends ConsumerWidget {
   const _OAuthRow();
 
@@ -190,20 +190,34 @@ class _OAuthRow extends ConsumerWidget {
     }
 
     final repo = ref.read(authRepositoryProvider);
+    final on = ref.watch(oauthProvidersProvider);
+    final enabled = on.valueOrNull ?? const <String>{};
+    Widget button(String name, IconData icon, String labelKey, Future<dynamic> Function() call) {
+      final active = enabled.contains(name);
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        OutlinedButton.icon(
+          key: ValueKey('oauth-$name'),
+          onPressed: active ? () => tryOAuth(call) : null,
+          icon: Icon(icon),
+          label: Text(strings.t(labelKey)),
+        ),
+        if (!active && !on.isLoading)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(strings.t('oauth_${name}_off'),
+                key: ValueKey('oauth-$name-off'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+          ),
+      ]);
+    }
+
     return Column(
       children: [
         const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider()),
-        OutlinedButton.icon(
-          onPressed: () => tryOAuth(repo.signInWithGoogle),
-          icon: const Icon(Icons.g_mobiledata),
-          label: Text(strings.t('oauth_google')),
-        ),
+        button('google', Icons.g_mobiledata, 'oauth_google', repo.signInWithGoogle),
         const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: () => tryOAuth(repo.signInWithApple),
-          icon: const Icon(Icons.apple),
-          label: Text(strings.t('oauth_apple')),
-        ),
+        button('apple', Icons.apple, 'oauth_apple', repo.signInWithApple),
       ],
     );
   }

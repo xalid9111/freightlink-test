@@ -420,7 +420,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/tirpark',
-              builder: (context, state) => TirParkScreen(addRequest: state.uri.queryParameters['add']),
+              builder: (context, state) => const TirParkScreen(),
               routes: [
                 // One park: pictures, rating, comments (TIRPark PR 2, 0078).
                 GoRoute(

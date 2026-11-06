@@ -8,6 +8,10 @@ import '../../domain/auth_repository.dart';
 /// Provider (not a family/factory) is correct here.
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepositoryImpl());
 
+/// Google / Apple sign-in switched on in Supabase (07.11.2026); the login
+/// buttons are active only for these.
+final oauthProvidersProvider = FutureProvider<Set<String>>((ref) => ref.watch(authRepositoryProvider).oauthProviders());
+
 /// The stream every auth-aware widget/router should watch. `null` means
 /// signed out. This is intentionally the ONLY place `authStateChanges()`
 /// is subscribed to — Riverpod shares one subscription across every

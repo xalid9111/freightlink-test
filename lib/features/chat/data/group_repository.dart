@@ -54,6 +54,21 @@ class GroupRepository {
     throw StateError('conversation_not_returned');
   }
 
+  /// "Mesaj yaz" on a service / shop page (0100): the chat remembers the
+  /// page; the receiver is its owner. Before SQL 0100 the person-to-person
+  /// chat with [ownerId] (as before).
+  Future<ConversationModel> openServicePage(String serviceId, String ownerId) async {
+    try {
+      final row = await _c.rpc('get_or_create_service_conversation', params: {'p_service': serviceId}).timeout(_netTimeout);
+      if (row is Map) return ConversationModel.fromJson(Map<String, dynamic>.from(row));
+      if (row is List && row.isNotEmpty) return ConversationModel.fromJson(Map<String, dynamic>.from(row.first as Map));
+      throw StateError('conversation_not_returned');
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || e.code == '42883') return openDirect(ownerId);
+      rethrow;
+    }
+  }
+
   // ---- groups -----------------------------------------------------------
 
   Stream<List<GroupMember>> watchMyMemberships(String uid) => _c

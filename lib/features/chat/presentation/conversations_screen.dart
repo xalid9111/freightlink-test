@@ -17,6 +17,7 @@ import 'providers/chat_providers.dart';
 import 'widgets/message_actions.dart';
 import 'providers/group_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import 'conversation_thread_screen.dart' show chatPageLabel;
 
 /// Bottom-nav "Messages" tab: search box on top, then groups and chats
 /// (newest activity first). Typing a name filters the list AND shows
@@ -128,6 +129,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       (byPartner[otherId] ??= []).add(item);
     }
     String routeOf(ConversationWithCargo item) {
+      // A chat from a service / shop page names the page (0100).
+      final page = chatPageLabel(item.conversation, strings);
+      if (page != null) return page;
       final cargo = item.conversation.cargoId == null ? null : item.cargo;
       final iAmOwner = user != null && user.id == item.conversation.cargoOwnerId;
       final subtitleKey = item.conversation.cargoId == null

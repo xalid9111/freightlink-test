@@ -341,14 +341,26 @@ files to the owner separately (they are run by hand in the SQL editor).
 - Map "+" buttons (owner, 06.11.2026): each section its own form — Servislər
   "+" → /service-join (Usta / Servis mərkəzi registration), Mağazalar "+" →
   /service-edit?kind=center&shop=1 (the same one-per-owner service form with
-  spare_parts ticked; an existing service gets the category added), Parklar
-  "TIR parkı əlavə et" → Profil → TIR Parkı (/profile/tirpark). There
-  "Dayanacaq əlavə et" (in place of "Park rezervasiyalarım") opens the map in
-  place-a-spot mode (/tirpark?add=…): a plain parking spot via the existing
-  tir_park_add (pending, no manager → no booking, capacity or owner panel
-  until a park owner applies); parks already there are listed and an
-  approved one opens with a tap. "Park rezervasiyalarım" (Rezervasiyalar və
-  statuslar) stands on Profil right under "TIR Parkı"; its screen unchanged.
+  spare_parts ticked; an existing service gets the category added).
+  "Park rezervasiyalarım" (Rezervasiyalar və statuslar) stands on Profil
+  right under "TIR Parkı"; its screen unchanged.
+  Users add NO parks / parking spots (owner, 07.11.2026, 0100): no "TIR
+  parkı əlavə et" on the map, no "Dayanacaq əlavə et" in Profil → TIR
+  Parkı, no /tirpark?add= mode; tir_park_add refuses every call
+  ('not_available'); users never had a direct INSERT on tir_parks. Parks
+  come only from "Park işlədirəm" (admin approval), manager applications
+  and the admins; spots added before stay (nothing deleted).
+- Service / shop pages (owner, 07.11.2026): the list card opens the profile
+  (its buttons keep their own work); no mini map on the profile (address +
+  "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a
+  page opens a page chat (0100: conversations.service_id / service_name /
+  service_kind set only by get_or_create_service_conversation; the receiver
+  is the owner; the person-to-person chat stays separate) — the thread shows
+  "Mağaza: … / Servis: …" with a link to the page, the Mesajlar list names it.
+- Google / Apple sign-in (owner, 07.11.2026): Supabase OAuth back to the
+  app's address; a button is active only when its provider is on in
+  Supabase (/auth/v1/settings), otherwise greyed out with a note. Panel
+  steps in docs/OAUTH_GOOGLE_APPLE.md; no keys in the repository.
 - Usta / Servis and Mağaza profile forms (owner's pictures, 06.11.2026,
   0097): one long scrolled page each, the same order — logo (left) +
   background (right), name (empty; faint placeholder "Servis adı" / "Mağaza
@@ -387,7 +399,7 @@ files to the owner separately (they are run by hand in the SQL editor).
   06.11.2026, 0098 + 0099): a last trigger (zz_service_publish) publishes
   every service / shop its owner makes or saves (a re-run of an old guard
   cannot bring the waiting back); the waiting ones were published once;
-  "Dayanacaq əlavə et" (tir_park_add) is shown at once; rejected /
+  (0100: users add no parking spots any more); rejected /
   suspended / hidden stay; the admin can still take any of them down. The
   admin approves ONLY "Park işlədirəm" (park owner requests / manager
   applications — a park with a manager application keeps waiting). Each map its own places: a

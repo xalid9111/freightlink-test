@@ -13,7 +13,11 @@ set role authenticated;
 select tests.login(:manager);
 insert into ids values ('p', public.tir_park_manage_apply(null, 'Test Park', 40.3000, 47.2000, 'Bərdə', null,
   '+994501234567', '{}', 20, 10, 3, 'day', '24/7', null));
-insert into ids values ('q', public.tir_park_add('Real Park', 41.0000, 45.5000, 'Qazax', '{}', null));
+reset role;  -- users no longer add parks (0100): the park is made directly
+with n as (insert into public.tir_parks (name, lat, lng, city, amenities, created_by, status)
+           values ('Real Park', 41.0000, 45.5000, 'Qazax', '{}', auth.uid(), 'pending') returning id)
+insert into ids select 'q', id from n;
+set role authenticated;
 select tests.login(:admin);
 select public.admin_tir_park_manager_set((select id from ids where k='p'), 'approved');
 select public.admin_tir_park_set_status((select id from ids where k='q'), 'approved');
