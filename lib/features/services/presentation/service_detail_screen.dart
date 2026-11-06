@@ -134,10 +134,9 @@ class ServiceDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _OwnerTools(p: p, s: s),
                   const SizedBox(height: 10),
-                  _AdvertiseCard(s: s, serviceId: p.id),
-                  const SizedBox(height: 10),
-                  // "Önə çıxar" (owner, 04.11.2026, 0093): the TIR Bazarı
-                  // sheets; shown first around the service's own place.
+                  // Advertising a service = "Önə çıxar" only (İrəli çək ·
+                  // VIP · Premium, owner 06.11.2026; the old banner ads are
+                  // no longer offered here). Shown first around its place.
                   PlacePromoSection(
                     s: s,
                     target: PlaceTarget.service,
@@ -433,48 +432,6 @@ class _OwnerToolsState extends ConsumerState<_OwnerTools> {
   }
 }
 
-/// Owner: advertise the service in the loads feed (the normal "Reklam ver"
-/// flow — same prices, receipt and admin check as every other ad).
-class _AdvertiseCard extends StatelessWidget {
-  final AppStrings s;
-  final String serviceId;
-  const _AdvertiseCard({required this.s, required this.serviceId});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      // Service ad editor: service templates, countries only.
-      onTap: () => context.pushOnce('/ad-create?service=$serviceId'),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.campaign, color: AppColors.accent),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(s.t('svc_advertise_title'), style: const TextStyle(fontWeight: FontWeight.w400)),
-                  Text(s.t('svc_advertise_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.textSoft),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Gold strip on top of a PRO service profile.
 class _ProBanner extends StatelessWidget {
   final AppStrings s;
   const _ProBanner({required this.s});

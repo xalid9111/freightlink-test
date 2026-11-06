@@ -389,12 +389,12 @@ class ProfileActivityScreen extends ConsumerWidget {
           subtitle: strings.t('job_center_profile_sub'),
           onTap: () => context.pushOnce('/jobs'),
         ),
-        // Shown while the admin's "Reklam ver" switch is on, or
-        // when this user already has ad orders (to pay / follow).
+        // The old banner ads are no longer offered in Profil (owner,
+        // 06.11.2026: services / shops use "Önə çıxar"); only a user who
+        // already has ad orders keeps the row, to pay / follow them.
         Consumer(builder: (context, ref, _) {
-          final on = ref.watch(adsOrderingEnabledProvider).valueOrNull ?? false;
           final hasOrders = (ref.watch(myAdOrdersProvider).valueOrNull ?? const []).isNotEmpty;
-          if (!on && !hasOrders) return const SizedBox.shrink();
+          if (!hasOrders) return const SizedBox.shrink();
           return _MenuRow(
             icon: Icons.campaign_outlined,
             iconColor: AppColors.accent,

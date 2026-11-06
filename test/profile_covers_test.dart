@@ -20,6 +20,14 @@ const _tpl = [
   CoverTemplate(id: 't2', name: 'Kafe', imageUrl: '$_base/cafe.jpg', sections: [CoverSection.park, CoverSection.shop]),
 ];
 
+class _Banners extends CoverRepository {
+  @override
+  Future<List<CoverTemplate>> templates({CoverSection? section, bool all = false}) async => const [];
+  @override
+  Future<List<CoverTemplate>> adBannerTemplates(CoverSection section) async =>
+      [CoverTemplate(id: 'ad-b1', name: 'Servis baneri', imageUrl: '$_base/banner.jpg', sections: [section], copy: true)];
+}
+
 Widget _sheet({List<CoverTemplate> list = _tpl, String? current, CoverSection section = CoverSection.park}) => ProviderScope(
       overrides: [coverTemplatesProvider.overrideWith((ref, s) async => [for (final t in list) if (t.sections.contains(s)) t])],
       child: MaterialApp(home: Scaffold(body: CoverPickerSheet(s: _az, section: section, current: current))),
@@ -127,6 +135,31 @@ void main() {
     for (final k in ['admin-cover-pick', 'admin-cover-name', 'admin-cover-sec-park', 'admin-cover-sec-service', 'admin-cover-sec-shop', 'admin-cover-save']) {
       expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
     }
+  });
+
+  testWidgets('Servis / Mağaza: the admins\' old banner templates are offered too; Park not', (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    for (final (section, shown) in [(CoverSection.service, true), (CoverSection.shop, true), (CoverSection.park, false)]) {
+      await tester.pumpWidget(ProviderScope(
+        key: UniqueKey(),
+        overrides: [coverRepositoryProvider.overrideWithValue(_Banners())],
+        child: MaterialApp(home: Scaffold(body: CoverPickerSheet(s: _az, section: section, current: null))),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('cover-template-ad-b1')), shown ? findsOneWidget : findsNothing, reason: '$section');
+    }
+  });
+
+  test('wired: a banner template is copied into the owner\'s own folder; no old ad button on the service page', () {
+    final c = src('lib/features/covers/profile_covers.dart');
+    expect(c, contains(".inFilter('audience', ['service', 'all'])"));
+    expect(c, contains('if (choice.copy) {'));
+    final d = src('lib/features/services/presentation/service_detail_screen.dart');
+    expect(d.contains('/ad-create?service='), isFalse, reason: 'advertising a service = Önə çıxar only');
+    expect(d, contains('PlacePromoSection('));
+    expect(src('lib/features/auth/presentation/profile_screen.dart').contains('adsOrderingEnabledProvider'), isFalse);
   });
 
   test('wired: the owner only; booking, contact, route and the gallery stay; the server checks', () {

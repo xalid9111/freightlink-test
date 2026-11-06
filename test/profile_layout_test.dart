@@ -148,9 +148,12 @@ void main() {
     final c = tester.getTopLeft(find.byKey(const ValueKey('act-service')));
     expect(c.dy, greaterThan(a.dy), reason: 'two in a row: Usta / Servis under Daşıyıcı');
     expect(find.text('Fəaliyyət bölmələrim'), findsOneWidget);
-    for (final t in ['Yüklərim', 'Səhifəm və kataloqum', 'İş Mərkəzi', 'Reklam sifarişi']) {
+    for (final t in ['Yüklərim', 'Səhifəm və kataloqum', 'İş Mərkəzi']) {
       expect(find.text(t), findsOneWidget, reason: t);
     }
+    // The old banner ads are not offered in Profil any more (owner,
+    // 06.11.2026) — even with the admin's switch on; only existing orders keep the row.
+    expect(find.text('Reklam sifarişi'), findsNothing);
   });
 
   testWidgets('TIR Parkı: park management, work at a park, "Dayanacaq əlavə et" (bookings moved to Profil)', (tester) async {
