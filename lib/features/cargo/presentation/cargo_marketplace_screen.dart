@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../promo/promo_cross.dart' show PlaceCrossStrip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -164,6 +165,13 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 // minutes. Scrolling brings the next rows.
                 final rows = buildLoadRows(list, columns: 2);
                 return [
+                  // Parks, services and shops whose Premium chose Yüklər (owner, 07.11.2026, 0103).
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                      child: PlaceCrossStrip(s: strings, place: 'loads'),
+                    ),
+                  ),
                   // No panel behind the tiles (owner, 24.10.2026): the page
                   // ground shows between them.
                   SliverPadding(

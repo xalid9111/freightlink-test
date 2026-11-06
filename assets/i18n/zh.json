@@ -1962,12 +1962,11 @@
   "promo_places_chosen": "已选位置：{places}",
   "promo_places_total": "总计：{sum}",
   "promo_cross_loads": "Premium 货物",
-  "promo_place_parks": "停车场",
-  "promo_place_services": "服务",
-  "promo_place_shops": "商店",
-  "promo_places_missing": "所选板块之一没有该期限的 Premium 套餐——请移除该板块或选择其他期限。",
-  "promo_cross_places": "Premium",
+  "promo_places_missing": "此期限无法同时选择两个位置：货物板块没有该 Premium 套餐——请选择一个位置或其他期限。",
+  "promo_cross_places": "Premium · TIR 停车场、服务和商店",
   "promo_place_kind_park": "TIR 停车场",
   "promo_place_kind_service": "服务",
-  "promo_place_kind_shop": "商店"
+  "promo_place_kind_shop": "商店",
+  "promo_place_market": "TIR 市场",
+  "promo_place_loads": "货物板块"
 }
