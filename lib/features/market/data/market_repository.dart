@@ -253,9 +253,16 @@ class MarketRepository {
 
   /// "İrəli çək" / "Premium et": an order for my active ad; the server sets
   /// the price.
-  Future<MarketPromoOrder> createPromoOrder(String listingId, MarketPromoKind kind, int qty) async {
+  /// [places] (Premium, 0101): 'loads' / 'market' — where it is shown;
+  /// null = TIR Bazarı only (the old call).
+  Future<MarketPromoOrder> createPromoOrder(String listingId, MarketPromoKind kind, int qty, {List<String>? places}) async {
     final res = await _c
-        .rpc('market_promo_order_create', params: {'p_listing': listingId, 'p_kind': kind.wire, 'p_qty': qty})
+        .rpc('market_promo_order_create', params: {
+          'p_listing': listingId,
+          'p_kind': kind.wire,
+          'p_qty': qty,
+          if (places != null) 'p_places': places,
+        })
         .timeout(_timeout);
     return MarketPromoOrder.fromJson(Map<String, dynamic>.from(res as Map));
   }

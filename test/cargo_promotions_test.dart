@@ -140,7 +140,7 @@ void main() {
   test('wired: Önə çıxar on my load, marks on the tile, checkout, admin prices', () {
     final promo = src('lib/features/cargo/presentation/widgets/cargo_promo.dart');
     expect(promo, contains('class CargoPromoTarget extends PromoTarget'));
-    expect(promo, contains('repo.createPromoOrder(cargo.id, kind, qty)'));
+    expect(promo, contains('repo.createPromoOrder(cargo.id, kind, qty,'));
     expect(promo, contains('cargo: true, promo: true'));
     expect(promo, contains('cargoPromoPlansProvider((kind, true))'));
     // A load's Premium names the Loads page, not TIR Bazarı (6 languages).

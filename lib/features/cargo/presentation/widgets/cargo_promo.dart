@@ -4,6 +4,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../finance/presentation/card_checkout.dart';
 import '../../../market/domain/market_models.dart';
 import '../../../market/presentation/market_promo.dart';
+import '../../../market/presentation/market_providers.dart' show marketPromoPlansProvider;
 import '../providers/cargo_media_providers.dart';
 import '../providers/cargo_providers.dart';
 
@@ -29,13 +30,21 @@ class CargoPromoTarget extends PromoTarget {
   }
 
   @override
-  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty) async {
+  PromoPlace get home => PromoPlace.loads;
+
+  @override
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>> otherPremiumPlans() =>
+      marketPromoPlansProvider((MarketPromoKind.premium, true));
+
+  @override
+  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places}) async {
     final repo = ref.read(cargoMediaRepositoryProvider);
     if (kind == MarketPromoKind.vip) {
       final o = await repo.createVipOrder(cargo.id, qty);
       return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, cargo: true);
     }
-    final o = await repo.createPromoOrder(cargo.id, kind, qty);
+    final o = await repo.createPromoOrder(cargo.id, kind, qty,
+        places: kind == MarketPromoKind.premium && places != null ? promoPlacesWire(places) : null);
     return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, cargo: true, promo: true);
   }
 

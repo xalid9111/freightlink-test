@@ -200,7 +200,7 @@ class PlacePromoTarget extends PromoTarget {
       };
 
   @override
-  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty) async {
+  Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places}) async {
     final o = await ref.read(placePromoRepositoryProvider).createOrder(target, id, kind, qty);
     return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, place: true);
   }
