@@ -19,7 +19,6 @@ import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../promo/place_promo.dart';
 import '../../covers/profile_covers.dart';
-import '../../ads/presentation/public_profile_screen.dart' show ProfileCoverPlaceholder;
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -731,18 +730,13 @@ class _ServiceHeader extends ConsumerWidget {
     final key = (CoverSection.service, p.id);
     final media = ref.watch(placeMediaProvider(key)).valueOrNull ?? const PlaceMedia();
     final repo = ref.read(coverRepositoryProvider);
+    // A shop = a service selling spare parts (the same as on the map).
+    final shop = p.categories.contains('spare_parts');
     return PlaceCoverHeader(
       coverUrl: media.cover,
-      fallback: const ProfileCoverPlaceholder(),
-      // The owner's logo (0097), else the map pin as before.
-      avatar: roundPicture(
-        media.logo,
-        Container(
-          color: AppColors.card,
-          padding: const EdgeInsets.all(18),
-          child: ServicePin(type: p.markerType, active: p.isActive, selected: true, pro: p.isPro),
-        ),
-      ),
+      fallback: Image.asset(defaultServiceCover(shop: shop), key: const ValueKey('svc-default-cover'), fit: BoxFit.cover),
+      // The owner's logo (0097), else the default picture (06.11.2026).
+      avatar: roundPicture(media.logo, Image.asset(defaultServiceLogo(shop: shop), fit: BoxFit.cover)),
       name: p.name,
       subtitle: subtitle,
       changeLabel: s.t('cover_change'),

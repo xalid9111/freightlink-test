@@ -117,6 +117,7 @@ flutter:
     - assets/images/brands/
     - assets/images/promo/
     - assets/images/premium/
+    - assets/images/profile/
     - assets/images/jobs/
     - assets/images/tirpark/
     # Country flags for the web (loaded at run time, see

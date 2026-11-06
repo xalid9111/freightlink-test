@@ -452,6 +452,10 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                     _MediaRow(
                       logoUrl: _logoUrl,
                       coverUrl: _coverUrl,
+                      name: _name,
+                      nameHint: s.t(shop ? 'shop_name_hint' : 'svc_name_hint'),
+                      hint: s.t('media_hint'),
+                      shop: shop,
                       logoLabel: s.t('media_logo_add'),
                       coverLabel: s.t(_coverUrl == null ? 'media_cover_add' : 'cover_change'),
                       onLogo: _saving ? null : _pickLogo,
@@ -870,99 +874,150 @@ class _DashedBox extends CustomPainter {
   bool shouldRepaint(_DashedBox old) => old.color != color || old.radius != radius;
 }
 
-/// Logo (dashed box, left) and background (right), as in the owner's picture.
+/// Background on top with the camera, the round logo half over its lower
+/// edge with its own camera, and the name beside it — the same look as the
+/// Profil card (owner, 06.11.2026).
 class _MediaRow extends StatelessWidget {
   final String? logoUrl, coverUrl;
-  final String logoLabel, coverLabel;
+  final TextEditingController name;
+  final String nameHint, hint, logoLabel, coverLabel;
+  final bool shop;
   final VoidCallback? onLogo, onCover;
   final VoidCallback onLogoClear, onCoverClear;
   const _MediaRow({
     required this.logoUrl,
     required this.coverUrl,
+    required this.name,
+    required this.nameHint,
+    required this.hint,
     required this.logoLabel,
     required this.coverLabel,
+    required this.shop,
     required this.onLogo,
     required this.onCover,
     required this.onLogoClear,
     required this.onCoverClear,
   });
 
-  Widget _empty(IconData icon, String label) => Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(8),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: AppColors.accent, size: 30),
-          const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 13, color: AppColors.text)),
-        ]),
-      );
+  static const double _r = 44;
 
-  Widget _clear(VoidCallback onTap, String key) => Positioned(
-        top: 6,
-        right: 6,
-        child: InkWell(
-          key: ValueKey(key),
-          onTap: onTap,
-          child: Container(
-            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-            padding: const EdgeInsets.all(4),
-            child: const Icon(Icons.close, size: 16, color: Colors.white),
-          ),
-        ),
+  Widget _round(VoidCallback onTap, String key, IconData icon, String tooltip) => Material(
+        color: AppColors.cardAlt.withValues(alpha: 0.9),
+        shape: const CircleBorder(),
+        child: IconButton(key: ValueKey(key), tooltip: tooltip, onPressed: onTap, icon: Icon(icon, color: AppColors.text)),
       );
 
   @override
   Widget build(BuildContext context) {
-    const h = 120.0;
-    return SizedBox(
-      height: h,
-      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        SizedBox(
-          width: h,
-          child: Stack(fit: StackFit.expand, children: [
-            InkWell(
+    const left = 14.0;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(builder: (context, box) {
+        final coverH = box.maxWidth / kPlaceCoverAspect;
+        return Stack(children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            SizedBox(
+              height: coverH,
+              child: Stack(fit: StackFit.expand, children: [
+                InkWell(
+                  key: const ValueKey('svc-cover'),
+                  onTap: onCover,
+                  // Never empty: the default picture until the owner puts his own.
+                  child: (coverUrl ?? '').isEmpty
+                      ? Image.asset(defaultServiceCover(shop: shop), key: const ValueKey('svc-default-cover'), fit: BoxFit.cover)
+                      : FramedImage(
+                          image: NetworkImage(coverUrl!),
+                          framing: ImageFraming.of(coverUrl),
+                          errorBuilder: (_, __, ___) => Image.asset(defaultServiceCover(shop: shop), fit: BoxFit.cover),
+                        ),
+                ),
+                if (onCover != null)
+                  Positioned(right: 8, top: 8, child: _round(onCover!, 'svc-cover-edit', Icons.photo_camera_outlined, coverLabel)),
+                if (coverUrl != null) Positioned(left: 8, top: 8, child: _round(onCoverClear, 'svc-cover-clear', Icons.close, '')),
+              ]),
+            ),
+            Container(height: 1, color: AppColors.line),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(left + _r * 2 + 14, 10, 14, 14),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: _r + 4),
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: name,
+                  builder: (context, v, _) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(
+                      v.text.trim().isEmpty ? nameHint : v.text.trim(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: v.text.trim().isEmpty ? AppColors.textSoft : AppColors.text),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(hint, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                  ]),
+                ),
+              ),
+            ),
+          ]),
+          // The logo, half over the background's edge, with its camera.
+          Positioned(
+            left: left,
+            top: coverH - _r,
+            child: InkWell(
               key: const ValueKey('svc-logo'),
+              customBorder: const CircleBorder(),
               onTap: onLogo,
-              borderRadius: BorderRadius.circular(16),
-              child: logoUrl == null
-                  ? CustomPaint(
-                      painter: _DashedBox(color: AppColors.online.withValues(alpha: 0.7), radius: 16),
-                      child: _empty(Icons.photo_camera_outlined, logoLabel),
-                    )
-                  : ClipRRect(borderRadius: BorderRadius.circular(16), child: roundPicture(logoUrl, _empty(Icons.photo_camera_outlined, logoLabel))),
-            ),
-            if (logoUrl != null) _clear(onLogoClear, 'svc-logo-clear'),
-          ]),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Stack(fit: StackFit.expand, children: [
-            InkWell(
-              key: const ValueKey('svc-cover'),
-              onTap: onCover,
-              borderRadius: BorderRadius.circular(16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: (coverUrl ?? '').isEmpty
-                    ? Container(color: AppColors.card, child: _empty(Icons.add_photo_alternate_outlined, coverLabel))
-                    : FramedImage(
-                        image: NetworkImage(coverUrl!),
-                        framing: ImageFraming.of(coverUrl),
-                        errorBuilder: (_, __, ___) => Container(color: AppColors.card, child: _empty(Icons.add_photo_alternate_outlined, coverLabel)),
+              child: Stack(clipBehavior: Clip.none, children: [
+                Container(
+                  width: _r * 2 + 6,
+                  height: _r * 2 + 6,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.cardAlt, border: Border.all(color: AppColors.card, width: 3)),
+                  child: ClipOval(
+                    child: roundPicture(logoUrl, Image.asset(defaultServiceLogo(shop: shop), key: const ValueKey('svc-default-logo'), fit: BoxFit.cover)),
+                  ),
+                ),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Tooltip(
+                    message: logoLabel,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardAlt,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.card, width: 2),
                       ),
-              ),
+                      child: Icon(Icons.photo_camera, size: 16, color: AppColors.text),
+                    ),
+                  ),
+                ),
+                if (logoUrl != null)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: InkWell(
+                      key: const ValueKey('svc-logo-clear'),
+                      onTap: onLogoClear,
+                      child: Container(
+                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ]),
             ),
-            if (coverUrl != null) ...[
-              _clear(onCoverClear, 'svc-cover-clear'),
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: IgnorePointer(child: CoverChangeButton(label: coverLabel, onTap: () {})),
-              ),
-            ],
-          ]),
-        ),
-      ]),
+          ),
+        ]);
+      }),
     );
   }
 }
