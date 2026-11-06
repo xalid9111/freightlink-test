@@ -21,6 +21,9 @@
 \set pubcols 'id, owner_id, kind, name, specialty, description, categories, country, city, address, lat, lng, is_mobile, service_radius_km, phone, whatsapp, working_hours, is_24h, is_active, status, is_verified, added_by_admin, photos, rating_avg, rating_count, created_at, updated_at'
 
 begin;
+-- 0099 publishes the waiting profiles once; the rules below are still
+-- checked on one that waits (the fixture is put back to 'pending').
+update public.service_providers set status = 'pending' where id = :p2;
 
 -- =============== 1. SIGNUP ROLE =======================================
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data) values

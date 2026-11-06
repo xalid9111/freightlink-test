@@ -383,10 +383,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   old banner templates (ad_templates, audience service / all, active) are
   offered in "Fon şəklini seç" → Şablonlardan seç for Servis and Mağaza; a
   picked one is copied into the owner's own folder (no SQL needed).
-- Services and shops are published without the admin (owner, 06.11.2026,
-  0098): new ones at once (0028); a profile still 'pending' from before
-  0028 is published by its owner's save; rejected / suspended stay; the
-  admin can still take one down afterwards. Each map its own places: a
+- No admin approval for services, shops and parking spots (owner,
+  06.11.2026, 0098 + 0099): a last trigger (zz_service_publish) publishes
+  every service / shop its owner makes or saves (a re-run of an old guard
+  cannot bring the waiting back); the waiting ones were published once;
+  "Dayanacaq əlavə et" (tir_park_add) is shown at once; rejected /
+  suspended / hidden stay; the admin can still take any of them down. The
+  admin approves ONLY "Park işlədirəm" (park owner requests / manager
+  applications — a park with a manager application keeps waiting). Each map its own places: a
   shop (spare_parts + shop_* only, ServiceProvider.isShop) only on
   Mağazalar, a service (also one that sells parts) only on Servislər,
   parks only on Parklar.
