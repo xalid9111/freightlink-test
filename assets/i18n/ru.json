@@ -1962,12 +1962,11 @@
   "promo_places_chosen": "Выбрано: {places}",
   "promo_places_total": "Итого: {sum}",
   "promo_cross_loads": "Premium-грузы",
-  "promo_place_parks": "Парки",
-  "promo_place_services": "Сервисы",
-  "promo_place_shops": "Магазины",
-  "promo_places_missing": "В одном из выбранных разделов нет пакета Premium на этот срок — уберите этот раздел или выберите другой срок.",
-  "promo_cross_places": "Premium",
+  "promo_places_missing": "Оба места на этот срок недоступны: в разделе «Грузы» нет такого пакета Premium — выберите одно место или другой срок.",
+  "promo_cross_places": "Premium · TIR-парки, сервисы и магазины",
   "promo_place_kind_park": "TIR-парк",
   "promo_place_kind_service": "Сервис",
-  "promo_place_kind_shop": "Магазин"
+  "promo_place_kind_shop": "Магазин",
+  "promo_place_market": "TIR Базар",
+  "promo_place_loads": "Раздел «Грузы»"
 }

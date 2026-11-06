@@ -142,7 +142,6 @@ class ServiceDetailScreen extends ConsumerWidget {
                     id: p.id,
                     open: p.status == 'approved' && p.isActive && hasRealCoords(p.lat, p.lng),
                     closedKey: p.status == 'approved' && p.isActive && !hasRealCoords(p.lat, p.lng) ? 'pp_no_area' : null,
-                    shop: p.isShop,
                   ),
                 ],
                 const SizedBox(height: 18),

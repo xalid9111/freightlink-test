@@ -1962,12 +1962,11 @@
   "promo_places_chosen": "Seçilmiş yerlər: {places}",
   "promo_places_total": "Yekun məbləğ: {sum}",
   "promo_cross_loads": "Premium yüklər",
-  "promo_place_parks": "Parklar",
-  "promo_place_services": "Servislər",
-  "promo_place_shops": "Mağazalar",
-  "promo_places_missing": "Seçilən bölmələrdən birində bu müddət üçün Premium paketi yoxdur — o bölməni çıxarın və ya başqa müddət seçin.",
-  "promo_cross_places": "Premium",
+  "promo_places_missing": "İkisi birlikdə bu müddət üçün alınmır: Yüklər bölməsində belə Premium paketi yoxdur — bir yer seçin və ya başqa müddət seçin.",
+  "promo_cross_places": "Premium · TIR park, servis və mağazalar",
   "promo_place_kind_park": "TIR park",
   "promo_place_kind_service": "Servis",
-  "promo_place_kind_shop": "Mağaza"
+  "promo_place_kind_shop": "Mağaza",
+  "promo_place_market": "TIR Bazarı",
+  "promo_place_loads": "Yüklər bölməsi"
 }

@@ -74,20 +74,15 @@ abstract class PromoTarget {
   DateTime? paidUntil(MarketPromoKind kind);
 
   /// An order on the server (it sets the price) → what the checkout pays.
-  /// [places]: Premium's places (0102), null = the own section only.
+  /// [places]: Premium's places (0103), null = no choice (own section only).
   Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places});
 
-  /// The section this item belongs to (a park: Parklar, a service:
-  /// Servislər, a shop: Mağazalar); null = no choice of places (TIR Bazarı).
-  PromoPlace? get home => null;
-
-  /// The sections Premium may be shown in (owner, 07.11.2026, 0102); fewer
-  /// than two = no choice.
+  /// Where else Premium may be shown (owner, 07.11.2026, 0103: a park /
+  /// service / shop — TIR Bazarı · Yüklər bölməsi); empty = no choice.
   List<PromoPlace> get placeChoices => const [];
 
-  /// The Premium packs of another section (the price of several places
-  /// adds them up).
-  ProviderListenable<AsyncValue<List<MarketPromoPlan>>>? premiumPlansAt(PromoPlace place) => null;
+  /// The Yüklər Premium packs: both places = the own price + Yüklər's.
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>>? secondPlacePlans() => null;
 
   /// After the checkout: show the new state.
   void refresh(ProviderContainer c);
@@ -284,7 +279,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
   AppStrings get s => widget.s;
   MarketPromoKind get kind => widget.kind;
 
-  /// Premium's places (owner, 07.11.2026, 0102); starts with the own section.
+  /// Premium's places (owner, 07.11.2026, 0103); none chosen at first.
   Set<PromoPlace>? _places;
 
   Future<void> _pay(MarketPromoPlan plan, CheckoutAvailability av, List<PayMethod> methods) async {
@@ -317,8 +312,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
     }
   }
 
-  bool get _choosesPlaces =>
-      kind == MarketPromoKind.premium && widget.target.home != null && widget.target.placeChoices.length > 1;
+  bool get _choosesPlaces => kind == MarketPromoKind.premium && widget.target.placeChoices.isNotEmpty;
 
   String _date(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 
@@ -336,14 +330,9 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
       MarketPromoKind.premium => [MarketPromoKind.bump, MarketPromoKind.vip, MarketPromoKind.premium],
     };
     final until = widget.target.paidUntil(kind);
-    final home = widget.target.home;
-    if (_choosesPlaces) _places ??= {home!};
+    if (_choosesPlaces) _places ??= <PromoPlace>{};
     final choices = widget.target.placeChoices;
-    final others = <PromoPlace, List<MarketPromoPlan>>{
-      if (_choosesPlaces)
-        for (final p in choices)
-          if (p != home) p: ref.watch(widget.target.premiumPlansAt(p)!).valueOrNull ?? const [],
-    };
+    final second = _choosesPlaces ? ref.watch(widget.target.secondPlacePlans()!).valueOrNull ?? const <MarketPromoPlan>[] : const <MarketPromoPlan>[];
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(18, 0, 18, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
@@ -394,7 +383,7 @@ class _PromoSheetState extends ConsumerState<_PromoSheet> {
               data: (list) {
                 if (list.isEmpty) return Text(s.t('mk_vip_no_plans'), style: TextStyle(color: AppColors.textSoft));
                 final chosen = list.firstWhere((p) => p.qty == _qty, orElse: () => list.first);
-                final total = _choosesPlaces ? premiumPlacesPrice(home: home!, places: _places!, own: chosen, others: others) : null;
+                final total = _choosesPlaces ? premiumPlacesPrice(places: _places!, own: chosen, second: second) : null;
                 final blocked = _choosesPlaces && (total == null);
                 final price = total ?? (amount: chosen.price, currency: chosen.currency);
                 return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -495,35 +484,31 @@ class _PackTile extends StatelessWidget {
   }
 }
 
-/// Where a park's / service's / shop's Premium is shown (owner, 07.11.2026,
-/// 0102): Parklar (the TIRPark map), Servislər, Mağazalar.
-enum PromoPlace { parks, services, shops }
+/// Where else a park's / service's / shop's Premium is shown (owner,
+/// 07.11.2026, 0103): TIR Bazarı · Yüklər bölməsi (its own map always).
+enum PromoPlace { market, loads }
 
 /// The places in the server's words, in a fixed order.
 List<String> promoPlacesWire(Set<PromoPlace> places) => [for (final p in PromoPlace.values) if (places.contains(p)) p.name];
 
-/// The Premium price for [places]: every chosen section's Premium pack for
-/// the same days, added up — the own section ([home]) with [own], the
-/// others from [others]. Null = nothing chosen, or a section without that
-/// pack / with another currency (no made-up price).
+/// The Premium price for [places] (owner's "2 OK"): one place = the item's
+/// own Premium price ([own]); both = [own] + the Yüklər Premium pack for the
+/// same days ([second]). Null = nothing chosen, or both without that pack /
+/// with another currency (no made-up price).
 ({double amount, String currency})? premiumPlacesPrice({
-  required PromoPlace home,
   required Set<PromoPlace> places,
   required MarketPromoPlan own,
-  required Map<PromoPlace, List<MarketPromoPlan>> others,
+  required List<MarketPromoPlan> second,
 }) {
   if (places.isEmpty) return null;
-  var sum = 0.0;
-  for (final p in PromoPlace.values.where(places.contains)) {
-    final plan = p == home ? own : (others[p] ?? const <MarketPromoPlan>[]).where((x) => x.qty == own.qty).firstOrNull;
-    if (plan == null || plan.currency.toUpperCase() != own.currency.toUpperCase()) return null;
-    sum += plan.price;
-  }
-  return (amount: sum, currency: own.currency);
+  if (places.length == 1) return (amount: own.price, currency: own.currency);
+  final o = second.where((p) => p.qty == own.qty).firstOrNull;
+  if (o == null || o.currency.toUpperCase() != own.currency.toUpperCase()) return null;
+  return (amount: own.price + o.price, currency: own.currency);
 }
 
-/// The place cards side by side (Parklar · Servislər · Mağazalar); one or
-/// more can be chosen.
+/// The place cards side by side (TIR Bazarı · Yüklər bölməsi); one or
+/// both can be chosen.
 class PromoPlacesPicker extends StatelessWidget {
   final AppStrings s;
   final List<PromoPlace> choices;
@@ -532,9 +517,8 @@ class PromoPlacesPicker extends StatelessWidget {
   const PromoPlacesPicker({super.key, required this.s, required this.choices, required this.places, required this.onChanged});
 
   static IconData iconOf(PromoPlace p) => switch (p) {
-        PromoPlace.parks => Icons.local_parking,
-        PromoPlace.services => Icons.home_repair_service_outlined,
-        PromoPlace.shops => Icons.storefront_outlined,
+        PromoPlace.market => Icons.storefront_outlined,
+        PromoPlace.loads => Icons.local_shipping_outlined,
       };
 
   @override

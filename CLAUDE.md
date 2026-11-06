@@ -197,10 +197,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   lift, VIP for the same days). The owner's icons (green arrow, V diamond,
   crown) sit next to the price / city line instead of any frame or seal.
   Paid by the existing card checkout; admin edits prices.
-  Yüklər takes no advertising (owner, 07.11.2026, 0102): no "Önə çıxar" on
-  a load (Yüklərim / the load page), no ads strip on the Loads page, a TIR
-  Bazarı ad's Premium has no place cards (server refuses Yüklər); paid
-  promotions run to their end, nothing deleted.
+  A load takes no advertising (owner, 07.11.2026, 0102): no "Önə çıxar" on
+  a load (Yüklərim / the load page); a TIR Bazarı ad's Premium has no place
+  cards (server refuses Yüklər); paid promotions run to their end, nothing
+  deleted. Yüklər shows only the parks / services / shops whose Premium
+  chose it (0103).
 - İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
   (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
   on the Loads map, right under the "CANLI" badge (owner, 27.10.2026; the
@@ -316,15 +317,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   owner's panel has "Parkı önə çıxar — reklam ver" on Ümumi (owner,
   05.11.2026); 0095 adds any missing pack with the standard Loads prices
   (never changes an admin's price) and reloads the API.
-  Premium places (owner, 07.11.2026, 0102): a park's / service's / shop's
-  Premium sheet has cards side by side — Parklar · Servislər · Mağazalar
-  (one or more, its own section chosen first); nothing chosen = no order;
-  price = the chosen sections' Premium prices added up (Parklar = TIRPark
-  prices, Servislər / Mağazalar = Servis prices; a missing pack = blocked,
-  no made-up price); after a verified payment it is Premium on its own map
-  only if chosen, and in the "Premium" strip of every other chosen map's
-  list (100 km of the map centre; a tap opens its page). İrəli çək / VIP
-  unchanged.
+  Premium places (owner, 07.11.2026, 0103 — replaces 0102's map cards): a
+  park's / service's / shop's Premium is always on its own map (as 0093)
+  and its sheet has two cards side by side — TIR Bazarı · Yüklər bölməsi
+  (one or both; nothing chosen = no order); price: one place = its own
+  Premium price, both = + the Yüklər Premium price for the same days (no
+  such pack = blocked, no made-up price); after a verified payment TIR
+  Bazarı / Yüklər show it in a "Premium" strip (a tap opens its page).
+  TIR Bazarı ads never pick Yüklər; İrəli çək / VIP unchanged.
 - Profile backgrounds (owner, 05.11.2026, 0096): Park, Servis and Mağaza
   (the seller's page, profile_details.cover_url) share one flow — "Fon
   şəklini dəyiş" on the background for the owner only (park: its approved

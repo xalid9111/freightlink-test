@@ -117,8 +117,8 @@ class CrossPremiumLoadsStrip extends ConsumerWidget {
   }
 }
 
-/// One park / service / shop of another section whose Premium chose this
-/// section (owner, 07.11.2026, 0102).
+/// One park / service / shop whose Premium chose TIR Bazarı or Yüklər
+/// (owner, 07.11.2026, 0103).
 class PlaceCrossItem {
   final String kind; // 'service' | 'tirpark'
   final String id;
@@ -144,38 +144,31 @@ class PlaceCrossItem {
   String labelKey() => isPark ? 'promo_place_kind_park' : (shop ? 'promo_place_kind_shop' : 'promo_place_kind_service');
 }
 
-/// Key: the section ('parks' | 'services' | 'shops') and the map's centre
-/// (rounded, so small moves keep the same list).
-typedef PlaceCrossKey = (String, double, double);
-
-PlaceCrossKey placeCrossKey(String place, double lat, double lng) =>
-    (place, (lat * 10).roundToDouble() / 10, (lng * 10).roundToDouble() / 10);
-
-/// The other sections' Premium for this section around the map's centre
-/// (100 km, newest first). Empty before SQL 0102, signed out or offline.
-final placeCrossProvider = FutureProvider.autoDispose.family<List<PlaceCrossItem>, PlaceCrossKey>((ref, k) async {
+/// Parks, services and shops whose Premium chose this section ('market' =
+/// TIR Bazarı, 'loads' = Yüklər; 0103), newest first. Empty before SQL
+/// 0103, signed out or offline.
+final placeCrossProvider = FutureProvider.autoDispose.family<List<PlaceCrossItem>, String>((ref, place) async {
   ref.watch(currentUserIdProvider);
   if (SupabaseConfig.client.auth.currentUser == null) return const [];
   try {
-    final res = await SupabaseConfig.client.rpc('place_cross_latest',
-        params: {'p_place': k.$1, 'p_lat': k.$2, 'p_lng': k.$3, 'p_limit': 12}).timeout(const Duration(seconds: 15));
+    final res = await SupabaseConfig.client
+        .rpc('place_cross_latest', params: {'p_place': place, 'p_limit': 12}).timeout(const Duration(seconds: 15));
     return [for (final r in (res as List? ?? const [])) PlaceCrossItem.fromJson(Map<String, dynamic>.from(r as Map))];
   } catch (_) {
     return const [];
   }
 });
 
-/// Parklar / Servislər / Mağazalar: "Premium" — parks, services and shops of
-/// the other sections whose Premium chose this one; a tap opens the page.
+/// TIR Bazarı / Yüklər: "Premium" — parks, services and shops whose Premium
+/// chose this section (owner, 07.11.2026, 0103); a tap opens the page.
 class PlaceCrossStrip extends ConsumerWidget {
   final AppStrings s;
   final String place;
-  final double lat, lng;
-  const PlaceCrossStrip({super.key, required this.s, required this.place, required this.lat, required this.lng});
+  const PlaceCrossStrip({super.key, required this.s, required this.place});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(placeCrossProvider(placeCrossKey(place, lat, lng))).valueOrNull ?? const <PlaceCrossItem>[];
+    final items = ref.watch(placeCrossProvider(place)).valueOrNull ?? const <PlaceCrossItem>[];
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

@@ -19,7 +19,6 @@ import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
 import '../../promo/premium_pin.dart';
-import '../../promo/promo_cross.dart' show PlaceCrossStrip;
 
 /// TIRPark (owner, 31.10.2026, picture): the banner, the map with the park
 /// pins, the search, "TIR parkı əlavə et" and the nearby parks below.
@@ -369,13 +368,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                       padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
                       itemCount: list.length + 1,
                       itemBuilder: (context, i) {
-                        if (i == 0) {
-                          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                            _ListHead(s: s, count: list.length, async: async),
-                            // Services and shops whose Premium chose Parklar (0102).
-                            PlaceCrossStrip(s: s, place: 'parks', lat: _center.latitude, lng: _center.longitude),
-                          ]);
-                        }
+                        if (i == 0) return _ListHead(s: s, count: list.length, async: async);
                         final (p, km) = list[i - 1];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
