@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -30,7 +31,11 @@ class CoverTemplate {
   final String id, name, imageUrl;
   final List<CoverSection> sections;
   final bool isActive;
-  const CoverTemplate({required this.id, required this.name, required this.imageUrl, required this.sections, this.isActive = true});
+  /// An old banner template of the ads (owner, 06.11.2026): picked like any
+  /// other, but copied into the owner's own folder first (the server takes
+  /// own pictures and background templates only).
+  final bool copy;
+  const CoverTemplate({required this.id, required this.name, required this.imageUrl, required this.sections, this.isActive = true, this.copy = false});
 
   factory CoverTemplate.fromJson(Map<String, dynamic> j) => CoverTemplate(
         id: '${j['id']}',
@@ -86,6 +91,27 @@ class CoverRepository {
     return '${_c.storage.from('profile-media').getPublicUrl(path)}?v=${DateTime.now().millisecondsSinceEpoch}';
   }
 
+  /// The admins' banner templates of the old ads for services (audience
+  /// service / all, active, not a user's own picture). Empty on any error.
+  Future<List<CoverTemplate>> adBannerTemplates(CoverSection section) async {
+    try {
+      final rows = await _c
+          .from('ad_templates')
+          .select('id,name,image_url,audience,owner_id')
+          .eq('is_active', true)
+          .inFilter('audience', ['service', 'all'])
+          .order('sort')
+          .timeout(_timeout);
+      return [
+        for (final r in rows as List)
+          if ((r as Map)['owner_id'] == null && '${r['image_url'] ?? ''}'.startsWith('http'))
+            CoverTemplate(id: 'ad-${r['id']}', name: '${r['name'] ?? ''}', imageUrl: '${r['image_url']}', sections: [section], copy: true),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<PlaceMedia> parkMedia(String id) async {
     try {
       final r = await _c.from('tir_parks').select('cover_url,logo_url').eq('id', id).maybeSingle().timeout(_timeout);
@@ -135,9 +161,14 @@ class CoverRepository {
 
 final coverRepositoryProvider = Provider<CoverRepository>((ref) => CoverRepository());
 
-final coverTemplatesProvider = FutureProvider.autoDispose.family<List<CoverTemplate>, CoverSection>((ref, section) {
+final coverTemplatesProvider = FutureProvider.autoDispose.family<List<CoverTemplate>, CoverSection>((ref, section) async {
   ref.watch(currentUserIdProvider);
-  return ref.watch(coverRepositoryProvider).templates(section: section);
+  final repo = ref.watch(coverRepositoryProvider);
+  final own = await repo.templates(section: section);
+  // Servis / Mağaza: also the banner templates the admin uploaded for the
+  // old service ads (owner, 06.11.2026).
+  if (section == CoverSection.park) return own;
+  return [...own, ...await repo.adBannerTemplates(section)];
 });
 
 /// Admin: every template, active or not.
@@ -206,6 +237,14 @@ Future<bool> changeCover({
     } else {
       image = NetworkImage(choice.templateUrl!);
     }
+    if (choice.copy) {
+      // An old banner template: its picture becomes the owner's own copy.
+      final res = await http.get(Uri.parse(choice.templateUrl!)).timeout(_timeout);
+      if (res.statusCode != 200 || res.bodyBytes.isEmpty) throw StateError('template');
+      bytes = res.bodyBytes;
+      type = res.headers['content-type']?.split(';').first ?? 'image/jpeg';
+      image = MemoryImage(bytes);
+    }
     // The preview: the picture in the background's own frame (move / zoom).
     final framing = await navigator.push<ImageFraming>(MaterialPageRoute(
       fullscreenDialog: true,
@@ -268,8 +307,8 @@ Future<bool> changeRoundPicture({
 
 class _CoverChoice {
   final String? templateUrl;
-  final bool upload, adjust;
-  const _CoverChoice({this.templateUrl, this.upload = false, this.adjust = false});
+  final bool upload, adjust, copy;
+  const _CoverChoice({this.templateUrl, this.upload = false, this.adjust = false, this.copy = false});
 }
 
 /// The sheet of the owner's picture (bottom, easy to close): templates of
@@ -349,7 +388,7 @@ class CoverPickerSheet extends ConsumerWidget {
                         child: InkWell(
                           key: ValueKey('cover-template-${t.id}'),
                           borderRadius: BorderRadius.circular(14),
-                          onTap: () => Navigator.of(context).pop(_CoverChoice(templateUrl: t.imageUrl)),
+                          onTap: () => Navigator.of(context).pop(_CoverChoice(templateUrl: t.imageUrl, copy: t.copy)),
                           child: Container(
                             width: 148,
                             decoration: BoxDecoration(

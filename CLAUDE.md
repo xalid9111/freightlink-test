@@ -375,6 +375,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   the owner puts his own, the default pictures (assets/images/profile —
   abstract waves, orange for Servis, blue for Mağaza; no text / logo /
   watermark) show on the form and on the service / shop page.
+- Service / shop advertising (owner, 06.11.2026): only "Önə çıxar"
+  (İrəli çək · VIP · Premium, 0093) on the service page — the old banner
+  ad ("Servis reklamı", /ad-create?service=) is no longer offered there,
+  and Profil → Mənim fəaliyyətim shows "Reklam sifarişi" only to a user who
+  already has ad orders (to pay / follow); /ads itself stays. The admins'
+  old banner templates (ad_templates, audience service / all, active) are
+  offered in "Fon şəklini seç" → Şablonlardan seç for Servis and Mağaza; a
+  picked one is copied into the owner's own folder (no SQL needed).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
