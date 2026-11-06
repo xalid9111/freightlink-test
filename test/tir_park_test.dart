@@ -85,7 +85,7 @@ void main() {
     }
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
-    expect(find.byKey(const ValueKey('tp-add')), findsNothing, reason: 'users add no parks (0100)');
+    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget, reason: '"TIR parkı əlavə et +" stays on the map (owner, 07.11.2026)');
     expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
   });
 
