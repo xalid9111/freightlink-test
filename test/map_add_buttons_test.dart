@@ -106,6 +106,15 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  test('no admin approval for services, shops and parking spots (0099); "Park işlədirəm" keeps it', () {
+    final sql = src('supabase/migrations/0099_no_admin_approval_services_spots.sql');
+    expect(sql, contains('create trigger zz_service_publish before insert or update on public.service_providers'));
+    expect(sql, contains("v_uid, 'approved', now())"), reason: 'a parking spot is shown at once');
+    expect(sql, contains("where status = 'pending' and manager_id is null;"), reason: 'a manager application keeps waiting');
+    expect(sql.toLowerCase().contains('tir_park_owner_apply'), isFalse, reason: 'the park owner request flow is untouched');
+    expect(_az.t('tp_stop_sent'), contains('xəritədə'));
+  });
+
   test('Servislər "+" → the registration page; Mağazalar "+" → the shop form; routes kept', () {
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     expect(svc, contains("const kServiceAddRoute = '/service-join';"));

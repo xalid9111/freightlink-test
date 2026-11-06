@@ -75,6 +75,7 @@ select tests.check(tests.err(format($$ select public.place_promo_order_create('s
   'O3 only a listed pack');
 reset role;
 select lat as svc_lat, lng as svc_lng from public.service_providers where id = :svc \gset
+update public.service_providers set status = 'pending' where id = '5e000000-0000-4000-8000-000000000002'; -- waiting (0099 published it)
 set role authenticated;
 select tests.login('a0000000-0000-4000-8000-000000000012');
 select tests.check(tests.err($$ select public.place_promo_order_create('service', '5e000000-0000-4000-8000-000000000002', 'premium', 5) $$) like '%not_open%',

@@ -7,6 +7,7 @@
 \set p4      '''5e000000-0000-4000-8000-000000000004'''
 
 begin;
+update public.service_providers set status = 'pending' where id = :p2;  -- a waiting one (0099 publishes them once)
 set role authenticated;
 select tests.login(:owner2);
 select tests.check((select status = 'pending' from public.service_providers where id = :p2), 'W0 a profile waiting from before 0028');

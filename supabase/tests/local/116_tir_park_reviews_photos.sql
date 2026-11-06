@@ -22,8 +22,10 @@ select tests.check(tests.err($$ select public.tir_park_set_photos((select id fro
 select tests.check(tests.err(format($$ select public.tir_park_set_photos(%L, %L::text[]) $$, (select id from ids where k='p'),
   (select array_agg('https://x.supabase.co/storage/v1/object/public/profile-media/u/' || g || '.jpg') from generate_series(1, 11) g)))
   like '%too_many%', 'F3 more than 10 pictures are refused');
+-- Comments only on approved parks (a spot is shown at once since 0099; the
+-- admin may still put one back to waiting).
+select public.admin_tir_park_set_status((select id from ids where k='p'), 'pending');
 select tests.login(:user1);
--- Comments only on approved parks.
 select tests.check(tests.err($$ insert into public.tir_park_reviews (park_id, rating, comment) values ((select id from ids where k='p'), 5, 'Əla') $$)
   like '%row-level security%', 'R1 no comments while the park waits for approval');
 select tests.login(:admin);
