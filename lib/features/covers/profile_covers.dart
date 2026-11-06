@@ -97,8 +97,14 @@ class CoverRepository {
 
   Future<PlaceMedia> serviceMedia(String id) async {
     try {
-      final r = await _c.from('service_providers').select('cover_url').eq('id', id).maybeSingle().timeout(_timeout);
-      return PlaceMedia(cover: r?['cover_url'] as String?);
+      // The logo since 0097 (06.11.2026); before it only the background.
+      try {
+        final r = await _c.from('service_providers').select('cover_url,logo_url').eq('id', id).maybeSingle().timeout(_timeout);
+        return PlaceMedia(cover: r?['cover_url'] as String?, logo: r?['logo_url'] as String?);
+      } on PostgrestException {
+        final r = await _c.from('service_providers').select('cover_url').eq('id', id).maybeSingle().timeout(_timeout);
+        return PlaceMedia(cover: r?['cover_url'] as String?);
+      }
     } catch (_) {
       return const PlaceMedia();
     }
@@ -110,6 +116,9 @@ class CoverRepository {
       _c.rpc('tir_park_set_logo', params: {'p_park': id, 'p_url': url}).timeout(_timeout);
   Future<void> setServiceCover(String id, String? url) =>
       _c.rpc('service_set_cover', params: {'p_service': id, 'p_url': url}).timeout(_timeout);
+  /// The service's / shop's round logo (0097).
+  Future<void> setServiceLogo(String id, String? url) =>
+      _c.rpc('service_set_logo', params: {'p_service': id, 'p_url': url}).timeout(_timeout);
 
   /// Admin: add (id null) or change a template (checked + logged on the server).
   Future<void> adminSave({String? id, required String name, required String imageUrl, required List<CoverSection> sections, bool active = true}) =>

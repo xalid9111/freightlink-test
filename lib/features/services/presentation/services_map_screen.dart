@@ -362,7 +362,8 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final loc = ref.watch(userLocationProvider);
     final results = ref.watch(serviceNearbyProvider(_query));
-    final cats = ref.watch(serviceCategoriesProvider).valueOrNull ?? const <ServiceCategory>[];
+    // The shop's product kinds (0097) are not service kinds.
+    final cats = [for (final c in ref.watch(serviceCategoriesProvider).valueOrNull ?? const <ServiceCategory>[]) if (!c.isShopKind) c];
     // Keep showing the previous pins while a new search loads.
     // PRO services first, then by distance (server order).
     final items = [...(results.valueOrNull ?? _lastItems)];

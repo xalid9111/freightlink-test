@@ -734,10 +734,14 @@ class _ServiceHeader extends ConsumerWidget {
     return PlaceCoverHeader(
       coverUrl: media.cover,
       fallback: const ProfileCoverPlaceholder(),
-      avatar: Container(
-        color: AppColors.card,
-        padding: const EdgeInsets.all(18),
-        child: ServicePin(type: p.markerType, active: p.isActive, selected: true, pro: p.isPro),
+      // The owner's logo (0097), else the map pin as before.
+      avatar: roundPicture(
+        media.logo,
+        Container(
+          color: AppColors.card,
+          padding: const EdgeInsets.all(18),
+          child: ServicePin(type: p.markerType, active: p.isActive, selected: true, pro: p.isPro),
+        ),
       ),
       name: p.name,
       subtitle: subtitle,

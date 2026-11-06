@@ -192,6 +192,7 @@ const kRpcMigration = <String, String>{
   'tir_park_set_cover': '0096_profile_covers.sql',
   'tir_park_set_logo': '0096_profile_covers.sql',
   'service_set_cover': '0096_profile_covers.sql',
+  'service_set_logo': '0097_service_shop_profile.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
 };

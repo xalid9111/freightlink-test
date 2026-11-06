@@ -349,6 +349,20 @@ files to the owner separately (they are run by hand in the SQL editor).
   until a park owner applies); parks already there are listed and an
   approved one opens with a tap. "Park rezervasiyalarım" (Rezervasiyalar və
   statuslar) stands on Profil right under "TIR Parkı"; its screen unchanged.
+- Usta / Servis and Mağaza profile forms (owner's pictures, 06.11.2026,
+  0097): one long scrolled page each, the same order — logo (left) +
+  background (right), name (empty; faint placeholder "Servis adı" / "Mağaza
+  adı" only), kinds, about, Ünvan (city, address, map + "Xəritədə yeri
+  seç", GPS), phone + WhatsApp, iş saatları + 24/7, photos (up to 10), the
+  save button at the end. The shop form shows only shop fields: product
+  kinds shop_* (Yeni and İşlənmiş ehtiyat hissələri can both be chosen,
+  Mühərrik, Elektrik, Təkər və disk, Yağlar, Aksesuarlar, Digər), no
+  Usta / Servis choice, ixtisas or mobile service; the shop_* kinds never
+  show on the service form or the Servislər chips. The service form keeps
+  every service kind and field. Choice chips keep the existing look (no
+  extra frames). Logo = service_providers.logo_url (service_set_logo,
+  owner only, own picture); shown round on the service / shop page. No
+  ready names, logos, texts or watermarks on backgrounds.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

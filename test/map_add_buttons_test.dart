@@ -11,14 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
-import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
-import 'package:freightlink/features/services/data/services_repository.dart';
-import 'package:freightlink/features/services/presentation/service_edit_screen.dart';
-import 'package:freightlink/features/services/presentation/services_providers.dart';
 import 'package:freightlink/features/tirpark/data/tir_park_repository.dart';
 import 'package:freightlink/features/tirpark/domain/tir_park.dart';
 import 'package:freightlink/features/tirpark/presentation/tir_park_screen.dart';
-import 'package:freightlink/models/service_models.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,67 +32,8 @@ class _FakeParks extends TirParkRepository {
   }
 }
 
-class _FakeServices implements ServicesRepository {
-  final ServiceProvider? existing;
-  _FakeServices(this.existing);
-  @override
-  Future<ServiceProvider?> mine(String uid) async => existing;
-  @override
-  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
-}
-
-const _cats = [
-  ServiceCategory(id: 'tire', names: {'az': 'Təkər təmiri'}, icon: 'tire', sortOrder: 1, isActive: true),
-  ServiceCategory(id: 'spare_parts', names: {'az': 'Ehtiyat hissələri satışı'}, icon: 'parts', sortOrder: 2, isActive: true),
-];
-
-const _mySvc = ServiceProvider(
-  id: 's1', ownerId: 'u1', kind: 'center', name: 'Usta Elvin', categories: ['tire'], lat: 40.4, lng: 49.8,
-  isMobile: false, is24h: false, isActive: true, status: 'approved', isVerified: false, addedByAdmin: false,
-  photos: [], ratingAvg: 0, ratingCount: 0,
-);
-
-Widget _edit({required bool shop, ServiceProvider? existing}) => ProviderScope(
-      key: UniqueKey(),
-      overrides: [
-        stringsProvider.overrideWithValue(_az),
-        currentUserIdProvider.overrideWithValue('u1'),
-        servicesRepositoryProvider.overrideWithValue(_FakeServices(existing)),
-        serviceCategoriesProvider.overrideWith((ref) async => _cats),
-        myServiceProvider.overrideWith((ref) async => existing),
-      ],
-      child: MaterialApp.router(
-          routerConfig: GoRouter(routes: [GoRoute(path: '/', builder: (c, st) => ServiceEditScreen(initialKind: 'center', shop: shop))])),
-    );
-
-bool _ticked(WidgetTester t, String label) => t.widget<FilterChip>(find.widgetWithText(FilterChip, label)).selected;
-
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
-
-  testWidgets('Mağaza əlavə et: the shop form with "Ehtiyat hissələri satışı" ticked; Servis form untouched', (tester) async {
-    tester.view.physicalSize = const Size(400, 1600);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(_edit(shop: true));
-    await tester.pumpAndSettle();
-    expect(find.text('Mağaza əlavə et'), findsOneWidget, reason: 'its own title');
-    expect(_ticked(tester, 'Ehtiyat hissələri satışı'), isTrue);
-    expect(_ticked(tester, 'Təkər təmiri'), isFalse);
-    expect(find.byKey(const ValueKey('svc-shop-note')), findsNothing);
-
-    await tester.pumpWidget(_edit(shop: false));
-    await tester.pumpAndSettle();
-    expect(find.text('Mağaza əlavə et'), findsNothing);
-    expect(_ticked(tester, 'Ehtiyat hissələri satışı'), isFalse, reason: 'Servis keeps its own form');
-
-    // One service per account: the shop category goes onto it, said clearly.
-    await tester.pumpWidget(_edit(shop: true, existing: _mySvc));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('svc-shop-note')), findsOneWidget);
-    expect(_ticked(tester, 'Ehtiyat hissələri satışı'), isTrue);
-    expect(_ticked(tester, 'Təkər təmiri'), isTrue, reason: 'the service keeps what it had');
-  });
 
   GoRouter router(String initial) => GoRouter(initialLocation: initial, routes: [
         GoRoute(path: '/tirpark', builder: (c, st) => TirParkScreen(addRequest: st.uri.queryParameters['add']), routes: [
