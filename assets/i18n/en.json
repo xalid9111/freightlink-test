@@ -1956,5 +1956,14 @@
   "oauth_google_off": "Google sign-in is not active yet — use e-mail and password.",
   "oauth_apple_off": "Apple sign-in is not active yet — use e-mail and password.",
   "error_oauth_not_configured": "This sign-in method is not active yet.",
-  "error_oauth_failed": "Sign-in failed. Please try again."
+  "error_oauth_failed": "Sign-in failed. Please try again.",
+  "promo_places_title": "Where it is shown",
+  "promo_place_loads": "Loads",
+  "promo_place_market": "TIR Market",
+  "promo_places_none": "Choose at least one place.",
+  "promo_places_both_missing": "Both places are not offered for this period: the other section has no such Premium pack.",
+  "promo_places_chosen": "Chosen places: {places}",
+  "promo_places_total": "Total: {sum}",
+  "promo_cross_loads": "Premium loads",
+  "promo_cross_ads": "Premium · TIR Market"
 }

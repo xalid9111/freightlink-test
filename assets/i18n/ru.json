@@ -1956,5 +1956,14 @@
   "oauth_google_off": "Вход через Google пока не активен — используйте e-mail и пароль.",
   "oauth_apple_off": "Вход через Apple пока не активен — используйте e-mail и пароль.",
   "error_oauth_not_configured": "Этот способ входа пока не активен.",
-  "error_oauth_failed": "Не удалось войти. Попробуйте снова."
+  "error_oauth_failed": "Не удалось войти. Попробуйте снова.",
+  "promo_places_title": "Где показывать",
+  "promo_place_loads": "Раздел «Грузы»",
+  "promo_place_market": "TIR Базар",
+  "promo_places_none": "Выберите хотя бы одно место.",
+  "promo_places_both_missing": "Оба места на этот срок недоступны: в другом разделе нет такого пакета Premium.",
+  "promo_places_chosen": "Выбрано: {places}",
+  "promo_places_total": "Итого: {sum}",
+  "promo_cross_loads": "Premium-грузы",
+  "promo_cross_ads": "Premium · TIR Базар"
 }

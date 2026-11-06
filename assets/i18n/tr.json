@@ -1956,5 +1956,14 @@
   "oauth_google_off": "Google ile giriş henüz aktif değil — e-posta ve şifre ile girin.",
   "oauth_apple_off": "Apple ile giriş henüz aktif değil — e-posta ve şifre ile girin.",
   "error_oauth_not_configured": "Bu giriş yöntemi henüz aktif değil.",
-  "error_oauth_failed": "Giriş yapılamadı. Tekrar deneyin."
+  "error_oauth_failed": "Giriş yapılamadı. Tekrar deneyin.",
+  "promo_places_title": "Yayın yeri",
+  "promo_place_loads": "Yükler bölümü",
+  "promo_place_market": "TIR Pazarı",
+  "promo_places_none": "En az bir yayın yeri seçin.",
+  "promo_places_both_missing": "Bu süre için iki yer birlikte satılmıyor: diğer bölümde böyle bir Premium paketi yok.",
+  "promo_places_chosen": "Seçilen yerler: {places}",
+  "promo_places_total": "Toplam tutar: {sum}",
+  "promo_cross_loads": "Premium yükler",
+  "promo_cross_ads": "Premium · TIR Pazarı"
 }

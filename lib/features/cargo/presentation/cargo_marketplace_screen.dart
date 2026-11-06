@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../promo/promo_cross.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -164,6 +165,13 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 // minutes. Scrolling brings the next rows.
                 final rows = buildLoadRows(list, columns: 2);
                 return [
+                  // TIR Bazarı ads whose Premium chose Yüklər (owner, 07.11.2026, 0101).
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                      child: CrossPremiumMarketStrip(s: strings),
+                    ),
+                  ),
                   // No panel behind the tiles (owner, 24.10.2026): the page
                   // ground shows between them.
                   SliverPadding(

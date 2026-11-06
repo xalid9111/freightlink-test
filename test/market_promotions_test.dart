@@ -67,7 +67,7 @@ void main() {
     final promo = _read('lib/features/market/presentation/market_promo.dart');
     for (final k in ["'mk-promo-options'", "ValueKey('mk-promo-\${kind.name}')", "ValueKey('promo-plan-\${kind.name}-\${p.qty}')",
       "ValueKey('promo-pay')", "ValueKey('promo-pay-soon')", 'repo.createVipOrder(l.id, qty)',
-      'repo.createPromoOrder(l.id, kind, qty)', 'promo: true', 'class MarketPromoTarget extends PromoTarget']) {
+      'repo.createPromoOrder(l.id, kind, qty,', 'promo: true', 'class MarketPromoTarget extends PromoTarget']) {
       expect(promo, contains(k));
     }
     final home = _read('lib/features/market/presentation/market_home_screen.dart');

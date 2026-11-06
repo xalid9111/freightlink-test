@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../promo/promo_cross.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/layout/desktop_layout.dart';
@@ -206,6 +207,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       onFilters: () => _openFilters(context, s, filter),
                     ),
                     const SizedBox(height: 16),
+                    // Loads whose Premium chose TIR Bazarı (owner, 07.11.2026, 0101).
+                    CrossPremiumLoadsStrip(s: s),
                     Row(
                       children: [
                         Expanded(
