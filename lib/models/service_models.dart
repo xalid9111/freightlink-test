@@ -28,6 +28,10 @@ class ServiceCategory {
     String? ok(String? v) => (v == null || v.trim().isEmpty) ? null : v;
     return ok(names[lang]) ?? ok(names['en']) ?? ok(names['az']) ?? id;
   }
+
+  /// A shop's product kind (0097: shop_new, shop_used …) — only on the
+  /// Mağaza form, never among the Servislər kinds.
+  bool get isShopKind => id.startsWith('shop_');
 }
 
 /// How a provider is drawn on the map.
