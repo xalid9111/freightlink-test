@@ -137,17 +137,8 @@ void main() {
     expect([o.id, o.cargoId, o.kind, o.qty, o.amount], ['o1', 'c1', 'premium', 5, 20.0]);
   });
 
-  test('wired: Önə çıxar on my load, marks on the tile, checkout, admin prices', () {
-    final promo = src('lib/features/cargo/presentation/widgets/cargo_promo.dart');
-    expect(promo, contains('class CargoPromoTarget extends PromoTarget'));
-    expect(promo, contains('repo.createPromoOrder(cargo.id, kind, qty,'));
-    expect(promo, contains('cargo: true, promo: true'));
-    expect(promo, contains('cargoPromoPlansProvider((kind, true))'));
-    // A load's Premium names the Loads page, not TIR Bazarı (6 languages).
-    expect(promo, contains("'cargo_promo_premium_body'"));
-    for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
-      expect(src('assets/i18n/$l.json'), contains('"cargo_promo_premium_body"'), reason: l);
-    }
+  test('wired: marks on the tile, checkout, admin prices (no "Önə çıxar" on a load since 07.11.2026)', () {
+    expect(File('lib/features/cargo/presentation/widgets/cargo_promo.dart').existsSync(), isFalse);
     // The app never sends a price: the server's order sets the amount.
     final repo = src('lib/features/cargo/data/cargo_media_repository.dart');
     final start = repo.indexOf('Future<CargoPromoOrder> createPromoOrder');

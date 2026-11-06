@@ -141,9 +141,16 @@ class PlacePromoRepository {
     }
   }
 
-  Future<PlacePromoOrder> createOrder(PlaceTarget t, String id, MarketPromoKind kind, int qty) async {
-    final res = await _c.rpc('place_promo_order_create',
-        params: {'p_target': t.wire, 'p_id': id, 'p_kind': kind.wire, 'p_qty': qty}).timeout(_timeout);
+  /// [places] (Premium, 0102): 'parks' / 'services' / 'shops' — where it
+  /// is shown; null = its own section (the 0093 call).
+  Future<PlacePromoOrder> createOrder(PlaceTarget t, String id, MarketPromoKind kind, int qty, {List<String>? places}) async {
+    final res = await _c.rpc('place_promo_order_create', params: {
+      'p_target': t.wire,
+      'p_id': id,
+      'p_kind': kind.wire,
+      'p_qty': qty,
+      if (places != null) 'p_places': places,
+    }).timeout(_timeout);
     return PlacePromoOrder.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
@@ -181,12 +188,28 @@ final placePromoPlansProvider =
 Map<String, PlacePromo> watchPlacePromos(WidgetRef ref, PlaceTarget t, Iterable<String> ids) =>
     ref.watch(placePromoStateProvider(placePromoKey(t, ids))).valueOrNull ?? const {};
 
-/// "Önə çıxar" on my own service / park.
+/// "Önə çıxar" on my own service / shop / park. Its Premium picks where it
+/// is shown: Parklar · Servislər · Mağazalar (owner, 07.11.2026, 0102).
 class PlacePromoTarget extends PromoTarget {
   final PlaceTarget target;
   final String id;
   final PlacePromo? now;
-  const PlacePromoTarget(this.target, this.id, this.now);
+  /// A shop (ServiceProvider.isShop): its own section is Mağazalar.
+  final bool shop;
+  const PlacePromoTarget(this.target, this.id, this.now, {this.shop = false});
+
+  @override
+  PromoPlace get home =>
+      target == PlaceTarget.tirpark ? PromoPlace.parks : (shop ? PromoPlace.shops : PromoPlace.services);
+
+  @override
+  List<PromoPlace> get placeChoices => PromoPlace.values;
+
+  /// Parklar = the TIRPark prices; Servislər and Mağazalar = the Servis
+  /// prices (a shop is a service).
+  @override
+  ProviderListenable<AsyncValue<List<MarketPromoPlan>>> premiumPlansAt(PromoPlace place) => placePromoPlansProvider(
+      (place == PromoPlace.parks ? PlaceTarget.tirpark : PlaceTarget.service, MarketPromoKind.premium, true));
 
   @override
   ProviderListenable<AsyncValue<List<MarketPromoPlan>>> plans(MarketPromoKind kind) =>
@@ -201,7 +224,8 @@ class PlacePromoTarget extends PromoTarget {
 
   @override
   Future<VipCheckoutTarget> order(WidgetRef ref, MarketPromoKind kind, int qty, {Set<PromoPlace>? places}) async {
-    final o = await ref.read(placePromoRepositoryProvider).createOrder(target, id, kind, qty);
+    final o = await ref.read(placePromoRepositoryProvider).createOrder(target, id, kind, qty,
+        places: kind == MarketPromoKind.premium && places != null ? promoPlacesWire(places) : null);
     return VipCheckoutTarget(vipOrderId: o.id, amount: o.amount, currency: o.currency, place: true);
   }
 
@@ -224,8 +248,10 @@ class PlacePromoSection extends ConsumerWidget {
   final String id;
   final bool open;
   final String? closedKey;
+  /// A shop: its Premium starts on Mağazalar.
+  final bool shop;
   const PlacePromoSection(
-      {super.key, required this.s, required this.target, required this.id, required this.open, this.closedKey});
+      {super.key, required this.s, required this.target, required this.id, required this.open, this.closedKey, this.shop = false});
 
   String _date(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 
@@ -250,7 +276,7 @@ class PlacePromoSection extends ConsumerWidget {
                 key: const ValueKey('pp-closed'), style: TextStyle(color: AppColors.textSoft, height: 1.35)),
           ])
         else ...[
-          MarketPromoOptions(s: s, target: PlacePromoTarget(target, id, promo)),
+          MarketPromoOptions(s: s, target: PlacePromoTarget(target, id, promo, shop: shop)),
           if (promo != null && promo.isVip) ...[
             const SizedBox(height: 8),
             Row(children: [

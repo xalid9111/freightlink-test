@@ -1958,12 +1958,16 @@
   "error_oauth_not_configured": "შესვლის ეს გზა ჯერ აქტიური არ არის.",
   "error_oauth_failed": "შესვლა ვერ მოხერხდა. სცადეთ თავიდან.",
   "promo_places_title": "სად გამოჩნდეს",
-  "promo_place_loads": "ტვირთების განყოფილება",
-  "promo_place_market": "TIR ბაზარი",
   "promo_places_none": "აირჩიეთ ერთი ადგილი მაინც.",
-  "promo_places_both_missing": "ამ ვადით ორივე ადგილი არ იყიდება: სხვა განყოფილებაში ასეთი Premium პაკეტი არ არის.",
   "promo_places_chosen": "არჩეული ადგილები: {places}",
   "promo_places_total": "ჯამი: {sum}",
   "promo_cross_loads": "Premium ტვირთები",
-  "promo_cross_ads": "Premium · TIR ბაზარი"
+  "promo_place_parks": "პარკები",
+  "promo_place_services": "სერვისები",
+  "promo_place_shops": "მაღაზიები",
+  "promo_places_missing": "ერთ-ერთ არჩეულ განყოფილებაში ამ ვადით Premium პაკეტი არ არის — მოხსენით ეს განყოფილება ან აირჩიეთ სხვა ვადა.",
+  "promo_cross_places": "Premium",
+  "promo_place_kind_park": "TIR პარკი",
+  "promo_place_kind_service": "სერვისი",
+  "promo_place_kind_shop": "მაღაზია"
 }

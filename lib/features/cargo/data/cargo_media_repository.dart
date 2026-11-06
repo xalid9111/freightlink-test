@@ -201,15 +201,9 @@ class CargoMediaRepository {
 
   /// "İrəli çək" / "Premium": an order for my open load; the server sets
   /// the price.
-  /// [places] (Premium, 0101): 'loads' / 'market' — where it is shown;
-  /// null = Yüklər only (the old call).
-  Future<CargoPromoOrder> createPromoOrder(String cargoId, MarketPromoKind kind, int qty, {List<String>? places}) async {
-    final res = await _c.rpc('cargo_promo_order_create', params: {
-      'p_cargo': cargoId,
-      'p_kind': kind.wire,
-      'p_qty': qty,
-      if (places != null) 'p_places': places,
-    }).timeout(_timeout);
+  Future<CargoPromoOrder> createPromoOrder(String cargoId, MarketPromoKind kind, int qty) async {
+    final res = await _c
+        .rpc('cargo_promo_order_create', params: {'p_cargo': cargoId, 'p_kind': kind.wire, 'p_qty': qty}).timeout(_timeout);
     return CargoPromoOrder.fromJson(Map<String, dynamic>.from(res as Map));
   }
 

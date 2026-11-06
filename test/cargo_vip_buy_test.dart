@@ -17,16 +17,11 @@ void main() {
     expect([o.id, o.cargoId, o.days, o.amount], ['o1', 'c1', 14, 9.0]);
   });
 
-  // 0067: "VIP et" is now "Önə çıxar" (İrəli çək · VIP · Premium).
-  test('"Önə çıxar" in Yüklərim and on my own load page (not on other people\'s loads)', () {
-    final my = src('lib/features/cargo/presentation/my_cargo_screen.dart');
-    expect(my, contains("ValueKey('my-cargo-promo-\${c.id}')"));
-    expect(my, contains('showPromoChooser(context, strings, CargoPromoTarget(c))'));
-    final detail = src('lib/features/cargo/presentation/cargo_detail_screen.dart');
-    final i = detail.indexOf("ValueKey('cargo-promo-open')");
-    expect(i, greaterThan(0));
-    // Inside the owner's tools only.
-    expect(detail.lastIndexOf('if (isOwner) ...[', i), greaterThan(detail.lastIndexOf('final ownerTools', i)));
+  // 0067: "VIP et" became "Önə çıxar"; since 07.11.2026 a load has none
+  // (Yüklər takes no advertising); paid ones run to their end.
+  test('no "Önə çıxar" in Yüklərim or on my own load page', () {
+    expect(src('lib/features/cargo/presentation/my_cargo_screen.dart').contains('my-cargo-promo'), isFalse);
+    expect(src('lib/features/cargo/presentation/cargo_detail_screen.dart').contains('cargo-promo-open'), isFalse);
   });
 
   test('the app never sends a price; checkout goes to the load VIP order', () {
@@ -34,7 +29,6 @@ void main() {
     final start = repo.indexOf('Future<CargoVipOrder> createVipOrder');
     expect(repo.substring(start, repo.indexOf('}', start)).contains('price'), isFalse);
     expect(src('lib/features/finance/data/finance_repository.dart'), contains("'cargo_vip_order_id': vipOrderId"));
-    expect(src('lib/features/cargo/presentation/widgets/cargo_promo.dart'), contains('currency: o.currency, cargo: true)'));
     final fn = src('supabase/functions/payments-checkout/index.ts');
     expect(fn, contains("rpc/cargo_vip_payment_create"));
     expect(fn, contains('targets !== 1'));

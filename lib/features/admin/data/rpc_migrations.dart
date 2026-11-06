@@ -195,6 +195,7 @@ const kRpcMigration = <String, String>{
   'service_set_logo': '0097_service_shop_profile.sql',
   'get_or_create_service_conversation': '0100_no_user_spots_service_chat_context.sql',
   'promo_cross_latest': '0101_premium_places.sql',
+  'place_cross_latest': '0102_place_premium_places.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
 };

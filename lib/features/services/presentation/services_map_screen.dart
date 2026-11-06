@@ -24,6 +24,7 @@ import '../../tirpark/presentation/map_page_banner.dart';
 import '../../tirpark/presentation/tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
 import '../../promo/premium_pin.dart';
+import '../../promo/promo_cross.dart' show PlaceCrossStrip;
 
 
 /// "Servislər" tab: a GPS map of nearby mechanics, service centres and
@@ -923,6 +924,13 @@ class _ResultsSheet extends ConsumerWidget {
                   ],
                 ],
               ),
+            ),
+          ),
+          // Parks and services / shops whose Premium chose this map (0102).
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: PlaceCrossStrip(s: s, place: shops ? 'shops' : 'services', lat: query.lat, lng: query.lng),
             ),
           ),
           if (results.hasError && items.isEmpty)

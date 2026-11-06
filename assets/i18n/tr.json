@@ -1958,12 +1958,16 @@
   "error_oauth_not_configured": "Bu giriş yöntemi henüz aktif değil.",
   "error_oauth_failed": "Giriş yapılamadı. Tekrar deneyin.",
   "promo_places_title": "Yayın yeri",
-  "promo_place_loads": "Yükler bölümü",
-  "promo_place_market": "TIR Pazarı",
   "promo_places_none": "En az bir yayın yeri seçin.",
-  "promo_places_both_missing": "Bu süre için iki yer birlikte satılmıyor: diğer bölümde böyle bir Premium paketi yok.",
   "promo_places_chosen": "Seçilen yerler: {places}",
   "promo_places_total": "Toplam tutar: {sum}",
   "promo_cross_loads": "Premium yükler",
-  "promo_cross_ads": "Premium · TIR Pazarı"
+  "promo_place_parks": "Parklar",
+  "promo_place_services": "Servisler",
+  "promo_place_shops": "Mağazalar",
+  "promo_places_missing": "Seçilen bölümlerden birinde bu süre için Premium paketi yok — o bölümü çıkarın veya başka bir süre seçin.",
+  "promo_cross_places": "Premium",
+  "promo_place_kind_park": "TIR park",
+  "promo_place_kind_service": "Servis",
+  "promo_place_kind_shop": "Mağaza"
 }

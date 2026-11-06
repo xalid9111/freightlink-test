@@ -1,4 +1,4 @@
--- Premium: where it is shown — 0101. Rolled back.
+-- Premium: where it is shown — 0101 (new orders with Yüklər refused by 0102). Rolled back.
 \set owner  '''a0000000-0000-4000-8000-000000000012'''
 \set other  '''a0000000-0000-4000-8000-000000000021'''
 \set c1 '''c1010000-0000-4000-8000-000000000001'''
@@ -28,26 +28,27 @@ insert into public.market_listings (id, category, brand, model, price, currency,
 values (:m1, 'truck', 'DAF', 'XF', 100, 'AZN', 'pending'), (:m2, 'truck', 'MAN', 'TGX', 100, 'AZN', 'pending');
 update public.market_listings set status = 'active' where id in (:m1, :m2);
 
--- Orders and prices.
-insert into o select 'c-loads', id, amount, places from public.cargo_promo_order_create(:c1, 'premium', 5, array['loads']);
-insert into o select 'c-market', id, amount, places from public.cargo_promo_order_create(:c2, 'premium', 5, array['market']);
-insert into o select 'c-both', id, amount, places from public.cargo_promo_order_create(:c3, 'premium', 5, array['market', 'loads']);
-insert into o select 'm-both', id, amount, places from public.market_promo_order_create(:m1, 'premium', 5, array['loads', 'market']);
-insert into o select 'm-loads', id, amount, places from public.market_promo_order_create(:m2, 'premium', 5, array['loads']);
-select tests.check((select amount = 20 and places = array['loads'] from o where k = 'c-loads'), 'Q1 a load, Yüklər only: the Loads Premium price');
-select tests.check((select amount = 20 and places = array['market'] from o where k = 'c-market'), 'Q2 a load, TIR Bazarı only: the same current price');
-select tests.check((select amount = 45 and places = array['loads', 'market'] from o where k = 'c-both'), 'Q3 both places: 20 + 25 (the two sections'' prices)');
-select tests.check((select amount = 45 from o where k = 'm-both'), 'Q4 a TIR Bazarı ad, both places: 25 + 20');
-select tests.check((select amount = 25 from o where k = 'm-loads'), 'Q5 an ad, Yüklər only: the TIR Bazarı Premium price');
-select tests.check(tests.err(format($$ select public.cargo_promo_order_create(%L, 'premium', 5, '{}'::text[]) $$, :c1)) like '%invalid_places%',
-  'Q6 no place chosen: refused');
-select tests.check(tests.err(format($$ select public.cargo_promo_order_create(%L, 'premium', 5, array['moon']) $$, :c1)) like '%invalid_places%',
-  'Q7 an unknown place: refused');
-select tests.check(tests.err(format($$ select public.cargo_promo_order_create(%L, 'premium', 30, array['loads','market']) $$, :c1)) like '%both_not_available%',
-  'Q8 both places without a TIR Bazarı pack for those days: refused, no made-up price');
-select tests.check((select id from public.cargo_promo_order_create(:c3, 'premium', 5, array['loads','market'])) = (select id from o where k = 'c-both'),
-  'Q9 a double tap re-uses the unpaid order');
-select tests.check((select count(*) = 1 from public.cargo_promo_order_create(:c1, 'premium', 5)), 'Q10 the old 3-argument call still works');
+-- Orders made while 0101 took them (0102 refuses new ones with Yüklər, see
+-- 140): written directly, as they are in the database; the payment of such
+-- an order still applies it.
+reset role;
+insert into o values
+  ('c-loads', gen_random_uuid(), 20, array['loads']), ('c-market', gen_random_uuid(), 20, array['market']),
+  ('c-both', gen_random_uuid(), 45, array['loads', 'market']);
+insert into o values ('m-both', gen_random_uuid(), 45, array['loads', 'market']), ('m-loads', gen_random_uuid(), 25, array['loads']);
+insert into public.cargo_promo_orders (id, cargo_id, user_id, kind, qty, amount, currency, places)
+select o.id, x.c, :owner, 'premium', 5, o.amount, 'AZN', o.places
+  from o join (values ('c-loads', :c1::uuid), ('c-market', :c2::uuid), ('c-both', :c3::uuid)) x(k, c) on x.k = o.k;
+insert into public.market_promo_orders (id, listing_id, user_id, kind, qty, amount, currency, places)
+select o.id, x.l, :owner, 'premium', 5, o.amount, 'AZN', o.places
+  from o join (values ('m-both', :m1::uuid), ('m-loads', :m2::uuid)) x(k, l) on x.k = o.k;
+set role authenticated;
+select tests.login(:owner);
+select tests.check(tests.err(format($$ select public.cargo_promo_order_create(%L, 'premium', 5, array['loads','market']) $$, :c3)) like '%not_available%',
+  'Q1 0102: a load''s Premium with places is no longer taken');
+select tests.check(tests.err(format($$ select public.market_promo_order_create(%L, 'premium', 5, array['loads']) $$, :m2)) like '%invalid_places%',
+  'Q2 0102: a TIR Bazarı ad cannot pick Yüklər');
+select tests.check((select kind = 'premium' and amount = 25 from public.market_promo_order_create(:m2, 'premium', 5, array['market'])), 'Q3 TIR Bazarı alone: as before');
 
 -- Payment applied (the verified-payment path calls these, as the payment service).
 reset role;
@@ -61,17 +62,16 @@ select tests.check((select premium_until is null from public.cargo where id = :c
   'A2 TIR Bazarı only: not on top of Loads, Premium in TIR Bazarı');
 select tests.check((select premium_until is not null from public.cargo where id = :c3)
                    and exists (select 1 from public.promo_cross where source_id = :c3 and place = 'market'), 'A3 both: in both sections');
-select tests.check((select premium_until is not null from public.market_listings where id = :m1)
-                   and exists (select 1 from public.promo_cross where source_kind = 'market' and source_id = :m1 and place = 'loads'), 'A4 an ad, both: in both');
-select tests.check((select premium_until is null from public.market_listings where id = :m2)
-                   and exists (select 1 from public.promo_cross where source_id = :m2 and place = 'loads'), 'A5 an ad, Yüklər only');
+select tests.check((select premium_until > now() + interval '4 days' from public.market_listings where id = :m1)
+                   and (select premium_until > now() + interval '4 days' from public.market_listings where id = :m2)
+                   and not exists (select 1 from public.promo_cross where source_kind = 'market'),
+  'A4 0102: an ad''s paid Premium is TIR Bazarı''s (Yüklər shows no ads), also an order made with Yüklər');
 
 set role authenticated;
 select tests.login(:other);
 select tests.check((select array_agg(source_id order by source_id) from public.promo_cross_latest('market')) = array[:c2, :c3]::uuid[],
   'S1 TIR Bazarı shows the loads that chose it');
-select tests.check((select array_agg(source_id order by source_id) from public.promo_cross_latest('loads')) = array[:m1, :m2]::uuid[],
-  'S2 Yüklər shows the ads that chose it');
+select tests.check(not exists (select 1 from public.promo_cross_latest('loads')), 'S2 Yüklər: no ads');
 select tests.check(tests.err($$ insert into public.promo_cross (source_kind, source_id, place, until) values ('cargo', gen_random_uuid(), 'market', now() + interval '9 days') $$)
   like '%permission denied%', 'S3 nobody writes Premium places himself');
 reset role;

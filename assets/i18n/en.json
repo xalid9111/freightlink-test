@@ -1958,12 +1958,16 @@
   "error_oauth_not_configured": "This sign-in method is not active yet.",
   "error_oauth_failed": "Sign-in failed. Please try again.",
   "promo_places_title": "Where it is shown",
-  "promo_place_loads": "Loads",
-  "promo_place_market": "TIR Market",
   "promo_places_none": "Choose at least one place.",
-  "promo_places_both_missing": "Both places are not offered for this period: the other section has no such Premium pack.",
   "promo_places_chosen": "Chosen places: {places}",
   "promo_places_total": "Total: {sum}",
   "promo_cross_loads": "Premium loads",
-  "promo_cross_ads": "Premium · TIR Market"
+  "promo_place_parks": "Parks",
+  "promo_place_services": "Services",
+  "promo_place_shops": "Shops",
+  "promo_places_missing": "One of the chosen sections has no Premium pack for this period — remove that section or choose another period.",
+  "promo_cross_places": "Premium",
+  "promo_place_kind_park": "TIR park",
+  "promo_place_kind_service": "Service",
+  "promo_place_kind_shop": "Shop"
 }
