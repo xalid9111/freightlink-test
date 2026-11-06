@@ -26,7 +26,10 @@ import '../../promo/premium_pin.dart';
 /// "Servislər" (the former tab) opens from here. Approved parks for
 /// everybody; one's own parks waiting for approval are shown grey.
 class TirParkScreen extends ConsumerStatefulWidget {
-  const TirParkScreen({super.key});
+  /// "Dayanacaq əlavə et" (owner, 06.11.2026): Profil → TIR Parkı opens the
+  /// map with `?add=<stamp>`; a new stamp starts placing a parking spot.
+  final String? addRequest;
+  const TirParkScreen({super.key, this.addRequest});
 
   @override
   ConsumerState<TirParkScreen> createState() => _TirParkScreenState();
@@ -51,7 +54,14 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
+    _adding = widget.addRequest != null;
     WidgetsBinding.instance.addPostFrameCallback((_) => _locate(initial: true));
+  }
+
+  @override
+  void didUpdateWidget(covariant TirParkScreen old) {
+    super.didUpdateWidget(old);
+    if (widget.addRequest != null && widget.addRequest != old.addRequest) _adding = true;
   }
 
   @override
@@ -136,7 +146,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     if (added == true) {
       setState(() => _adding = false);
       ref.invalidate(tirParksProvider);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tp_sent'))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tp_stop_sent'))));
     }
   }
 
@@ -409,7 +419,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                           ]),
                         ]),
                       )
-                    : MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: () => setState(() => _adding = true)),
+                    : MapAddButton(
+                        buttonKey: 'tp-add',
+                        label: s.t('tp_add'),
+                        // The TIR Parkı page (manage / work / dayanacaq), owner 06.11.2026.
+                        onTap: () => context.pushOnce('/profile/tirpark'),
+                      ),
               ),
               // Nearby parks.
               if (!_adding)

@@ -85,8 +85,21 @@ void main() {
     }
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
-    // Add: the place pin and "Bu yeri seç".
-    await tester.tap(find.byKey(const ValueKey('tp-add')));
+    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
+  });
+
+  testWidgets('"Dayanacaq əlavə et" (?add=…): the place pin and "Bu yeri seç", Ləğv et back to the map', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        stringsProvider.overrideWithValue(_az),
+        tirParksProvider.overrideWith((ref) async => const [_utep]),
+      ],
+      child: const MaterialApp(home: TirParkScreen(addRequest: '1')),
+    ));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('tp-add-here')), findsOneWidget);
     expect(find.text('Bu yeri seç'), findsOneWidget);
@@ -294,7 +307,7 @@ void main() {
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: '/tirpark',"));
-    expect(router, contains('builder: (context, state) => const TirParkScreen(),'));
+    expect(router, contains("builder: (context, state) => TirParkScreen(addRequest: state.uri.queryParameters['add']),"));
     expect(router, contains("GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),"),
         reason: 'Servislər kept (+ Mağazalar, 05.11.2026)');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onServices: () => context.go('/services')"));
@@ -329,7 +342,11 @@ void main() {
       expect(page, contains('MapPageBanner('));
       expect(page, contains('gap: 76,'), reason: 'locate button above the add button');
     }
-    expect(svc, contains("context.pushOnce(id != null ? '/service/\$id' : '/service-join');"));
+    // Each map its own "+" (owner, 06.11.2026): Servislər → registration,
+    // Mağazalar → the shop form, Parklar → the TIR Parkı page.
+    expect(svc, contains('onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),'));
+    expect(tp, contains("onTap: () => context.pushOnce('/profile/tirpark'),"));
+    expect(router, contains("shop: state.uri.queryParameters['shop'] == '1'"));
     expect(src('lib/features/admin/presentation/admin_shell.dart'), contains("AdminSection('tirpark', 'TIRPark (parklar)', Icons.local_parking)"));
     final sql = src('supabase/migrations/0077_tir_parks.sql').toLowerCase();
     for (final bad in ['drop table', 'truncate', 'delete from', 'alter table public.users', 'drop column']) {

@@ -528,7 +528,7 @@
   "pf_activity_roles": "My activity roles",
   "pf_activity_sections": "My activity sections",
   "pf_tirpark": "TIR Park",
-  "pf_tirpark_sub": "My park, worker invitations and bookings",
+  "pf_tirpark_sub": "My park, worker invitations and adding a parking spot",
   "pf_head_admin": "Head admin",
   "pf_head_admin_only": "Head admin only",
   "pf_account_group": "Account and display",
@@ -1909,5 +1909,11 @@
   "svc_found_shops": "{n} shops · {km} km",
   "svc_my_shop": "My shop",
   "svc_none_here_shops": "No shops found in this area.",
-  "svc_shop": "Shop"
+  "svc_shop": "Shop",
+  "tp_stop_add": "Add a parking spot",
+  "tp_stop_add_sub": "Mark a place on the map so drivers can show each other where to park",
+  "tp_stop_title": "New parking spot",
+  "tp_stop_hint": "This is a plain parking spot: no booking, capacity or owner management. Everyone will see it after an admin checks it; until then only you do.",
+  "tp_stop_sent": "Parking spot sent. Everyone will see it after an admin checks it.",
+  "svc_shop_note": "Each account has one service profile. The \"Spare parts sales\" category was added to your service — save it and it will show on the Shops map."
 }

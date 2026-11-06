@@ -27,7 +27,10 @@ import '../../../core/widgets/map_tiles.dart';
 class ServiceEditScreen extends ConsumerStatefulWidget {
   final String? id; // null = create
   final String? initialKind;
-  const ServiceEditScreen({super.key, this.id, this.initialKind});
+  /// "Mağaza əlavə et" (owner, 06.11.2026): the "+" on Mağazalar opens this
+  /// same form with the shop category (spare_parts) already ticked.
+  final bool shop;
+  const ServiceEditScreen({super.key, this.id, this.initialKind, this.shop = false});
 
   @override
   ConsumerState<ServiceEditScreen> createState() => _ServiceEditScreenState();
@@ -115,6 +118,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         _hours.text = p.workingHours ?? '';
         _radius.text = p.serviceRadiusKm?.toString() ?? '';
         _cats.addAll(p.categories);
+        if (widget.shop) _cats.add('spare_parts');
         if ((p.city ?? '').isNotEmpty) _place = PickedPlace.fromStored(p.city!, p.country ?? '');
         _point = LatLng(p.lat, p.lng);
         _mobile = p.isMobile;
@@ -123,6 +127,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         _photos = [for (final u in p.photos) _PhotoEntry.uploaded(u)];
       } else {
         _kind = widget.initialKind == 'center' ? 'center' : 'individual';
+        if (widget.shop) _cats.add('spare_parts');
         _mobile = _kind == 'individual';
         final me = ref.read(currentUserProvider);
         _phone.text = me?.phone ?? '';
@@ -330,7 +335,9 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         leading: context.canPop()
             ? null
             : IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/services')),
-        title: Text(s.t(_existing == null ? 'svc_create_title' : 'svc_edit_title')),
+        title: Text(s.t(_existing == null
+            ? (widget.shop ? 'svc_add_shop' : 'svc_create_title')
+            : 'svc_edit_title')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -340,6 +347,15 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
+                    // One service per owner: the shop is added to it.
+                    if (widget.shop && _existing != null)
+                      Container(
+                        key: const ValueKey('svc-shop-note'),
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(color: AppColors.cardAlt, borderRadius: BorderRadius.circular(12)),
+                        child: Text(s.t('svc_shop_note'), style: TextStyle(fontSize: 13, color: AppColors.textSoft, height: 1.35)),
+                      ),
                     if (_existing == null)
                       Container(
                         padding: const EdgeInsets.all(12),

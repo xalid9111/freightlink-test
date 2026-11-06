@@ -338,6 +338,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   service parts show (owner, 05.11.2026): no category chips, no Usta /
   Servis / Evakuator legend or filter, shop words ("n mağaza", "Mağazam"),
   the + reads "Mağaza əlavə et"; the filter keeps the shops.
+- Map "+" buttons (owner, 06.11.2026): each section its own form — Servislər
+  "+" → /service-join (Usta / Servis mərkəzi registration), Mağazalar "+" →
+  /service-edit?kind=center&shop=1 (the same one-per-owner service form with
+  spare_parts ticked; an existing service gets the category added), Parklar
+  "TIR parkı əlavə et" → Profil → TIR Parkı (/profile/tirpark). There
+  "Dayanacaq əlavə et" (in place of "Park rezervasiyalarım") opens the map in
+  place-a-spot mode (/tirpark?add=…): a plain parking spot via the existing
+  tir_park_add (pending, no manager → no booking, capacity or owner panel
+  until a park owner applies); parks already there are listed and an
+  approved one opens with a tap. "Park rezervasiyalarım" (Rezervasiyalar və
+  statuslar) stands on Profil right under "TIR Parkı"; its screen unchanged.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

@@ -305,7 +305,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/service-edit',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => DeskFrame(section: 5, child: ServiceEditScreen(initialKind: state.uri.queryParameters['kind'])),
+        builder: (context, state) => DeskFrame(section: 5, child: ServiceEditScreen(
+            initialKind: state.uri.queryParameters['kind'], shop: state.uri.queryParameters['shop'] == '1')),
       ),
       GoRoute(
         path: '/service-edit/:id',
@@ -419,7 +420,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/tirpark',
-              builder: (context, state) => const TirParkScreen(),
+              builder: (context, state) => TirParkScreen(addRequest: state.uri.queryParameters['add']),
               routes: [
                 // One park: pictures, rating, comments (TIRPark PR 2, 0078).
                 GoRoute(

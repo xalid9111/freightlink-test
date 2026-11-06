@@ -154,6 +154,16 @@ class ProfileScreen extends ConsumerWidget {
                       badge: n,
                       onTap: () => context.pushOnce('/profile/tirpark'),
                     ),
+                    // Right under "TIR Parkı" (owner, 06.11.2026): one's own
+                    // bookings, the same screen as before.
+                    _MenuRow(
+                      key: const ValueKey('pf-bookings'),
+                      icon: Icons.event_available_outlined,
+                      iconColor: AppColors.accent,
+                      title: strings.t('tpb_my'),
+                      subtitle: strings.t('tpb_my_sub'),
+                      onTap: () => context.pushOnce('/tirpark/bookings'),
+                    ),
                   ]);
                 }),
                 // Every platform admin (owner, 04.11.2026 — an admin the owner
@@ -399,8 +409,8 @@ class ProfileActivityScreen extends ConsumerWidget {
 }
 
 /// Profil → "TIR Parkı": managing a park, working at a park (invitations,
-/// the park admin's İşçilər) and one's own space bookings — the same
-/// entries and red counts as before (0079 – 0089).
+/// the park admin's İşçilər) and "Dayanacaq əlavə et" — the same entries
+/// and red counts as before (0079 – 0089); the bookings moved to Profil.
 class ProfileTirParkScreen extends ConsumerWidget {
   const ProfileTirParkScreen({super.key});
 
@@ -453,13 +463,16 @@ class ProfileTirParkScreen extends ConsumerWidget {
             },
           );
         }),
+        // "Dayanacaq əlavə et" (owner, 06.11.2026) in place of the bookings
+        // (now on Profil itself): the TIRPark map opens in "place a spot"
+        // mode — a plain parking spot, not a managed park.
         _MenuRow(
-          key: const ValueKey('pf-tirpark-bookings'),
-          icon: Icons.event_available_outlined,
+          key: const ValueKey('pf-tirpark-stop'),
+          icon: Icons.add_location_alt_outlined,
           iconColor: AppColors.accent,
-          title: strings.t('tpb_my'),
-          subtitle: strings.t('tpb_my_sub'),
-          onTap: () => context.pushOnce('/tirpark/bookings'),
+          title: strings.t('tp_stop_add'),
+          subtitle: strings.t('tp_stop_add_sub'),
+          onTap: () => context.go('/tirpark?add=${DateTime.now().millisecondsSinceEpoch}'),
         ),
       ]),
     ]);
