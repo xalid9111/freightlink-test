@@ -17,6 +17,8 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
 import '../../promo/place_promo.dart';
 import '../../covers/profile_covers.dart';
+import '../../../core/widgets/guest_sign_in.dart';
+import '../../../core/router/guest_access.dart';
 
 /// Public page of one mechanic / service centre / tow truck: photos,
 /// trust badge, categories, hours, location, contact buttons and
@@ -181,8 +183,13 @@ class ServiceDetailScreen extends ConsumerWidget {
                   label: s.t('svc_location'),
                   value: [p.address, p.city, p.country].where((e) => (e ?? '').trim().isNotEmpty).join(', ').ifEmpty('—'),
                 ),
-                if ((p.phone ?? '').isNotEmpty) _InfoRow(icon: Icons.phone_outlined, label: s.t('svc_phone'), value: p.phone!),
-                if ((p.whatsapp ?? '').isNotEmpty)
+                // A visitor sees no number: one sign-in button instead (0107).
+                if (isSignedOut() && ((p.phone ?? '').isNotEmpty || (p.whatsapp ?? '').isNotEmpty)) ...[
+                  const SizedBox(height: 8),
+                  GuestSignInButton(s: s),
+                ],
+                if (!isSignedOut() && (p.phone ?? '').isNotEmpty) _InfoRow(icon: Icons.phone_outlined, label: s.t('svc_phone'), value: p.phone!),
+                if (!isSignedOut() && (p.whatsapp ?? '').isNotEmpty)
                   _InfoRow(
                     icon: Icons.chat,
                     label: 'WhatsApp',
@@ -216,6 +223,7 @@ class ServiceDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _report(BuildContext context, WidgetRef ref, ServiceProvider p, AppStrings s) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     const reasons = ['fake', 'spam', 'fraud', 'other'];
     var reason = 'fake';
     final details = TextEditingController();
@@ -462,6 +470,7 @@ class _ReviewsState extends ConsumerState<_Reviews> {
   bool get isOwner => widget.isOwner;
 
   Future<void> _write(BuildContext context, WidgetRef ref, ServiceReview? existing) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final uid = ref.read(currentUserIdProvider);
     if (uid == null) return;
     var rating = existing?.rating ?? 5;
@@ -602,6 +611,7 @@ class _ClaimButtonState extends ConsumerState<_ClaimButton> {
   bool _sent = false;
 
   Future<void> _claim() async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final s = widget.s;
     final msg = TextEditingController();
     final phone = TextEditingController(text: ref.read(currentUserProvider)?.phone ?? '');

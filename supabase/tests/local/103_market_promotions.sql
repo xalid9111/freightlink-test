@@ -171,7 +171,7 @@ select tests.check((select count(*) >= 1 from public.market_search(null, null, n
   'S5 the old 13-parameter call still works');
 reset role;
 set role anon;
-select tests.check(tests.err($$ select * from public.market_premium_latest() $$) like '%permission denied%', 'S6 not for anon');
+select tests.check(tests.err($$ select * from public.market_premium_latest() $$) is null, 'S6 a visitor sees the Premium ads too (0107)');
 reset role;
 select tests.summary('TIR BAZARI PROMOTIONS (0066)');
 rollback;

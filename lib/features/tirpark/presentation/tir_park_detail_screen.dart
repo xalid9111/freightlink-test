@@ -22,6 +22,8 @@ import '../../chat/presentation/widgets/location_message.dart' show ChatLocation
 import '../../../services/geo_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/widgets/guest_sign_in.dart';
+import '../../../core/router/guest_access.dart';
 
 /// One park (TIRPark PR 2, 0078): pictures, rating, place · distance,
 /// amenities, the note and the comments ("Şərh yaz"). Admins add, replace
@@ -43,6 +45,7 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
   void _snack(String t) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
 
   Future<void> _writeReview(TirPark park, TirParkReview? mine) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final s = ref.read(stringsProvider);
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -226,12 +229,14 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                 // "Rezervasiya bağlıdır".
                 if (park.isManaged) ...[
                   const SizedBox(height: 16),
-                  TirParkBookingSection(park: park, s: s),
+                  // A visitor books after signing in (0107).
+                  if (isSignedOut()) GuestSignInButton(s: s, label: 'guest_book_sign_in') else TirParkBookingSection(park: park, s: s),
                 ],
                 // Əlaqə and Marşrut cards (owner's design, 05.11.2026).
                 if ((park.phone ?? '').isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  _PhoneCard(phone: park.phone!, s: s),
+                  // A visitor sees no number (0107).
+                  if (isSignedOut()) GuestSignInButton(s: s) else _PhoneCard(phone: park.phone!, s: s),
                 ],
                 const SizedBox(height: 12),
                 _RouteCard(park: park, s: s),

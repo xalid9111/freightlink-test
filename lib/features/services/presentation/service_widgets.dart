@@ -14,6 +14,7 @@ import '../../chat/presentation/widgets/location_message.dart';
 import 'service_search_logic.dart' show hasRealCoords;
 import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/router/guest_access.dart';
 
 /// Round map pin: colour + icon by type (mobile mechanic / service centre /
 /// tow truck). Inactive providers are drawn faded.
@@ -146,6 +147,7 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
   bool _opening = false;
 
   Future<void> _message() async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final owner = widget.p.ownerId;
     if (owner == null) return;
     setState(() => _opening = true);
@@ -174,6 +176,7 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
 
   /// "Mesaj yaz": two choices — FreightLink chat and WhatsApp.
   Future<void> _messageOptions(bool canChat) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final s = widget.s;
     final wa = _waDigits();
     final me = ref.read(currentUserIdProvider);
@@ -266,7 +269,8 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
           icon: Icons.call,
           label: s.t('svc_call'),
           primary: true,
-          onTap: phone.isEmpty ? null : () => showCallOptions(context, s, phone),
+          // A visitor sees no number: the button opens sign-in (0107).
+          onTap: phone.isEmpty && !isSignedOut() ? null : () => askSignIn(context) ? null : showCallOptions(context, s, phone),
         ),
         const SizedBox(width: 6),
         btn(

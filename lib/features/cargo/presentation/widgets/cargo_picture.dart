@@ -14,6 +14,7 @@ import '../../data/cargo_media_repository.dart';
 import '../../domain/cargo_pictures.dart';
 import '../providers/cargo_media_providers.dart';
 import '../../../../core/utils/image_decode.dart';
+import '../../../../core/router/guest_access.dart';
 
 /// A load's card picture (0058). A load without its own picture shows an
 /// admin template of its type (owner, 24.10.2026), picked by [seed] (the
@@ -80,6 +81,7 @@ class CargoFavoriteHeart extends ConsumerWidget {
     final on = ref.watch(cargoFavoriteIdsProvider).contains(cargoId);
     final s = ref.watch(stringsProvider);
     void tap() {
+      if (askSignIn(context)) return; // a visitor signs in first (0107)
       ref.read(cargoFavoriteIdsProvider.notifier).toggle(cargoId).catchError((_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('fav_cargo_failed'))));

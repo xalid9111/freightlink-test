@@ -14,6 +14,7 @@ import '../cargo/presentation/widgets/cargo_card.dart';
 import '../market/presentation/market_providers.dart';
 import '../services/presentation/services_providers.dart' show serviceByIdProvider;
 import '../tirpark/data/tir_park_repository.dart' show tirParksProvider;
+import '../../core/router/guest_access.dart';
 
 /// "Bəyəndiklərim" (owner, 07.11.2026, 0106). Loads and TIR Bazarı ads keep
 /// their own hearts (0058 / 0040); chats (a person's Mesajlar row), people's
@@ -75,6 +76,7 @@ class _LikeHeartState extends ConsumerState<LikeHeart> {
 
   Future<void> _toggle(bool now, AppStrings s) async {
     if (_busy) return;
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     setState(() {
       _busy = true;
       _shown = !now;

@@ -80,8 +80,12 @@ select tests.check((select count(*) from public.service_providers) = 6,
 reset role;
 set role anon;
 select tests.login(null);
-select tests.check(tests.err('select id from public.service_providers') like '%permission denied%',
-  'V9 anonymous cannot read service profiles');
+-- 0107 (owner, 07.11.2026): visitors browse the approved services only,
+-- with the same columns as a signed-in stranger (no admin note).
+select tests.check(tests.err('select id from public.service_providers') is null
+                   and not exists (select 1 from public.service_providers where status <> 'approved')
+                   and tests.err('select admin_note from public.service_providers') like '%permission denied%',
+  'V9 anonymous reads approved service profiles only, no admin note (0107)');
 reset role;
 
 -- =============== 3. admin_note ========================================
@@ -224,7 +228,7 @@ select tests.check(not exists (
       ('unlock_contact','get_or_create_conversation','get_or_create_direct_conversation','create_chat_group',
        'add_chat_group_members','remove_chat_group_member','rename_chat_group','mark_chat_group_read',
        'create_ad_order','submit_ad_payment','cancel_ad_order','delete_my_cargo','get_ad_payment_info',
-       'nearby_services','service_provider_notes','_require_admin'))
+       'service_provider_notes','_require_admin'))
       and has_function_privilege('anon', p.oid, 'execute')),
   'D2 anon has no EXECUTE on any admin or user RPC');
 select tests.check(has_function_privilege('authenticated', 'public.nearby_services(double precision, double precision, double precision, text, numeric, boolean, text, text, integer)', 'execute')

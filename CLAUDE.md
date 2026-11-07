@@ -406,6 +406,22 @@ files to the owner separately (they are run by hand in the SQL editor).
   "Parkı qur" still opens the owner panel. Prostoy (free waiting 24 / 36 /
   48 h) is optional: nothing chosen on a new load, a second tap takes the
   choice off; a load without it shows no Prostoy row.
+- Browsing without an account (owner, 07.11.2026, 0107): the link opens
+  Yüklər straight away (no login page first). A visitor looks at Yüklər,
+  TIR Bazarı, TIRPark, Servislər / Mağazalar, a load / ad / park / service
+  page and public profiles (isGuestPath in core/router/guest_access.dart);
+  anything else — "+" forms, Mesajlar, Profil, Bəyəndiklərim, a message, a
+  call, a heart, an offer, a booking, a review, a complaint — opens the
+  login page (askSignIn) and brings him back to the same page after signing
+  in; the login page has an ✕ back to browsing. A visitor sees no phone
+  number (a "Əlaqə üçün daxil olun" button instead). Server (0107): anon
+  reads only an allow-list of public catalogue tables, with exactly the
+  columns and rows a signed-in stranger reads (twin "<rule>_guest"
+  policies), plus the read-only search functions; no users, messages,
+  bookings, payments, favourites or job centre; no writes.
+  Google sign-in is on (owner, 07.11.2026: Google Cloud project
+  "FreightLink", OAuth client "FreightLink Web", published; Supabase
+  provider enabled); Apple stays off for now.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

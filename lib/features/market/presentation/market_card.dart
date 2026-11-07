@@ -11,6 +11,7 @@ import '../domain/market_models.dart';
 import 'market_promo.dart';
 import 'market_providers.dart';
 import '../../../core/utils/image_decode.dart';
+import '../../../core/router/guest_access.dart';
 
 const kVipGold = Color(0xFFFFC83D);
 
@@ -75,7 +76,7 @@ class FavoriteHeart extends ConsumerWidget {
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
-        onTap: () => ref.read(marketFavoriteIdsProvider.notifier).toggle(id).catchError((_) {}),
+        onTap: () => askSignIn(context) ? null : ref.read(marketFavoriteIdsProvider.notifier).toggle(id).catchError((_) {}),
         child: Padding(
           padding: const EdgeInsets.all(7),
           child: Icon(on ? Icons.favorite : Icons.favorite_border, size: size, color: on ? AppColors.accent : Colors.white),

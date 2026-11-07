@@ -1993,5 +1993,9 @@
   "pub_cargo_done": "Yükünüz dərc olundu ✓",
   "pub_market_done": "Elanınız dərc olundu ✓",
   "pub_service_done": "Servisiniz dərc olundu ✓",
-  "pub_shop_done": "Mağazanız dərc olundu ✓"
+  "pub_shop_done": "Mağazanız dərc olundu ✓",
+  "guest_browse_back": "Baxmağa qayıt",
+  "guest_sign_in_needed": "Davam etmək üçün daxil olun və ya qeydiyyatdan keçin",
+  "guest_contact_sign_in": "Əlaqə üçün daxil olun",
+  "guest_book_sign_in": "Rezerv etmək üçün daxil olun"
 }
