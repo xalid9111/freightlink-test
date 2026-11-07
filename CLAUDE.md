@@ -331,7 +331,7 @@ files to the owner separately (they are run by hand in the SQL editor).
   amenities; nothing made up), 📍 city · km (km only when the user's place
   is already known; no GPS asked) and an orange "Profilə bax ›"; several =
   swiped with dots; on TIR Bazarı under the search box, on Yüklər above the
-  tiles; a tap opens its page.
+  tiles and exactly as wide as the two load cards (never past their edges); a tap opens its page.
   TIR Bazarı ads never pick Yüklər; İrəli çək / VIP unchanged.
 - Profile backgrounds (owner, 05.11.2026, 0096): Park, Servis and Mağaza
   (the seller's page, profile_details.cover_url) share one flow — "Fon
