@@ -1971,5 +1971,7 @@
   "vf_slogan": "Show you can be trusted, win more customers",
   "vf_activate": "{price} a month · Activate",
   "vf_not_live": "Online payment is not connected yet. As soon as it is, you can activate the verified account here.",
-  "vf_failed": "The order could not be made. Please try again a little later."
+  "vf_failed": "The order could not be made. Please try again a little later.",
+  "presence_online": "Online",
+  "presence_offline": "Offline"
 }

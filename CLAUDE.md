@@ -387,6 +387,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   Everywhere (0105): user_profiles.is_verified = the grant OR a running
   paid subscription, so load cards, the load page, Mesajlar, TIR Bazarı and
   the ad banner show the badge for both; the own profile asks the view too.
+  Another person's profile page (owner, 07.11.2026): the blue badge sits on
+  the photo's corner (where the online dot was); the old pill's place shows
+  the presence — a round green dot + "Online" (grey + "Offline").
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

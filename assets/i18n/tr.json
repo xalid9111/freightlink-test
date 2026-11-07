@@ -1971,5 +1971,7 @@
   "vf_slogan": "Güvenilirliğini göster, daha çok müşteri kazan",
   "vf_activate": "Aylık {price} · Etkinleştir",
   "vf_not_live": "Çevrimiçi ödeme henüz bağlanmadı. Bağlanır bağlanmaz doğrulanmış hesabı buradan etkinleştirebileceksiniz.",
-  "vf_failed": "Sipariş alınamadı. Biraz sonra tekrar deneyin."
+  "vf_failed": "Sipariş alınamadı. Biraz sonra tekrar deneyin.",
+  "presence_online": "Çevrimiçi",
+  "presence_offline": "Çevrimdışı"
 }
