@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/localization/app_strings.dart';
@@ -13,6 +14,7 @@ import '../../finance/domain/finance_models.dart';
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/tir_park.dart';
+import '../../../core/widgets/published_notice.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_owner_panel.dart';
 
@@ -155,7 +157,12 @@ class _OwnerApplyState extends ConsumerState<_OwnerApply> {
     try {
       await ref.read(tirParkRepositoryProvider).ownerApply(name);
       ref.invalidate(myOwnerRequestProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpo_apply_sent'))));
+      if (mounted) {
+        // Sent: straight back to TIRPark with a clear green notice (owner,
+        // 07.11.2026); the waiting request stays in Profil → TIR Parkı.
+        showPublishedNotice(context, s.t('tpo_apply_sent'));
+        context.go('/tirpark');
+      }
     } on TirParkRefused catch (e) {
       setState(() => _error = e.reason == 'already_applied' ? 'tpo_err_already' : 'tpm_err_invalid');
     } on TirParkNotReady {
@@ -694,7 +701,7 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
       ref.invalidate(myOwnerRequestProvider);
       ref.invalidate(tirParksProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpo_setup_done'))));
+      showPublishedNotice(context, s.t('tpo_setup_done'));
       Navigator.of(context).maybePop();
     } on TirParkRefused catch (e) {
       setState(() => _error = switch (e.reason) {

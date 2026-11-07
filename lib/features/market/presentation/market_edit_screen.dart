@@ -20,6 +20,7 @@ import '../../services/presentation/services_providers.dart' show userLocationPr
 import '../data/market_repository.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
+import '../../../core/widgets/published_notice.dart';
 import 'market_card.dart';
 import 'market_home_screen.dart' show marketCategoryIcon;
 import 'market_providers.dart';
@@ -314,6 +315,13 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       ref.invalidate(marketFeedProvider);
       if (!mounted) return;
       final msg = !publish ? 'mk_saved_draft' : (saved.status == MarketStatus.pending ? 'mk_sent_review' : 'mk_published');
+      if (publish && _orig == null) {
+        // A new ad: straight back to TIR Bazarı with a clear green notice
+        // (owner, 07.11.2026).
+        showPublishedNotice(context, s.t(saved.status == MarketStatus.pending ? msg : 'pub_market_done'));
+        context.go('/market');
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(msg))));
       context.pop();
     } catch (_) {

@@ -18,6 +18,7 @@ import '../data/cargo_media_repository.dart';
 import '../domain/cargo_pictures.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../domain/truck_types.dart';
+import '../../../core/widgets/published_notice.dart';
 import 'widgets/cargo_category_bar.dart';
 import 'widgets/cargo_picture_field.dart';
 import 'providers/cargo_media_providers.dart';
@@ -51,7 +52,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   // Optional contact number of this load (0060); empty = registered phone.
   final _altPhoneCtrl = TextEditingController();
   String? _altPhoneSaved;
-  int _freeWait = kDefaultFreeWaitHours;
+  // Prostoy is optional (owner, 07.11.2026): nothing chosen = not shown.
+  int? _freeWait;
   // Ticked payment ways: advance (its box opens), cash, delivery, bank.
   final Set<String> _payOn = {};
 
@@ -167,7 +169,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         if (c.payOnDelivery) 'delivery',
         if (c.bankTicked) 'bank',
       ]);
-    _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours! : kDefaultFreeWaitHours;
+    _freeWait = kFreeWaitChoices.contains(c.freeWaitHours) ? c.freeWaitHours : null;
     _loaded = true;
   }
 
@@ -338,14 +340,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
       container.invalidate(marketplaceProvider);
       container.invalidate(myCargoProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.t(o == null ? 'create_success' : 'quick_saved'))),
-      );
       if (o == null) {
-        // go, not pushReplacement: opened from "Yüklərim" (a page above
-        // the tabs) the new load would open hidden behind it.
-        context.go('/cargo/$id');
-      } else if (context.canPop()) {
+        // A new load: straight back to Yüklər with a clear green notice
+        // (owner, 07.11.2026). go, not pop: opened from "Yüklərim" (a page
+        // above the tabs) it would otherwise stay hidden behind it.
+        showPublishedNotice(context, strings.t('pub_cargo_done'));
+        context.go('/cargo');
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('quick_saved'))));
+      if (context.canPop()) {
         context.pop();
       } else {
         // Opened on its own (iPhone reloads the page after the photo
@@ -649,7 +653,8 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
                   }
                 }),
                 freeWait: _freeWait,
-                onFreeWait: (h) => setState(() => _freeWait = h),
+                // A second tap on the chosen hours takes the choice off.
+                onFreeWait: (h) => setState(() => _freeWait = _freeWait == h ? null : h),
               ),
 
               const SizedBox(height: 18),
@@ -800,7 +805,7 @@ class _PaymentTerms extends StatelessWidget {
   final TextEditingController advance;
   final Set<String> on;
   final void Function(String key, bool on) onToggle;
-  final int freeWait;
+  final int? freeWait;
   final ValueChanged<int> onFreeWait;
   const _PaymentTerms({
     required this.strings,
