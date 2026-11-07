@@ -236,9 +236,9 @@ class _PlaceCrossStripState extends ConsumerState<PlaceCrossStrip> {
   Widget build(BuildContext context) {
     final items = ref.watch(placeCrossProvider(widget.place)).valueOrNull ?? const <PlaceCrossItem>[];
     if (items.isEmpty) return const SizedBox.shrink();
-    // The owner's size (07.11.2026: a low card, about a quarter of its
-    // width); grows only with the text size (Profil → 1…5), so nothing is cut.
-    final h = 112 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
+    // The owner's size (07.11.2026: a low card, then 20 % smaller overall —
+    // 90 pt); grows only with the text size (Profil → 1…5), so nothing is cut.
+    final h = 90 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
     return Padding(
       key: ValueKey('place-cross-${widget.place}'),
       padding: const EdgeInsets.only(bottom: 14),
@@ -300,48 +300,48 @@ class PlaceAdCard extends ConsumerWidget {
     final fallback = Image.asset(defaultServiceCover(shop: item.shop), fit: BoxFit.cover);
     return Material(
       color: AppColors.card,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         key: ValueKey('place-ad-${item.id}'),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         onTap: open,
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: c.withValues(alpha: 0.75), width: 1.4),
-            boxShadow: [BoxShadow(color: c.withValues(alpha: 0.22), blurRadius: 14, spreadRadius: 0.5)],
+            boxShadow: [BoxShadow(color: c.withValues(alpha: 0.22), blurRadius: 11, spreadRadius: 0.5)],
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             // The picture (left).
             Expanded(
               flex: 9,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child:
                     info.photo == null ? fallback : Image.network(info.photo!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               flex: 11,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Container(
                   key: const ValueKey('place-ad-badge'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(color: c.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(6)),
                   child: Text(s.t('pp_ad').toUpperCase(),
-                      style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+                      style: TextStyle(color: c, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Row(children: [
-                  Icon(_icon, size: 18, color: c),
-                  const SizedBox(width: 6),
+                  Icon(_icon, size: 14, color: c),
+                  const SizedBox(width: 5),
                   Expanded(
                     child: Text(item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: TextStyle(color: AppColors.text, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
                 if (info.about != null) ...[
@@ -349,17 +349,17 @@ class PlaceAdCard extends ConsumerWidget {
                   Text(info.about!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.25)),
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 10, height: 1.25)),
                 ],
                 const Spacer(),
                 Row(children: [
                   if (where.isNotEmpty) ...[
-                    Icon(Icons.place_outlined, size: 15, color: AppColors.textSoft),
+                    Icon(Icons.place_outlined, size: 12, color: AppColors.textSoft),
                     const SizedBox(width: 2),
                     Expanded(
                       flex: 2,
                       child: Text(where,
-                          maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 10)),
                     ),
                   ] else
                     const Spacer(),
@@ -378,13 +378,14 @@ class PlaceAdCard extends ConsumerWidget {
                             backgroundColor: AppColors.accentFill,
                             foregroundColor: Colors.white,
                             visualDensity: VisualDensity.compact,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            minimumSize: const Size(0, 30),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(0, 24),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Text(s.t('job_view_profile'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                            const Icon(Icons.chevron_right, size: 18),
+                            Text(s.t('job_view_profile'), style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500)),
+                            const Icon(Icons.chevron_right, size: 14),
                           ]),
                         ),
                       ),
