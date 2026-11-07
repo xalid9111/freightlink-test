@@ -1989,5 +1989,9 @@
   "fav_kind_park": "TIR park",
   "fav_add": "Beğen",
   "fav_remove": "Beğenmekten çıkar",
-  "fav_failed": "Olmadı. Tekrar deneyin."
+  "fav_failed": "Olmadı. Tekrar deneyin.",
+  "pub_cargo_done": "Yükünüz yayınlandı ✓",
+  "pub_market_done": "İlanınız yayınlandı ✓",
+  "pub_service_done": "Servisiniz yayınlandı ✓",
+  "pub_shop_done": "Mağazanız yayınlandı ✓"
 }

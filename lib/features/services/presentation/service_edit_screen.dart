@@ -24,6 +24,7 @@ import 'service_widgets.dart';
 import 'services_map_screen.dart' show kShopCategory;
 import 'services_providers.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/published_notice.dart';
 
 /// Create / edit the signed-in user's own service profile. Moderation
 /// fields (status, verified, rating) are never sent — the database
@@ -297,7 +298,14 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
       ref.invalidate(serviceByIdProvider(saved.id));
       ref.invalidate(serviceNearbyProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(_existing == null ? 'svc_created' : 'svc_saved'))));
+      if (_existing == null) {
+        // A new service / shop: straight back to its map with a clear
+        // green notice (owner, 07.11.2026).
+        showPublishedNotice(context, s.t(_shopForm ? 'pub_shop_done' : 'pub_service_done'));
+        context.go(_shopForm ? '/services?shops=1' : '/services');
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('svc_saved'))));
       context.pushReplacement('/service/${saved.id}');
     } catch (e) {
       final raw = e.toString();

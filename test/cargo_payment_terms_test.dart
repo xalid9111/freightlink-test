@@ -71,9 +71,12 @@ void main() {
       expect(_load(wait: 48).hasTerms, isTrue);
       expect(_load(cash: 1).hasTerms, isTrue);
     });
-    test('free waiting: 24 / 36 / 48, 48 by default', () {
+    test('free waiting: 24 / 36 / 48, optional (nothing chosen by default)', () {
       expect(kFreeWaitChoices, [24, 36, 48]);
-      expect(kDefaultFreeWaitHours, 48);
+      final f = File('lib/features/cargo/presentation/cargo_quick_form.dart').readAsStringSync();
+      expect(f.contains('  int? _freeWait;'), isTrue);
+      expect(f.contains('onFreeWait: (h) => setState(() => _freeWait = _freeWait == h ? null : h),'), isTrue);
+      expect(f.contains('kDefaultFreeWaitHours'), isFalse);
     });
   });
 

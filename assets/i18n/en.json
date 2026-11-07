@@ -1989,5 +1989,9 @@
   "fav_kind_park": "TIR park",
   "fav_add": "Like",
   "fav_remove": "Remove from favourites",
-  "fav_failed": "That did not work. Please try again."
+  "fav_failed": "That did not work. Please try again.",
+  "pub_cargo_done": "Your load is published ✓",
+  "pub_market_done": "Your ad is published ✓",
+  "pub_service_done": "Your service is published ✓",
+  "pub_shop_done": "Your shop is published ✓"
 }

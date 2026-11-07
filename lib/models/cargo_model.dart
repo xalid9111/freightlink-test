@@ -328,9 +328,9 @@ class CargoModel {
       };
 }
 
-/// Free waiting time choices (hours); 48 is preselected on a new load.
+/// Free waiting time choices (hours). Optional (owner, 07.11.2026): a new
+/// load has none chosen; a second tap on the chosen one takes it off.
 const kFreeWaitChoices = [24, 36, 48];
-const kDefaultFreeWaitHours = 48;
 
 /// Payment amount typed by the load owner: empty → null (not offered);
 /// otherwise a positive number (comma or dot), else [FormatException].

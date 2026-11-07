@@ -398,6 +398,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   by its owner, written only through favorite_set, checked on the server);
   load and ad hearts stay as they were (cargo_favorites / market_favorites).
   Liked chats stand first in Mesajlar with a small heart.
+- After publishing (owner, 07.11.2026): a new load → Yüklər, a new TIR
+  Bazarı ad → TIR Bazarı, a new service → Servislər, a new shop → Mağazalar,
+  a "Park işlədirəm" request → TIRPark, each at once with a clear green
+  notice ("… dərc olundu ✓", showPublishedNotice); an error keeps the form
+  and what was typed; editing a saved one goes back where it came from;
+  "Parkı qur" still opens the owner panel. Prostoy (free waiting 24 / 36 /
+  48 h) is optional: nothing chosen on a new load, a second tap takes the
+  choice off; a load without it shows no Prostoy row.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

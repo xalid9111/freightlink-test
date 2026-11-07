@@ -119,7 +119,7 @@ void main() {
     });
     test('saving an edit never fails on "nothing to go back to"', () {
       final form = File('lib/features/cargo/presentation/cargo_quick_form.dart').readAsStringSync();
-      expect(form, contains('} else if (context.canPop()) {'));
+      expect(form, contains('      if (context.canPop()) {'));
       expect(form, contains("context.go('/cargo/\$id');"));
       expect(form, contains("source: 'cargo.save'"));
     });

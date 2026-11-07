@@ -1989,5 +1989,9 @@
   "fav_kind_park": "TIR 停车场",
   "fav_add": "收藏",
   "fav_remove": "取消收藏",
-  "fav_failed": "未成功，请重试。"
+  "fav_failed": "未成功，请重试。",
+  "pub_cargo_done": "您的货物已发布 ✓",
+  "pub_market_done": "您的广告已发布 ✓",
+  "pub_service_done": "您的服务已发布 ✓",
+  "pub_shop_done": "您的商店已发布 ✓"
 }
