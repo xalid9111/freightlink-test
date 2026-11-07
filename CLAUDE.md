@@ -384,6 +384,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   is_chief_admin()) gives / takes it — a trigger refuses every other
   signed-in path ('chief_admin_only'), Admin → İstifadəçilər shows "Mavi tık
   ver" only to him; the SQL editor stays trusted.
+  Everywhere (0105): user_profiles.is_verified = the grant OR a running
+  paid subscription, so load cards, the load page, Mesajlar, TIR Bazarı and
+  the ad banner show the badge for both; the own profile asks the view too.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a
