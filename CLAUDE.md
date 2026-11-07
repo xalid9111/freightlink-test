@@ -390,6 +390,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   Another person's profile page (owner, 07.11.2026): the blue badge sits on
   the photo's corner (where the online dot was); the old pill's place shows
   the presence — a round green dot + "Online" (grey + "Offline").
+- Bəyəndiklərim (owner, 07.11.2026, 0106): one page /favorites with the tabs
+  Yüklər · TIR Bazarı · Mesajlar · Profillər (counts); the hearts in the
+  Yüklər, TIR Bazarı, Mesajlar and Profil headers open it on their own tab.
+  Hearts on a chat (the other person), on another person's profile, on a
+  service / shop page and on an approved park page (user_favorites, read only
+  by its owner, written only through favorite_set, checked on the server);
+  load and ad hearts stay as they were (cargo_favorites / market_favorites).
+  Liked chats stand first in Mesajlar with a small heart.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

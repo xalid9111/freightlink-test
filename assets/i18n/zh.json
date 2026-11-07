@@ -1973,5 +1973,21 @@
   "vf_not_live": "在线支付尚未接入。接入后即可在此激活认证账户。",
   "vf_failed": "订单未能创建，请稍后再试。",
   "presence_online": "在线",
-  "presence_offline": "离线"
+  "presence_offline": "离线",
+  "fav_title": "我的收藏",
+  "fav_tab_loads": "货物",
+  "fav_tab_market": "TIR 市场",
+  "fav_tab_chats": "消息",
+  "fav_tab_profiles": "主页",
+  "fav_empty_market": "还没有收藏的 TIR 市场广告。点按广告上的爱心。",
+  "fav_empty_chats": "还没有收藏的聊天。点按聊天顶部的爱心。",
+  "fav_empty_profiles": "还没有收藏的主页。在个人、服务、商店或停车场页面点按爱心。",
+  "fav_kind_chat": "聊天",
+  "fav_kind_user": "个人主页",
+  "fav_kind_service": "服务",
+  "fav_kind_shop": "商店",
+  "fav_kind_park": "TIR 停车场",
+  "fav_add": "收藏",
+  "fav_remove": "取消收藏",
+  "fav_failed": "未成功，请重试。"
 }

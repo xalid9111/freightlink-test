@@ -1973,5 +1973,21 @@
   "vf_not_live": "Online payment is not connected yet. As soon as it is, you can activate the verified account here.",
   "vf_failed": "The order could not be made. Please try again a little later.",
   "presence_online": "Online",
-  "presence_offline": "Offline"
+  "presence_offline": "Offline",
+  "fav_title": "My favourites",
+  "fav_tab_loads": "Loads",
+  "fav_tab_market": "TIR Market",
+  "fav_tab_chats": "Messages",
+  "fav_tab_profiles": "Profiles",
+  "fav_empty_market": "No liked TIR Market ads yet. Tap the heart on an ad.",
+  "fav_empty_chats": "No liked chats yet. Tap the heart at the top of a chat.",
+  "fav_empty_profiles": "No liked profiles yet. Tap the heart on a profile, service, shop or park page.",
+  "fav_kind_chat": "Chat",
+  "fav_kind_user": "Profile",
+  "fav_kind_service": "Service",
+  "fav_kind_shop": "Shop",
+  "fav_kind_park": "TIR park",
+  "fav_add": "Like",
+  "fav_remove": "Remove from favourites",
+  "fav_failed": "That did not work. Please try again."
 }

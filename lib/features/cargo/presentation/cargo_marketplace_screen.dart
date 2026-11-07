@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart' show openFavorites, FavTab;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';

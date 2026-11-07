@@ -1,10 +1,10 @@
+import '../../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
-import '../../../../core/router/safe_navigation.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../repositories/profile_repository.dart';
@@ -134,7 +134,8 @@ class HeaderCircles extends ConsumerWidget {
       HeaderCircle(
         key: const ValueKey('hdr-favorites'),
         tooltip: strings.t('fav_cargo_title'),
-        onTap: () => context.pushOnce('/cargo/favorites'),
+        // "Bəyəndiklərim" (owner, 07.11.2026): every section's favourites.
+        onTap: () => openFavorites(context, FavTab.loads),
         child: Badge(
           isLabelVisible: favCount > 0,
           label: Text(favCount > 99 ? '99+' : '$favCount'),

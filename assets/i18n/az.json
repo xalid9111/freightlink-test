@@ -1973,5 +1973,21 @@
   "vf_not_live": "Onlayn ödəniş hələ qoşulmayıb. Qoşulan kimi təsdiqlənmiş hesabı buradan aktiv edə biləcəksiniz.",
   "vf_failed": "Sifariş alınmadı. Bir az sonra yenidən cəhd edin.",
   "presence_online": "Online",
-  "presence_offline": "Offline"
+  "presence_offline": "Offline",
+  "fav_title": "Bəyəndiklərim",
+  "fav_tab_loads": "Yüklər",
+  "fav_tab_market": "TIR Bazarı",
+  "fav_tab_chats": "Mesajlar",
+  "fav_tab_profiles": "Profillər",
+  "fav_empty_market": "Bəyəndiyiniz TIR Bazarı elanı yoxdur. Elanda ürəyə toxunun.",
+  "fav_empty_chats": "Bəyəndiyiniz söhbət yoxdur. Söhbətin yuxarısında ürəyə toxunun.",
+  "fav_empty_profiles": "Bəyəndiyiniz profil yoxdur. Profil, servis, mağaza və ya park səhifəsində ürəyə toxunun.",
+  "fav_kind_chat": "Söhbət",
+  "fav_kind_user": "Profil",
+  "fav_kind_service": "Servis",
+  "fav_kind_shop": "Mağaza",
+  "fav_kind_park": "TIR park",
+  "fav_add": "Bəyən",
+  "fav_remove": "Bəyənmədən çıxar",
+  "fav_failed": "Alınmadı. Yenidən cəhd edin."
 }

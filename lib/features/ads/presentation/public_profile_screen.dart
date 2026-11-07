@@ -1,4 +1,5 @@
 
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -151,11 +152,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                         _TitleRow(
                           title: s.t('profile_title'),
                           onBack: _back,
-                          action: _SquareButton(
-                            icon: Icons.share_outlined,
-                            tooltip: s.t('profile_share'),
-                            onTap: () => _share(s),
-                          ),
+                          action: Row(mainAxisSize: MainAxisSize.min, children: [
+                            // Like this profile (owner, 07.11.2026, 0106).
+                            if (!isMe) LikeHeart(kind: FavKind.user, id: widget.userId),
+                            _SquareButton(
+                              icon: Icons.share_outlined,
+                              tooltip: s.t('profile_share'),
+                              onTap: () => _share(s),
+                            ),
+                          ]),
                         ),
                         // Same card as the Profile tab, with the cover on top.
                         Container(

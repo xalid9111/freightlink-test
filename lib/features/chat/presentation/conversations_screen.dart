@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +34,9 @@ class ConversationsScreen extends ConsumerStatefulWidget {
 class _Entry {
   final DateTime time;
   final Widget tile;
-  const _Entry(this.time, this.tile);
+  /// A liked chat (owner, 07.11.2026, 0106): stands at the top.
+  final bool favorite;
+  const _Entry(this.time, this.tile, {this.favorite = false});
 }
 
 class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
@@ -75,6 +78,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     final groups = ref.watch(myGroupsProvider).valueOrNull ?? const <ChatGroup>[];
     final groupUnread = ref.watch(groupUnreadProvider);
     final groupActivity = ref.watch(groupLastActivityProvider);
+    final favChats = (ref.watch(userFavoritesProvider).valueOrNull ?? const <FavKey>[]).toSet();
     // Chats I deleted "for me" stay hidden until a newer message arrives
     // (migration 0031); the list is sorted by the latest message.
     final clears = ref.watch(chatClearsProvider).valueOrNull ?? const <String, DateTime>{};
@@ -165,8 +169,10 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       if (!state.visible) continue;
       final last = state.last;
       shownPartnerIds.add(otherId);
+      final fav = favChats.contains((FavKind.chat, otherId));
       entries.add(_Entry(
         last,
+        favorite: fav,
         deletable(
           key: 'u$otherId',
           targetId: otherId,
@@ -176,13 +182,15 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             route: route,
             roleLabel: strings.t(subtitleKey),
             unread: unread,
+            favorite: fav,
             // One thread per person: all load chats + the direct chat together.
             onTap: () => context.pushOnce('/messages/with/$otherId'),
           ),
         ),
       ));
     }
-    entries.sort((a, b) => b.time.compareTo(a.time));
+    // Liked chats first (owner, 07.11.2026), then the newest.
+    entries.sort((a, b) => a.favorite != b.favorite ? (a.favorite ? -1 : 1) : b.time.compareTo(a.time));
 
     // People search (whole platform) while typing
     final people = _query.length >= 2 ? ref.watch(userSearchProvider(_query)) : null;
@@ -191,6 +199,13 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       appBar: AppBar(
         title: Text(strings.t('messages_placeholder_title')),
         actions: [
+          // "Bəyəndiklərim" on the Mesajlar tab (owner, 07.11.2026).
+          IconButton(
+            key: const ValueKey('msg-favorites'),
+            tooltip: strings.t('fav_title'),
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () => openFavorites(context, FavTab.chats),
+          ),
           IconButton(
             tooltip: strings.t('chat_new_group'),
             icon: const Icon(Icons.group_add_outlined),
@@ -414,12 +429,14 @@ class _ConversationTile extends ConsumerWidget {
   final String roleLabel;
   final int unread;
   final VoidCallback onTap;
+  final bool favorite;
   const _ConversationTile({
     required this.otherUserId,
     required this.route,
     required this.roleLabel,
     required this.unread,
     required this.onTap,
+    this.favorite = false,
   });
 
   @override
@@ -467,6 +484,10 @@ class _ConversationTile extends ConsumerWidget {
                             if (profile?.isVerified == true) ...[
                               const SizedBox(width: 4),
                               const VerifiedTick(),
+                            ],
+                            if (favorite) ...[
+                              const SizedBox(width: 4),
+                              Icon(Icons.favorite, key: ValueKey('msg-fav-$otherUserId'), size: 14, color: AppColors.accent),
                             ],
                           ],
                         ),

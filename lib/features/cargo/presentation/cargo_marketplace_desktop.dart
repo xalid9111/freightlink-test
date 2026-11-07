@@ -549,7 +549,7 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
           key: const ValueKey('desk-favorites'),
           tooltip: s.t('fav_cargo_title'),
           size: 54,
-          onTap: () => context.pushOnce('/cargo/favorites'),
+          onTap: () => openFavorites(context, FavTab.loads),
           child: Badge(
             isLabelVisible: favCount > 0,
             label: Text(favCount > 99 ? '99+' : '$favCount'),

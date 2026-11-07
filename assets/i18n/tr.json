@@ -1973,5 +1973,21 @@
   "vf_not_live": "Çevrimiçi ödeme henüz bağlanmadı. Bağlanır bağlanmaz doğrulanmış hesabı buradan etkinleştirebileceksiniz.",
   "vf_failed": "Sipariş alınamadı. Biraz sonra tekrar deneyin.",
   "presence_online": "Çevrimiçi",
-  "presence_offline": "Çevrimdışı"
+  "presence_offline": "Çevrimdışı",
+  "fav_title": "Beğendiklerim",
+  "fav_tab_loads": "Yükler",
+  "fav_tab_market": "TIR Pazarı",
+  "fav_tab_chats": "Mesajlar",
+  "fav_tab_profiles": "Profiller",
+  "fav_empty_market": "Beğendiğiniz TIR Pazarı ilanı yok. İlanda kalbe dokunun.",
+  "fav_empty_chats": "Beğendiğiniz sohbet yok. Sohbetin üstündeki kalbe dokunun.",
+  "fav_empty_profiles": "Beğendiğiniz profil yok. Profil, servis, mağaza veya park sayfasında kalbe dokunun.",
+  "fav_kind_chat": "Sohbet",
+  "fav_kind_user": "Profil",
+  "fav_kind_service": "Servis",
+  "fav_kind_shop": "Mağaza",
+  "fav_kind_park": "TIR park",
+  "fav_add": "Beğen",
+  "fav_remove": "Beğenmekten çıkar",
+  "fav_failed": "Olmadı. Tekrar deneyin."
 }

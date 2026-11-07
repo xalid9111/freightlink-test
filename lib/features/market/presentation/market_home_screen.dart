@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart' show openFavorites, FavTab;
 import 'package:flutter/material.dart';
 import '../../promo/promo_cross.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -151,7 +152,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                         ),
                         IconButton(
                           tooltip: s.t('mk_favorites'),
-                          onPressed: () => context.pushOnce('/market/favorites'),
+                          onPressed: () => openFavorites(context, FavTab.market),
                           icon: const Icon(Icons.favorite_border, size: 28),
                         ),
                       ],

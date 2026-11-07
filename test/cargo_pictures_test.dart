@@ -75,7 +75,8 @@ void main() {
       final desk = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
       expect(desk.contains("key: const ValueKey('desk-favorites')"), isTrue);
       final c = src('lib/features/cargo/presentation/widgets/cargo_picture.dart');
-      expect(c.contains("context.pushOnce('/cargo/favorites')"), isTrue);
+      // The heart opens Bəyəndiklərim on Yüklər (0106); the old route stays.
+      expect(c.contains('openFavorites(context, FavTab.loads)'), isTrue);
       expect(c.contains("context.go('/profile')"), isTrue);
       expect(src('lib/core/router/app_router.dart').contains("path: '/cargo/favorites'"), isTrue);
     });

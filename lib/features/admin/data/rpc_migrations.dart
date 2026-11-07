@@ -200,6 +200,7 @@ const kRpcMigration = <String, String>{
   'verified_order_create': '0104_verified_account.sql',
   'is_chief_admin': '0104_verified_account.sql',
   'admin_set_account_verified': '0104_verified_account.sql',
+  'favorite_set': '0106_user_favorites.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
 };
