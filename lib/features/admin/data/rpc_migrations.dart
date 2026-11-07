@@ -196,6 +196,10 @@ const kRpcMigration = <String, String>{
   'get_or_create_service_conversation': '0100_no_user_spots_service_chat_context.sql',
   'promo_cross_latest': '0101_premium_places.sql',
   'place_cross_latest': '0102_place_premium_places.sql',
+  'account_verification': '0104_verified_account.sql',
+  'verified_order_create': '0104_verified_account.sql',
+  'is_chief_admin': '0104_verified_account.sql',
+  'admin_set_account_verified': '0104_verified_account.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
 };

@@ -1967,5 +1967,9 @@
   "promo_place_kind_service": "服务",
   "promo_place_kind_shop": "商店",
   "promo_place_market": "TIR 市场",
-  "promo_place_loads": "货物板块"
+  "promo_place_loads": "货物板块",
+  "vf_slogan": "展示您的可信度，赢得更多客户",
+  "vf_activate": "每月 {price} · 激活",
+  "vf_not_live": "在线支付尚未接入。接入后即可在此激活认证账户。",
+  "vf_failed": "订单未能创建，请稍后再试。"
 }

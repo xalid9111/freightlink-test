@@ -61,6 +61,8 @@ class VipCheckoutTarget {
   final bool tirParkBooking;
   /// A Servis / TIRPark İrəli çək · VIP · Premium order (0093).
   final bool place;
+  /// A "Təsdiqlənmiş hesab" subscription order (0104; LIVE only).
+  final bool verified;
   const VipCheckoutTarget(
       {required this.vipOrderId,
       required this.amount,
@@ -68,7 +70,8 @@ class VipCheckoutTarget {
       this.cargo = false,
       this.promo = false,
       this.tirParkBooking = false,
-      this.place = false});
+      this.place = false,
+      this.verified = false});
 }
 
 class CheckoutSheet extends ConsumerStatefulWidget {
@@ -104,7 +107,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   Future<CheckoutPayment> _start(FinanceRepository repo) {
     final vip = widget.vip;
     return vip != null
-        ? (vip.place
+        ? (vip.verified
+            ? repo.startVerifiedCheckout(orderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
+            : vip.place
             ? repo.startPlacePromoCheckout(promoOrderId: vip.vipOrderId, method: _method, idempotencyKey: _key)
             : vip.tirParkBooking
             ? repo.startTirParkBookingCheckout(bookingId: vip.vipOrderId, method: _method, idempotencyKey: _key)

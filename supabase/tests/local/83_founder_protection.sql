@@ -42,8 +42,8 @@ select tests.check((select role = 'admin' and not is_verified and not is_blocked
 -- Admins still manage everybody else.
 set role authenticated;
 select tests.login(:admin);
-select public.admin_update_user(:fake, '{"is_verified":true}');
-select tests.check((select is_verified from public.users where id = :fake), 'O1 admins still verify other accounts');
+select tests.check(tests.err(format($$ select public.admin_update_user(%L, '{"is_verified":true}') $$, :fake)) like '%chief_admin_only%',
+  'O1 0104: an ordinary admin no longer gives the blue tick (Baş admin only)');
 select public.admin_set_user_block(:other, true, null, 'test');
 select tests.check((select is_blocked from public.users where id = :other), 'O2 admins still block other accounts');
 

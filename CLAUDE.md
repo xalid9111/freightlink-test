@@ -372,6 +372,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   ('not_available'); users never had a direct INSERT on tir_parks. Parks
   come only from "Park işlədirəm" (admin approval), manager applications
   and the admins; spots added before stay (nothing deleted).
+- "Təsdiqlənmiş hesab" (owner's picture, 07.11.2026, 0104): on the Profil
+  card under the account owner's details — not verified yet: a pale blue
+  badge, the slogan "Etibarını göstər, daha çox müştəri qazan" and "Ayda 20
+  AZN · Aktiv et" (price from verified_plans); verified: the clear blue
+  badge. Two ways, kept apart: the paid subscription (20 AZN / month,
+  verified_subscriptions; ONLY a verified LIVE payment activates it, the
+  server refuses a test checkout — no made-up activation; without a live
+  shop "Aktiv et" only explains it) and the Baş admin's own grant
+  (users.is_verified): only the Baş admin (admin + finance owner or Founder,
+  is_chief_admin()) gives / takes it — a trigger refuses every other
+  signed-in path ('chief_admin_only'), Admin → İstifadəçilər shows "Mavi tık
+  ver" only to him; the SQL editor stays trusted.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

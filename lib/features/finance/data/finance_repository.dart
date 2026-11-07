@@ -86,6 +86,16 @@ class FinanceRepository {
     return CheckoutPayment.fromJson(j['payment'] as Map);
   }
 
+  /// Checkout for a "Təsdiqlənmiş hesab" subscription order (0104): the
+  /// amount comes from the order; the server takes only a LIVE checkout and
+  /// only a verified LIVE payment activates it.
+  Future<CheckoutPayment> startVerifiedCheckout(
+      {required String orderId, required PayMethod method, required String idempotencyKey}) async {
+    final j = await _checkout(
+        {'action': 'create', 'verified_order_id': orderId, 'method': method.wire, 'idempotency_key': idempotencyKey});
+    return CheckoutPayment.fromJson(j['payment'] as Map);
+  }
+
   /// Checkout for a TIR park booking (0079): the amount comes from the
   /// booking on the server; only a verified provider event confirms it.
   Future<CheckoutPayment> startTirParkBookingCheckout(
