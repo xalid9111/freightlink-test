@@ -223,7 +223,7 @@ void main() {
     expect(find.text('Profilə bax'), findsOneWidget);
     final card = tester.getRect(find.byKey(const ValueKey('place-ad-s1')));
     expect(card.width, greaterThan(350), reason: 'one big card across the page');
-    expect(card.height, lessThanOrEqualTo(115), reason: 'the owner\'s size: a low card (07.11.2026)');
+    expect(card.height, lessThanOrEqualTo(92), reason: 'the owner\'s size: a low card, then 20 % smaller (07.11.2026)');
     await tester.drag(find.byKey(const ValueKey('place-ad-s1')), const Offset(-300, 0));
     await tester.pumpAndSettle();
     expect(find.text('Hissə Mağazası'), findsOneWidget, reason: 'the next ad is swiped in');
@@ -253,7 +253,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(tester.getRect(find.byKey(const ValueKey('place-ad-s9'))).height, lessThanOrEqualTo(145));
+    expect(tester.getRect(find.byKey(const ValueKey('place-ad-s9'))).height, lessThanOrEqualTo(116));
   });
 
   test('wired: places to the server, strips on TIR Bazarı and Yüklər (not on the maps), SQL 0103', () {
