@@ -8,7 +8,7 @@
 // orders or load VIP orders.
 //
 // POST { action: 'create', order_id | vip_order_id | cargo_vip_order_id | promo_order_id | cargo_promo_order_id
-//        | tir_park_booking_id | place_promo_order_id, method, idempotency_key }
+//        | tir_park_booking_id | place_promo_order_id | verified_order_id, method, idempotency_key }
 //   → payment_create (ad order), market_vip_payment_create (VIP order,
 //     0044), cargo_vip_payment_create (load VIP order, 0062) or
 //     market_promo_payment_create (İrəli çək / Premium, 0066) or
@@ -226,16 +226,19 @@ export async function handle(req: Request): Promise<Response> {
     const cargoPromoOrderId = body?.cargo_promo_order_id; // Loads İrəli çək / Premium (0067)
     const tirParkBookingId = body?.tir_park_booking_id; // TIR park space booking (0079)
     const placePromoOrderId = body?.place_promo_order_id; // Servis / TIRPark İrəli çək · VIP · Premium (0093)
+    const verifiedOrderId = body?.verified_order_id; // "Təsdiqlənmiş hesab" subscription (0104, LIVE only)
     const method = body?.method, key = body?.idempotency_key;
     // Exactly one order: an ad order, a TIR Bazarı VIP order, a load VIP
     // order or an İrəli çək / Premium order (TIR Bazarı or a load).
-    const all = [orderId, vipOrderId, cargoVipOrderId, promoOrderId, cargoPromoOrderId, tirParkBookingId, placePromoOrderId];
+    const all = [orderId, vipOrderId, cargoVipOrderId, promoOrderId, cargoPromoOrderId, tirParkBookingId, placePromoOrderId, verifiedOrderId];
     const targets = all.filter(isUuid).length;
     const unknown = all.some((v) => v !== undefined && v !== null && !isUuid(v));
     if (targets !== 1 || unknown || !(METHODS as readonly unknown[]).includes(method) || !isIdempotencyKey(key)) {
       return json({ error: 'invalid_request' }, 400);
     }
-    const res = isUuid(placePromoOrderId)
+    const res = isUuid(verifiedOrderId)
+      ? await rest(url, 'rpc/verified_payment_create', anonKey, auth, { body: { p_order: verifiedOrderId, p_method: method, p_key: key } })
+      : isUuid(placePromoOrderId)
       ? await rest(url, 'rpc/place_promo_payment_create', anonKey, auth, { body: { p_promo_order: placePromoOrderId, p_method: method, p_key: key } })
       : isUuid(tirParkBookingId)
       ? await rest(url, 'rpc/tir_park_booking_payment_create', anonKey, auth, { body: { p_booking: tirParkBookingId, p_method: method, p_key: key } })

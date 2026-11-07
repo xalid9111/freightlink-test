@@ -212,10 +212,11 @@ select tests.check((select role from public.users where id = 'a0000000-0000-4000
 
 set role authenticated;
 select tests.login(:admin);
-select public.admin_update_user(:owner2, '{"is_verified":true}');
+-- 0104: the blue tick is the Baş admin's only; another edit shows the RPC works.
+select public.admin_update_user(:owner2, '{"full_name":"E10 admin edit"}');
 update public.users set block_reason = 'admin direct edit' where id = :blocked;
 reset role;
-select tests.check((select is_verified from public.users where id = :owner2)
+select tests.check((select full_name = 'E10 admin edit' from public.users where id = :owner2)
                    and (select block_reason from public.users where id = :blocked) = 'admin direct edit',
   'E10 admin can still edit users (RPC and direct)');
 select tests.login(:admin);

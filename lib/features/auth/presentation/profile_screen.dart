@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../verified/verified_account.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/phone_countries.dart';
 import '../../../core/localization/app_strings.dart';
@@ -827,15 +828,14 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6, children: [
-                  _Badge(
-                    icon: verified ? Icons.verified : Icons.hourglass_empty,
-                    label: strings.t(verified ? 'pf_verified_account' : 'profile_unverified'),
-                    color: verified ? AppColors.blue : AppColors.textSoft,
-                  ),
-                  if (profile?.isEarlyMember == true)
-                    _Badge(icon: Icons.star_rounded, label: strings.t('badge_early_member'), color: AppColors.accent),
-                ]),
+                // "Təsdiqlənmiş hesab" (owner's picture, 07.11.2026, 0104):
+                // the clear blue badge when verified; otherwise the pale
+                // badge, the slogan and "Ayda 20 AZN · Aktiv et".
+                VerifiedAccountBlock(s: strings, userId: widget.userId, legacyVerified: verified),
+                if (profile?.isEarlyMember == true) ...[
+                  const SizedBox(height: 6),
+                  _Badge(icon: Icons.star_rounded, label: strings.t('badge_early_member'), color: AppColors.accent),
+                ],
               ]),
             ),
           ),

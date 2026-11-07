@@ -1,3 +1,4 @@
+import '../../verified/verified_account.dart' show isChiefAdminProvider, verifiedAccountRepositoryProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -644,6 +645,7 @@ Future<void> showUserDetail(BuildContext context, String id) {
       // The founder's account is changed only by the founder (checked on the
       // server too, 0045); other admins see it locked.
       final locked = founder && ref.watch(currentUserIdProvider) != id;
+      final chief = ref.watch(isChiefAdminProvider).valueOrNull == true;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -677,18 +679,22 @@ Future<void> showUserDetail(BuildContext context, String id) {
           else
           _actions([
             FilledButton.icon(
-              onPressed: () => _editUser(ctx, u),
+              onPressed: () => _editUser(ctx, u, chief: chief),
               icon: const Icon(Icons.edit_outlined, size: 18),
               label: const Text('Redaktə et'),
             ),
+            // The blue badge without payment: the Baş admin only (0104,
+            // checked on the server for every path).
+            if (chief)
             OutlinedButton.icon(
+              key: const ValueKey('admin-verified-grant'),
               style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1D9BF0)),
               onPressed: () async {
                 final v = u['is_verified'] == true;
                 final ok = await confirmAction(ctx, v ? 'Mavi tıkı götür' : 'Mavi tık ver',
-                    v ? 'Mavi tık götürülsün?' : 'Mavi tık profildə, mesajlarda və reklamlarda görünəcək.');
+                    v ? 'Mavi tık götürülsün?' : 'Ödənişsiz mavi tık (Baş admin təsdiqi) profildə, mesajlarda və reklamlarda görünəcək.');
                 if (!ok || !ctx.mounted) return;
-                await runAdmin(ctx, () => _repo(ctx).updateUser(id, {'is_verified': !v}),
+                await runAdmin(ctx, () => ref.read(verifiedAccountRepositoryProvider).adminSet(id, !v),
                     success: v ? 'Mavi tık götürüldü' : 'Mavi tık verildi');
               },
               icon: const Icon(Icons.verified, size: 18),
@@ -789,7 +795,7 @@ Future<void> showUserDetail(BuildContext context, String id) {
   });
 }
 
-Future<void> _editUser(BuildContext context, JsonRow u) async {
+Future<void> _editUser(BuildContext context, JsonRow u, {bool chief = false}) async {
   final name = TextEditingController(text: '${u['full_name'] ?? ''}');
   final phone = TextEditingController(text: '${u['phone'] ?? ''}');
   var role = '${u['role']}';
@@ -814,12 +820,14 @@ Future<void> _editUser(BuildContext context, JsonRow u) async {
                 items: [for (final r in roleLabels.entries) DropdownMenuItem(value: r.key, child: Text(r.value))],
                 onChanged: (v) => setState(() => role = v ?? role),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Təsdiqlənmiş hesab ✓'),
-                value: verified,
-                onChanged: (v) => setState(() => verified = v),
-              ),
+              // The blue badge: the Baş admin only (0104).
+              if (chief)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Təsdiqlənmiş hesab ✓'),
+                  value: verified,
+                  onChanged: (v) => setState(() => verified = v),
+                ),
             ],
           ),
         ),
@@ -844,7 +852,7 @@ Future<void> _editUser(BuildContext context, JsonRow u) async {
           'full_name': name.text.trim(),
           'phone': phone.text.trim(),
           'role': role,
-          'is_verified': verified,
+          if (chief) 'is_verified': verified,
         }),
       );
     }

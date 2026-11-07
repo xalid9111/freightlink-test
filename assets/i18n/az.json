@@ -1967,5 +1967,9 @@
   "promo_place_kind_service": "Servis",
   "promo_place_kind_shop": "Mağaza",
   "promo_place_market": "TIR Bazarı",
-  "promo_place_loads": "Yüklər bölməsi"
+  "promo_place_loads": "Yüklər bölməsi",
+  "vf_slogan": "Etibarını göstər, daha çox müştəri qazan",
+  "vf_activate": "Ayda {price} · Aktiv et",
+  "vf_not_live": "Onlayn ödəniş hələ qoşulmayıb. Qoşulan kimi təsdiqlənmiş hesabı buradan aktiv edə biləcəksiniz.",
+  "vf_failed": "Sifariş alınmadı. Bir az sonra yenidən cəhd edin."
 }
