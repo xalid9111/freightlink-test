@@ -96,7 +96,10 @@ class ProfileRepository {
     // restriction banner). RLS (0019) lets a user read only their own row.
     if (userId == _client.auth.currentUser?.id) {
       final row = await _client.from('users').select('*').eq('id', userId).maybeSingle();
-      return row == null ? null : PublicProfile.fromJson(row);
+      if (row == null) return null;
+      // The blue badge (0105): the Baş admin's grant OR a running paid
+      // subscription — the public view decides, as for everybody else.
+      return PublicProfile.fromJson({...row, 'is_verified': row['is_verified'] == true || await _paidBadge(userId)});
     }
     // Anyone else: public fields only, from the user_profiles view. Phone
     // and e-mail are no longer part of a profile — see contact().
@@ -108,6 +111,17 @@ class ProfileRepository {
       // Migration 0019 not applied yet: the old table read still works.
       final row = await _client.from('users').select('*').eq('id', userId).maybeSingle();
       return row == null ? null : PublicProfile.fromJson(row);
+    }
+  }
+
+  /// The public view's badge (0105: grant or paid); false when it cannot
+  /// be read (older database / offline) — the own row then decides.
+  Future<bool> _paidBadge(String userId) async {
+    try {
+      final r = await _client.from('user_profiles').select('is_verified').eq('id', userId).maybeSingle();
+      return r?['is_verified'] == true;
+    } catch (_) {
+      return false;
     }
   }
 

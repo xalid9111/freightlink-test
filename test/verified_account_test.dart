@@ -113,6 +113,15 @@ void main() {
     expect(find.byKey(const ValueKey('vf-activate')), findsNothing);
   });
 
+  test('the badge everywhere (0105): load cards, chats, ads read the public view; the own profile asks it too', () {
+    final sql = src('supabase/migrations/0105_verified_badge_everywhere.sql');
+    expect(sql, contains('where s.user_id = u.id and s.paid_until > now())) as is_verified,'));
+    expect(sql.toLowerCase().contains('drop '), isFalse);
+    final repo = src('lib/repositories/profile_repository.dart');
+    expect(repo, contains("'is_verified': row['is_verified'] == true || await _paidBadge(userId)"));
+    expect(repo, contains("from('user_profiles').select('is_verified')"));
+  });
+
   test('wired: under the owner\'s details on Profil; admin UI and server allow only the Baş admin', () {
     final p = src('lib/features/auth/presentation/profile_screen.dart');
     expect(p, contains('VerifiedAccountBlock(s: strings, userId: widget.userId, legacyVerified: verified),'));
