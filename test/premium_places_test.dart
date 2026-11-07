@@ -223,6 +223,7 @@ void main() {
     expect(find.text('Profilə bax'), findsOneWidget);
     final card = tester.getRect(find.byKey(const ValueKey('place-ad-s1')));
     expect(card.width, greaterThan(350), reason: 'one big card across the page');
+    expect(card.height, lessThanOrEqualTo(115), reason: 'the owner\'s size: a low card (07.11.2026)');
     await tester.drag(find.byKey(const ValueKey('place-ad-s1')), const Offset(-300, 0));
     await tester.pumpAndSettle();
     expect(find.text('Hissə Mağazası'), findsOneWidget, reason: 'the next ad is swiped in');
@@ -231,6 +232,28 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('place-ad-open-s1')));
     await tester.pumpAndSettle();
     expect(find.text('page s1'), findsOneWidget);
+  });
+
+  testWidgets('the ad card keeps its size and never overflows with big text (step 5 = 125 %)', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        placeCrossProvider('loads').overrideWith((ref) async => const [
+              PlaceCrossItem(kind: 'service', id: 's9', name: 'Çox uzun adlı yolüstü TIR təmir servisi', city: 'Sumqayıt'),
+            ]),
+        serviceByIdProvider('s9').overrideWith((ref) async => null),
+        placeMediaProvider((CoverSection.service, 's9')).overrideWith((ref) async => const PlaceMedia()),
+      ],
+      child: MaterialApp(
+        builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(textScaler: const TextScaler.linear(1.25)), child: child!),
+        home: Scaffold(body: ListView(children: [PlaceCrossStrip(s: _az, place: 'loads')])),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.getRect(find.byKey(const ValueKey('place-ad-s9'))).height, lessThanOrEqualTo(145));
   });
 
   test('wired: places to the server, strips on TIR Bazarı and Yüklər (not on the maps), SQL 0103', () {

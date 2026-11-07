@@ -236,8 +236,9 @@ class _PlaceCrossStripState extends ConsumerState<PlaceCrossStrip> {
   Widget build(BuildContext context) {
     final items = ref.watch(placeCrossProvider(widget.place)).valueOrNull ?? const <PlaceCrossItem>[];
     if (items.isEmpty) return const SizedBox.shrink();
-    // Grows with the text size (Profil → 1…5), so nothing is cut.
-    final h = 150 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
+    // The owner's size (07.11.2026: a low card, about a quarter of its
+    // width); grows only with the text size (Profil → 1…5), so nothing is cut.
+    final h = 112 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
     return Padding(
       key: ValueKey('place-cross-${widget.place}'),
       padding: const EdgeInsets.only(bottom: 14),
@@ -305,7 +306,7 @@ class PlaceAdCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: open,
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: c.withValues(alpha: 0.75), width: 1.4),
@@ -327,12 +328,12 @@ class PlaceAdCard extends ConsumerWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Container(
                   key: const ValueKey('place-ad-badge'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
                   decoration: BoxDecoration(color: c.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(6)),
                   child: Text(s.t('pp_ad').toUpperCase(),
                       style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
                 Row(children: [
                   Icon(_icon, size: 18, color: c),
                   const SizedBox(width: 6),
@@ -344,9 +345,9 @@ class PlaceAdCard extends ConsumerWidget {
                   ),
                 ]),
                 if (info.about != null) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 1),
                   Text(info.about!,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: AppColors.textSoft, fontSize: 12.5, height: 1.25)),
                 ],
@@ -378,7 +379,7 @@ class PlaceAdCard extends ConsumerWidget {
                             foregroundColor: Colors.white,
                             visualDensity: VisualDensity.compact,
                             padding: const EdgeInsets.symmetric(horizontal: 10),
-                            minimumSize: const Size(0, 34),
+                            minimumSize: const Size(0, 30),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
