@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -181,7 +182,11 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
     // Closes with a swipe from the left edge too (owner, 01.11.2026).
     return EdgeSwipeBack(
       child: Scaffold(
-      appBar: AppBar(title: Text(park?.name ?? s.t('tp_parks'), maxLines: 1, overflow: TextOverflow.ellipsis)),
+      appBar: AppBar(
+        title: Text(park?.name ?? s.t('tp_parks'), maxLines: 1, overflow: TextOverflow.ellipsis),
+        // Like this park (owner, 07.11.2026, 0106).
+        actions: [if (park != null && park.isApproved) LikeHeart(kind: FavKind.park, id: park.id)],
+      ),
       body: park == null
           ? Center(
               child: parksAsync.isLoading

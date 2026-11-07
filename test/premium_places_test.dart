@@ -17,6 +17,7 @@ import 'package:freightlink/features/finance/presentation/card_checkout.dart';
 import 'package:freightlink/features/finance/presentation/finance_providers.dart';
 import 'package:freightlink/features/market/domain/market_models.dart';
 import 'package:freightlink/features/market/presentation/market_promo.dart';
+import 'package:freightlink/features/cargo/presentation/cargo_marketplace_screen.dart' show TileRowWidth, tileRowWidth;
 import 'package:freightlink/features/covers/profile_covers.dart';
 import 'package:freightlink/features/promo/promo_cross.dart';
 import 'package:freightlink/features/services/presentation/services_providers.dart' show serviceByIdProvider;
@@ -234,6 +235,38 @@ void main() {
     expect(find.text('page s1'), findsOneWidget);
   });
 
+  testWidgets('Yüklər: the ad card never goes past the load cards\' left / right edges (owner, 07.11.2026)', (tester) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        placeCrossProvider('loads').overrideWith((ref) async => const [PlaceCrossItem(kind: 'tirpark', id: 'p7', name: 'Upark', city: 'Bakı')]),
+        placeMediaProvider((CoverSection.park, 'p7')).overrideWith((ref) async => const PlaceMedia()),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: ListView(children: [
+            // Exactly as on the Loads page.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              child: TileRowWidth(child: PlaceCrossStrip(s: _az, place: 'loads')),
+            ),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final card = tester.getRect(find.byKey(const ValueKey('place-ad-p7')));
+    final row = tileRowWidth(390 - 24);
+    final left = 12 + (390 - 24 - row) / 2, right = left + row;
+    expect(card.left, greaterThanOrEqualTo(left));
+    expect(card.right, lessThanOrEqualTo(right));
+    expect(card.width, greaterThan(row - 6), reason: 'as wide as the two cards');
+    expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart'),
+        contains("TileRowWidth(child: PlaceCrossStrip(s: strings, place: 'loads'))"));
+  });
+
   testWidgets('the ad card keeps its size and never overflows with big text (step 5 = 125 %)', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -261,7 +294,7 @@ void main() {
     expect(pp, contains("if (places != null) 'p_places': places,"));
     expect(pp, contains('places: kind == MarketPromoKind.premium && places != null ? promoPlacesWire(places) : null'));
     expect(pp, contains('cargoPromoPlansProvider((MarketPromoKind.premium, true))'), reason: 'both = + the Yüklər price');
-    expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart'), contains("PlaceCrossStrip(s: strings, place: 'loads'),"));
+    expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart'), contains("TileRowWidth(child: PlaceCrossStrip(s: strings, place: 'loads'))"));
     expect(src('lib/features/market/presentation/market_home_screen.dart'), contains("PlaceCrossStrip(s: s, place: 'market'),"));
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart').contains('PlaceCrossStrip'), isFalse);
     expect(src('lib/features/services/presentation/services_map_screen.dart').contains('PlaceCrossStrip'), isFalse);

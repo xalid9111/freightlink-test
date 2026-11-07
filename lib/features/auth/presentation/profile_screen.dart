@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -91,6 +92,21 @@ class ProfileScreen extends ConsumerWidget {
                       child: Text(strings.t('profile_title'),
                           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
+                    // "Bəyəndiklərim" → Profillər (owner, 07.11.2026).
+                    Material(
+                      color: AppColors.card,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(color: AppColors.line),
+                      ),
+                      child: IconButton(
+                        key: const ValueKey('profile-favorites'),
+                        tooltip: strings.t('fav_title'),
+                        icon: Icon(Icons.favorite_border, color: AppColors.text),
+                        onPressed: () => openFavorites(context, FavTab.profiles),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Material(
                       color: AppColors.card,
                       shape: RoundedRectangleBorder(

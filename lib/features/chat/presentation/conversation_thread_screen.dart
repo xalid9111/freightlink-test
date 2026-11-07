@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -271,6 +272,8 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
       appBar: AppBar(
         titleSpacing: 0,
         actions: [
+          // Like this chat (owner, 07.11.2026, 0106): it stands first in Mesajlar.
+          if (otherId != null) LikeHeart(kind: FavKind.chat, id: otherId),
           // WhatsApp-style: shop icon → the person's profile / catalog.
           if (otherId != null)
             IconButton(

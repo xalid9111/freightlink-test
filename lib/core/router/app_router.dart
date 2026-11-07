@@ -1,3 +1,4 @@
+import '../../features/favorites/favorites.dart' show FavoritesScreen, favTabOf;
 import 'package:flutter/widgets.dart' show GlobalKey, Listenable, NavigatorState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -257,6 +258,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/chat-group/:gid',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => DeskFrame(section: 3, child: GroupThreadScreen(groupId: state.pathParameters['gid']!)),
+      ),
+      // "Bəyəndiklərim" (owner, 07.11.2026): Yüklər · TIR Bazarı · Mesajlar · Profillər.
+      GoRoute(
+        path: '/favorites',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => FavoritesScreen(initial: favTabOf(state.uri.queryParameters['tab'])),
       ),
       GoRoute(
         path: '/user/:id',

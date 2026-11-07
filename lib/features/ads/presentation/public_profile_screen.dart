@@ -1,4 +1,5 @@
 
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -151,11 +152,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                         _TitleRow(
                           title: s.t('profile_title'),
                           onBack: _back,
-                          action: _SquareButton(
-                            icon: Icons.share_outlined,
-                            tooltip: s.t('profile_share'),
-                            onTap: () => _share(s),
-                          ),
+                          action: Row(mainAxisSize: MainAxisSize.min, children: [
+                            // Like this profile (owner, 07.11.2026, 0106).
+                            if (!isMe) LikeHeart(kind: FavKind.user, id: widget.userId),
+                            _SquareButton(
+                              icon: Icons.share_outlined,
+                              tooltip: s.t('profile_share'),
+                              onTap: () => _share(s),
+                            ),
+                          ]),
                         ),
                         // Same card as the Profile tab, with the cover on top.
                         Container(
@@ -202,7 +207,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    UserAvatar(imageUrl: p.avatarUrl, initials: p.initials, radius: 44, online: online),
+                                    // A verified account: the blue badge on the photo's corner,
+                                    // where the online dot was (owner, 07.11.2026).
+                                    VerifiedCornerAvatar(imageUrl: p.avatarUrl, initials: p.initials, verified: p.isVerified),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
@@ -232,14 +239,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                               ],
                                             ],
                                           ),
-                                          if (p.isVerified || p.isEarlyMember) ...[
+                                          ...[
                                             const SizedBox(height: 8),
                                             Wrap(
                                               spacing: 6,
                                               runSpacing: 6,
                                               children: [
-                                                if (p.isVerified)
-                                                  _Badge(icon: Icons.verified, label: s.t('pf_verified_account'), color: AppColors.blue),
+                                                // Online / offline where the "Təsdiqlənmiş hesab" pill was
+                                                // (owner, 07.11.2026): a round dot + the word.
+                                                ProfilePresence(online: online, s: s),
                                                 if (p.isEarlyMember)
                                                   _Badge(icon: Icons.star_rounded, label: s.t('badge_early_member'), color: AppColors.accent),
                                               ],
@@ -429,6 +437,58 @@ class _SquareButton extends StatelessWidget {
         side: BorderSide(color: AppColors.line),
       ),
       child: IconButton(tooltip: tooltip, icon: Icon(icon, color: AppColors.text), onPressed: onTap),
+    );
+  }
+}
+
+/// The profile photo; a verified account has the blue badge on its corner,
+/// where the online dot used to be (owner, 07.11.2026).
+class VerifiedCornerAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final String initials;
+  final bool verified;
+  const VerifiedCornerAvatar({super.key, this.imageUrl, required this.initials, required this.verified});
+
+  @override
+  Widget build(BuildContext context) => Stack(clipBehavior: Clip.none, children: [
+        UserAvatar(imageUrl: imageUrl, initials: initials, radius: 44),
+        if (verified)
+          Positioned(
+            right: -1,
+            bottom: -1,
+            child: Container(
+              key: const ValueKey('profile-verified-corner'),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.card, width: 2),
+              ),
+              child: Icon(Icons.verified, size: 26, color: AppColors.blue),
+            ),
+          ),
+      ]);
+}
+
+/// A green (online) or grey (offline) dot with its word, where the
+/// "Təsdiqlənmiş hesab" pill used to be (owner, 07.11.2026).
+class ProfilePresence extends StatelessWidget {
+  final bool online;
+  final AppStrings s;
+  const ProfilePresence({super.key, required this.online, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = online ? AppColors.online : AppColors.textSoft;
+    return Container(
+      key: ValueKey(online ? 'profile-presence-online' : 'profile-presence-offline'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(s.t(online ? 'presence_online' : 'presence_offline'),
+            style: TextStyle(color: c, fontSize: 12.5, fontWeight: FontWeight.w400)),
+      ]),
     );
   }
 }

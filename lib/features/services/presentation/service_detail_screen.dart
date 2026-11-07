@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,11 @@ class ServiceDetailScreen extends ConsumerWidget {
         // A shop is shown as a shop (owner, 07.11.2026) — the same rule as
         // the Mağazalar map (ServiceProvider.isShop).
         title: Text(s.t(async.valueOrNull?.isShop == true ? 'shop_profile_title' : 'svc_profile_title')),
+        // Like this service / shop (owner, 07.11.2026, 0106); not one's own.
+        actions: [
+          if (async.valueOrNull case final sp? when sp.ownerId != me && sp.status == 'approved')
+            LikeHeart(kind: FavKind.service, id: id),
+        ],
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),

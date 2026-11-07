@@ -1,3 +1,4 @@
+import '../../favorites/favorites.dart' show openFavorites, FavTab;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -110,7 +111,7 @@ class _MarketHomeDesktopState extends ConsumerState<MarketHomeDesktop> {
                           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
                     TextButton.icon(
-                      onPressed: () => context.pushOnce('/market/favorites'),
+                      onPressed: () => openFavorites(context, FavTab.market),
                       icon: const Icon(Icons.favorite_border, size: 20),
                       label: Text(s.t('mk_favorites')),
                     ),
