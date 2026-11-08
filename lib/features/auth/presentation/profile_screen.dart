@@ -83,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
             bottom: false,
             child: ListView(
               // Room under the last card so the bottom bar never covers it.
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 32 + MediaQuery.of(context).viewPadding.bottom),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 32 + MediaQuery.paddingOf(context).bottom),
               children: [
                 // Title + settings gear
                 Row(

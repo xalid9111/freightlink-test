@@ -285,7 +285,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                 if (feed.items.isNotEmpty && feed.loading)
                   const SliverToBoxAdapter(
                       child: Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // The floating bar's room after the last ads (owner, 08.11.2026).
+                SliverToBoxAdapter(child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)),
               ],
             ),
           ),

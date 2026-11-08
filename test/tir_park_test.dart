@@ -286,8 +286,8 @@ void main() {
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: '/tirpark',"));
-    expect(router, contains('builder: (context, state) => const TirParkScreen(),'));
-    expect(router, contains("GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),"),
+    expect(router, contains('builder: (context, state) => const NavRoom(child: TirParkScreen()),'));
+    expect(router, contains("GoRoute(path: '/services', builder: (context, state) => NavRoom(child: ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1'))),"),
         reason: 'Servislər kept (+ Mağazalar, 05.11.2026)');
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("onServices: () => context.go('/services')"));
     // The same switch on Servislər, back to the parks, and "Servis əlavə et" there (owner, 31.10.2026).

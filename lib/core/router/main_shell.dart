@@ -15,6 +15,7 @@ import '../../features/auth/presentation/settings_screen.dart' show showLanguage
 import '../notify/message_alert.dart';
 import '../notify/notify_settings.dart';
 import '../../models/group_models.dart';
+import 'floating_nav.dart';
 import 'safe_navigation.dart';
 
 /// Bottom navigation shell (brief §14): Home/Loads, Search, Shipments,
@@ -104,23 +105,47 @@ class MainShell extends ConsumerWidget {
       );
     }
 
+    // Phone: the floating capsule (owner's picture, 08.11.2026) — see
+    // floating_nav.dart. The pages run under it (extendBody); each tab page
+    // makes its own room for it (NavRoom in app_router.dart). The
+    // navigator itself keeps the phone's own bottom safe area, so a sheet
+    // opened in a tab is laid out as before (the capsule steps aside).
+    // With the keyboard open the capsule is not there, as before.
+    final outer = MediaQuery.of(context);
+    final keyboard = outer.viewInsets.bottom > 0;
+    final space = keyboard ? 0.0 : FloatingNav.space(outer.viewPadding.bottom);
     return ResumeRefresher(
       child: Scaffold(
+        extendBody: true,
         body: Column(
           children: [
             const _RestrictedBanner(),
-            Expanded(child: navigationShell),
+            Expanded(
+              child: MediaQuery(
+                data: outer.removeViewInsets(removeBottom: true),
+                child: FloatingNavScope(space: space, child: navigationShell),
+              ),
+            ),
           ],
         ),
-        bottomNavigationBar: _BottomBar(
-          items: items,
-          current: navigationShell.currentIndex,
-          onTap: goTo,
-        ),
+        bottomNavigationBar: keyboard
+            ? null
+            : ValueListenableBuilder<int>(
+                valueListenable: ShellOverlayObserver.open,
+                builder: (context, open, _) => _BottomBar(
+                  items: items,
+                  current: navigationShell.currentIndex,
+                  onTap: goTo,
+                  hidden: open > 0,
+                ),
+              ),
       ),
     );
   }
 }
+
+/// The phone's bottom bar: the floating capsule.
+typedef _BottomBar = FloatingNavBar;
 
 List<_NavItem> _navItems(AppStrings strings, int unread) => <_NavItem>[
       _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
@@ -176,98 +201,7 @@ class DeskFrame extends ConsumerWidget {
   }
 }
 
-class _NavItem {
-  final int branch;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final int badge;
-  const _NavItem(this.branch, this.icon, this.selectedIcon, this.label, {this.badge = 0});
-}
-
-/// Equal slots that always fit: each label is one line and shrinks to
-/// its slot (FittedBox) instead of wrapping or overflowing on a 320 px
-/// iPhone. Respects the home-indicator safe area.
-class _BottomBar extends StatelessWidget {
-  final List<_NavItem> items;
-  final int current;
-  final ValueChanged<int> onTap;
-  const _BottomBar({required this.items, required this.current, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.hero,
-      child: DecoratedBox(
-        decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 62,
-            child: Row(
-              children: [
-                for (final it in items) Expanded(child: _slot(it, it.branch == current)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _slot(_NavItem it, bool selected) {
-    final color = selected ? AppColors.accent : AppColors.textSoft;
-    Widget icon = Icon(selected ? it.selectedIcon : it.icon, color: color, size: 22);
-    if (it.badge > 0) {
-      icon = Badge(label: Text(it.badge > 99 ? '99+' : '${it.badge}'), child: icon);
-    }
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: it.label,
-      child: InkWell(
-        onTap: () => onTap(it.branch),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 46,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.accent.withValues(alpha: 0.16) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                alignment: Alignment.center,
-                child: icon,
-              ),
-              const SizedBox(height: 3),
-              SizedBox(
-                height: 15,
-                width: double.infinity,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    it.label,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+typedef _NavItem = FloatingNavItem;
 
 /// Desktop sidebar (owner's desktop design): logo, the five sections,
 /// unread badge on Mesajlar, day / night switch and app language.
