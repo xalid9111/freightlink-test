@@ -146,26 +146,59 @@ class HeaderCircles extends ConsumerWidget {
         ),
       ),
       const SizedBox(width: 10),
-      HeaderCircle(
-        key: const ValueKey('hdr-profile'),
-        tooltip: strings.t('nav_profile'),
-        onTap: () => context.go('/profile'),
-        padding: 2,
-        child: UserAvatar(imageUrl: profile?.avatarUrl, initials: initials, radius: 18),
+      // The profile picture 15 % bigger, with the blue badge on its lower
+      // right edge for a verified account (owner's picture, 08.11.2026).
+      // It keeps the old 42 pt place, so nothing else in the header moves.
+      SizedBox(
+        width: HeaderCircle.defaultSize,
+        height: HeaderCircle.defaultSize,
+        child: OverflowBox(
+          maxWidth: kHeaderProfileSize,
+          maxHeight: kHeaderProfileSize,
+          child: Stack(clipBehavior: Clip.none, children: [
+            HeaderCircle(
+              key: const ValueKey('hdr-profile'),
+              tooltip: strings.t('nav_profile'),
+              onTap: () => context.go('/profile'),
+              size: kHeaderProfileSize,
+              padding: 2 * kHeaderProfileScale,
+              child: UserAvatar(imageUrl: profile?.avatarUrl, initials: initials, radius: 18 * kHeaderProfileScale),
+            ),
+            if (profile?.isVerified == true)
+              Positioned(
+                right: -3,
+                bottom: -3,
+                child: IgnorePointer(
+                  child: Container(
+                    key: const ValueKey('hdr-profile-verified'),
+                    decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle),
+                    padding: const EdgeInsets.all(1.5),
+                    child: Icon(Icons.verified, size: 17, color: AppColors.blue),
+                  ),
+                ),
+              ),
+          ]),
+        ),
       ),
     ]);
   }
 }
 
+/// The header's profile picture: 15 % bigger than the other round buttons
+/// (owner, 08.11.2026).
+const double kHeaderProfileScale = 1.15;
+const double kHeaderProfileSize = HeaderCircle.defaultSize * kHeaderProfileScale;
+
 /// One round glass button of the header (also used on the computer).
 class HeaderCircle extends StatelessWidget {
+  static const double defaultSize = 42;
   final Widget child;
   final VoidCallback onTap;
   final String tooltip;
   final double size;
   final double padding;
   const HeaderCircle(
-      {super.key, required this.child, required this.onTap, required this.tooltip, this.size = 42, this.padding = 0});
+      {super.key, required this.child, required this.onTap, required this.tooltip, this.size = defaultSize, this.padding = 0});
 
   @override
   Widget build(BuildContext context) {

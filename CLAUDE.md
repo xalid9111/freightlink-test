@@ -390,6 +390,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   Another person's profile page (owner, 07.11.2026): the blue badge sits on
   the photo's corner (where the online dot was); the old pill's place shows
   the presence — a round green dot + "Online" (grey + "Offline").
+  Yüklər header (owner's picture, 08.11.2026): the profile picture is 15 %
+  bigger (kHeaderProfileScale, drawn over its old 42 pt place so nothing
+  else moves) and a verified account (user_profiles.is_verified) gets the
+  blue badge on its lower right edge; not verified = no badge.
 - Map banners (owner, 08.11.2026): switching Parklar | Servislər |
   Mağazalar never reloads the banner picture — the TIRPark / Servislər page
   heroes stay in memory (pageHeroProvider keepAlive for kMapBannerPages);
