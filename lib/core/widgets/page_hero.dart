@@ -171,6 +171,11 @@ class PageHeroRepository {
 final pageHeroRepositoryProvider = Provider<PageHeroRepository>((ref) => PageHeroRepository());
 
 final pageHeroProvider = FutureProvider.autoDispose.family<PageHero?, String>((ref, page) async {
+  // TIRPark / Servislər / Mağazalar switch (owner, 08.11.2026): the map
+  // banners stay in memory, so going back and forth shows the same picture
+  // at once instead of the default one and then reloading it. An admin's
+  // edit still refreshes it (the editor invalidates this provider).
+  if (kMapBannerPages.contains(page)) ref.keepAlive();
   ref.watch(currentUserIdProvider);
   try {
     return await ref.watch(pageHeroRepositoryProvider).fetch(page);
@@ -179,6 +184,9 @@ final pageHeroProvider = FutureProvider.autoDispose.family<PageHero?, String>((r
     return null;
   }
 });
+
+/// The map pages' banners (MapPageBanner): TIRPark and Servislər / Mağazalar.
+const kMapBannerPages = {'tirpark', 'services'};
 
 bool isAdminUser(WidgetRef ref) => ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin;
 
