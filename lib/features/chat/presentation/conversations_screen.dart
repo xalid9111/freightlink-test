@@ -520,7 +520,8 @@ class _LazyList extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(14),
+        // The floating bar's room after the last chat (owner, 08.11.2026).
+        padding: EdgeInsets.fromLTRB(14, 14, 14, 14 + MediaQuery.paddingOf(context).bottom),
         itemCount: children.length,
         itemBuilder: (_, i) => children[i],
       );

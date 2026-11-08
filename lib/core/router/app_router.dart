@@ -34,6 +34,7 @@ import '../../features/services/presentation/services_map_screen.dart';
 import '../autofix/route_error_screen.dart';
 import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
+import 'floating_nav.dart';
 import 'main_shell.dart';
 import '../../features/jobs/presentation/job_applications_screen.dart';
 import '../../features/jobs/presentation/job_center_screen.dart';
@@ -372,28 +373,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell, location: state.uri.path),
         branches: [
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
             GoRoute(
               path: '/cargo',
-              builder: (context, state) => const CargoMarketplaceScreen(),
+              builder: (context, state) => const NavRoom.behind(child: CargoMarketplaceScreen()),
               routes: [
                 GoRoute(
                   path: ':id',
-                  builder: (context, state) => CargoDetailScreen(cargoId: state.pathParameters['id']!),
+                  builder: (context, state) => NavRoom(child: CargoDetailScreen(cargoId: state.pathParameters['id']!)),
                 ),
               ],
             ),
           ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
+            GoRoute(path: '/search', builder: (context, state) => const NavRoom(child: SearchScreen())),
           ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/shipments', builder: (context, state) => const ShipmentsScreen()),
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
+            GoRoute(path: '/shipments', builder: (context, state) => const NavRoom(child: ShipmentsScreen())),
           ]),
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
             GoRoute(
               path: '/messages',
-              builder: (context, state) => const ConversationsScreen(),
+              builder: (context, state) => const NavRoom.behind(child: ConversationsScreen()),
               routes: [
                 // Specific paths first — ':id' would otherwise match them.
                 GoRoute(
@@ -403,66 +404,68 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ),
                 GoRoute(
                   path: 'group/:gid',
-                  builder: (context, state) => GroupThreadScreen(groupId: state.pathParameters['gid']!),
+                  builder: (context, state) => NavRoom(child: GroupThreadScreen(groupId: state.pathParameters['gid']!)),
                 ),
                 // One thread per person (all load chats + the direct chat).
                 GoRoute(
                   path: 'with/:uid',
-                  builder: (context, state) => ConversationThreadScreen(otherUserId: state.pathParameters['uid']!),
+                  builder: (context, state) => NavRoom(child: ConversationThreadScreen(otherUserId: state.pathParameters['uid']!)),
                 ),
                 GoRoute(
                   path: ':id',
-                  builder: (context, state) => ConversationThreadScreen(conversationId: state.pathParameters['id']!),
+                  builder: (context, state) => NavRoom(child: ConversationThreadScreen(conversationId: state.pathParameters['id']!)),
                 ),
               ],
             ),
           ]),
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
             GoRoute(
               path: '/profile',
-              builder: (context, state) => const ProfileScreen(),
+              builder: (context, state) => const NavRoom.behind(child: ProfileScreen()),
               // Owner's design (04.11.2026): the details on their own pages.
               routes: [
-                GoRoute(path: 'personal', builder: (context, state) => const ProfilePersonalScreen()),
-                GoRoute(path: 'activity', builder: (context, state) => const ProfileActivityScreen()),
-                GoRoute(path: 'tirpark', builder: (context, state) => const ProfileTirParkScreen()),
+                GoRoute(path: 'personal', builder: (context, state) => const NavRoom(child: ProfilePersonalScreen())),
+                GoRoute(path: 'activity', builder: (context, state) => const NavRoom(child: ProfileActivityScreen())),
+                GoRoute(path: 'tirpark', builder: (context, state) => const NavRoom(child: ProfileTirParkScreen())),
               ],
             ),
           ]),
           // Branch 5 — TIRPark (owner, 31.10.2026; was the Services tab).
           // Servislər stays in the same tab, opened from TIRPark.
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
             GoRoute(
               path: '/tirpark',
-              builder: (context, state) => const TirParkScreen(),
+              builder: (context, state) => const NavRoom(child: TirParkScreen()),
               routes: [
                 // One park: pictures, rating, comments (TIRPark PR 2, 0078).
                 GoRoute(
                   path: 'p/:id',
-                  builder: (context, state) => TirParkDetailScreen(
-                    parkId: state.pathParameters['id']!,
-                    write: state.uri.queryParameters['write'] == '1',
+                  builder: (context, state) => NavRoom(
+                    child: TirParkDetailScreen(
+                      parkId: state.pathParameters['id']!,
+                      write: state.uri.queryParameters['write'] == '1',
+                    ),
                   ),
                 ),
                 // Managing a park and bookings (owner, 01.11.2026, 0079).
                 GoRoute(
                   path: 'manage',
-                  builder: (context, state) => const TirParkManageScreen(),
-                  routes: [GoRoute(path: 'new', builder: (context, state) => const TirParkManageFormScreen())],
+                  builder: (context, state) => const NavRoom(child: TirParkManageScreen()),
+                  routes: [GoRoute(path: 'new', builder: (context, state) => const NavRoom(child: TirParkManageFormScreen()))],
                 ),
-                GoRoute(path: 'bookings', builder: (context, state) => const MyParkBookingsScreen()),
+                GoRoute(path: 'bookings', builder: (context, state) => const NavRoom(child: MyParkBookingsScreen())),
                 // A park's worker (owner, 03.11.2026, 0087).
-                GoRoute(path: 'work', builder: (context, state) => const TirParkWorkScreen()),
+                GoRoute(path: 'work', builder: (context, state) => const NavRoom(child: TirParkWorkScreen())),
               ],
             ),
-            GoRoute(path: '/services', builder: (context, state) => ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1')),
+            GoRoute(path: '/services', builder: (context, state) => NavRoom(child: ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1'))),
           ]),
           // Branch 6 — TIR Bazarı: a separate part of the app, downloaded
           // only when the tab is opened (deferred).
-          StatefulShellBranch(routes: [
+          StatefulShellBranch(observers: [ShellOverlayObserver()], routes: [
             GoRoute(
               path: '/market',
-              builder: (context, state) => DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketHomeScreen()),
+              builder: (context, state) => NavRoom.behind(child: DeferredPage(load: market.loadLibrary, builder: (_) => market.MarketHomeScreen())),
             ),
           ]),
         ],

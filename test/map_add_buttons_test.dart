@@ -83,7 +83,7 @@ void main() {
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     expect(tp.contains('TirParkAddSheet'), isFalse);
     expect(tp, contains("onTap: () => context.pushOnce('/profile/tirpark'),"), reason: 'the map + opens the TIR Parkı page');
-    expect(src('lib/core/router/app_router.dart'), contains('builder: (context, state) => const TirParkScreen(),'));
+    expect(src('lib/core/router/app_router.dart'), contains('builder: (context, state) => const NavRoom(child: TirParkScreen()),'));
   });
 
   test('no admin approval for services, shops and parking spots (0099); "Park işlədirəm" keeps it', () {

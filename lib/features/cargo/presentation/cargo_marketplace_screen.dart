@@ -177,8 +177,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ),
                   // No panel behind the tiles (owner, 24.10.2026): the page
                   // ground shows between them.
+                  // Room under the last row: never under the floating bar.
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, kTileGap, 12, 96),
+                    padding: EdgeInsets.fromLTRB(12, kTileGap, 12, math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
                     sliver: SliverList.builder(
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
