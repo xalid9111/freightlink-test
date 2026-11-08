@@ -74,6 +74,29 @@ class VerifiedTick extends StatelessWidget {
   Widget build(BuildContext context) => Icon(Icons.verified, size: size, color: AppColors.blue);
 }
 
+/// The verified badge drawn ON a profile picture (owner, 08.11.2026): the
+/// blue badge with a clean white tick, no white ring or frame around it.
+/// The white disc sits only under the tick (inside the badge), so nothing
+/// white shows past the badge's edge.
+class VerifiedPhotoBadge extends StatelessWidget {
+  final double size;
+  const VerifiedPhotoBadge({super.key, this.size = 18});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: size,
+        height: size,
+        child: Stack(alignment: Alignment.center, children: [
+          Container(
+            width: size * 0.56,
+            height: size * 0.56,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          ),
+          Icon(Icons.verified, size: size, color: AppColors.blue),
+        ]),
+      );
+}
+
 /// Small "Early member" pill.
 class EarlyMemberChip extends StatelessWidget {
   final String label;
