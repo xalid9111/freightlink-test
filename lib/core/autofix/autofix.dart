@@ -66,7 +66,7 @@ class AutoFix {
     final prevFlutter = FlutterError.onError;
     FlutterError.onError = (details) {
       prevFlutter?.call(details); // keep the normal console output
-      capture(details.exception, details.stack, source: 'flutter');
+      capture(details.exception, details.stack, source: 'flutter', detail: imageErrorDetail(details));
     };
     final prevPlatform = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (error, stack) {
@@ -119,11 +119,13 @@ class AutoFix {
     bool messaging = false,
     String? forceKind,
     ProviderBase<Object?>? provider,
+    String? detail,
   }) {
     if (_inCapture) return; // never loop on our own errors
     _inCapture = true;
     try {
-      final text = error.toString();
+      // [detail]: which picture failed, for image errors (AutoFix 08.11.2026).
+      final text = detail == null ? error.toString() : '$error\n$detail';
       final classified = classifyError(error.runtimeType.toString(), text, messaging: messaging);
       final kind = forceKind ?? classified.kind;
       final stackText = stack?.toString() ?? '';
@@ -355,5 +357,24 @@ class AutoFixObserver extends ProviderObserver {
     final a = AutoFix.instance;
     a.attachContainer(container);
     a.capture(error, stackTrace, source: 'provider', provider: provider, messaging: a.isChatProvider(provider));
+  }
+}
+
+/// For a picture that could not be loaded / decoded (Flutter's "image
+/// resource service"): which picture it was ("Image provider: …", with its
+/// address), so Admin → AutoFix names it (owner, 08.11.2026: "AbortError:
+/// Aborted by failure" from the browser's image decoder had no clue).
+/// Null for every other error.
+String? imageErrorDetail(FlutterErrorDetails details) {
+  if (details.library != 'image resource service') return null;
+  try {
+    final lines = <String>[
+      'image resource service: ${details.context?.toDescription() ?? ''}'.trim(),
+      for (final d in details.informationCollector?.call() ?? const <DiagnosticsNode>[]) d.toString(),
+    ];
+    final s = lines.where((l) => l.isNotEmpty).join('\n');
+    return s.length > 600 ? s.substring(0, 600) : s;
+  } catch (_) {
+    return 'image resource service';
   }
 }
