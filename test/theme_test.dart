@@ -59,7 +59,10 @@ void main() {
 
   test('saved before the first screen; Settings switch for everyone', () {
     final main = File('lib/main.dart').readAsStringSync();
-    expect(main.indexOf('await loadSavedTheme();') < main.indexOf('runApp('), isTrue);
+    // Started together with the rest of the start-up (08.11.2026), still
+    // finished before the first screen.
+    expect(main.indexOf('loadSavedTheme(serverReady: supabaseReady),') < main.indexOf('await local;'), isTrue);
+    expect(main.indexOf('await local;') < main.indexOf('runApp(\n    ProviderScope('), isTrue);
     expect(main.contains('themeMode: AppColors.isDay ? ThemeMode.light : ThemeMode.dark'), isTrue);
     final settings = File('lib/features/auth/presentation/settings_screen.dart').readAsStringSync();
     expect(settings.contains('const kDayModeForEveryone = true;'), isTrue);

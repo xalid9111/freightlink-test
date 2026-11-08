@@ -37,10 +37,19 @@ NightThemeSpec? _specFrom(String? raw) {
   }
 }
 
+/// Set once the published night palette has been asked for on this device
+/// (also when there is none), so later starts never wait for it.
+const kNightThemeCheckedKey = 'night_theme_checked';
+
 /// Before runApp: the saved mode becomes the app's colours. At night the
-/// admin's published palette is asked for (a short wait at most; the copy
-/// from the last start is used meanwhile / when offline).
-Future<void> loadSavedTheme() async {
+/// admin's published palette (0076) is asked for:
+///  * first start on this device: waited for (a short wait at most, as
+///    before) so the very first screen has the right colours;
+///  * later starts (owner, 08.11.2026 — faster start): the copy kept from
+///    the last start is used at once and the server's answer is kept for
+///    the NEXT start, so the colours never change on an open screen.
+/// [serverReady] completes once Supabase is initialised.
+Future<void> loadSavedTheme({Future<void>? serverReady}) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     final mode = prefs.getString(kThemeModeKey);
@@ -50,20 +59,39 @@ Future<void> loadSavedTheme() async {
     }
     final preview = _specFrom(prefs.getString(kNightThemePreviewKey));
     nightPreviewActive = preview != null;
-    var night = preview ?? _specFrom(prefs.getString(kNightThemeCacheKey));
+    final cached = prefs.getString(kNightThemeCacheKey);
+    final night = preview ?? _specFrom(cached);
     AppColors.use(paletteFor(mode, night: night));
-    final published = await fetchPublishedNightTheme().timeout(const Duration(milliseconds: 1500));
-    if (published == null) return;
+    final known = cached != null || (prefs.getBool(kNightThemeCheckedKey) ?? false);
+    final refresh = _refreshPublishedNightTheme(prefs, serverReady);
+    if (known) return; // kept for the next start
+    // First start: put it on screen only if it arrives within the short
+    // wait (a later answer is kept for the next start, never shown live).
+    final published = await refresh.timeout(const Duration(milliseconds: 1500));
+    if (published != null && preview == null) AppColors.use(paletteFor(mode, night: published.spec));
+  } catch (_) {
+    // Offline, slow or 0076 not run yet: what is already in use stays
+    // (the copy from the last start, or the classic night).
+  }
+}
+
+/// Asks the server for the published night palette and keeps it on the
+/// device (for this and the next starts). Null = could not ask.
+Future<PublishedNightTheme?> _refreshPublishedNightTheme(SharedPreferences prefs, Future<void>? serverReady) async {
+  try {
+    if (serverReady != null) await serverReady;
+    final published = await fetchPublishedNightTheme();
+    if (published == null) return null;
     final spec = published.spec;
     if (spec == null) {
       await prefs.remove(kNightThemeCacheKey);
     } else {
       await prefs.setString(kNightThemeCacheKey, jsonEncode(spec.toJson()));
     }
-    if (preview == null) AppColors.use(paletteFor(mode, night: spec));
+    await prefs.setBool(kNightThemeCheckedKey, true);
+    return published;
   } catch (_) {
-    // Offline, slow or 0076 not run yet: what is already in use stays
-    // (the copy from the last start, or the classic night).
+    return null;
   }
 }
 

@@ -34,4 +34,9 @@ class Env {
       : dotenv.get('APP_ENV', fallback: 'development');
 
   static bool get isProduction => appEnv == 'production';
+
+  /// The web release / CI build gets everything from --dart-define, so the
+  /// bundled .env file need not be downloaded before start (owner,
+  /// 08.11.2026: one network round trip less at every start).
+  static bool get definedAtBuild => _urlDefine.isNotEmpty && _keyDefine.isNotEmpty && _envDefine.isNotEmpty;
 }

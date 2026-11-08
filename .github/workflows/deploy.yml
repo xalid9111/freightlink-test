@@ -34,7 +34,8 @@ jobs:
             --base-href "/${{ github.event.repository.name }}/" \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=APP_ENV=production
+            --dart-define=APP_ENV=production \
+            --dart-define=BUILD_ID=${{ github.sha }}
           touch build/web/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3

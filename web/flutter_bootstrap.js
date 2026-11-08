@@ -15,8 +15,9 @@ _flutter.loader.load({
   onEntrypointLoaded: async function (engineInitializer) {
     try {
       const appRunner = await engineInitializer.initializeEngine();
-      const loadingEl = document.getElementById('app-loading');
-      if (loadingEl) loadingEl.remove();
+      // The logo stays until the app's first frame (it calls
+      // window.flHideSplash); a safety timer removes it in any case.
+      setTimeout(function () { if (window.flHideSplash) window.flHideSplash(); }, 30000);
       window.flStarted = true;
       await appRunner.runApp();
     } catch (err) {

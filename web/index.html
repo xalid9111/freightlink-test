@@ -56,6 +56,8 @@
     #app-loading {
       position: fixed;
       inset: 0;
+      /* Stays above the app until its first frame is drawn. */
+      z-index: 2147483000;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -106,6 +108,13 @@
     // startup, show the actual error ON the splash instead of freezing
     // on a blank dark screen with no information. Defined here (sync,
     // before flutter_bootstrap.js) so the bootstrap script can call it.
+    // The app calls this after its first frame (lib/core/startup/splash.dart):
+    // the logo stays until the Yüklər page is really on screen — no empty
+    // dark page in between (owner, 08.11.2026).
+    window.flHideSplash = function () {
+      var el = document.getElementById('app-loading');
+      if (el) el.remove();
+    };
     function flShowBootError(msg) {
       var el = document.getElementById('app-loading');
       if (!el) {

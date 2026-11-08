@@ -210,7 +210,11 @@ void main() {
   test('the texts always match the app: the web build reads them fresh, never an old cached copy', () {
     final l = src('lib/core/localization/localization_service.dart');
     expect(l, contains("import 'fresh_text_stub.dart' if (dart.library.js_interop) 'fresh_text_web.dart' as fresh;"));
-    expect(l, contains('await fresh.fetchFreshText(path) ?? await rootBundle.loadString(path)'));
+    // Fresh from the server, or this version's own copy kept on the device
+    // (keyed by the published BUILD_ID, 08.11.2026); the bundle as fallback.
+    expect(l, contains('var raw = buildId.isEmpty ? null : fresh.readCachedText(code, buildId);'));
+    expect(l, contains('raw = await fresh.fetchFreshText(path);'));
+    expect(l, contains('raw ??= await rootBundle.loadString(path);'));
     expect(src('lib/core/localization/fresh_text_web.dart'), contains("RequestInit(cache: 'no-cache')"));
   });
 

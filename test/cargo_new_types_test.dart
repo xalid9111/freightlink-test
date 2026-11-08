@@ -162,7 +162,9 @@ void main() {
       expect(bar.contains('height: 27,'), isTrue);
       expect(bar.contains('scrollDirection: Axis.horizontal'), isTrue);
       final main = File('lib/main.dart').readAsStringSync();
-      expect(main.contains('await loadCargoCategoryPrefs();'), isTrue);
+      // Read before the first screen (together with the other start-up work).
+      expect(main.contains('    loadCargoCategoryPrefs(),'), isTrue);
+      expect(main.indexOf('    loadCargoCategoryPrefs(),') < main.indexOf('await local;'), isTrue);
     });
   });
 

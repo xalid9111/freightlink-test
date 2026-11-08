@@ -19,6 +19,11 @@ import 'core/localization/locale_controller.dart';
 import 'core/localization/localization_service.dart';
 import 'core/site/site_access.dart';
 import 'features/cargo/presentation/providers/category_providers.dart';
+import 'core/config/env.dart';
+import 'core/startup/splash.dart';
+import 'features/cargo/data/cargo_feed_prefetch.dart';
+import 'features/cargo/data/cargo_repository_impl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,53 +37,88 @@ Future<void> main() async {
       ..maximumSize = 300;
   }
 
-  // 1. Load environment variables. The web/PWA release gets its config
-  // from --dart-define instead (static hosts may refuse to serve the
-  // .env dotfile asset) — so a missing .env must never kill app boot.
+  // Faster start (owner, 08.11.2026): the independent steps below run at
+  // the same time instead of one after another; runApp() still waits for
+  // everything the first screen uses (colours, texts, date names, saved
+  // choices), so the first screen looks exactly as before.
+
+  // 1. Environment. The web release / CI build has it from --dart-define;
+  // only other builds read the bundled .env (a missing .env must never
+  // kill app boot).
+  final env = Env.definedAtBuild ? Future<void>.sync(() => dotenv.testLoad()) : _loadDotEnv();
+
+  // 2. Supabase (auth, database, storage, realtime) — after the env.
+  final supabaseReady = env.then((_) => SupabaseConfig.initialize());
+
+  // 3. Texts: the saved / device language, Azerbaijani and English before
+  // the first screen; the other languages after it (LocaleCatalog).
+  final prefs = _prefs();
+  final texts = prefs.then((p) => LocalizationService.loadStartup(_startLocale(p)));
+
+  // 4. Date names for every locale (az/tr/ru/en … months and weekdays) —
+  // without this `DateFormat` silently falls back to English.
+  final dates = initializeDateFormatting();
+
+  // 5. Day / night colours (the server's night palette is waited for only
+  // on a device's very first start), display size, desktop preview and the
+  // load type last chosen on the Loads page.
+  final local = Future.wait([
+    loadSavedTheme(serverReady: supabaseReady),
+    loadSavedUiScale(),
+    loadSavedDesktopPreview(),
+    loadCargoCategoryPrefs(),
+  ]);
+
+  // 6. Yüklər: the open-loads request leaves now (it waits for the network
+  // while the rest starts); the page takes this answer (CargoFeedPrefetch).
+  await supabaseReady;
+  if (CargoFeedPrefetch.opensOnLoads(Uri.base)) {
+    CargoFeedPrefetch.start(CargoRepositoryImpl(), SupabaseConfig.client.auth.currentUser?.id);
+  }
+
+  final catalog = LocaleCatalog(await texts);
+  await dates;
+  await local;
+
+  runApp(
+    ProviderScope(
+      observers: [AutoFixObserver()],
+      overrides: [localeCatalogProvider.overrideWith((ref) => catalog)],
+      child: const FreightLinkApp(),
+    ),
+  );
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    // The logo of index.html goes away only now: the first screen is drawn.
+    hideStartupSplash();
+    // Flags font: in the background, after the first screen.
+    loadFlagFont();
+    // The other languages, a little later (the first screen's own requests
+    // go first on a slow network).
+    Future.delayed(const Duration(seconds: 3), catalog.loadRest);
+  });
+}
+
+Future<void> _loadDotEnv() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
     // No bundled .env — config comes from compile-time dart-defines.
   }
+}
 
-  // 2. Initialize Supabase (auth, database, storage, realtime)
-  await SupabaseConfig.initialize();
+Future<SharedPreferences?> _prefs() async {
+  try {
+    return await SharedPreferences.getInstance();
+  } catch (_) {
+    return null;
+  }
+}
 
-  // 3. Eager-load all 4 language files ONCE, before the UI exists, so
-  // no screen ever has to show a loading state just to read a string.
-  final localeCatalog = await LocalizationService.loadAll();
-
-  // 4. Load date-formatting data for all locales (az/tr/ru/en month and
-  // weekday names etc.) — without this, `DateFormat` silently falls
-  // back to English for any locale it wasn't told about, which would
-  // have left pickup/delivery dates in English even when the rest of
-  // the UI was switched to Azerbaijani/Turkish/Russian. No argument
-  // loads every locale bundled with the intl package.
-  await initializeDateFormatting();
-
-  // 5. Day / night mode chosen in Settings (night unless changed).
-  await loadSavedTheme();
-  // Display size chosen in Settings (Kiçik / Normal / Böyük).
-  await loadSavedUiScale();
-  // Desktop preview (test only, off unless chosen in Settings).
-  await loadSavedDesktopPreview();
-  // The load type last chosen on the Loads page (per account).
-  await loadCargoCategoryPrefs();
-
-  // Firebase.initializeApp() and Mapbox.setAccessToken() are added
-  // in Phase 10 / Phase 12 once those features are implemented —
-  // this project only proves the boot sequence and DI wiring are
-  // correct up to the phase that's actually been built.
-
-  runApp(
-    ProviderScope(
-      observers: [AutoFixObserver()],
-      overrides: [localeCatalogProvider.overrideWithValue(localeCatalog)],
-      child: const FreightLinkApp(),
-    ),
-  );
-  // Flags font: in the background, after the first screen.
-  WidgetsBinding.instance.addPostFrameCallback((_) => loadFlagFont());
+/// The language the first screen will show: the one saved on this device,
+/// else the browser's (as LocaleController decides).
+Locale? _startLocale(SharedPreferences? prefs) {
+  final saved = prefs == null ? null : LocalizationService.supported(savedLocaleCode(prefs));
+  return saved ?? LocalizationService.supported(WidgetsBinding.instance.platformDispatcher.locale.languageCode);
 }
 
 class FreightLinkApp extends ConsumerWidget {
