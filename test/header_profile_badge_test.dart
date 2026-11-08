@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
+import 'package:freightlink/core/widgets/user_avatar.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
 import 'package:freightlink/features/cargo/data/cargo_media_repository.dart';
 import 'package:freightlink/features/cargo/presentation/providers/cargo_media_providers.dart';
@@ -50,6 +51,14 @@ void main() {
     expect(badge.center.dy, greaterThan(pic.center.dy));
     expect(badge.right, greaterThan(pic.right - 6));
     expect(badge.bottom, greaterThan(pic.bottom - 6));
+    // Owner, 08.11.2026: the blue badge alone — no white ring around it; the
+    // white disc only fills the tick, well inside the badge.
+    final b = find.byKey(const ValueKey('hdr-profile-verified'));
+    expect(tester.widget<VerifiedPhotoBadge>(b).size, 18);
+    final boxes = tester.widgetList<Container>(find.descendant(of: b, matching: find.byType(Container)));
+    expect(boxes.length, 1);
+    expect(tester.getSize(find.descendant(of: b, matching: find.byType(Container))).width, lessThan(18 * 0.6));
+    expect(tester.getSize(find.descendant(of: b, matching: find.byType(Icon))).width, 18, reason: 'the blue badge is the outer edge');
   });
 
   testWidgets('not verified: no badge', (tester) async {

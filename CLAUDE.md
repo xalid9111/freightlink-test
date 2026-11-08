@@ -393,7 +393,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   Yüklər header (owner's picture, 08.11.2026): the profile picture is 15 %
   bigger (kHeaderProfileScale, drawn over its old 42 pt place so nothing
   else moves) and a verified account (user_profiles.is_verified) gets the
-  blue badge on its lower right edge; not verified = no badge.
+  blue badge on its lower right edge; not verified = no badge. The badge
+  is only the blue badge with a white tick — no white ring or frame around
+  it (VerifiedPhotoBadge, owner 08.11.2026).
 - Map banners (owner, 08.11.2026): switching Parklar | Servislər |
   Mağazalar never reloads the banner picture — the TIRPark / Servislər page
   heroes stay in memory (pageHeroProvider keepAlive for kMapBannerPages);

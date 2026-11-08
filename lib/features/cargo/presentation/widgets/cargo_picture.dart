@@ -165,16 +165,11 @@ class HeaderCircles extends ConsumerWidget {
               child: UserAvatar(imageUrl: profile?.avatarUrl, initials: initials, radius: 18 * kHeaderProfileScale),
             ),
             if (profile?.isVerified == true)
-              Positioned(
-                right: -3,
-                bottom: -3,
+              const Positioned(
+                right: -2,
+                bottom: -2,
                 child: IgnorePointer(
-                  child: Container(
-                    key: const ValueKey('hdr-profile-verified'),
-                    decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle),
-                    padding: const EdgeInsets.all(1.5),
-                    child: Icon(Icons.verified, size: 17, color: AppColors.blue),
-                  ),
+                  child: VerifiedPhotoBadge(key: ValueKey('hdr-profile-verified'), size: 18),
                 ),
               ),
           ]),
