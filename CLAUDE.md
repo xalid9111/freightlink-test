@@ -371,6 +371,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   "+" → /service-join (Usta / Servis mərkəzi registration), Mağazalar "+" →
   /service-edit?kind=center&shop=1 (the same one-per-owner service form with
   spare_parts ticked; an existing service gets the category added).
+  Mağaza kind first (owner, 09.11.2026): on Mağazalar both the map "+" and
+  the list's "Mağaza əlavə et" open /shop-join (ShopJoinScreen, the look of
+  "Usta / Servis kimi qoşul"): "Mağaza" → that shop form as before,
+  "İşlənmiş ehtiyat hissələri" → the same form with shop_used ticked
+  (&shopKind=shop_used, only shop_* kinds taken). Servislər's "Usta kimi
+  qoşul" and "+" keep /service-join.
   "Park rezervasiyalarım" (Rezervasiyalar və statuslar) stands on Profil
   right under "TIR Parkı"; its screen unchanged.
   Users add NO parking spots (owner, 07.11.2026, 0100): no "Dayanacaq

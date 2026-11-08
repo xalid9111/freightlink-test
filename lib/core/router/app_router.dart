@@ -321,7 +321,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/service-edit',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => DeskFrame(section: 5, child: ServiceEditScreen(
-            initialKind: state.uri.queryParameters['kind'], shop: state.uri.queryParameters['shop'] == '1')),
+            initialKind: state.uri.queryParameters['kind'], shop: state.uri.queryParameters['shop'] == '1',
+            initialShopKind: state.uri.queryParameters['shopKind'])),
       ),
       GoRoute(
         path: '/service-edit/:id',
@@ -332,6 +333,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/service-join',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 5, child: ServiceJoinScreen()),
+      ),
+      // "Mağaza əlavə et": the shop kind first (owner, 09.11.2026).
+      GoRoute(
+        path: '/shop-join',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 5, child: ShopJoinScreen()),
       ),
       GoRoute(
         path: '/my-cargo',

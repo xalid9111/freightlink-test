@@ -23,7 +23,7 @@ void main() {
       expect(isGuestPath(p), isTrue, reason: p);
     }
     for (final p in ['/cargo/create', '/cargo/favorites', '/cargo/en-route', '/messages', '/profile', '/profile/tirpark', '/market/new', '/market/mine',
-      '/market/favorites', '/favorites', '/service-join', '/service-edit', '/tirpark/manage', '/tirpark/bookings', '/admin', '/chat/1', '/my-cargo', '/jobs', '/finance']) {
+      '/market/favorites', '/favorites', '/service-join', '/shop-join', '/service-edit', '/tirpark/manage', '/tirpark/bookings', '/admin', '/chat/1', '/my-cargo', '/jobs', '/finance']) {
       expect(isGuestPath(p), isFalse, reason: p);
     }
   });

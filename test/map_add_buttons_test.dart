@@ -97,7 +97,8 @@ void main() {
   test('Servislər "+" → the registration page; Mağazalar "+" → the shop form; routes kept', () {
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     expect(svc, contains("const kServiceAddRoute = '/service-join';"));
-    expect(svc, contains("const kShopAddRoute = '/service-edit?kind=center&shop=1';"));
+    // Mağaza: the shop kind first (owner, 09.11.2026), then the same shop form.
+    expect(svc, contains("const kShopAddRoute = '/shop-join';"));
     expect(svc, contains('onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),'));
     final r = src('lib/core/router/app_router.dart');
     expect(r, contains("path: '/service-join'"));
