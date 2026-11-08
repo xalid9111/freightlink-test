@@ -165,6 +165,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   no money; an approved worker never joins / leaves on his own;
   Ayarlar behind the gear. "Yük əlavə et" (orange +) is on the Loads
   page under the live map. Search and Shipments are not in the bar.
+  The phone's bar is a floating capsule (owner's picture, 08.11.2026,
+  core/router/floating_nav.dart): rounded dark see-through glass, ~0.5 cm
+  above the bottom edge with side gaps, the selected tab a bit bigger in
+  the accent colour; every tab page makes room for it (NavRoom in
+  app_router.dart; Yüklər, TIR Bazarı, Mesajlar and Profil scroll behind
+  it), it steps aside while a sheet / dialog / menu or a pushed editor is
+  open in a tab and is gone with the keyboard open. The computer keeps its
+  sidebar.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
   Night colours (owner, 29.10.2026, 0076): only the admin changes them,

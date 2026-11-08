@@ -103,7 +103,7 @@ void main() {
       ),
     ));
     final room = FloatingNav.space(34) + FloatingNav.contentGap;
-    expect(plainHeight, 800 - room);
+    expect(plainHeight, 600 - room, reason: 'the test screen is 600 pt tall');
     expect(plainPad, 0, reason: 'the safe area is taken by the capsule');
     expect(behindPad, room);
   });
@@ -141,7 +141,7 @@ void main() {
     nav.currentState!.pop();
     await tester.pumpAndSettle();
     expect(ShellOverlayObserver.open.value, 0);
-    expect(ShellOverlayObserver.counts(MaterialPage<void>(child: const SizedBox()).createRoute(nav.currentContext!)), isFalse);
+    expect(ShellOverlayObserver.counts(const MaterialPage<void>(child: SizedBox()).createRoute(nav.currentContext!)), isFalse);
   });
 
   test('wired: the shell, every tab page and the lists that run under the capsule', () {
