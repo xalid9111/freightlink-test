@@ -428,30 +428,59 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                   child: LayoutBuilder(
-                    builder: (context, c) => PageHeroBanner(
+                    builder: (context, c) => widget.shops
+                        ? PageHeroBanner(
+                            // Mağazalar has its own banner (owner, 08.11.2026, 0108).
+                            page: 'shops',
+                            strings: s,
+                            kicker: s.t('tp_shops'),
+                            defaultTitle: s.t('shop_hero_title'),
+                            defaultAccent: s.t('shop_hero_accent'),
+                            defaultSubtitle: s.t('shop_hero_subtitle'),
+                            icon: Icons.storefront,
+                            compact: false,
+                            height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
+                          )
+                        : PageHeroBanner(
+                            page: 'services',
+                            strings: s,
+                            kicker: s.t('nav_services'),
+                            defaultTitle: s.t('svc_hero_title'),
+                            defaultAccent: s.t('svc_hero_accent'),
+                            defaultSubtitle: s.t('svc_hero_subtitle'),
+                            icon: Icons.handyman,
+                            compact: false,
+                            height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
+                          ),
+                  ),
+                )
+              : widget.shops
+                  ? MapPageBanner(
+                      // Mağazalar has its own banner (owner, 08.11.2026, 0108):
+                      // its own picture, texts and pencil; until the admin
+                      // sets one, the shop picture of the profile pages.
+                      s: s,
+                      page: 'shops',
+                      brandIcon: Icons.storefront,
+                      editIcon: Icons.storefront,
+                      brandAccent: '',
+                      brandRest: s.t('tp_shops'),
+                      defaultTitle: s.t('shop_hero_title'),
+                      defaultAccent: s.t('shop_hero_accent'),
+                      defaultSubtitle: s.t('shop_hero_subtitle'),
+                      asset: 'assets/images/profile/cover_shop.jpg',
+                    )
+                  : MapPageBanner(
+                      s: s,
                       page: 'services',
-                      strings: s,
-                      kicker: s.t('nav_services'),
+                      brandIcon: Icons.handyman,
+                      editIcon: Icons.handyman,
+                      brandAccent: '',
+                      brandRest: s.t('nav_services'),
                       defaultTitle: s.t('svc_hero_title'),
                       defaultAccent: s.t('svc_hero_accent'),
                       defaultSubtitle: s.t('svc_hero_subtitle'),
-                      icon: Icons.handyman,
-                      compact: false,
-                      height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
                     ),
-                  ),
-                )
-              : MapPageBanner(
-                  s: s,
-                  page: 'services',
-                  brandIcon: Icons.handyman,
-                  editIcon: Icons.handyman,
-                  brandAccent: '',
-                  brandRest: s.t('nav_services'),
-                  defaultTitle: s.t('svc_hero_title'),
-                  defaultAccent: s.t('svc_hero_accent'),
-                  defaultSubtitle: s.t('svc_hero_subtitle'),
-                ),
         ),
         // The map and its controls under the banner (no second top inset).
         Expanded(
