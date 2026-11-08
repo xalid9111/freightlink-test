@@ -62,7 +62,17 @@ ErrorInfo classifyError(String typeName, String text, {bool messaging = false}) 
     return ErrorInfo(kind: AutoFixKind.auth, code: pgCode ?? 'auth', message: _short(text, 1000), transient: true);
   }
 
+  // A picture the browser could not load / decode (Flutter's "image resource
+  // service", e.g. "AbortError: Aborted by failure" on an animated GIF): not
+  // a code bug; its own code so Admin → AutoFix shows what it is.
+  if (t.contains('image resource service')) {
+    return ErrorInfo(kind: AutoFixKind.runtime, code: 'image', message: _short(text, 1000), transient: false);
+  }
+
   final isNetwork = t.contains('failed to fetch') ||
+      // An app file (asset) that did not arrive: a dropped connection or a
+      // new version being published at that moment (AutoFix 08.11.2026).
+      t.contains('unable to load asset') ||
       t.contains('xmlhttprequest error') ||
       t.contains('clientexception') ||
       t.contains('socketexception') ||

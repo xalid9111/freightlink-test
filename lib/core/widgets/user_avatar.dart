@@ -28,6 +28,10 @@ class UserAvatar extends StatelessWidget {
           // Decoded at the size it is shown (×3 for sharp retina), not at
           // the full upload size — saves a lot of memory on iPhones.
           foregroundImage: hasImage && !framed ? ResizeImage(NetworkImage(imageUrl!), width: (radius * 6).round()) : null,
+          // A picture that cannot be shown (e.g. an animated GIF the
+          // browser fails to decode, AutoFix 08.11.2026): the initials
+          // stay, as for a user without a photo — not an app error.
+          onForegroundImageError: hasImage && !framed ? (_, __) {} : null,
           child: Text(initials, style: AppFonts.display(size: radius * 0.85, color: AppColors.text)),
         ),
         if (framed)

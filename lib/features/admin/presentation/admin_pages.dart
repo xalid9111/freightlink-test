@@ -259,6 +259,8 @@ Widget _userRow(BuildContext context, JsonRow u) => AdminRow(
         radius: 16,
         backgroundColor: AppColors.cardAlt,
         backgroundImage: (u['avatar_url'] as String?)?.isNotEmpty == true ? NetworkImage(u['avatar_url'] as String) : null,
+        // A picture the browser cannot decode: an empty circle, not an app error.
+        onBackgroundImageError: (u['avatar_url'] as String?)?.isNotEmpty == true ? (_, __) {} : null,
         child: (u['avatar_url'] as String?)?.isNotEmpty == true
             ? null
             : Icon(Icons.person_outline, size: 18, color: AppColors.textSoft),
