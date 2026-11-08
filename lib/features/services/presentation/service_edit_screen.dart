@@ -35,7 +35,10 @@ class ServiceEditScreen extends ConsumerStatefulWidget {
   /// "Mağaza əlavə et" (owner, 06.11.2026): the "+" on Mağazalar opens this
   /// same form with the shop category (spare_parts) already ticked.
   final bool shop;
-  const ServiceEditScreen({super.key, this.id, this.initialKind, this.shop = false});
+  /// A shop kind ticked when the form opens (shop_used from "Mağaza əlavə
+  /// et" → "İşlənmiş ehtiyat hissələri", owner 09.11.2026); only shop_* kinds.
+  final String? initialShopKind;
+  const ServiceEditScreen({super.key, this.id, this.initialKind, this.shop = false, this.initialShopKind});
 
   @override
   ConsumerState<ServiceEditScreen> createState() => _ServiceEditScreenState();
@@ -136,6 +139,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
         _radius.text = p.serviceRadiusKm?.toString() ?? '';
         _cats.addAll(p.categories);
         if (widget.shop) _cats.add(kShopCategory);
+        if (widget.shop && kShopKindOrder.contains(widget.initialShopKind)) _cats.add(widget.initialShopKind!);
         if ((p.city ?? '').isNotEmpty) _place = PickedPlace.fromStored(p.city!, p.country ?? '');
         _point = LatLng(p.lat, p.lng);
         _mobile = p.isMobile;
@@ -145,6 +149,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
       } else {
         _kind = _shopForm || widget.initialKind == 'center' ? 'center' : 'individual';
         if (_shopForm) _cats.add(kShopCategory);
+        if (_shopForm && kShopKindOrder.contains(widget.initialShopKind)) _cats.add(widget.initialShopKind!);
         _mobile = !_shopForm && _kind == 'individual';
         final me = ref.read(currentUserProvider);
         _phone.text = me?.phone ?? '';
@@ -1169,12 +1174,54 @@ class ServiceJoinScreen extends ConsumerWidget {
   }
 }
 
+/// "Mağaza əlavə et" (owner, 09.11.2026): pick the shop's kind in the same
+/// look as "Usta / Servis kimi qoşul", then the existing shop form opens —
+/// "Mağaza" as before, "İşlənmiş ehtiyat hissələri" with that kind ticked.
+/// An existing service gets the shop added by the form, as before.
+class ShopJoinScreen extends ConsumerWidget {
+  const ShopJoinScreen({super.key});
+
+  /// The existing shop form.
+  static const shopRoute = '/service-edit?kind=center&shop=1';
+  static const usedRoute = '/service-edit?kind=center&shop=1&shopKind=shop_used';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    return Scaffold(
+      appBar: AppBar(title: Text(s.t('svc_add_shop'))),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(s.t('shop_join_intro'), style: TextStyle(color: AppColors.textSoft, height: 1.4)),
+          const SizedBox(height: 16),
+          _JoinCard(
+            key: const ValueKey('shop-join-shop'),
+            icon: Icons.storefront_outlined,
+            title: s.t('shop_profile_title'),
+            sub: s.t('shop_join_shop_sub'),
+            onTap: () => context.pushReplacement(shopRoute),
+          ),
+          const SizedBox(height: 10),
+          _JoinCard(
+            key: const ValueKey('shop-join-used'),
+            icon: Icons.autorenew,
+            title: s.t('shop_kind_used'),
+            sub: s.t('shop_join_used_sub'),
+            onTap: () => context.pushReplacement(usedRoute),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _JoinCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String sub;
   final VoidCallback onTap;
-  const _JoinCard({required this.icon, required this.title, required this.sub, required this.onTap});
+  const _JoinCard({super.key, required this.icon, required this.title, required this.sub, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -34,7 +34,7 @@ const kShopCategory = 'spare_parts';
 
 /// Where the "+" on each map goes (owner, 06.11.2026).
 const kServiceAddRoute = '/service-join';
-const kShopAddRoute = '/service-edit?kind=center&shop=1';
+const kShopAddRoute = '/shop-join';
 
 class ServicesMapScreen extends ConsumerStatefulWidget {
   /// "Mağazalar" (owner, 05.11.2026): the shops — services that sell spare
@@ -923,7 +923,7 @@ class _ResultsSheet extends ConsumerWidget {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () => context.pushOnce(hasMine ? '/service/${mine.valueOrNull!.id}' : '/service-join'),
+                        onPressed: () => context.pushOnce(hasMine ? '/service/${mine.valueOrNull!.id}' : (shops ? kShopAddRoute : kServiceAddRoute)),
                         style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), visualDensity: VisualDensity.compact),
                         icon: Icon(hasMine ? Icons.storefront : Icons.add_business, size: 18),
                         label: Text(s.t(hasMine ? (shops ? 'svc_my_shop' : 'svc_my_service') : (shops ? 'svc_add_shop' : 'svc_join_short')),

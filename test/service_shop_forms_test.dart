@@ -57,7 +57,7 @@ ServiceProvider _svc(List<String> cats) => ServiceProvider(
       photos: const [], ratingAvg: 0, ratingCount: 0,
     );
 
-Widget _edit({required bool shop, ServiceProvider? existing, bool byId = false}) => ProviderScope(
+Widget _edit({required bool shop, ServiceProvider? existing, bool byId = false, String? shopKind}) => ProviderScope(
       key: UniqueKey(),
       overrides: [
         stringsProvider.overrideWithValue(_az),
@@ -69,7 +69,7 @@ Widget _edit({required bool shop, ServiceProvider? existing, bool byId = false})
       ],
       child: MaterialApp.router(
           routerConfig: GoRouter(routes: [
-        GoRoute(path: '/', builder: (c, st) => ServiceEditScreen(id: byId ? 's1' : null, initialKind: 'center', shop: shop)),
+        GoRoute(path: '/', builder: (c, st) => ServiceEditScreen(id: byId ? 's1' : null, initialKind: 'center', shop: shop, initialShopKind: shopKind)),
       ])),
     );
 
@@ -116,6 +116,27 @@ void main() {
     // Telefon | WhatsApp and İş saatları | 24/7 side by side.
     expect(tester.getTopLeft(find.text('WhatsApp', findRichText: true)).dy, tester.getTopLeft(find.text('Telefon *', findRichText: true)).dy);
     expect(tester.getCenter(find.byKey(const ValueKey('svc-24h'))).dx, greaterThan(250));
+  });
+
+  testWidgets('"Mağaza əlavə et" → "İşlənmiş ehtiyat hissələri": the shop form opens with that kind ticked (owner, 09.11.2026)', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_edit(shop: true, shopKind: 'shop_used'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mağaza profili yarat'), findsOneWidget);
+    expect(_ticked(tester, 'İşlənmiş ehtiyat hissələri'), isTrue);
+    expect(_ticked(tester, 'Yeni ehtiyat hissələri'), isFalse);
+    // "Mağaza": nothing ticked, as before.
+    await tester.pumpWidget(_edit(shop: true));
+    await tester.pumpAndSettle();
+    expect(_ticked(tester, 'İşlənmiş ehtiyat hissələri'), isFalse);
+    // A service that adds a shop: its own kinds kept, the used parts added.
+    await tester.pumpWidget(_edit(shop: true, shopKind: 'shop_used', existing: _svc(['tyres'])));
+    await tester.pumpAndSettle();
+    expect(_ticked(tester, 'İşlənmiş ehtiyat hissələri'), isTrue);
+    // Only shop kinds are taken from the address.
+    await tester.pumpWidget(_edit(shop: true, shopKind: 'tow'));
+    await tester.pumpAndSettle();
+    expect(find.text('Evakuator'), findsNothing);
   });
 
   testWidgets('both forms follow the same order, top to bottom', (tester) async {
