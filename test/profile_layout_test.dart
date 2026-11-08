@@ -28,6 +28,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 String src(String p) => File(p).readAsStringSync();
 final _az = AppStrings(Map<String, String>.from(jsonDecode(src('assets/i18n/az.json')) as Map));
 
+class _NameRepo implements ProfileRepository {
+  final saved = <String>[];
+  @override
+  Future<void> updateName(String name) async => saved.add(name);
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
 class _NoActs implements ActivitiesRepository {
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -36,7 +44,7 @@ class _NoActs implements ActivitiesRepository {
 const _admin = AppUser(id: 'u1', email: 'a@b.az', fullName: 'SSD', role: 'admin', isVerified: true);
 const _driver = AppUser(id: 'u2', email: 'd@b.az', fullName: 'Elvin', role: 'carrier', isVerified: true);
 
-Widget _app(Widget home, {AppUser user = _admin, bool head = false, bool finance = false, int tirWaiting = 0}) => ProviderScope(
+Widget _app(Widget home, {AppUser user = _admin, bool head = false, bool finance = false, int tirWaiting = 0, ProfileRepository? repo}) => ProviderScope(
       key: UniqueKey(),
       overrides: [
         stringsProvider.overrideWithValue(_az),
@@ -52,6 +60,7 @@ Widget _app(Widget home, {AppUser user = _admin, bool head = false, bool finance
         myServiceProvider.overrideWith((ref) async => null),
         adsOrderingEnabledProvider.overrideWith((ref) async => true),
         myAdOrdersProvider.overrideWith((ref) => Stream.value(const [])),
+        if (repo != null) profileRepositoryProvider.overrideWithValue(repo),
       ],
       child: MaterialApp(home: home),
     );
@@ -178,7 +187,48 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('a@b.az'), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-age')), findsOneWidget);
-    expect(find.byTooltip(_az.t('profile_name_edit')), findsOneWidget);
+    // Owner, 09.11.2026: no pencil on top; the name field below instead.
+    expect(find.byTooltip(_az.t('profile_name_edit')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-name-field')), findsOneWidget);
+  });
+
+  testWidgets('Şəxsi məlumatlarım (owner, 09.11.2026): order name · e-mail · phone · birth date · Yadda saxla; the saved name stays on top; emptied = faint placeholder; saving works', (tester) async {
+    tester.view.physicalSize = const Size(400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _NameRepo();
+    await tester.pumpWidget(_app(const ProfilePersonalScreen(), user: _driver, repo: repo));
+    await tester.pumpAndSettle();
+    final field = find.byKey(const ValueKey('profile-name-field'));
+    expect(tester.widget<TextField>(field).controller!.text, 'Elvin', reason: 'starts with the saved name');
+    // The order, top to bottom.
+    final ys = [
+      tester.getTopLeft(field).dy,
+      tester.getTopLeft(find.text('d@b.az')).dy,
+      tester.getTopLeft(find.byIcon(Icons.phone_outlined)).dy,
+      tester.getTopLeft(find.byKey(const ValueKey('profile-age'))).dy,
+      tester.getTopLeft(find.byKey(const ValueKey('profile-save'))).dy,
+    ];
+    for (var i = 1; i < ys.length; i++) {
+      expect(ys[i], greaterThan(ys[i - 1]), reason: 'item $i');
+    }
+    // Emptied: the faint placeholder; saving an empty name is refused clearly.
+    await tester.enterText(field, '');
+    await tester.pump();
+    expect(tester.widget<TextField>(field).decoration!.hintText, _az.t('profile_name_label'));
+    expect(find.text(_az.t('profile_name_label')), findsOneWidget, reason: 'the placeholder shows');
+    await tester.tap(find.byKey(const ValueKey('profile-save')));
+    await tester.pump();
+    expect(repo.saved, isEmpty);
+    expect(find.text(_az.t('register_name_required')), findsOneWidget);
+    // A new name is saved; the saved name on top stays visible meanwhile.
+    await tester.enterText(field, 'Elvin Logistics MMC');
+    await tester.tap(find.byKey(const ValueKey('profile-save')));
+    await tester.pumpAndSettle();
+    expect(repo.saved, ['Elvin Logistics MMC']);
+    expect(find.text(_az.t('profile_name_saved')), findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, 'Elvin Logistics MMC', reason: 'what was saved stays in the field');
+    expect(find.byWidgetPredicate((w) => w is Text && w.data == 'Elvin'), findsOneWidget, reason: 'the saved name on top until the account is read again');
   });
 
   test('routes and the server-side rule are wired', () {

@@ -108,6 +108,32 @@ void main() {
     expect(behindPad, room);
   });
 
+  testWidgets('keyboard opens / closes: the page is NOT rebuilt from scratch (its state stays)', (tester) async {
+    final space = ValueNotifier<double>(FloatingNav.space(0));
+    for (final behind in [false, true]) {
+      await tester.pumpWidget(MaterialApp(
+        home: ValueListenableBuilder<double>(
+          valueListenable: space,
+          builder: (_, v, __) => FloatingNavScope(
+            space: v,
+            child: behind ? const NavRoom.behind(child: _Counter()) : const NavRoom(child: _Counter()),
+          ),
+        ),
+      ));
+      await tester.tap(find.byType(TextButton));
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget);
+      space.value = 0; // keyboard open: no capsule
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget, reason: 'state kept (behind: $behind)');
+      space.value = FloatingNav.space(0); // keyboard closed
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget, reason: 'state kept (behind: $behind)');
+      space.value = FloatingNav.space(0);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
   testWidgets('no capsule (computer, keyboard open): pages unchanged', (tester) async {
     late double h;
     await tester.pumpWidget(MaterialApp(
@@ -168,4 +194,16 @@ void main() {
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('32 + MediaQuery.paddingOf(context).bottom'));
     expect(src('lib/features/market/presentation/market_home_screen.dart'), contains('SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)'));
   });
+}
+
+class _Counter extends StatefulWidget {
+  const _Counter();
+  @override
+  State<_Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<_Counter> {
+  int n = 0;
+  @override
+  Widget build(BuildContext context) => TextButton(onPressed: () => setState(() => n++), child: Text('$n'));
 }

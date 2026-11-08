@@ -515,6 +515,20 @@ class _ProfileCard extends ConsumerStatefulWidget {
 class _ProfileCardState extends ConsumerState<_ProfileCard> {
   bool _uploading = false;
 
+  /// Şəxsi məlumatlarım (owner, 09.11.2026): the name is edited in its own
+  /// field under the card (the saved name stays on top) and saved with the
+  /// "Yadda saxla" button at the bottom.
+  final _nameCtrl = TextEditingController();
+  String? _lastSaved; // the saved name the field last followed
+  bool _savingName = false;
+  String? _nameError;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
   /// The camera on the picture: a new picture, or — when there is one —
   /// "Yerini düzəlt" to move / zoom it in the circle (owner, 29.10.2026).
   Future<void> _photoMenu(String? current) async {
@@ -605,28 +619,20 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     }
   }
 
-  /// Change the display name (company or person) others see.
-  Future<void> _editName(String current) async {
+  /// Saves the display name (person or company) others see.
+  Future<void> _saveName(String saved) async {
     final strings = widget.strings;
-    final ctrl = TextEditingController(text: current);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(strings.t('profile_name_edit')),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 80,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: strings.t('profile_name_label')),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('common_cancel'))),
-          FilledButton(onPressed: () => Navigator.of(ctx).pop(ctrl.text), child: Text(strings.t('profile_phone_save'))),
-        ],
-      ),
-    );
-    if (newName == null || newName.trim().length < 2 || newName.trim() == current) return;
+    final newName = _nameCtrl.text.trim();
+    if (newName.length < 2) {
+      setState(() => _nameError = strings.t('register_name_required'));
+      return;
+    }
+    if (newName == saved.trim()) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _savingName = true;
+      _nameError = null;
+    });
     try {
       await ref.read(profileRepositoryProvider).updateName(newName);
       ref.invalidate(publicProfileProvider(widget.userId));
@@ -634,6 +640,8 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_name_saved'))));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
+    } finally {
+      if (mounted) setState(() => _savingName = false);
     }
   }
 
@@ -906,6 +914,13 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     final verified = profile?.isVerified == true;
     final birth = profile?.birthDate;
     final age = birth == null ? null : ageFromBirthDate(birth, DateTime.now());
+    // The field starts with the saved name and follows it while untouched.
+    // A newly saved name (after "Yadda saxla" or from elsewhere) comes in;
+    // what the user is typing is never overwritten.
+    if (name != _lastSaved) {
+      if (_lastSaved == null || _nameCtrl.text.trim() == _lastSaved!.trim()) _nameCtrl.text = name;
+      _lastSaved = name;
+    }
 
     // Profil (owner's picture, 04.11.2026): the cover on top, the photo half
     // over its edge, name, roles, country and badges — from the account.
@@ -975,13 +990,6 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
-                        if (widget.details)
-                        IconButton(
-                          tooltip: strings.t('profile_name_edit'),
-                          visualDensity: VisualDensity.compact,
-                          onPressed: () => _editName(name),
-                          icon: Icon(Icons.edit_outlined, size: 20, color: AppColors.textSoft),
-                        ),
                       ],
                     ),
                     Wrap(
@@ -1017,7 +1025,53 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
           ),
           if (widget.details) ...[
           const SizedBox(height: 14),
-          // E-mail and phone; tap to add / change the phone.
+          // 1) Ad Soyad / Şirkət adı (owner, 09.11.2026): emptied = the faint
+          // placeholder; saved with "Yadda saxla" below.
+          Container(
+            key: const ValueKey('profile-name-box'),
+            padding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _nameError == null ? AppColors.line : AppColors.danger),
+            ),
+            child: Row(children: [
+              Icon(Icons.person_outline, size: 22, color: AppColors.text),
+              const SizedBox(width: 14),
+              Expanded(
+                child: TextField(
+                  key: const ValueKey('profile-name-field'),
+                  controller: _nameCtrl,
+                  maxLength: 80,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.done,
+                  onChanged: (_) => setState(() => _nameError = null),
+                  onSubmitted: (_) => _saveName(name),
+                  style: const TextStyle(fontSize: 15),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    counterText: '',
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    hintText: strings.t('profile_name_label'),
+                    hintStyle: TextStyle(fontSize: 15, color: AppColors.textSoft.withValues(alpha: 0.6)),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+          if (_nameError != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_nameError!, style: TextStyle(color: AppColors.danger, fontSize: 12.5)),
+              ),
+            ),
+          const SizedBox(height: 10),
+          // 2) e-mail and 3) phone; tap to add / change the phone.
           InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: _editPhone,
@@ -1092,6 +1146,18 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                   label: Text(strings.t('profile_age_edit')),
                 ),
               ]),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // "Yadda saxla" at the very bottom (owner, 09.11.2026).
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              key: const ValueKey('profile-save'),
+              onPressed: _savingName ? null : () => _saveName(name),
+              child: _savingName
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(strings.t('profile_phone_save')),
             ),
           ),
           ],

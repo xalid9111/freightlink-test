@@ -303,7 +303,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   itself has the cover on top (the existing profile_details.cover_url and its
   editor) with the photo half over its edge, name, roles, country, badges; then one
   entry each — "Şəxsi məlumatlarım" (/profile/personal: name, e-mail,
-  phone, birth date), "Mənim fəaliyyətim" (/profile/activity: roles 2 × 2 +
+  phone, birth date; owner 09.11.2026: the saved name stays on the card on
+  top, no pencil there; below in this order 1) Ad Soyad / Şirkət adı field
+  (emptied = faint placeholder) 2) e-mail 3) phone 4) birth date, and
+  "Yadda saxla" at the bottom saves the name), "Mənim fəaliyyətim" (/profile/activity: roles 2 × 2 +
   Yüklərim · Servisim · Səhifəm və kataloqum · İş Mərkəzi · Reklam
   sifarişi), "TIR Parkı" (/profile/tirpark: manage, work, bookings, with the
   red count); "Baş admin idarəetməsi" (Maliyyə, Admin Panel) for the
