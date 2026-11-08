@@ -98,7 +98,10 @@ void main() {
     test('theme falls back to it and main loads it after the first frame', () {
       final theme = File('lib/core/theme/app_theme.dart').readAsStringSync();
       expect(theme.contains('fontFamilyFallback: AppFonts.fallback'), isTrue);
-      expect(File('lib/main.dart').readAsStringSync().contains('addPostFrameCallback((_) => loadFlagFont())'), isTrue);
+      final main = File('lib/main.dart').readAsStringSync();
+      final afterFrame = main.indexOf('WidgetsBinding.instance.addPostFrameCallback((_) {');
+      expect(afterFrame > main.indexOf('runApp(\n    ProviderScope('), isTrue);
+      expect(main.indexOf('    loadFlagFont();') > afterFrame, isTrue);
     });
   });
 

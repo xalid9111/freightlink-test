@@ -61,14 +61,35 @@ class SupabaseAccountLanguage implements AccountLanguage {
   }
 }
 
-/// Populated once in main.dart (via ProviderScope overrides) after
-/// LocalizationService.loadAll() completes, before runApp(). Every
-/// other localization provider reads from this — nothing re-fetches
-/// the JSON files.
-final localeCatalogProvider = Provider<Map<Locale, AppStrings>>((ref) {
+/// The loaded languages. main.dart fills it before runApp() with the
+/// languages the first screen can use (LocalizationService.loadStartup) and
+/// overrides this provider; the others follow in the background after the
+/// first screen ([LocaleCatalog.loadRest]) or at once when one is chosen.
+/// Nothing re-fetches a file already read.
+class LocaleCatalog extends StateNotifier<Map<Locale, AppStrings>> {
+  LocaleCatalog(super.state);
+
+  final _pending = <Locale, Future<void>>{};
+
+  /// Loads [locale] if it is not in memory yet.
+  Future<void> ensure(Locale locale) {
+    if (state.containsKey(locale)) return Future.value();
+    return _pending[locale] ??= () async {
+      final s = await LocalizationService.load(locale);
+      _pending.remove(locale);
+      if (mounted) state = {...state, locale: s};
+    }();
+  }
+
+  /// Every other language, in the background (language picker, an
+  /// account's language after sign-in).
+  Future<void> loadRest() => Future.wait([for (final l in LocalizationService.supportedLocales) ensure(l)]);
+}
+
+final localeCatalogProvider = StateNotifierProvider<LocaleCatalog, Map<Locale, AppStrings>>((ref) {
   throw StateError(
-    'localeCatalogProvider was not overridden — main.dart must call '
-    'LocalizationService.loadAll() and override this provider before runApp().',
+    'localeCatalogProvider was not overridden — main.dart must load the start-up '
+    'languages (LocalizationService.loadStartup) and override this provider before runApp().',
   );
 });
 
@@ -194,5 +215,15 @@ final currentLocaleProvider = StateNotifierProvider<LocaleController, Locale>((r
 final stringsProvider = Provider<AppStrings>((ref) {
   final catalog = ref.watch(localeCatalogProvider);
   final locale = ref.watch(currentLocaleProvider);
-  return catalog[locale] ?? catalog[LocalizationService.fallbackLocale]!;
+  final s = catalog[locale];
+  if (s != null) return s;
+  // A language not read yet (rare: chosen before the background load
+  // finished): fetched now; the default language shows meanwhile.
+  final loader = ref.read(localeCatalogProvider.notifier);
+  Future.microtask(() => loader.ensure(locale));
+  return catalog[LocalizationService.fallbackLocale] ?? catalog.values.first;
 });
+
+/// The language saved on this device (SharedPreferences), read before
+/// runApp() so its texts are among the first ones loaded.
+String? savedLocaleCode(SharedPreferences prefs) => prefs.getString(_prefsKey);

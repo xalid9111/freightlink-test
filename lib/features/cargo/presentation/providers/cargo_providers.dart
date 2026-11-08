@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/cargo_feed_prefetch.dart';
 import '../../../../core/config/supabase_config.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../repositories/profile_repository.dart' show isMissingRelation;
@@ -49,8 +50,11 @@ class CargoFilter {
 /// the create-cargo screen and pull-to-refresh both force a re-fetch.
 final marketplaceProvider = FutureProvider<List<CargoModel>>((ref) {
   ref.watch(currentUserIdProvider); // re-fetch when the signed-in account changes
-  return ref.watch(cargoRepositoryProvider).fetchMarketplace();
+  // The same request already sent during start-up (main.dart), once.
+  return CargoFeedPrefetch.take(_sessionUserId) ?? ref.watch(cargoRepositoryProvider).fetchMarketplace();
 });
+
+String? _sessionUserId() => SupabaseConfig.client.auth.currentUser?.id;
 
 /// Search tab: same fetch, parameterized by whatever filter is active.
 /// `.family` keys the cache by filter value, so switching filters and

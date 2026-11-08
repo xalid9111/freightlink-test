@@ -422,6 +422,23 @@ files to the owner separately (they are run by hand in the SQL editor).
   Google sign-in is on (owner, 07.11.2026: Google Cloud project
   "FreightLink", OAuth client "FreightLink Web", published; Supabase
   provider enabled); Apple stays off for now.
+- Faster start (owner, 08.11.2026): the same visual order — logo / spinner
+  of index.html → the app → the Yüklər page — only sooner and steadier. The
+  logo stays until the app's first frame (lib/core/startup/splash.dart calls
+  window.flHideSplash; a 30 s safety timer), so no empty dark page in
+  between. main.dart runs the independent start-up work at the same time
+  and still awaits everything the first screen uses before runApp(); the
+  .env file is not downloaded when the build has --dart-define values.
+  Texts: only the saved / device language + az + en before the first screen,
+  the rest 3 s after it (LocaleCatalog); deploy.yml passes BUILD_ID (the
+  commit) and the web app keeps the texts it fetched fresh for that version
+  on the device (a new version fetches fresh again; the bundle is the
+  fallback; a fetch gives up after 10 s). Night palette (0076): waited for
+  only on a device's first start; later the kept copy is used at once and
+  the server's answer is kept for the next start (never changed on an open
+  screen). Yüklər: the same open-loads query (fetchMarketplace, 1000, same
+  order / filters / VIP / Premium) leaves during start-up when the app opens
+  on Yüklər and is taken once by marketplaceProvider (CargoFeedPrefetch).
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a
