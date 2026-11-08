@@ -390,6 +390,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   Another person's profile page (owner, 07.11.2026): the blue badge sits on
   the photo's corner (where the online dot was); the old pill's place shows
   the presence — a round green dot + "Online" (grey + "Offline").
+- Map banners (owner, 08.11.2026): switching Parklar | Servislər |
+  Mağazalar never reloads the banner picture — the TIRPark / Servislər page
+  heroes stay in memory (pageHeroProvider keepAlive for kMapBannerPages);
+  an admin's edit still refreshes it; TIR Bazarı's banner unchanged.
 - Bəyəndiklərim (owner, 07.11.2026, 0106): one page /favorites with the tabs
   Yüklər · TIR Bazarı · Mesajlar · Profillər (counts); the hearts in the
   Yüklər, TIR Bazarı, Mesajlar and Profil headers open it on their own tab.
