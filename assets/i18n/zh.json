@@ -1997,5 +1997,8 @@
   "guest_browse_back": "返回浏览",
   "guest_sign_in_needed": "请登录或注册以继续",
   "guest_contact_sign_in": "登录后联系",
-  "guest_book_sign_in": "登录后预订"
+  "guest_book_sign_in": "登录后预订",
+  "shop_hero_title": "卡车配件",
+  "shop_hero_accent": "附近的商店",
+  "shop_hero_subtitle": "新旧配件、轮胎、机油——一张地图全览"
 }

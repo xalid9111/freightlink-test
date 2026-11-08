@@ -104,7 +104,8 @@ class PageHeroImage extends StatelessWidget {
 }
 
 /// TIRPark's banner too (owner, 31.10.2026, 0078).
-const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero', 'tirpark': 'tirpark_hero'};
+/// Mağazalar its own banner (shops_hero, 0108, owner 08.11.2026).
+const kPageHeroTables = {'market': 'market_hero', 'services': 'services_hero', 'tirpark': 'tirpark_hero', 'shops': 'shops_hero'};
 
 class PageHeroRepository {
   SupabaseClient get _c => SupabaseConfig.client;
@@ -186,7 +187,7 @@ final pageHeroProvider = FutureProvider.autoDispose.family<PageHero?, String>((r
 });
 
 /// The map pages' banners (MapPageBanner): TIRPark and Servislər / Mağazalar.
-const kMapBannerPages = {'tirpark', 'services'};
+const kMapBannerPages = {'tirpark', 'services', 'shops'};
 
 bool isAdminUser(WidgetRef ref) => ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin;
 

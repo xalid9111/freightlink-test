@@ -394,6 +394,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   Mağazalar never reloads the banner picture — the TIRPark / Servislər page
   heroes stay in memory (pageHeroProvider keepAlive for kMapBannerPages);
   an admin's edit still refreshes it; TIR Bazarı's banner unchanged.
+  Mağazalar has its own banner (owner, 08.11.2026, 0108): shops_hero
+  (picture, texts, place, zoom), page 'shops' on the phone and computer, its
+  own pencil; until the admin sets one, assets/images/profile/cover_shop.jpg
+  with the shop texts (shop_hero_*). Servislər keeps services_hero, TIRPark
+  keeps tirpark_hero; a change to one never touches the others.
 - Bəyəndiklərim (owner, 07.11.2026, 0106): one page /favorites with the tabs
   Yüklər · TIR Bazarı · Mesajlar · Profillər (counts); the hearts in the
   Yüklər, TIR Bazarı, Mesajlar and Profil headers open it on their own tab.

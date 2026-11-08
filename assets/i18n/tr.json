@@ -1997,5 +1997,8 @@
   "guest_browse_back": "Göz atmaya dön",
   "guest_sign_in_needed": "Devam etmek için giriş yapın veya kaydolun",
   "guest_contact_sign_in": "İletişim için giriş yapın",
-  "guest_book_sign_in": "Rezervasyon için giriş yapın"
+  "guest_book_sign_in": "Rezervasyon için giriş yapın",
+  "shop_hero_title": "TIR yedek parçaları",
+  "shop_hero_accent": "mağazalar yakınınızda",
+  "shop_hero_subtitle": "Yeni ve ikinci el parçalar, lastikler, yağlar — tek haritada"
 }
