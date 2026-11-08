@@ -69,18 +69,23 @@ class NavRoom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The widget tree is the SAME with and without the capsule (keyboard
+    // open / closed): only the numbers change. A different tree would
+    // rebuild the page from scratch when the keyboard opens and lose what
+    // it was doing (e.g. the name dialog on Şəxsi məlumatlarım saved
+    // nothing, owner 09.11.2026).
     final space = FloatingNavScope.of(context);
-    if (space <= 0) return child;
+    final room = space > 0 ? space + FloatingNav.contentGap : 0.0;
     final mq = MediaQuery.of(context);
     if (behind) {
       return MediaQuery(
-        data: mq.copyWith(padding: mq.padding.copyWith(bottom: space + FloatingNav.contentGap)),
+        data: room > 0 ? mq.copyWith(padding: mq.padding.copyWith(bottom: room)) : mq,
         child: child,
       );
     }
     return Padding(
-      padding: EdgeInsets.only(bottom: space + FloatingNav.contentGap),
-      child: MediaQuery.removePadding(context: context, removeBottom: true, child: child),
+      padding: EdgeInsets.only(bottom: room),
+      child: MediaQuery.removePadding(context: context, removeBottom: room > 0, child: child),
     );
   }
 }
