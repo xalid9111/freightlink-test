@@ -25,6 +25,7 @@ import 'profile_catalog.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../auth/data/activities_repository.dart';
 import '../../auth/domain/activities.dart';
+import '../../../core/router/guest_access.dart';
 
 /// A user's / company's FreightLink page, in the same design language as
 /// the Profile tab (title row, rounded cards, the same profile card, menu
@@ -45,6 +46,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
   static const double _coverHeight = 120;
 
   Future<void> _message() async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final strings = ref.read(stringsProvider);
     setState(() => _opening = true);
     try {

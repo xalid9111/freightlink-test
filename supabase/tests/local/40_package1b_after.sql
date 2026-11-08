@@ -71,8 +71,9 @@ reset role;
 
 set role anon;
 select tests.login(null);
-select tests.check(tests.err('select 1 from public.user_profiles') like '%permission denied%',
-  'V7 anonymous cannot read the profile view');
+-- 0107: the public profile view (no phone / e-mail) is readable by visitors.
+select tests.check(tests.err('select 1 from public.user_profiles') is null,
+  'V7 anonymous reads the public profile view only (0107)');
 select tests.check((select count(*) from public.users) = 0,
   'V8 anonymous reads no users rows');
 select tests.check(tests.err($$select public.get_user_contact('a0000000-0000-4000-8000-000000000012')$$) like '%permission denied%',

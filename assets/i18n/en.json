@@ -1993,5 +1993,9 @@
   "pub_cargo_done": "Your load is published ✓",
   "pub_market_done": "Your ad is published ✓",
   "pub_service_done": "Your service is published ✓",
-  "pub_shop_done": "Your shop is published ✓"
+  "pub_shop_done": "Your shop is published ✓",
+  "guest_browse_back": "Back to browsing",
+  "guest_sign_in_needed": "Sign in or register to continue",
+  "guest_contact_sign_in": "Sign in to contact",
+  "guest_book_sign_in": "Sign in to book"
 }

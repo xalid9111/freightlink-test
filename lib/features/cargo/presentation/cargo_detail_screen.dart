@@ -38,6 +38,8 @@ import '../domain/cargo_pictures.dart';
 import '../data/cargo_media_repository.dart';
 import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/router/guest_access.dart';
+import '../../../core/widgets/guest_sign_in.dart';
 
 class CargoDetailScreen extends ConsumerWidget {
   final String cargoId;
@@ -430,10 +432,14 @@ class _DetailBody extends ConsumerWidget {
         _OwnerContactSection(cargo: cargo, strings: strings),
         gap(),
         _MessageOwnerButton(cargo: cargo, strings: strings),
-        gap(),
-        _CarrierOfferSection(cargo: cargo, strings: strings),
-        const SizedBox(height: 8),
-        Align(alignment: Alignment.centerLeft, child: _ReportCargoButton(cargo: cargo, strings: strings)),
+        // Offers and complaints need an account (a visitor signs in via the
+        // contact / message buttons above, 0107).
+        if (!isSignedOut()) ...[
+          gap(),
+          _CarrierOfferSection(cargo: cargo, strings: strings),
+          const SizedBox(height: 8),
+          Align(alignment: Alignment.centerLeft, child: _ReportCargoButton(cargo: cargo, strings: strings)),
+        ],
       ],
       if (isOwner) _OffersReceivedSection(cargo: cargo, strings: strings),
     ];
@@ -638,6 +644,19 @@ class _OwnerContactSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // A visitor sees no number: one "sign in" button instead (0107).
+    if (isSignedOut()) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(strings.t('detail_owner_contact_title'), style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 10),
+            GuestSignInButton(s: strings),
+          ]),
+        ),
+      );
+    }
     final contactAsync = ref.watch(ownerContactProvider((cargoId: cargo.id, ownerId: cargo.ownerId)));
     final profile = ref.watch(publicProfileProvider(cargo.ownerId)).valueOrNull;
     return Card(
@@ -809,6 +828,7 @@ class _MessageOwnerButtonState extends ConsumerState<_MessageOwnerButton> {
 
   Future<void> _open() async {
     if (_busy) return;
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     setState(() => _busy = true);

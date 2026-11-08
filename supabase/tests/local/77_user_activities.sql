@@ -62,7 +62,8 @@ select tests.login(:owner1);
 select tests.check((select activities = '{seller}' from public.user_activities where id = :other), 'U14 user_activities shows them to signed-in users');
 reset role;
 set role anon;
-select tests.check(tests.err($$ select * from public.user_activities $$) like '%permission denied%', 'U14b not public to anonymous');
+-- 0107 (owner, 07.11.2026): public profile pages are open to visitors, roles included.
+select tests.check(tests.err($$ select id, activities from public.user_activities $$) is null, 'U14b visitors see the roles on a public profile (0107)');
 reset role;
 set role authenticated;
 

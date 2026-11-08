@@ -1993,5 +1993,9 @@
   "pub_cargo_done": "您的货物已发布 ✓",
   "pub_market_done": "您的广告已发布 ✓",
   "pub_service_done": "您的服务已发布 ✓",
-  "pub_shop_done": "您的商店已发布 ✓"
+  "pub_shop_done": "您的商店已发布 ✓",
+  "guest_browse_back": "返回浏览",
+  "guest_sign_in_needed": "请登录或注册以继续",
+  "guest_contact_sign_in": "登录后联系",
+  "guest_book_sign_in": "登录后预订"
 }

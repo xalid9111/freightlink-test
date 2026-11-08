@@ -72,7 +72,7 @@ select tests.check((select availability is null and brand = 'DAF' from public.ma
   'O11 the older ad keeps its values (no value = in stock)');
 reset role;
 set role anon;
-select tests.check(tests.err($$ select * from public.market_search(p_availability => 'on_order') $$) like '%permission denied%',
-  'O12 still not for anon');
+select tests.check(tests.err($$ select * from public.market_search(p_availability => 'on_order') $$) is null,
+  'O12 a visitor may search too (0107)');
 reset role;
 rollback;

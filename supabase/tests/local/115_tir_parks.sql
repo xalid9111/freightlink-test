@@ -52,7 +52,8 @@ reset role;
 select tests.check((select count(*) = 1 from public.tir_parks where id = (select id from ids where k='p1')), 'A6 …and kept (nothing deleted)');
 set role anon;
 select tests.login(null);
-select tests.check(tests.err($$ select * from public.tir_parks $$) like '%permission denied%', 'S1 not for signed-out visitors');
+select tests.check(tests.err($$ select * from public.tir_parks $$) is null
+                   and not exists (select 1 from public.tir_parks where status <> 'approved'), 'S1 a visitor sees approved parks only (0107)');
 reset role;
 select tests.summary('TIRPARK (0077)');
 rollback;

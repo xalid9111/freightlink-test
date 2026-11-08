@@ -23,6 +23,7 @@ import '../domain/market_models.dart';
 import 'market_card.dart';
 import 'market_promo.dart';
 import 'market_providers.dart';
+import '../../../core/router/guest_access.dart';
 
 /// Elanın ətraflı səhifəsi (Şəkil 4) + bənzər elanlar (Şəkil 5).
 class MarketDetailScreen extends ConsumerStatefulWidget {
@@ -43,10 +44,13 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Real view (one per person per day, never the owner's own).
-    ref.read(marketRepositoryProvider).recordView(widget.listingId).then((v) {
-      if (mounted && v != null) setState(() => _views = v);
-    }).catchError((_) {});
+    // Real view (one per person per day, never the owner's own); a
+    // visitor's look is not counted (0107).
+    if (!isSignedOut()) {
+      ref.read(marketRepositoryProvider).recordView(widget.listingId).then((v) {
+        if (mounted && v != null) setState(() => _views = v);
+      }).catchError((_) {});
+    }
   }
 
   @override
@@ -66,6 +70,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
   }
 
   Future<void> _message(AppStrings s, MarketListing l) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     setState(() => _busy = true);
     final id = await _openChat(s, l);
     if (mounted) setState(() => _busy = false);
@@ -76,6 +81,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
 
   /// "Təklif et": price offer as a chat message to the seller.
   Future<void> _offer(AppStrings s, MarketListing l) async {
+    if (askSignIn(context)) return; // a visitor signs in first (0107)
     final amount = TextEditingController(text: l.price?.round().toString() ?? '');
     final note = TextEditingController();
     final ok = await showDialog<bool>(
@@ -600,7 +606,8 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             side: BorderSide(color: AppColors.accentFill),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          onPressed: phone.isEmpty ? null : () => showCallOptions(context, s, phone),
+          // A visitor sees no number: the button opens sign-in (0107).
+          onPressed: phone.isEmpty && !isSignedOut() ? null : () => askSignIn(context) ? null : showCallOptions(context, s, phone),
           icon: const Icon(Icons.call),
           label: Text(s.t('svc_call')),
         ),
@@ -638,7 +645,7 @@ class FavoriteHeartPlain extends ConsumerWidget {
     final on = ref.watch(marketFavoriteIdsProvider).contains(id);
     return IconButton(
       icon: Icon(on ? Icons.favorite : Icons.favorite_border, color: on ? AppColors.accent : null),
-      onPressed: () => ref.read(marketFavoriteIdsProvider.notifier).toggle(id).catchError((_) {}),
+      onPressed: () => askSignIn(context) ? null : ref.read(marketFavoriteIdsProvider.notifier).toggle(id).catchError((_) {}),
     );
   }
 }

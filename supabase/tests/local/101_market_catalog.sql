@@ -67,6 +67,8 @@ select tests.check((select id = :m2 from public.market_search() limit 1),
   'C15 VIP ad still first in the feed');
 reset role;
 set role anon;
-select tests.check(tests.err($$ select * from public.market_search() $$) like '%permission denied%', 'C12 still not for anon');
+-- 0107 (owner, 07.11.2026): visitors may browse — active ads only.
+select tests.check(tests.err($$ select * from public.market_search() $$) is null
+                   and not exists (select 1 from public.market_search() where status <> 'active'), 'C12 a visitor sees active ads only (0107)');
 reset role;
 rollback;

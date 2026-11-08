@@ -50,6 +50,7 @@ import '../../features/tirpark/presentation/tir_park_work.dart';
 import '../../features/tirpark/presentation/tir_park_screen.dart';
 import '../widgets/deferred_page.dart';
 import '../../features/market/presentation/market_module.dart' deferred as market;
+import 'guest_access.dart';
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -72,7 +73,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/login',
+    // The link opens Yüklər straight away, also without an account
+    // (owner, 07.11.2026, guest_access.dart).
+    initialLocation: '/cargo',
     // Unknown route / broken link → reported to AutoFix + a way back.
     errorBuilder: (context, state) => RouteErrorScreen(location: state.uri.toString(), error: state.error),
     // Re-check redirects only when sign-in state can change. A token
@@ -94,6 +97,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (signedIn && recovery.value) return '/reset-password';
       final onAuthScreen = loc == '/login' || loc == '/role-select' || loc.startsWith('/register');
 
+      // The bare address opens Yüklər.
+      if (state.uri.path == '/' || state.uri.path.isEmpty) return '/cargo';
+      // A visitor may look at the public pages (guest_access.dart).
+      if (!signedIn && isGuestPath(loc)) return null;
       // Remember where the user was going (e.g. /admin opened from a
       // bookmark) and send them back there right after login.
       if (!signedIn && !onAuthScreen) {

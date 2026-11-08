@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/router/guest_access.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'change_password_screen.dart' show ForgotPasswordButton;
@@ -58,9 +59,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final strings = ref.watch(stringsProvider);
+    // Opened because a visitor wanted to do something (guest_access.dart):
+    // say so, keep where to come back to, and let him go back to browsing.
+    String? from;
+    try {
+      from = GoRouterState.of(context).uri.queryParameters['from'];
+    } catch (_) {}
     return Scaffold(
       body: SafeArea(
-        child: Center(
+        child: Stack(children: [
+          Positioned(
+            top: 4,
+            left: 4,
+            child: IconButton(
+              key: const ValueKey('login-close'),
+              tooltip: strings.t('guest_browse_back'),
+              icon: const Icon(Icons.close),
+              // Back to the page he was looking at (a public one), else Yüklər.
+              onPressed: () => context.go(from != null && isGuestPath(Uri.parse(from).path) ? from : '/cargo'),
+            ),
+          ),
+          Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
@@ -81,6 +100,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
+                    if (from != null) ...[
+                      const SizedBox(height: 14),
+                      Text(strings.t('guest_sign_in_needed'),
+                          key: const ValueKey('login-guest-note'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.w500)),
+                    ],
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _emailCtrl,
@@ -142,7 +168,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         Text(strings.t('login_no_account')),
                         TextButton(
-                          onPressed: () => context.go('/register'), // one account for everyone (0039)
+                          // one account for everyone (0039); back to the visitor's page after it
+                          onPressed: () => context.go(from == null ? '/register' : Uri(path: '/register', queryParameters: {'from': from}).toString()),
                           child: Text(strings.t('login_signup_link')),
                         ),
                       ],
@@ -155,6 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+        ]),
       ),
     );
   }
