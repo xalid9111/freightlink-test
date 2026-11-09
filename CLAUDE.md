@@ -416,7 +416,10 @@ files to the owner separately (they are run by hand in the SQL editor).
 - Map banners (owner, 08.11.2026): switching Parklar | Servislər |
   Mağazalar never reloads the banner picture — the TIRPark / Servislər page
   heroes stay in memory (pageHeroProvider keepAlive for kMapBannerPages);
-  an admin's edit still refreshes it; TIR Bazarı's banner unchanged.
+  an admin's edit still refreshes it. Since 09.11.2026 (owner: the TIR
+  Bazarı banner "opened twice" when scrolled away and back) every page
+  banner stays in memory the same way, and PageHeroImage decodes the
+  picture at its shown size (heroDecodeWidth).
   Mağazalar has its own banner (owner, 08.11.2026, 0108): shops_hero
   (picture, texts, place, zoom), page 'shops' on the phone and computer, its
   own pencil; until the admin sets one, assets/images/profile/cover_shop.jpg
