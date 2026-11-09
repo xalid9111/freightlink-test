@@ -480,6 +480,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   slower). The 709 KB flags font is NOT preloaded or registered earlier —
   measured slower on a slow network / on repeat visits; it stays after the
   first frame.
+  Turbo.az-style loading (owner, 09.11.2026): Yüklər shows its first rows
+  from a small first answer (every VIP / Premium / İrəli çək load + the 24
+  newest, cargo_feed_first.dart) while the full feed (unchanged) loads; only
+  rows that are already final are shown (same cards and VIP / Premium
+  order, tested on random feeds), the count and filters wait for the full
+  feed. The load-type pictures are read once per session in one request
+  (allCargoTemplatesProvider; an admin's change refreshes them), so cards
+  never re-ask the server or re-open their picture while scrolling. Other
+  people's profiles asked for together go in one user_profiles request (the
+  old one-by-one read is the fallback).
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

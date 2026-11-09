@@ -57,6 +57,6 @@ void main() {
     final r = src('lib/repositories/profile_repository.dart');
     expect(r, contains("await _client.from('user_profiles').select(_publicCols).inFilter('id', part);"));
     expect(r, contains('_fetchOne(id).then(jobs[id]!.complete, onError: jobs[id]!.completeError);'));
-    expect(r, contains("if (userId == _client.auth.currentUser?.id) {"), reason: 'the own profile is read as before');
+    expect(r, contains('if (userId == _client.auth.currentUser?.id) {'), reason: 'the own profile is read as before');
   });
 }
