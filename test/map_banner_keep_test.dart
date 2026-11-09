@@ -41,7 +41,9 @@ void main() {
     expect(repo.calls['services'], 1);
   });
 
-  test('other banners (TIR Bazarı) behave as before', () async {
+  // Owner, 09.11.2026: the TIR Bazarı banner stays in memory too (it
+  // "opened twice" when scrolled away and back).
+  test('the TIR Bazarı banner is kept too', () async {
     final repo = _Repo();
     final c = ProviderContainer(overrides: [
       pageHeroRepositoryProvider.overrideWithValue(repo),
@@ -50,7 +52,7 @@ void main() {
     addTearDown(c.dispose);
     await visit(c, 'market');
     await visit(c, 'market');
-    expect(repo.calls['market'], 2);
+    expect(repo.calls['market'], 1);
   });
 
   test('an admin edit still refreshes it', () async {

@@ -93,14 +93,30 @@ class PageHeroImage extends StatelessWidget {
         child: Transform.scale(
           scale: zoom,
           alignment: align,
-          child: Image.network(url,
-              key: ValueKey(url),
-              fit: BoxFit.cover,
-              alignment: align,
-              gaplessPlayback: true,
-              errorBuilder: (c, __, ___) => fallback(c)),
+          // Decoded at the size it is shown (zoom included), not the full
+          // upload: a small picture in memory stays in the image cache while
+          // scrolling, so it never has to be read and opened again.
+          child: LayoutBuilder(
+            builder: (context, c) => Image.network(url,
+                key: ValueKey(url),
+                fit: BoxFit.cover,
+                alignment: align,
+                gaplessPlayback: true,
+                cacheWidth: heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom),
+                errorBuilder: (c, __, ___) => fallback(c)),
+          ),
         ),
       );
+}
+
+/// The width a banner picture is decoded at: the banner's width on screen ×
+/// pixel ratio × zoom, twice over — "cover" may crop the sides of a picture
+/// wider than the banner, so this keeps it sharp up to twice the banner's
+/// width-to-height — within 480…2400 px; null (full size) when unknown.
+int? heroDecodeWidth(BoxConstraints c, double devicePixelRatio, double zoom) {
+  if (!c.hasBoundedWidth || c.maxWidth <= 0) return null;
+  final z = zoom < 1 ? 1.0 : zoom;
+  return (c.maxWidth * devicePixelRatio * z * 2).round().clamp(480, 2400);
 }
 
 /// TIRPark's banner too (owner, 31.10.2026, 0078).
@@ -172,11 +188,12 @@ class PageHeroRepository {
 final pageHeroRepositoryProvider = Provider<PageHeroRepository>((ref) => PageHeroRepository());
 
 final pageHeroProvider = FutureProvider.autoDispose.family<PageHero?, String>((ref, page) async {
-  // TIRPark / Servislər / Mağazalar switch (owner, 08.11.2026): the map
-  // banners stay in memory, so going back and forth shows the same picture
-  // at once instead of the default one and then reloading it. An admin's
-  // edit still refreshes it (the editor invalidates this provider).
-  if (kMapBannerPages.contains(page)) ref.keepAlive();
+  // Every page banner stays in memory (owner, 08.11.2026 map banners;
+  // 09.11.2026 TIR Bazarı): its banner sits in the scrolling list, so
+  // scrolling away and back used to drop it and ask the server again — the
+  // default banner showed first, then the picture "opened a second time".
+  // An admin's edit still refreshes it (the editor invalidates this provider).
+  ref.keepAlive();
   ref.watch(currentUserIdProvider);
   try {
     return await ref.watch(pageHeroRepositoryProvider).fetch(page);
