@@ -40,6 +40,7 @@ import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/router/guest_access.dart';
 import '../../../core/widgets/guest_sign_in.dart';
+import 'providers/cargo_feed_pager.dart';
 
 class CargoDetailScreen extends ConsumerWidget {
   final String cargoId;
@@ -1170,6 +1171,7 @@ class _OffersReceivedSectionState extends ConsumerState<_OffersReceivedSection> 
             );
         await ref.read(shipmentRepositoryProvider).setCargoStatus(cargoId: widget.cargo.id, status: 'agreed');
         container.invalidate(marketplaceProvider);
+        container.invalidate(cargoFeedPagerProvider);
         container.invalidate(myShipmentsProvider);
         container.invalidate(myCargoProvider); // "Yüklərim": no longer Active
         if (mounted) {
@@ -1302,6 +1304,7 @@ class _OwnerActionsState extends ConsumerState<_OwnerActions> {
       // shipment exists; chats about the load are kept.
       await SupabaseConfig.client.rpc('delete_my_cargo', params: {'p_id': widget.cargo.id}).timeout(const Duration(seconds: 20));
       container.invalidate(marketplaceProvider);
+      container.invalidate(cargoFeedPagerProvider);
       container.invalidate(myCargoProvider);
       messenger.showSnackBar(SnackBar(content: Text(s.t('cargo_deleted'))));
       if (mounted) {
@@ -1453,6 +1456,7 @@ class _AdminClearPicture extends ConsumerWidget {
           await ref.read(cargoMediaRepositoryProvider).adminClearImage(cargo.id);
           ref.invalidate(cargoDetailProvider(cargo.id));
           ref.invalidate(marketplaceProvider);
+          ref.invalidate(cargoFeedPagerProvider);
         } catch (_) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
@@ -1506,6 +1510,7 @@ Future<void> _addPicture(BuildContext context, WidgetRef ref, CargoModel cargo, 
     await media.setCargoPictures(cargo.id, picked);
     container.invalidate(cargoDetailProvider(cargo.id));
     container.invalidate(marketplaceProvider);
+    container.invalidate(cargoFeedPagerProvider);
   } catch (e, st) {
     AutoFix.instance.capture(e, st, source: 'cargo.pictures');
     if (context.mounted) {

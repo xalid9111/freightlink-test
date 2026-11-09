@@ -10,6 +10,7 @@ import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
 import 'widgets/cargo_card.dart';
 import '../../../core/router/safe_navigation.dart';
+import 'providers/cargo_feed_pager.dart';
 
 /// "My loads" (Profile → My loads): every load the signed-in owner has
 /// posted, any status, with quick Edit. Tap a card for full details.
@@ -120,6 +121,7 @@ void _say(BuildContext context, String text) {
 void _refresh(ProviderContainer c, String id) {
   c.invalidate(myCargoProvider);
   c.invalidate(marketplaceProvider);
+  c.invalidate(cargoFeedPagerProvider);
   c.invalidate(cargoDetailProvider(id));
 }
 

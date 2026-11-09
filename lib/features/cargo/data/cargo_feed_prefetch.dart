@@ -1,13 +1,13 @@
 import '../../../models/cargo_model.dart';
-import '../domain/cargo_feed_first.dart';
 import '../domain/cargo_repository.dart';
 
-/// Faster first Yüklər page (owner, 08.11.2026): the open-loads request is
-/// sent while the app is still starting (main.dart, right after Supabase is
-/// ready) instead of after the first frame. The marketplace provider takes
-/// this answer once — the very same query (fetchMarketplace: same columns,
-/// filters, order, limit), so the list, VIP / Premium order and filters are
-/// unchanged; only its waiting time overlaps the start-up.
+typedef CargoFeedStartParts = ({Future<List<CargoModel>> promoted, Future<List<CargoModel>> page, Future<int> count});
+
+/// Faster first Yüklər page (owner, 08.11.2026): the Loads page's first
+/// requests are sent while the app is still starting (main.dart, right
+/// after Supabase is ready) instead of after the first frame. Since
+/// 09.11.2026 (SQL 0109) these are the small page-by-page requests
+/// (CargoFeedPager takes them once), never the whole feed.
 ///
 /// It is used only for the account it was asked for and only once, shortly
 /// after the start; any later refresh (pull, a new load) asks the server
@@ -17,44 +17,34 @@ class CargoFeedPrefetch {
 
   static const maxAge = Duration(seconds: 45);
 
-  static Future<List<CargoModel>>? _future;
-  static Future<CargoFeedPart>? _first;
+  static CargoFeedStartParts? _pages;
   static String? _userId;
   static DateTime? _at;
 
   /// [userId] = the account the request is sent with (null: a visitor).
-  /// Staged (owner, 09.11.2026): the small first part and the full feed
-  /// leave together; the first rows show as soon as the small one is here.
+  /// Page by page (owner, 09.11.2026, SQL 0109): the promoted loads, the
+  /// first page and the counter leave together — small answers, never the
+  /// whole feed.
   static void start(CargoRepository repo, String? userId) {
-    final first = repo.fetchMarketplaceFirst();
-    final f = repo.fetchMarketplace();
+    final parts = (promoted: repo.fetchFeedPromoted(), page: repo.fetchFeedPage(), count: repo.fetchFeedCount());
     // An error is shown by the page that uses it (the usual retry), never
     // reported as an "unhandled" one when no page asks for it.
-    first.then((_) {}, onError: (_) {});
-    f.then((_) {}, onError: (_) {});
-    _first = first;
-    _future = f;
+    for (final f in <Future<Object>>[parts.promoted, parts.page, parts.count]) {
+      f.then((_) {}, onError: (_) {});
+    }
+    _pages = parts;
     _userId = userId;
     _at = DateTime.now();
   }
 
-  /// The started first part for [userId], once (as [take]).
-  static Future<CargoFeedPart>? takeFirst(String? Function() userId) {
-    final f = _first;
-    if (f == null) return null;
-    _first = null;
-    final fresh = _at != null && DateTime.now().difference(_at!) < maxAge;
-    return fresh && userId() == _userId ? f : null;
-  }
-
-  /// The started request for [userId], once; null when there is none (not
+  /// The started requests for [userId], once; null when there are none (not
   /// started, already taken, too old or asked for another account).
-  static Future<List<CargoModel>>? take(String? Function() userId) {
-    final f = _future;
-    if (f == null) return null;
-    _future = null;
+  static CargoFeedStartParts? takePages(String? Function() userId) {
+    final p = _pages;
+    if (p == null) return null;
+    _pages = null;
     final fresh = _at != null && DateTime.now().difference(_at!) < maxAge;
-    return fresh && userId() == _userId ? f : null;
+    return fresh && userId() == _userId ? p : null;
   }
 
   /// Should the start-up send it? Only when the app opens on Yüklər (the

@@ -203,4 +203,8 @@ const kRpcMigration = <String, String>{
   'favorite_set': '0106_user_favorites.sql',
   'admin_cover_template_save': '0096_profile_covers.sql',
   'admin_cover_template_delete': '0096_profile_covers.sql',
+  // Yüklər page by page (owner, 09.11.2026).
+  'cargo_feed_promoted': '0109_cargo_feed_pages.sql',
+  'cargo_feed_page': '0109_cargo_feed_pages.sql',
+  'cargo_feed_count': '0109_cargo_feed_pages.sql',
 };

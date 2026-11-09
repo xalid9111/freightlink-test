@@ -13,6 +13,7 @@ import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/core/theme/theme_mode.dart';
 import 'package:freightlink/features/cargo/data/cargo_feed_prefetch.dart';
 import 'package:freightlink/features/cargo/domain/cargo_feed_first.dart';
+import 'package:freightlink/features/cargo/domain/cargo_feed_pages.dart';
 import 'package:freightlink/features/cargo/domain/cargo_repository.dart';
 import 'package:freightlink/models/cargo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,6 +42,19 @@ class _Repo implements CargoRepository {
     firstCalls++;
     return (loads: const <CargoModel>[], complete: true, cutoff: null);
   }
+
+  int pageCalls = 0;
+  @override
+  Future<List<CargoModel>> fetchFeedPromoted() async {
+    pageCalls++;
+    return const [];
+  }
+
+  @override
+  Future<List<CargoModel>> fetchFeedPage({int limit = kCargoPageSize, CargoModel? after}) async => const [];
+
+  @override
+  Future<int> fetchFeedCount() async => 7;
 
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -133,15 +147,15 @@ void main() {
     test('taken once, for the same account, while fresh', () async {
       final repo = _Repo();
       CargoFeedPrefetch.start(repo, 'u1');
-      expect(CargoFeedPrefetch.take(() => 'u2'), isNull, reason: 'another account');
+      expect(CargoFeedPrefetch.takePages(() => 'u2'), isNull, reason: 'another account');
       CargoFeedPrefetch.start(repo, null);
-      expect(await CargoFeedPrefetch.take(() => null), isEmpty);
-      expect(CargoFeedPrefetch.take(() => null), isNull, reason: 'only once: a refresh asks the server again');
-      expect(repo.calls, 2);
-      // Staged (owner, 09.11.2026): the small first part leaves with it, taken once too.
-      expect(repo.firstCalls, 2);
-      expect(CargoFeedPrefetch.takeFirst(() => null), isNotNull);
-      expect(CargoFeedPrefetch.takeFirst(() => null), isNull);
+      final p = CargoFeedPrefetch.takePages(() => null)!;
+      expect(await p.count, 7);
+      expect(CargoFeedPrefetch.takePages(() => null), isNull, reason: 'only once: a refresh asks the server again');
+      expect(repo.pageCalls, 2);
+      // Page by page (owner, 09.11.2026, 0109): never the whole feed at start-up.
+      expect(repo.calls, 0);
+      expect(repo.firstCalls, 0);
     });
 
     test('only when the app opens on Yüklər', () {
@@ -151,10 +165,12 @@ void main() {
       expect(CargoFeedPrefetch.opensOnLoads(Uri.parse('https://x.io/freightlink-test/#/cargo/abc')), isFalse);
     });
 
-    test('the page uses the very same query (no change to order, filters, VIP / Premium)', () {
-      final p = src('lib/features/cargo/presentation/providers/cargo_providers.dart');
-      expect(p, contains('return CargoFeedPrefetch.take(_sessionUserId) ?? ref.watch(cargoRepositoryProvider).fetchMarketplace();'));
-      expect(src('lib/features/cargo/data/cargo_feed_prefetch.dart'), contains('final f = repo.fetchMarketplace();'));
+    test('start-up sends the small page-by-page requests; the pager takes them once', () {
+      expect(src('lib/features/cargo/data/cargo_feed_prefetch.dart'),
+          contains('final parts = (promoted: repo.fetchFeedPromoted(), page: repo.fetchFeedPage(), count: repo.fetchFeedCount());'));
+      expect(src('lib/features/cargo/presentation/providers/cargo_feed_pager.dart'), contains('CargoFeedPrefetch.takePages(userId)'));
+      // The full feed (filters, the computer) is read as before when asked for.
+      expect(src('lib/features/cargo/presentation/providers/cargo_providers.dart'), contains('return ref.watch(cargoRepositoryProvider).fetchMarketplace();'));
     });
   });
 

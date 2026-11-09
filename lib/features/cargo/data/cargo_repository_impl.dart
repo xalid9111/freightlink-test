@@ -4,6 +4,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../models/cargo_model.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/cargo_feed_first.dart';
+import '../domain/cargo_feed_pages.dart';
 import '../domain/cargo_repository.dart';
 
 /// At most this many open loads are read for the feed (newest first): the
@@ -12,6 +13,52 @@ const kCargoFeedMax = 1000;
 
 class CargoRepositoryImpl implements CargoRepository {
   final SupabaseClient _client = SupabaseConfig.client;
+
+  // ---- Yüklər page by page (SQL 0109; RLS applies, read-only) ------------
+  List<CargoModel> _listed(Object? rows) {
+    final now = DateTime.now();
+    return [for (final r in rows as List) CargoModel.fromJson(Map<String, dynamic>.from(r as Map))]
+        .where((c) => c.isListedOn(now))
+        .toList();
+  }
+
+  @override
+  Future<List<CargoModel>> fetchFeedPromoted() async {
+    try {
+      return _listed(await _client.rpc('cargo_feed_promoted'));
+    } on PostgrestException catch (e) {
+      throw AppException(e.message, code: e.code);
+    }
+  }
+
+  @override
+  Future<List<CargoModel>> fetchFeedPage({int limit = kCargoPageSize, CargoModel? after}) async {
+    try {
+      final now = DateTime.now();
+      return _listed(await _client.rpc('cargo_feed_page', params: {
+        'p_limit': limit,
+        if (after != null) ...{
+          'p_after_id': after.id,
+          // Used only if that load is gone meanwhile (the server works the
+          // lift time out itself otherwise).
+          'p_after_lifted': after.liftedAt(now).toUtc().toIso8601String(),
+          if (after.createdAt != null) 'p_after_created': after.createdAt!.toUtc().toIso8601String(),
+        },
+      }));
+    } on PostgrestException catch (e) {
+      throw AppException(e.message, code: e.code);
+    }
+  }
+
+  @override
+  Future<int> fetchFeedCount() async {
+    try {
+      final n = await _client.rpc('cargo_feed_count');
+      return (n as num).toInt();
+    } on PostgrestException catch (e) {
+      throw AppException(e.message, code: e.code);
+    }
+  }
 
   @override
   Future<CargoFeedPart> fetchMarketplaceFirst({int newest = kCargoFirstPage}) async {
