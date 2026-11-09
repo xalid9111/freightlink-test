@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
@@ -145,13 +144,18 @@ class FloatingNavBar extends StatelessWidget {
   /// Stepped aside (a sheet / dialog is open): slides down and fades out,
   /// keeping its room so the page under the sheet does not move.
   final bool hidden;
-  const FloatingNavBar({super.key, required this.items, required this.current, required this.onTap, this.hidden = false});
+  const FloatingNavBar(
+      {super.key, required this.items, required this.current, required this.onTap, this.hidden = false});
 
   @override
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     final day = AppColors.isDay;
-    final glass = day ? AppColors.card.withValues(alpha: 0.82) : AppColors.hero.withValues(alpha: 0.72);
+    // Option B (owner, 09.11.2026, "daha axıcı olsun"): no blur behind the
+    // capsule — a blur re-draws everything under it on every scrolled frame
+    // (measured on a weak phone: 13 → 16 fps); a slightly denser glass keeps
+    // it readable instead.
+    final glass = day ? AppColors.card.withValues(alpha: 0.92) : AppColors.hero.withValues(alpha: 0.92);
     return SizedBox(
       height: FloatingNav.space(safeBottom),
       child: IgnorePointer(
@@ -164,7 +168,8 @@ class FloatingNavBar extends StatelessWidget {
             duration: const Duration(milliseconds: 160),
             opacity: hidden ? 0 : 1,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(FloatingNav.sideGap, 0, FloatingNav.sideGap, FloatingNav.bottomGap(safeBottom)),
+              padding:
+                  EdgeInsets.fromLTRB(FloatingNav.sideGap, 0, FloatingNav.sideGap, FloatingNav.bottomGap(safeBottom)),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: ConstrainedBox(
@@ -174,28 +179,28 @@ class FloatingNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(FloatingNav.height / 2),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: day ? 0.14 : 0.38), blurRadius: 22, offset: const Offset(0, 8)),
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: day ? 0.14 : 0.38),
+                            blurRadius: 22,
+                            offset: const Offset(0, 8)),
                       ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(FloatingNav.height / 2),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: Container(
-                            height: FloatingNav.height,
-                            decoration: BoxDecoration(
-                              color: glass,
-                              borderRadius: BorderRadius.circular(FloatingNav.height / 2),
-                              border: Border.all(color: AppColors.line.withValues(alpha: day ? 1 : 0.9)),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Row(
-                              children: [
-                                for (final it in items) Expanded(child: _slot(it, it.branch == current)),
-                              ],
-                            ),
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Container(
+                          height: FloatingNav.height,
+                          decoration: BoxDecoration(
+                            color: glass,
+                            borderRadius: BorderRadius.circular(FloatingNav.height / 2),
+                            border: Border.all(color: AppColors.line.withValues(alpha: day ? 1 : 0.9)),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Row(
+                            children: [
+                              for (final it in items) Expanded(child: _slot(it, it.branch == current)),
+                            ],
                           ),
                         ),
                       ),

@@ -67,10 +67,12 @@ void main() {
     expect(on.color, AppColors.accent);
     expect(off.color, AppColors.textSoft);
     expect(find.text('3'), findsOneWidget, reason: 'the unread badge stays');
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    // Option B (owner, 09.11.2026): no blur behind it, smoother scrolling.
+    expect(find.byType(BackdropFilter), findsNothing);
     final glass = tester.widget<Container>(find.descendant(of: find.byKey(const ValueKey('floating-nav')), matching: find.byType(Container)).first);
     final deco = glass.decoration! as BoxDecoration;
     expect(deco.color!.a, lessThan(1), reason: 'see-through');
+    expect(deco.color!.a, closeTo(0.92, 0.01), reason: 'denser glass instead of the blur');
     expect(deco.borderRadius, BorderRadius.circular(FloatingNav.height / 2));
   });
 
