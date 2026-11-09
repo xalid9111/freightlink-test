@@ -3,6 +3,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../models/cargo_model.dart';
 import '../domain/cargo_categories.dart';
+import '../domain/cargo_feed_first.dart';
 import '../domain/cargo_repository.dart';
 
 /// At most this many open loads are read for the feed (newest first): the
@@ -11,6 +12,28 @@ const kCargoFeedMax = 1000;
 
 class CargoRepositoryImpl implements CargoRepository {
   final SupabaseClient _client = SupabaseConfig.client;
+
+  @override
+  Future<CargoFeedPart> fetchMarketplaceFirst({int newest = kCargoFirstPage}) async {
+    try {
+      // The same table, rows and order as fetchMarketplace — two small
+      // reads side by side instead of the whole feed (RLS applies as usual).
+      final both = await Future.wait([
+        _client.from('cargo').select().eq('status', 'new').order('created_at', ascending: false).limit(newest),
+        _client
+            .from('cargo')
+            .select()
+            .eq('status', 'new')
+            .or(kCargoPromotedFilter)
+            .order('created_at', ascending: false)
+            .limit(kCargoFeedMax),
+      ]);
+      List<CargoModel> map(Object rows) => [for (final r in rows as List) CargoModel.fromJson(r)];
+      return mergeFirstPart(newest: map(both[0]), promoted: map(both[1]), now: DateTime.now(), pageSize: newest);
+    } on PostgrestException catch (e) {
+      throw AppException(e.message, code: e.code);
+    }
+  }
 
   @override
   Future<List<CargoModel>> fetchMarketplace({

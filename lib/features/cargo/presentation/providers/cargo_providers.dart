@@ -7,6 +7,7 @@ import '../../../../repositories/profile_repository.dart' show isMissingRelation
 import '../../../../models/cargo_model.dart';
 import '../../data/cargo_repository_impl.dart';
 import '../../domain/cargo_repository.dart';
+import '../../domain/cargo_feed_first.dart';
 
 final cargoRepositoryProvider = Provider<CargoRepository>((ref) => CargoRepositoryImpl());
 
@@ -55,6 +56,14 @@ final marketplaceProvider = FutureProvider<List<CargoModel>>((ref) {
 });
 
 String? _sessionUserId() => SupabaseConfig.client.auth.currentUser?.id;
+
+/// The first, small part of the feed (owner, 09.11.2026, staged loading):
+/// shown by the Loads page only until [marketplaceProvider] (the full feed,
+/// unchanged) is here. Its rows are the full feed's first rows exactly.
+final marketplaceFirstProvider = FutureProvider.autoDispose<CargoFeedPart>((ref) {
+  ref.watch(currentUserIdProvider);
+  return CargoFeedPrefetch.takeFirst(_sessionUserId) ?? ref.watch(cargoRepositoryProvider).fetchMarketplaceFirst();
+});
 
 /// Search tab: same fetch, parameterized by whatever filter is active.
 /// `.family` keys the cache by filter value, so switching filters and

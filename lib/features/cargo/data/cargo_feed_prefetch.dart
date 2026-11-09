@@ -1,4 +1,5 @@
 import '../../../models/cargo_model.dart';
+import '../domain/cargo_feed_first.dart';
 import '../domain/cargo_repository.dart';
 
 /// Faster first Yüklər page (owner, 08.11.2026): the open-loads request is
@@ -17,18 +18,33 @@ class CargoFeedPrefetch {
   static const maxAge = Duration(seconds: 45);
 
   static Future<List<CargoModel>>? _future;
+  static Future<CargoFeedPart>? _first;
   static String? _userId;
   static DateTime? _at;
 
   /// [userId] = the account the request is sent with (null: a visitor).
+  /// Staged (owner, 09.11.2026): the small first part and the full feed
+  /// leave together; the first rows show as soon as the small one is here.
   static void start(CargoRepository repo, String? userId) {
+    final first = repo.fetchMarketplaceFirst();
     final f = repo.fetchMarketplace();
     // An error is shown by the page that uses it (the usual retry), never
     // reported as an "unhandled" one when no page asks for it.
+    first.then((_) {}, onError: (_) {});
     f.then((_) {}, onError: (_) {});
+    _first = first;
     _future = f;
     _userId = userId;
     _at = DateTime.now();
+  }
+
+  /// The started first part for [userId], once (as [take]).
+  static Future<CargoFeedPart>? takeFirst(String? Function() userId) {
+    final f = _first;
+    if (f == null) return null;
+    _first = null;
+    final fresh = _at != null && DateTime.now().difference(_at!) < maxAge;
+    return fresh && userId() == _userId ? f : null;
   }
 
   /// The started request for [userId], once; null when there is none (not

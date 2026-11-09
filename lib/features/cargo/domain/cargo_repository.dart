@@ -1,6 +1,11 @@
 import '../../../models/cargo_model.dart';
+import 'cargo_feed_first.dart';
 
 abstract class CargoRepository {
+  /// The first, small part of the open-loads feed (owner, 09.11.2026):
+  /// every promoted load + the [newest] newest loads (cargo_feed_first.dart).
+  Future<CargoFeedPart> fetchMarketplaceFirst({int newest = kCargoFirstPage});
+
   Future<List<CargoModel>> fetchMarketplace({
     String? pickupCountry,
     String? destinationCountry,

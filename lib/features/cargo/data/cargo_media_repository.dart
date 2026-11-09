@@ -29,6 +29,19 @@ class CargoMediaRepository {
 
   // ---- templates -----------------------------------------------------------
 
+  /// Every load type's pictures in one request (owner, 09.11.2026: one
+  /// read for the whole Loads page instead of one per type, kept for the
+  /// session). Same table, same order inside a type.
+  Future<List<CargoTemplate>> allTemplates() async {
+    final rows = await _c
+        .from('cargo_image_templates')
+        .select()
+        .order('sort_order', ascending: true)
+        .order('created_at', ascending: true)
+        .timeout(_timeout);
+    return [for (final r in rows as List) CargoTemplate.fromJson(Map<String, dynamic>.from(r as Map))];
+  }
+
   Future<List<CargoTemplate>> templates(String category) async {
     final rows = await _c
         .from('cargo_image_templates')

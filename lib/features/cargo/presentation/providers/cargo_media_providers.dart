@@ -8,14 +8,22 @@ import '../../domain/cargo_vip.dart';
 
 final cargoMediaRepositoryProvider = Provider<CargoMediaRepository>((ref) => CargoMediaRepository());
 
-/// The admin's pictures for one load type (0058); empty until 0058 is run.
-final cargoTemplatesProvider = FutureProvider.autoDispose.family<List<CargoTemplate>, String>((ref, category) async {
+/// All the admin's load-type pictures (0058), read ONCE and kept for the
+/// session (owner, 09.11.2026: scrolling back up never asks the server
+/// again, so a card's picture never "re-opens"). Empty until 0058 is run.
+/// An admin's change invalidates it (admin_cargo_pictures_page.dart).
+final allCargoTemplatesProvider = FutureProvider<List<CargoTemplate>>((ref) async {
   try {
-    return await ref.watch(cargoMediaRepositoryProvider).templates(category);
+    return await ref.watch(cargoMediaRepositoryProvider).allTemplates();
   } catch (_) {
     return const [];
   }
 });
+
+/// The pictures of one load type, at once from the kept list (no loading
+/// step when a card comes back into view). Same order as before.
+final cargoTemplatesProvider = Provider.family<AsyncValue<List<CargoTemplate>>, String>((ref, category) =>
+    ref.watch(allCargoTemplatesProvider).whenData((all) => [for (final t in all) if (t.category == category) t]));
 
 /// Hearts: ids of my favourite loads; a tap changes it at once
 /// (optimistic, put back if the server refuses).
