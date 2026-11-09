@@ -157,6 +157,29 @@ void main() {
     expect(m, contains('Future.delayed(const Duration(seconds: 3), catalog.loadRest);'));
   });
 
+  // Owner, 09.11.2026 ("dərhal açılsın"): what the engine waits for before
+  // the first screen starts downloading with the page, not one after another.
+  test('index.html: connections to Google and the start-up fonts start at once; the flags font is not preloaded', () {
+    final html = src('web/index.html');
+    expect(html, contains('<link rel="preconnect" href="https://www.gstatic.com">'));
+    expect(html, contains('<link rel="preconnect" href="https://www.gstatic.com" crossorigin>'));
+    expect(html, contains('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'));
+    final pub = src('pubspec.yaml');
+    for (final f in ['Regular', 'Bold', 'Italic']) {
+      expect(pub, contains('assets/fonts/FreightLinkSans-$f.ttf'));
+      expect(html, contains('<link rel="preload" href="assets/assets/fonts/FreightLinkSans-$f.ttf" as="fetch" crossorigin>'));
+    }
+    expect(html.contains('NotoColorEmoji-Flags.woff2'), isFalse, reason: 'measured: on a slow network it held up the app');
+    // The Roboto address must be the one this Flutter version's engine asks for.
+    final m = RegExp(r'<link rel="preload" href="https://fonts\.gstatic\.com/s/(roboto/[^"]+)" as="fetch" crossorigin>').firstMatch(html);
+    expect(m, isNotNull);
+    final root = Platform.environment['FLUTTER_ROOT'];
+    final engine = root == null ? null : File('$root/bin/cache/flutter_web_sdk/lib/_engine/engine/canvaskit/fonts.dart');
+    if (engine != null && engine.existsSync()) {
+      expect(engine.readAsStringSync(), contains(m!.group(1)), reason: 'update the Roboto preload in web/index.html to the engine\'s URL');
+    }
+  });
+
   test('the logo stays until the first frame (no empty dark page); a safety timer too', () {
     final html = src('web/index.html');
     expect(html, contains('window.flHideSplash = function () {'));
