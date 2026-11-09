@@ -21,6 +21,7 @@ import 'core/site/site_access.dart';
 import 'features/cargo/presentation/providers/category_providers.dart';
 import 'core/config/env.dart';
 import 'core/startup/splash.dart';
+import 'core/widgets/page_hero.dart';
 import 'features/cargo/data/cargo_feed_prefetch.dart';
 import 'features/cargo/data/cargo_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -67,6 +68,8 @@ Future<void> main() async {
     loadSavedUiScale(),
     loadSavedDesktopPreview(),
     loadCargoCategoryPrefs(),
+    // The page banners of the last visit (shown at once, PageHeroMemory).
+    PageHeroMemory.load(),
   ]);
 
   // 6. Yüklər: the open-loads request leaves now (it waits for the network
@@ -87,6 +90,10 @@ Future<void> main() async {
       child: const FreightLinkApp(),
     ),
   );
+  // TIR Bazarı / TIRPark / Servislər / Mağazalar: their banner request leaves
+  // right away, while the first screen is being drawn, not after it
+  // (pageHeroProvider takes the answer).
+  PageHeroPrefetch.start(PageHeroRepository(), Uri.base);
   WidgetsBinding.instance.addPostFrameCallback((_) {
     // The logo of index.html goes away only now: the first screen is drawn.
     hideStartupSplash();

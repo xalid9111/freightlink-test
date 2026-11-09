@@ -420,6 +420,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   Bazarı banner "opened twice" when scrolled away and back) every page
   banner stays in memory the same way, and PageHeroImage decodes the
   picture at its shown size (heroDecodeWidth).
+  First open (owner, 09.11.2026: TIR Bazarı showed the old design without
+  the banner first, then the banner): until the banner is known only its
+  ground stands in its fixed place (pageHeroShownProvider, no default
+  texts / icon); the last banner of each page is kept on the device
+  (PageHeroMemory, public banner row only) and shown at once on the next
+  visit (offline too), the server's answer replaces it when it differs; the
+  banner request of the page the app opens on leaves right after runApp()
+  (PageHeroPrefetch); the picture and its texts appear together, at its
+  first frame (PageHeroImage overlay). Size, place, look and quality as
+  before; an admin's edit still refreshes it.
   Mağazalar has its own banner (owner, 08.11.2026, 0108): shops_hero
   (picture, texts, place, zoom), page 'shops' on the phone and computer, its
   own pencil; until the admin sets one, assets/images/profile/cover_shop.jpg

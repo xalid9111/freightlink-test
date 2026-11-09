@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
@@ -66,6 +68,22 @@ class PageHero {
         zoomDay: _z(j['zoom_day']),
       );
 
+  /// The same row as the server sends it (kept on the device, PageHeroMemory).
+  Map<String, dynamic> toJson() => {
+        'image_url': imageUrl,
+        'image_url_day': imageUrlDay,
+        'title': title,
+        'title_accent': titleAccent,
+        'subtitle': subtitle,
+        'show_text': showText,
+        'focus_x': focusX,
+        'focus_y': focusY,
+        'focus_day_x': focusDayX,
+        'focus_day_y': focusDayY,
+        'zoom': zoom,
+        'zoom_day': zoomDay,
+      };
+
   /// The picture for the current theme; the other one if that is missing.
   String? imageFor({required bool day}) => day ? (imageUrlDay ?? imageUrl) : (imageUrl ?? imageUrlDay);
 
@@ -81,30 +99,51 @@ class PageHero {
 
 /// A banner picture: fills the frame, zoomed in [zoom] times around the
 /// chosen point [align] (that part stays in view).
+///
+/// First open (owner, 09.11.2026): until the picture is ready only
+/// [placeholder] stands in the banner's place; the picture and what is
+/// written on it ([overlay]) then appear together, at once. A picture
+/// already in memory is drawn on the first frame, with no placeholder.
 class PageHeroImage extends StatelessWidget {
   final String url;
   final Alignment align;
   final double zoom;
   final Widget Function(BuildContext) fallback;
-  const PageHeroImage({super.key, required this.url, required this.align, required this.zoom, required this.fallback});
+  final Widget Function(BuildContext)? placeholder;
+
+  /// Drawn over the picture (not zoomed) once it is shown.
+  final Widget? overlay;
+  const PageHeroImage(
+      {super.key,
+      required this.url,
+      required this.align,
+      required this.zoom,
+      required this.fallback,
+      this.placeholder,
+      this.overlay});
 
   @override
   Widget build(BuildContext context) => ClipRect(
-        child: Transform.scale(
-          scale: zoom,
-          alignment: align,
-          // Decoded at the size it is shown (zoom included), not the full
-          // upload: a small picture in memory stays in the image cache while
-          // scrolling, so it never has to be read and opened again.
-          child: LayoutBuilder(
-            builder: (context, c) => Image.network(url,
-                key: ValueKey(url),
-                fit: BoxFit.cover,
-                alignment: align,
-                gaplessPlayback: true,
-                cacheWidth: heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom),
-                errorBuilder: (c, __, ___) => fallback(c)),
-          ),
+        // Decoded at the size it is shown (zoom included), not the full
+        // upload: a small picture in memory stays in the image cache while
+        // scrolling, so it never has to be read and opened again.
+        child: LayoutBuilder(
+          builder: (context, c) => Image.network(url,
+              key: ValueKey(url),
+              fit: BoxFit.cover,
+              alignment: align,
+              gaplessPlayback: true,
+              cacheWidth: heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom),
+              frameBuilder: (c, child, frame, sync) {
+                final ready = sync || frame != null;
+                return Stack(fit: StackFit.expand, children: [
+                  if (!ready) (placeholder ?? fallback)(c),
+                  Transform.scale(scale: zoom, alignment: align, child: child),
+                  if (ready && overlay != null) overlay!,
+                ]);
+              },
+              errorBuilder: (c, __, ___) =>
+                  Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!])),
         ),
       );
 }
@@ -196,12 +235,111 @@ final pageHeroProvider = FutureProvider.autoDispose.family<PageHero?, String>((r
   ref.keepAlive();
   ref.watch(currentUserIdProvider);
   try {
-    return await ref.watch(pageHeroRepositoryProvider).fetch(page);
+    final hero = await (PageHeroPrefetch.take(page) ?? ref.watch(pageHeroRepositoryProvider).fetch(page));
+    PageHeroMemory.remember(page, hero);
+    return hero;
   } catch (_) {
-    // Table not there yet (0049 not run) or offline: the default banner.
-    return null;
+    // Offline: the banner kept on this device; table not there yet (0049
+    // not run) and nothing kept: the default banner.
+    return PageHeroMemory.known(page) ? PageHeroMemory.of(page) : null;
   }
 });
+
+/// What a banner shows (owner, 09.11.2026: TIR Bazarı's banner must not
+/// show the default design first and then change): [known] = the server's
+/// answer, or the banner kept on this device from the last visit (shown at
+/// once, the server's answer replaces it when it differs); not known (the
+/// very first visit, the answer still on its way) = only the banner's
+/// ground in its fixed place, no default texts or picture.
+typedef PageHeroShown = ({PageHero? hero, bool known});
+
+final pageHeroShownProvider = Provider.autoDispose.family<PageHeroShown, String>((ref, page) {
+  final a = ref.watch(pageHeroProvider(page));
+  if (a.hasValue) return (hero: a.value, known: true);
+  if (PageHeroMemory.known(page)) return (hero: PageHeroMemory.of(page), known: true);
+  return (hero: null, known: a.hasError);
+});
+
+/// The last banner of every page, kept on the device (read once before the
+/// first screen, main.dart): a repeat visit draws the banner at once from
+/// it — and its picture from the browser's cache — instead of the default
+/// banner while the server answers. Only the public banner row (picture
+/// addresses, texts, place, zoom) is kept; nothing private.
+class PageHeroMemory {
+  PageHeroMemory._();
+  static const _prefix = 'page_hero_v1_';
+  static const _none = 'none';
+  static final Map<String, PageHero?> _kept = {};
+
+  static bool known(String page) => _kept.containsKey(page);
+  static PageHero? of(String page) => _kept[page];
+
+  static Future<void> load() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      for (final page in kPageHeroTables.keys) {
+        final raw = p.getString('$_prefix$page');
+        if (raw == null) continue;
+        _raw[page] = raw;
+        _kept[page] = raw == _none ? null : PageHero.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      }
+    } catch (_) {
+      // Nothing kept (private mode, old data): the banner waits for the server.
+    }
+  }
+
+  static void remember(String page, PageHero? hero) {
+    final raw = hero == null ? _none : jsonEncode(hero.toJson());
+    _kept[page] = hero;
+    if (_raw[page] == raw) return; // unchanged: nothing written
+    _raw[page] = raw;
+    () async {
+      try {
+        await (await SharedPreferences.getInstance()).setString('$_prefix$page', raw);
+      } catch (_) {}
+    }();
+  }
+
+  /// What is written on the device per page.
+  static final Map<String, String> _raw = {};
+
+  /// Tests only.
+  static void clear() {
+    _kept.clear();
+    _raw.clear();
+  }
+}
+
+/// The banner request of the page the app opens on leaves during start-up
+/// (main.dart, right after Supabase is ready) instead of after the first
+/// screen; pageHeroProvider takes that answer once.
+class PageHeroPrefetch {
+  PageHeroPrefetch._();
+  static final Map<String, Future<PageHero?>> _pending = {};
+
+  /// The banner page of the address the app opens on, or null.
+  static String? pageOf(Uri address) {
+    final f = address.fragment;
+    final route = f.isNotEmpty ? f.split('?').first : '';
+    final q = f.contains('?') ? Uri.splitQueryString(f.substring(f.indexOf('?') + 1)) : const <String, String>{};
+    return switch (route) {
+      '/market' => 'market',
+      '/tirpark' => 'tirpark',
+      '/services' => q['shops'] == '1' ? 'shops' : 'services',
+      _ => null,
+    };
+  }
+
+  static void start(PageHeroRepository repo, Uri address) {
+    final page = pageOf(address);
+    if (page == null) return;
+    final f = repo.fetch(page);
+    f.ignore(); // an error is handled where it is taken
+    _pending[page] = f;
+  }
+
+  static Future<PageHero?>? take(String page) => _pending.remove(page);
+}
 
 /// The map pages' banners (MapPageBanner): TIRPark and Servislər / Mağazalar.
 const kMapBannerPages = {'tirpark', 'services', 'shops'};
@@ -210,7 +348,8 @@ bool isAdminUser(WidgetRef ref) => ref.watch(currentUserProvider)?.role == AppCo
 
 /// Banner background until a picture is added.
 class PageHeroGround extends StatelessWidget {
-  final IconData icon;
+  /// null = only the ground (while the banner is on its way, first visit).
+  final IconData? icon;
   final double iconSize;
   const PageHeroGround({super.key, required this.icon, this.iconSize = 220});
 
@@ -224,10 +363,12 @@ class PageHeroGround extends StatelessWidget {
           colors: [AppColors.card, Color.lerp(AppColors.card, AppColors.accentFill, 0.18)!],
         ),
       ),
-      child: Align(
-        alignment: const Alignment(0.75, 0.3),
-        child: Icon(icon, size: iconSize, color: AppColors.accent.withValues(alpha: 0.12)),
-      ),
+      child: icon == null
+          ? null
+          : Align(
+              alignment: const Alignment(0.75, 0.3),
+              child: Icon(icon, size: iconSize, color: AppColors.accent.withValues(alpha: 0.12)),
+            ),
     );
   }
 }
@@ -257,16 +398,57 @@ class PageHeroBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hero = ref.watch(pageHeroProvider(page)).valueOrNull;
+    final shown = ref.watch(pageHeroShownProvider(page));
+    final hero = shown.hero;
     final admin = isAdminUser(ref);
     final img = hero?.imageFor(day: AppColors.isDay);
     final onPhoto = img != null;
     // Picture with its own writing: no app texts and no dark shade on it.
-    final texts = !onPhoto || (hero?.showText ?? true);
+    // Not known yet (first visit): only the ground, no default texts.
+    final texts = shown.known && (!onPhoto || (hero?.showText ?? true));
     final ink = onPhoto ? Colors.white : AppColors.text;
     final soft = onPhoto ? Colors.white.withValues(alpha: 0.85) : AppColors.textSoft;
     final shadow = onPhoto ? const [Shadow(color: Color(0x99000000), blurRadius: 12)] : null;
     final pad = compact ? 16.0 : 32.0;
+    // Darker on the left so the texts stay readable on any photo.
+    const shade = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xCC000000), Color(0x66000000), Color(0x00000000)],
+          stops: [0, 0.5, 0.9],
+        ),
+      ),
+    );
+    final words = Padding(
+      padding: EdgeInsets.fromLTRB(pad, 0, admin ? pad + 36 : pad, 0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
+            const SizedBox(width: 7),
+            Text(kicker.toUpperCase(),
+                style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: compact ? 11 : 14)),
+          ]),
+          SizedBox(height: compact ? 4 : 8),
+          Text.rich(
+            TextSpan(children: [
+              TextSpan(text: '${hero?.title ?? defaultTitle}\n'),
+              TextSpan(text: hero?.titleAccent ?? defaultAccent, style: TextStyle(color: AppColors.accent)),
+            ]),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppFonts.display(size: compact ? 20 : 34, color: ink, height: 1.15).copyWith(shadows: shadow),
+          ),
+          SizedBox(height: compact ? 4 : 8),
+          Text(hero?.subtitle ?? defaultSubtitle,
+              maxLines: compact ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: compact ? 12.5 : 16, color: soft, height: 1.3, shadows: shadow)),
+        ],
+      ),
+    );
     return ClipRRect(
       key: ValueKey('page-hero-$page'),
       borderRadius: BorderRadius.circular(compact ? 18 : 22),
@@ -278,54 +460,14 @@ class PageHeroBanner extends ConsumerWidget {
                 url: img,
                 align: hero!.alignmentFor(day: AppColors.isDay),
                 zoom: hero.zoomFor(day: AppColors.isDay),
-                fallback: (_) => PageHeroGround(icon: icon, iconSize: height * 0.6))
-          else
-            PageHeroGround(icon: icon, iconSize: height * 0.6),
-          if (onPhoto && texts)
-            // Darker on the left so the texts stay readable on any photo.
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xCC000000), Color(0x66000000), Color(0x00000000)],
-                  stops: [0, 0.5, 0.9],
-                ),
-              ),
-            ),
-          if (texts)
-            Padding(
-              padding: EdgeInsets.fromLTRB(pad, 0, admin ? pad + 36 : pad, 0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
-                    const SizedBox(width: 7),
-                    Text(kicker.toUpperCase(),
-                        style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: compact ? 11 : 14)),
-                  ]),
-                  SizedBox(height: compact ? 4 : 8),
-                  Text.rich(
-                    TextSpan(children: [
-                      TextSpan(text: '${hero?.title ?? defaultTitle}\n'),
-                      TextSpan(text: hero?.titleAccent ?? defaultAccent, style: TextStyle(color: AppColors.accent)),
-                    ]),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                        AppFonts.display(size: compact ? 20 : 34, color: ink, height: 1.15).copyWith(shadows: shadow),
-                  ),
-                  SizedBox(height: compact ? 4 : 8),
-                  Text(hero?.subtitle ?? defaultSubtitle,
-                      maxLines: compact ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: compact ? 12.5 : 16, color: soft, height: 1.3, shadows: shadow)),
-                ],
-              ),
-            ),
+                fallback: (_) => PageHeroGround(icon: icon, iconSize: height * 0.6),
+                placeholder: (_) => const PageHeroGround(icon: null),
+                // The texts come with the picture, not before it.
+                overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)
+          else ...[
+            PageHeroGround(icon: shown.known ? icon : null, iconSize: height * 0.6),
+            if (texts) words,
+          ],
           if (admin)
             Positioned(
               right: 10,
