@@ -191,7 +191,8 @@ class _Hero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hero = ref.watch(pageHeroProvider('market')).valueOrNull;
+    final shown = ref.watch(pageHeroShownProvider('market'));
+    final hero = shown.hero;
     final isAdmin = ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin;
     // Night / day picture for the current theme (0049).
     final img = hero?.imageFor(day: AppColors.isDay);
@@ -201,13 +202,54 @@ class _Hero extends ConsumerWidget {
     // On a photo the text is light; without one it follows the theme.
     final onPhoto = img != null;
     // Picture with its own writing (0050): no texts and no shade on it.
-    final texts = !onPhoto || (hero?.showText ?? true);
+    // Not known yet (first visit): only the ground, no default texts.
+    final texts = shown.known && (!onPhoto || (hero?.showText ?? true));
     final ink = onPhoto ? Colors.white : AppColors.text;
     final soft = onPhoto ? Colors.white.withValues(alpha: 0.85) : AppColors.textSoft;
     final shadow = onPhoto ? const [Shadow(color: Color(0x99000000), blurRadius: 14)] : null;
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth;
       final h = (w * 0.26).clamp(320.0, 420.0);
+      // Darker on the left so the texts stay readable on any photo.
+      const shade = DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xCC000000), Color(0x66000000), Color(0x00000000)],
+            stops: [0, 0.45, 0.8],
+          ),
+        ),
+      );
+      final words = Positioned(
+        left: 36,
+        top: 92,
+        width: math.max(320, w * 0.5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Container(width: 9, height: 9, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
+              const SizedBox(width: 8),
+              Text(s.t('nav_market').toUpperCase(),
+                  style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: 15)),
+            ]),
+            const SizedBox(height: 8),
+            Text.rich(
+              key: const ValueKey('mk-hero-title'),
+              TextSpan(children: [
+                TextSpan(text: '$title\n'),
+                TextSpan(text: accent, style: TextStyle(color: AppColors.accent)),
+              ]),
+              style: AppFonts.display(size: (w * 0.028).clamp(30.0, 44.0), color: ink, height: 1.15)
+                  .copyWith(shadows: shadow),
+            ),
+            const SizedBox(height: 10),
+            Text(subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16.5, color: soft, height: 1.35, shadows: shadow)),
+          ],
+        ),
+      );
       return Padding(
         padding: const EdgeInsets.only(top: 20),
         child: ClipRRect(
@@ -222,51 +264,14 @@ class _Hero extends ConsumerWidget {
                       url: img,
                       align: hero!.alignmentFor(day: AppColors.isDay),
                       zoom: hero.zoomFor(day: AppColors.isDay),
-                      fallback: (_) => const PageHeroGround(icon: Icons.local_shipping))
-                else
-                  const PageHeroGround(icon: Icons.local_shipping),
-                if (onPhoto && texts)
-                  // Darker on the left so the texts stay readable on any photo.
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xCC000000), Color(0x66000000), Color(0x00000000)],
-                        stops: [0, 0.45, 0.8],
-                      ),
-                    ),
-                  ),
-                if (texts)
-                Positioned(
-                  left: 36,
-                  top: 92,
-                  width: math.max(320, w * 0.5),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Container(width: 9, height: 9, decoration: BoxDecoration(color: AppColors.accentFill, shape: BoxShape.circle)),
-                        const SizedBox(width: 8),
-                        Text(s.t('nav_market').toUpperCase(),
-                            style: AppFonts.mono(color: AppColors.accent, letterSpacing: 1.2, size: 15)),
-                      ]),
-                      const SizedBox(height: 8),
-                      Text.rich(
-                        key: const ValueKey('mk-hero-title'),
-                        TextSpan(children: [
-                          TextSpan(text: '$title\n'),
-                          TextSpan(text: accent, style: TextStyle(color: AppColors.accent)),
-                        ]),
-                        style: AppFonts.display(size: (w * 0.028).clamp(30.0, 44.0), color: ink, height: 1.15)
-                            .copyWith(shadows: shadow),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 16.5, color: soft, height: 1.35, shadows: shadow)),
-                    ],
-                  ),
-                ),
+                      fallback: (_) => const PageHeroGround(icon: Icons.local_shipping),
+                      placeholder: (_) => const PageHeroGround(icon: null),
+                      // The texts come with the picture, not before it.
+                      overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)
+                else ...[
+                  PageHeroGround(icon: shown.known ? Icons.local_shipping : null),
+                  if (texts) words,
+                ],
                 Positioned(
                   top: 18,
                   right: 20,

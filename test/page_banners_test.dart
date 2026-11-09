@@ -31,11 +31,13 @@ void main() {
     });
     test('off → no texts and no shade on the picture; switch in the editor', () {
       final f = File('lib/core/widgets/page_hero.dart').readAsStringSync();
-      expect(f.contains('final texts = !onPhoto || (hero?.showText ?? true);'), isTrue);
-      expect(f.contains('if (onPhoto && texts)'), isTrue);
+      // Not known yet (first open, 09.11.2026): no texts either.
+      expect(f.contains('final texts = shown.known && (!onPhoto || (hero?.showText ?? true));'), isTrue);
+      // The shade comes only with the picture's texts (overlay), 09.11.2026.
+      expect(f.contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)'), isTrue);
       expect(f.contains("key: const ValueKey('page-hero-show-text'),"), isTrue);
       final d = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
-      expect(d.contains('final texts = !onPhoto || (hero?.showText ?? true);'), isTrue);
+      expect(d.contains('final texts = shown.known && (!onPhoto || (hero?.showText ?? true));'), isTrue);
       final sql = File('supabase/migrations/0050_page_banner_text_toggle.sql').readAsStringSync();
       expect(RegExp(r'admin_set_page_hero[\s\S]*?perform public\._require_admin\(\);').hasMatch(sql), isTrue);
     });
@@ -90,7 +92,7 @@ void main() {
     test('banners on the phone TIR Bazarı page and on Services (phone + computer)', () {
       expect(read('lib/features/market/presentation/market_home_screen.dart').contains("page: 'market',"), isTrue);
       expect(read('lib/features/services/presentation/services_map_screen.dart').contains("page: 'services',"), isTrue);
-      expect(read('lib/features/market/presentation/market_home_desktop.dart').contains("ref.watch(pageHeroProvider('market'))"), isTrue);
+      expect(read('lib/features/market/presentation/market_home_desktop.dart').contains("ref.watch(pageHeroShownProvider('market'))"), isTrue);
     });
     test('pencil only for admins; saving is checked on the server', () {
       expect(read('lib/core/widgets/page_hero.dart').contains('if (admin)'), isTrue);

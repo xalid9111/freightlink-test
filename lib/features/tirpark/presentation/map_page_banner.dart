@@ -38,9 +38,12 @@ class MapPageBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bg = AppColors.background;
-    final hero = ref.watch(pageHeroProvider(page)).valueOrNull;
+    // Not known yet (first visit, the answer on its way): the banner's place
+    // stays empty — no default picture / texts that change a moment later.
+    final shown = ref.watch(pageHeroShownProvider(page));
+    final hero = shown.hero;
     final img = hero?.imageFor(day: AppColors.isDay);
-    final texts = img == null || (hero?.showText ?? true);
+    final texts = shown.known && (img == null || (hero?.showText ?? true));
     final admin = isAdminUser(ref);
     return SizedBox(
       key: ValueKey('map-banner-$page'),
@@ -53,6 +56,8 @@ class MapPageBanner extends ConsumerWidget {
             zoom: hero.zoomFor(day: AppColors.isDay),
             fallback: (_) => const SizedBox.shrink(),
           )
+        else if (!shown.known)
+          const SizedBox.shrink()
         else if (asset != null)
           Align(
             alignment: Alignment.centerRight,
