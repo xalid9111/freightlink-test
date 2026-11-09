@@ -43,8 +43,8 @@
        app waits for before its first screen starts downloading now, side
        by side with main.dart.js, instead of one after another later:
        the connections to Google's servers (drawing engine, fallback font)
-       and the fonts. The flags font is NOT preloaded here: on a slow
-       network it would hold up the app itself (measured). The Roboto
+       and the fonts (measured, 09.11.2026). The flags font is NOT
+       preloaded: on a slow network it held up the app itself. The Roboto
        address belongs to this Flutter version
        (test/startup_speed_test.dart keeps it in step). -->
   <link rel="preconnect" href="https://www.gstatic.com">

@@ -69,14 +69,7 @@ Future<void> main() async {
     loadCargoCategoryPrefs(),
   ]);
 
-  // 6. Flags font (owner, 09.11.2026): its download starts now instead of
-  // after the first screen, so it is usually ready before the load cards
-  // appear and their flags no longer send the browser for the same 709 KB
-  // emoji font to Google a second time. Never waited for; it is unpacked
-  // right after the first screen (below), so that screen is not held up.
-  final flagBytes = startFlagFontDownload();
-
-  // 7. Yüklər: the open-loads request leaves now (it waits for the network
+  // 6. Yüklər: the open-loads request leaves now (it waits for the network
   // while the rest starts); the page takes this answer (CargoFeedPrefetch).
   await supabaseReady;
   if (CargoFeedPrefetch.opensOnLoads(Uri.base)) {
@@ -97,8 +90,8 @@ Future<void> main() async {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     // The logo of index.html goes away only now: the first screen is drawn.
     hideStartupSplash();
-    // Flags font: registered now, from the download started above.
-    loadFlagFont(flagBytes);
+    // Flags font: in the background, after the first screen.
+    loadFlagFont();
     // The other languages, a little later (the first screen's own requests
     // go first on a slow network).
     Future.delayed(const Duration(seconds: 3), catalog.loadRest);

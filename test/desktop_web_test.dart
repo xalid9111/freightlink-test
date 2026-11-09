@@ -95,19 +95,13 @@ void main() {
       expect(File('assets/fonts/flags/OFL.txt').existsSync(), isTrue);
       expect(File('pubspec.yaml').readAsStringSync().contains('- assets/fonts/flags/'), isTrue);
     });
-    test('theme falls back to it; its download starts at start-up, it is registered after the first frame', () {
+    test('theme falls back to it and main loads it after the first frame', () {
       final theme = File('lib/core/theme/app_theme.dart').readAsStringSync();
       expect(theme.contains('fontFamilyFallback: AppFonts.fallback'), isTrue);
       final main = File('lib/main.dart').readAsStringSync();
-      final run = main.indexOf('runApp(\n    ProviderScope(');
       final afterFrame = main.indexOf('WidgetsBinding.instance.addPostFrameCallback((_) {');
-      expect(afterFrame > run, isTrue);
-      // Owner, 09.11.2026: the download starts early (never waited for) so the
-      // cards' flags do not fetch the same emoji font from Google a 2nd time.
-      final start = main.indexOf('final flagBytes = startFlagFontDownload();');
-      expect(start > 0 && start < run, isTrue);
-      expect(main.contains('await flagBytes'), isFalse, reason: 'the first screen never waits for it');
-      expect(main.indexOf('    loadFlagFont(flagBytes);') > afterFrame, isTrue);
+      expect(afterFrame > main.indexOf('runApp(\n    ProviderScope('), isTrue);
+      expect(main.indexOf('    loadFlagFont();') > afterFrame, isTrue);
     });
   });
 
