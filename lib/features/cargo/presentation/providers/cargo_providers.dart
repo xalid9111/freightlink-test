@@ -112,6 +112,9 @@ final activeCarriersCountProvider = FutureProvider<int>((ref) async {
         .select('id')
         .eq('role', 'carrier')
         .eq('is_active', true)
+        // Only the number is used (owner, 09.11.2026): the server counts
+        // exactly as before, but sends one row instead of every id.
+        .limit(1)
         .count(CountOption.exact);
     return res.count;
   }
@@ -131,6 +134,8 @@ final newCargo24hCountProvider = FutureProvider<int>((ref) async {
       .from('cargo')
       .select('id')
       .gte('created_at', since)
+      // Only the number is used: an exact count, one row sent (09.11.2026).
+      .limit(1)
       .count(CountOption.exact);
   return res.count;
 });
