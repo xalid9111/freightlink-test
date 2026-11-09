@@ -12,6 +12,7 @@ import 'package:freightlink/core/localization/localization_service.dart';
 import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/core/theme/theme_mode.dart';
 import 'package:freightlink/features/cargo/data/cargo_feed_prefetch.dart';
+import 'package:freightlink/features/cargo/domain/cargo_feed_first.dart';
 import 'package:freightlink/features/cargo/domain/cargo_repository.dart';
 import 'package:freightlink/models/cargo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +33,13 @@ class _Repo implements CargoRepository {
   }) async {
     calls++;
     return const [];
+  }
+
+  int firstCalls = 0;
+  @override
+  Future<CargoFeedPart> fetchMarketplaceFirst({int newest = kCargoFirstPage}) async {
+    firstCalls++;
+    return (loads: const <CargoModel>[], complete: true, cutoff: null);
   }
 
   @override
@@ -130,6 +138,10 @@ void main() {
       expect(await CargoFeedPrefetch.take(() => null), isEmpty);
       expect(CargoFeedPrefetch.take(() => null), isNull, reason: 'only once: a refresh asks the server again');
       expect(repo.calls, 2);
+      // Staged (owner, 09.11.2026): the small first part leaves with it, taken once too.
+      expect(repo.firstCalls, 2);
+      expect(CargoFeedPrefetch.takeFirst(() => null), isNotNull);
+      expect(CargoFeedPrefetch.takeFirst(() => null), isNull);
     });
 
     test('only when the app opens on Yüklər', () {

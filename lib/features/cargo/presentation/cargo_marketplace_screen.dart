@@ -24,6 +24,7 @@ import 'widgets/cargo_category_bar.dart';
 import 'widgets/route_city_sheet.dart';
 import '../../../core/constants/cities.dart';
 import '../domain/cargo_categories.dart';
+import '../domain/cargo_feed_first.dart';
 import '../domain/vip_rows.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -65,10 +66,69 @@ class CargoMarketplaceScreen extends ConsumerWidget {
 
     final shown = visible(cargoList);
     final anyFilter = filter.isActive || cat.isActive;
+    // Staged loading (owner, 09.11.2026): until the full feed is here, the
+    // first rows come from a small first answer — the very same rows, VIP /
+    // Premium order included (cargo_feed_first.dart). With a filter on, the
+    // page waits for the full feed as before.
+    final firstPart = marketplaceAsync.hasValue || anyFilter ? null : ref.watch(marketplaceFirstProvider).valueOrNull;
+    // The admin's load-type pictures: asked for once, with the page.
+    ref.listen(allCargoTemplatesProvider, (_, __) {});
     void resetFilters() {
       ref.read(routeFilterProvider.notifier).state = const RouteFilter();
       ref.read(cargoCategoryFilterProvider.notifier).state = const CargoCategoryFilter();
     }
+
+    // The load tiles (and the Premium places card above them) for [list]
+    // in [rows]; [more] = the rest of the feed is still on its way.
+    List<Widget> tiles(List<CargoModel> list, List<List<LoadCell>> rows, {bool more = false}) => [
+
+      // Parks, services and shops whose Premium chose Yüklər (owner, 07.11.2026, 0103).
+      // As wide as the two load cards under it (owner, 07.11.2026:
+      // never past their left / right edges).
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+          child: TileRowWidth(child: PlaceCrossStrip(s: strings, place: 'loads')),
+        ),
+      ),
+      // No panel behind the tiles (owner, 24.10.2026): the page
+      // ground shows between them.
+      // Room under the last row: never under the floating bar.
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(12, kTileGap, 12, more ? 0 : math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
+        sliver: SliverList.builder(
+          itemCount: rows.length,
+          itemBuilder: (context, i) {
+            final row = rows[i];
+            return WheelItem(
+              index: i,
+              isAd: false,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: kTileGap),
+                child: _TileRow(
+                  children: [
+                    for (final cell in row)
+                      CargoTile(
+                        cargo: list[cell.index],
+                        strings: strings,
+                        vip: cell.vip,
+                        onTap: () => context.pushOnce('/cargo/${list[cell.index].id}'),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      if (more)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(32, 8, 32, math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        ),
+    ];
 
     return Scaffold(
       // "Add load" moved to the bottom navigation bar.
@@ -124,9 +184,13 @@ class CargoMarketplaceScreen extends ConsumerWidget {
             ),
             ...marketplaceAsync.when<List<Widget>>(
               loading: () => [
-                const SliverToBoxAdapter(
-                  child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
-                ),
+                if (firstPart != null && firstPart.loads.isNotEmpty) ...[
+                  // The first rows at once; the rest of the feed follows.
+                  ...tiles(firstPart.loads, stableFirstRows(firstPart, columns: 2), more: !firstPart.complete),
+                ] else
+                  const SliverToBoxAdapter(
+                    child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+                  ),
               ],
               error: (e, _) => [
                 SliverToBoxAdapter(
@@ -164,48 +228,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 // Two tiles in a row (owner, 22–24.10.2026), chessboard:
                 // load–VIP, VIP–load …; the VIP order moves on every few
                 // minutes. Scrolling brings the next rows.
-                final rows = buildLoadRows(list, columns: 2);
-                return [
-                  // Parks, services and shops whose Premium chose Yüklər (owner, 07.11.2026, 0103).
-                  // As wide as the two load cards under it (owner, 07.11.2026:
-                  // never past their left / right edges).
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                      child: TileRowWidth(child: PlaceCrossStrip(s: strings, place: 'loads')),
-                    ),
-                  ),
-                  // No panel behind the tiles (owner, 24.10.2026): the page
-                  // ground shows between them.
-                  // Room under the last row: never under the floating bar.
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(12, kTileGap, 12, math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
-                    sliver: SliverList.builder(
-                      itemCount: rows.length,
-                      itemBuilder: (context, i) {
-                        final row = rows[i];
-                        return WheelItem(
-                          index: i,
-                          isAd: false,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: kTileGap),
-                            child: _TileRow(
-                              children: [
-                                for (final cell in row)
-                                  CargoTile(
-                                    cargo: list[cell.index],
-                                    strings: strings,
-                                    vip: cell.vip,
-                                    onTap: () => context.pushOnce('/cargo/${list[cell.index].id}'),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ];
+                return tiles(list, buildLoadRows(list, columns: 2));
               },
             ),
           ],

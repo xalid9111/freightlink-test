@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,6 +104,46 @@ class ProfileRepository {
     }
     // Anyone else: public fields only, from the user_profiles view. Phone
     // and e-mail are no longer part of a profile — see contact().
+    return _batched(userId);
+  }
+
+  // Faster pages (owner, 09.11.2026): the profiles asked for at the same
+  // moment (a page of load cards, a chat list) are read in ONE request
+  // instead of one per person — the same view, columns and rules.
+  final Map<String, Completer<PublicProfile?>> _batch = {};
+  Timer? _batchTimer;
+
+  Future<PublicProfile?> _batched(String userId) {
+    final c = _batch.putIfAbsent(userId, Completer<PublicProfile?>.new);
+    _batchTimer ??= Timer(Duration.zero, _flushBatch);
+    return c.future;
+  }
+
+  Future<void> _flushBatch() async {
+    final jobs = Map.of(_batch);
+    _batch.clear();
+    _batchTimer = null;
+    final ids = jobs.keys.toList();
+    for (var i = 0; i < ids.length; i += 100) {
+      final part = ids.sublist(i, i + 100 < ids.length ? i + 100 : ids.length);
+      try {
+        final rows = await _client.from('user_profiles').select(_publicCols).inFilter('id', part);
+        final byId = {
+          for (final r in rows as List) '${(r as Map)['id']}': PublicProfile.fromJson(Map<String, dynamic>.from(r)),
+        };
+        for (final id in part) {
+          jobs[id]!.complete(byId[id]);
+        }
+      } catch (_) {
+        // As before: one at a time (also the older-database fallback).
+        for (final id in part) {
+          _fetchOne(id).then(jobs[id]!.complete, onError: jobs[id]!.completeError);
+        }
+      }
+    }
+  }
+
+  Future<PublicProfile?> _fetchOne(String userId) async {
     try {
       final row = await _client.from('user_profiles').select(_publicCols).eq('id', userId).maybeSingle();
       return row == null ? null : PublicProfile.fromJson(row);

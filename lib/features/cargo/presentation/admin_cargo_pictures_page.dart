@@ -53,7 +53,7 @@ class _AdminCargoPicturesPageState extends ConsumerState<AdminCargoPicturesPage>
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: AppColors.danger, content: Text(t)));
       }
     } finally {
-      ref.invalidate(cargoTemplatesProvider(_cat));
+      ref.invalidate(allCargoTemplatesProvider);
       if (mounted) setState(() => _busy = false);
     }
   }

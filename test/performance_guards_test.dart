@@ -37,7 +37,8 @@ void main() {
     expect(src('lib/features/chat/presentation/conversations_screen.dart'), contains('ListView.builder('));
     expect(src('lib/features/cargo/presentation/cargo_marketplace_screen.dart'), contains('SliverList.builder('));
     final cargo = src('lib/features/cargo/data/cargo_repository_impl.dart');
-    expect(RegExp(r'\.limit\(kCargoFeedMax\)').allMatches(cargo).length, 2);
+    // The feed, the category feed and the promoted part of the staged first answer (09.11.2026).
+    expect(RegExp(r'\.limit\(kCargoFeedMax\)').allMatches(cargo).length, 3);
     final jobs = src('lib/features/jobs/presentation/job_center_screen.dart');
     expect(jobs, contains('const kJobFeedStep = 20;'));
   });
