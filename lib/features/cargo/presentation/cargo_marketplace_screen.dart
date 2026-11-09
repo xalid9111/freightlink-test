@@ -25,6 +25,8 @@ import 'widgets/route_city_sheet.dart';
 import '../../../core/constants/cities.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/cargo_feed_first.dart';
+import '../domain/cargo_feed_pages.dart';
+import 'providers/cargo_feed_pager.dart';
 import '../domain/vip_rows.dart';
 import '../../../core/widgets/country_picker.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -48,15 +50,22 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     // Wide window: the desktop page (same data and actions, wide layout).
     if (isDesktopLayout(context)) return const _DesktopMarketplace();
     final strings = ref.watch(stringsProvider);
-    final marketplaceAsync = ref.watch(marketplaceProvider);
-    final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     final filter = ref.watch(routeFilterProvider);
+    final cat = ref.watch(cargoCategoryFilterProvider);
+    final anyFilter = filter.isActive || cat.isActive;
+    // Page by page from the server (owner, 09.11.2026, SQL 0109, "Turbo.az
+    // kimi"): without a filter the page shows the promoted loads + one page
+    // at a time and never downloads the whole feed. With a filter on (or
+    // before the owner has run 0109) it uses the full feed as before.
+    final feed = ref.watch(cargoFeedPagerProvider);
+    final usePages = !anyFilter && !feed.legacy;
+    final marketplaceAsync = usePages ? const AsyncValue<List<CargoModel>>.loading() : ref.watch(marketplaceProvider);
+    final cargoList = marketplaceAsync.valueOrNull ?? const <CargoModel>[];
     // The old wide ad banner is gone from the Loads page (owner,
     // 23.10.2026). VIP and normal loads stand in a chessboard instead (0059).
     // Load-type tile / big-small card (0055): the server's answer, or the
     // same rule on the loaded list until it arrives — instant either way.
-    final cat = ref.watch(cargoCategoryFilterProvider);
-    final catFeed = ref.watch(categoryFeedProvider);
+    final catFeed = cat.isActive ? ref.watch(categoryFeedProvider) : const AsyncValue<List<CargoModel>>.loading();
     List<CargoModel> byCategory(List<CargoModel> all) =>
         !cat.isActive ? all : (catFeed.valueOrNull ?? all.where(cat.matches).toList());
     List<CargoModel> visible(List<CargoModel> all) {
@@ -65,12 +74,11 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     }
 
     final shown = visible(cargoList);
-    final anyFilter = filter.isActive || cat.isActive;
     // Staged loading (owner, 09.11.2026): until the full feed is here, the
     // first rows come from a small first answer — the very same rows, VIP /
     // Premium order included (cargo_feed_first.dart). With a filter on, the
     // page waits for the full feed as before.
-    final firstPart = marketplaceAsync.hasValue || anyFilter ? null : ref.watch(marketplaceFirstProvider).valueOrNull;
+    final firstPart = usePages || marketplaceAsync.hasValue || anyFilter ? null : ref.watch(marketplaceFirstProvider).valueOrNull;
     // The admin's load-type pictures: asked for once, with the page.
     ref.listen(allCargoTemplatesProvider, (_, __) {});
     void resetFilters() {
@@ -80,7 +88,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
 
     // The load tiles (and the Premium places card above them) for [list]
     // in [rows]; [more] = the rest of the feed is still on its way.
-    List<Widget> tiles(List<CargoModel> list, List<List<LoadCell>> rows, {bool more = false}) => [
+    List<Widget> tiles(List<CargoModel> list, List<List<LoadCell>> rows, {bool more = false, VoidCallback? onMore}) => [
 
       // Parks, services and shops whose Premium chose Yüklər (owner, 07.11.2026, 0103).
       // As wide as the two load cards under it (owner, 07.11.2026:
@@ -125,16 +133,42 @@ class CargoMarketplaceScreen extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(32, 8, 32, math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
-            child: const Center(child: CircularProgressIndicator()),
+            // Near the end of the list: the next page (page by page, 0109).
+            child: _MoreSpinner(onShown: onMore),
           ),
         ),
     ];
+
+    // Page by page (0109): the rows that are already final; the next page
+    // comes when the end of the list is near.
+    List<Widget> pagedSlivers() {
+      if (!feed.ready) {
+        return [
+          const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))),
+        ];
+      }
+      if (feed.error != null && feed.loads.isEmpty) {
+        return [
+          SliverToBoxAdapter(
+            child: _ErrorState(
+              message: strings.t('home_error_loading'),
+              retryLabel: strings.t('home_retry'),
+              onRetry: () => ref.invalidate(cargoFeedPagerProvider),
+            ),
+          ),
+        ];
+      }
+      if (feed.loads.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
+      return tiles(feed.loads, pagedRows(feed.loads, complete: feed.complete, columns: 2),
+          more: !feed.complete, onMore: () => ref.read(cargoFeedPagerProvider.notifier).loadMore());
+    }
 
     return Scaffold(
       // "Add load" moved to the bottom navigation bar.
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
+          ref.invalidate(cargoFeedPagerProvider);
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
@@ -146,7 +180,11 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           // iOS-style momentum everywhere: long, soft glide and no hard stop.
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            SliverToBoxAdapter(child: _Hero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
+            SliverToBoxAdapter(
+                child: _Hero(
+                    strings: strings,
+                    count: usePages ? (feed.count ?? 0) : cargoList.length,
+                    loaded: usePages ? feed.count != null : marketplaceAsync.hasValue)),
             // Load types + big / small loads (owner, 21.10.2026).
             SliverToBoxAdapter(
               child: Padding(
@@ -175,14 +213,14 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                         onPressed: resetFilters,
                         child: Text(strings.t('cat_reset')),
                       ),
-                    if (marketplaceAsync.hasValue)
-                      Text(strings.t('home_results', {'count': '${shown.length}'}),
+                    if (usePages ? feed.count != null : marketplaceAsync.hasValue)
+                      Text(strings.t('home_results', {'count': '${usePages ? feed.count : shown.length}'}),
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                   ],
                 ),
               ),
             ),
-            ...marketplaceAsync.when<List<Widget>>(
+            if (usePages) ...pagedSlivers() else ...marketplaceAsync.when<List<Widget>>(
               loading: () => [
                 if (firstPart != null && firstPart.loads.isNotEmpty) ...[
                   // The first rows at once; the rest of the feed follows.
@@ -244,9 +282,10 @@ class CargoMarketplaceScreen extends ConsumerWidget {
 /// computed from the open marketplace (no invented numbers).
 class _Hero extends ConsumerWidget {
   final AppStrings strings;
-  final List<CargoModel> cargoList;
+  // Open loads (the counter; page by page it comes from the server, 0109).
+  final int count;
   final bool loaded;
-  const _Hero({required this.strings, required this.cargoList, required this.loaded});
+  const _Hero({required this.strings, required this.count, required this.loaded});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -330,7 +369,7 @@ class _Hero extends ConsumerWidget {
                   _StatCard(
                     icon: Icons.local_shipping,
                     color: AppColors.accent,
-                    value: stat(cargoList.length),
+                    value: stat(count),
                     label: strings.t('home_stat_active'),
                     onTap: () => _scrollToFeed(),
                   ),
@@ -665,7 +704,15 @@ class _RouteSearch extends ConsumerWidget {
     // whole country). Closing the list keeps the whole country.
     String? city;
     if (code != null && context.mounted) {
-      final loads = ref.read(marketplaceProvider).valueOrNull ?? const <CargoModel>[];
+      // The towns of the loads in that country (page by page the screen
+      // does not hold every load: read them now, once).
+      var loads = ref.read(marketplaceProvider).valueOrNull ?? const <CargoModel>[];
+      if (loads.isEmpty) {
+        try {
+          loads = await ref.read(marketplaceProvider.future);
+        } catch (_) {}
+      }
+      if (!context.mounted) return;
       final v = await showModalBottomSheet<String>(
         context: context,
         isScrollControlled: true,
@@ -876,5 +923,18 @@ class _TileRow extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+/// The spinner at the end of the list; when it comes into view (near the
+/// end) it asks for the next page (page by page, 0109).
+class _MoreSpinner extends StatelessWidget {
+  final VoidCallback? onShown;
+  const _MoreSpinner({this.onShown});
+
+  @override
+  Widget build(BuildContext context) {
+    if (onShown != null) WidgetsBinding.instance.addPostFrameCallback((_) => onShown!());
+    return const Center(child: CircularProgressIndicator());
   }
 }

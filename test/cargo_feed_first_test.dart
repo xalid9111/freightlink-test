@@ -88,8 +88,8 @@ void main() {
     expect(repo, contains('.or(kCargoPromotedFilter)'));
     expect(repo, contains('.limit(newest)'));
     final screen = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    expect(screen, contains('final firstPart = marketplaceAsync.hasValue || anyFilter ? null : ref.watch(marketplaceFirstProvider).valueOrNull;'));
+    expect(screen, contains('final firstPart = usePages || marketplaceAsync.hasValue || anyFilter ? null : ref.watch(marketplaceFirstProvider).valueOrNull;'));
     expect(screen, contains('stableFirstRows(firstPart, columns: 2)'));
-    expect(screen, contains('if (marketplaceAsync.hasValue)\n'), reason: 'the result count still waits for the full feed');
+    expect(screen, contains('if (usePages ? feed.count != null : marketplaceAsync.hasValue)\n'), reason: 'the count: the server\'s counter, or the full feed');
   });
 }

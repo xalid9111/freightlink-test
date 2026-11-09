@@ -23,6 +23,7 @@ import 'widgets/cargo_category_bar.dart';
 import 'widgets/cargo_picture_field.dart';
 import 'providers/cargo_media_providers.dart';
 import 'providers/cargo_providers.dart';
+import 'providers/cargo_feed_pager.dart';
 
 /// Quick "post a load" form, built for speed on a phone: countries and
 /// weight are picked with one tap (chips), only city + price are typed.
@@ -338,6 +339,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         }
       }
       container.invalidate(marketplaceProvider);
+      container.invalidate(cargoFeedPagerProvider);
       container.invalidate(myCargoProvider);
       if (!mounted) return;
       if (o == null) {

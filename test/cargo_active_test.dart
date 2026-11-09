@@ -68,7 +68,8 @@ void main() {
     });
     test('every public list uses the same rule', () {
       final repo = src('lib/features/cargo/data/cargo_repository_impl.dart');
-      expect('.where((c) => c.isListedOn(now))'.allMatches(repo).length, 3);
+      // The feed, the category feed, the staged first part and the 0109 pages.
+      expect('.where((c) => c.isListedOn(now))'.allMatches(repo).length, 4);
       expect(src('lib/features/ads/presentation/ads_providers.dart'), contains('c.isListedOn(DateTime.now())'));
       expect(src('lib/features/cargo/data/cargo_media_repository.dart'), contains('c.isListedOn(DateTime.now())'));
     });

@@ -490,6 +490,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   never re-ask the server or re-open their picture while scrolling. Other
   people's profiles asked for together go in one user_profiles request (the
   old one-by-one read is the fallback).
+  Page by page from the server (owner, 09.11.2026, SQL 0109 approved):
+  without a filter Yüklər reads the promoted loads (cargo_feed_promoted),
+  one page of 20 of the others at a time in the app's order (latest lift,
+  then newest — cargo_feed_page, the next page after the last load, asked
+  for when the end of the list comes near) and the counter
+  (cargo_feed_count); it never downloads the whole feed. Only final rows
+  are shown (pagedRows, random-feed test). With a route / type filter, on
+  the computer, and until 0109 is run (CargoFeedPager legacy) the full feed
+  is used as before. The functions only read, with the caller's rights.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a

@@ -11,6 +11,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../../services/geo_service.dart';
 import '../providers/cargo_providers.dart';
 import '../../../../core/widgets/map_tiles.dart';
+import '../providers/cargo_feed_pager.dart';
 
 
 EndpointsKey _keyFor(CargoModel c) => (
@@ -226,6 +227,7 @@ class _RouteMapScreenState extends ConsumerState<RouteMapScreen> {
       }).eq('id', widget.cargo.id);
       ref.invalidate(cargoDetailProvider(widget.cargo.id));
       ref.invalidate(marketplaceProvider);
+      ref.invalidate(cargoFeedPagerProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('map_saved'))));
         Navigator.of(context).pop();

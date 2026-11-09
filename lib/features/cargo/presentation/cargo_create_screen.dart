@@ -10,6 +10,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../models/cargo_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import 'providers/cargo_providers.dart';
+import 'providers/cargo_feed_pager.dart';
 
 /// Real "Create cargo" form (brief §5 / §4). Submits directly to
 /// Supabase via CargoRepository.create() — RLS (migration 0002)
@@ -134,6 +135,7 @@ class _CargoCreateScreenState extends ConsumerState<CargoCreateScreen> {
       // Force the Home/Search feeds to re-fetch so the new listing
       // appears immediately without waiting for the next pull-to-refresh.
       ref.invalidate(marketplaceProvider);
+      ref.invalidate(cargoFeedPagerProvider);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('create_success'))));

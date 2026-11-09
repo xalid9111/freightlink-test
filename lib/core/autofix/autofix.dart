@@ -13,6 +13,7 @@ import '../../features/chat/presentation/providers/group_providers.dart';
 import '../config/supabase_config.dart';
 import 'autofix_logic.dart';
 import 'autofix_platform_stub.dart' if (dart.library.js_interop) 'autofix_platform_web.dart' as platform;
+import '../../features/cargo/presentation/providers/cargo_feed_pager.dart';
 
 /// AutoFix — free, built-in error tracking and safe recovery.
 ///
@@ -239,6 +240,7 @@ class AutoFix {
     _refreshChats();
     try {
       _container?.invalidate(marketplaceProvider);
+      _container?.invalidate(cargoFeedPagerProvider);
     } catch (_) {}
   }
 
