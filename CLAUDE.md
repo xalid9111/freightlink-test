@@ -471,6 +471,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   screen). Yüklər: the same open-loads query (fetchMarketplace, 1000, same
   order / filters / VIP / Premium) leaves during start-up when the app opens
   on Yüklər and is taken once by marketplaceProvider (CargoFeedPrefetch).
+  Owner, 09.11.2026 ("dərhal açılsın"): index.html preconnects to
+  www.gstatic.com / fonts.gstatic.com and preloads (as="fetch") the
+  three FreightLinkSans fonts and the engine's Roboto (the URL of this
+  Flutter version, kept in step by test/startup_speed_test.dart), so the
+  engine no longer downloads them one after another after main.dart.js
+  (measured: first screen −27 %, cards −19 % on a fast connection, never
+  slower). The 709 KB flags font is NOT preloaded or registered earlier —
+  measured slower on a slow network / on repeat visits; it stays after the
+  first frame.
 - Service / shop pages (owner, 07.11.2026): the list card opens the profile
   (its buttons keep their own work); no mini map on the profile (address +
   "Marşrut" stay); a shop shows "Mağaza" as title and kind. "Mesaj yaz" on a
