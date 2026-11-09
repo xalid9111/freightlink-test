@@ -172,7 +172,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   app_router.dart; Yüklər, TIR Bazarı, Mesajlar and Profil scroll behind
   it), it steps aside while a sheet / dialog / menu or a pushed editor is
   open in a tab and is gone with the keyboard open. The computer keeps its
-  sidebar.
+  sidebar. Option B (owner, 09.11.2026, "daha axıcı olsun"): no blur
+  (BackdropFilter) behind the capsule, the glass 92 % dense instead —
+  smoother scrolling on weak phones (measured 13 → 16 fps).
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
   Night colours (owner, 29.10.2026, 0076): only the admin changes them,
