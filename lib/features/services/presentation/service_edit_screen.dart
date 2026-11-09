@@ -25,6 +25,7 @@ import 'services_map_screen.dart' show kShopCategory;
 import 'services_providers.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/published_notice.dart';
+import '../../../core/router/after_save.dart';
 
 /// Create / edit the signed-in user's own service profile. Moderation
 /// fields (status, verified, rating) are never sent — the database
@@ -82,6 +83,9 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
   ServiceProvider? _existing;
   bool _loading = true;
   bool _saving = false;
+
+  /// Saved and on the way back: a second tap creates nothing (owner, 09.11.2026).
+  bool _left = false;
   bool _locating = false;
   String? _error;
 
@@ -229,6 +233,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving || _left) return; // a double tap never saves twice
     final s = ref.read(stringsProvider);
     if (!_form.currentState!.validate()) return;
     if (_shopForm && !_cats.any((c) => c.startsWith('shop_'))) {
@@ -306,12 +311,16 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
       if (_existing == null) {
         // A new service / shop: straight back to its map with a clear
         // green notice (owner, 07.11.2026).
+        _left = true;
         showPublishedNotice(context, s.t(_shopForm ? 'pub_shop_done' : 'pub_service_done'));
         context.go(_shopForm ? '/services?shops=1' : '/services');
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('svc_saved'))));
-      context.pushReplacement('/service/${saved.id}');
+      // Edited: back to the page it was opened from (the service / shop
+      // page reads the refreshed profile) — no second copy of that page in
+      // the history any more; opened from a link: the saved page.
+      _left = true;
+      leaveAfterSave(context, fallback: '/service/${saved.id}', notice: s.t('svc_saved'));
     } catch (e) {
       final raw = e.toString();
       if (mounted) {

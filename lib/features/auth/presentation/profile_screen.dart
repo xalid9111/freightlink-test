@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/phone_countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/after_save.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/age.dart';
 import '../../../core/utils/gif.dart';
@@ -521,6 +522,9 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
   final _nameCtrl = TextEditingController();
   String? _lastSaved; // the saved name the field last followed
   bool _savingName = false;
+
+  /// Saved and on the way back to Profil: a second tap does nothing.
+  bool _left = false;
   String? _nameError;
 
   @override
@@ -621,13 +625,19 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
 
   /// Saves the display name (person or company) others see.
   Future<void> _saveName(String saved) async {
+    if (_savingName || _left) return; // a double tap never saves twice
     final strings = widget.strings;
     final newName = _nameCtrl.text.trim();
     if (newName.length < 2) {
       setState(() => _nameError = strings.t('register_name_required'));
       return;
     }
-    if (newName == saved.trim()) return;
+    if (newName == saved.trim()) {
+      // Nothing changed: "Yadda saxla" just goes back to Profil.
+      _left = true;
+      leaveAfterSave(context, fallback: '/profile');
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       _savingName = true;
@@ -637,7 +647,12 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
       await ref.read(profileRepositoryProvider).updateName(newName);
       ref.invalidate(publicProfileProvider(widget.userId));
       ref.invalidate(authStateProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('profile_name_saved'))));
+      // Saved: back to Profil (owner, 09.11.2026), whose card shows the new
+      // name at once (its profile was read again above).
+      if (mounted) {
+        _left = true;
+        leaveAfterSave(context, fallback: '/profile', notice: strings.t('profile_name_saved'));
+      }
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('error_generic'))));
     } finally {

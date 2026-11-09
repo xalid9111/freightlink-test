@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/after_save.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/jobs_repository.dart';
@@ -73,6 +74,9 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
   String? _profilePhone;
   bool _saving = false;
 
+  /// Saved and on the way back: a second tap creates nothing (owner, 09.11.2026).
+  bool _left = false;
+
   @override
   void initState() {
     super.initState();
@@ -119,6 +123,7 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
   }
 
   Future<void> _save() async {
+    if (_saving || _left) return; // a double tap never saves twice
     final s = ref.read(stringsProvider);
     final uid = ref.read(currentUserIdProvider);
     if (uid == null) return;
@@ -170,8 +175,11 @@ class _VacancyFormState extends ConsumerState<_VacancyForm> {
       ref.invalidate(myVacanciesProvider);
       ref.invalidate(jobVacanciesProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_saved'))));
-      Navigator.of(context).maybePop();
+      // Back where the form was opened from (İş Mərkəzi, Mənim elanlarım,
+      // the ad page — they read the refreshed lists); opened from a link:
+      // the İş Mərkəzi home page (maybePop used to stay on the form).
+      _left = true;
+      leaveAfterSave(context, fallback: '/jobs', notice: s.t('job_saved'));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('job_save_failed'))));
     } finally {

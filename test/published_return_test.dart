@@ -41,7 +41,9 @@ void main() {
     final i = f.indexOf("showPublishedNotice(context, strings.t('pub_cargo_done'));");
     expect(i, greaterThan(0));
     expect(f.indexOf("context.go('/cargo');", i), greaterThan(i));
-    expect(f.contains("context.go('/cargo/\$id');\n      }\n    } on AppException"), isTrue, reason: 'edit opened alone still shows the load');
+    // Edited: back where it came from; opened alone: the load's page (09.11.2026, after_save.dart).
+    expect(f.contains("leaveAfterSave(context, fallback: '/cargo/\$id', notice: strings.t('quick_saved'));"), isTrue,
+        reason: 'edit opened alone still shows the load');
   });
 
   test('a new TIR Bazarı ad goes back to TIR Bazarı; a draft / edit pops', () {
@@ -55,13 +57,14 @@ void main() {
     final f = src('lib/features/services/presentation/service_edit_screen.dart');
     expect(f.contains("showPublishedNotice(context, s.t(_shopForm ? 'pub_shop_done' : 'pub_service_done'));"), isTrue);
     expect(f.contains("context.go(_shopForm ? '/services?shops=1' : '/services');"), isTrue);
-    expect(f.contains("context.pushReplacement('/service/\${saved.id}');"), isTrue);
+    // Edited: back to its page (or the page from a link), 09.11.2026.
+    expect(f.contains("leaveAfterSave(context, fallback: '/service/\${saved.id}', notice: s.t('svc_saved'));"), isTrue);
   });
 
   test('a park request goes back to TIRPark; setup keeps opening the panel', () {
     final f = src('lib/features/tirpark/presentation/tir_park_manage.dart');
     expect(f.contains("showPublishedNotice(context, s.t('tpo_apply_sent'));\n        context.go('/tirpark');"), isTrue);
-    expect(f.contains("showPublishedNotice(context, s.t('tpo_setup_done'));"), isTrue);
+    expect(f.contains("leaveAfterSave(context, fallback: '/tirpark/manage', notice: s.t('tpo_setup_done'), published: true);"), isTrue);
   });
 
   test('Prostoy is optional: none on a new load, a second tap takes it off', () {

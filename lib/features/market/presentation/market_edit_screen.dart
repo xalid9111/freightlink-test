@@ -21,6 +21,7 @@ import '../data/market_repository.dart';
 import '../domain/market_catalog.dart';
 import '../domain/market_models.dart';
 import '../../../core/widgets/published_notice.dart';
+import '../../../core/router/after_save.dart';
 import 'market_card.dart';
 import 'market_home_screen.dart' show marketCategoryIcon;
 import 'market_providers.dart';
@@ -44,6 +45,9 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
   MarketListing? _orig;
   bool _loaded = false;
   bool _busy = false;
+
+  /// Saved and on the way back: a second tap creates nothing (owner, 09.11.2026).
+  bool _left = false;
   bool _uploading = false;
   String? _error;
   bool _brandOther = false;
@@ -284,6 +288,7 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
   }
 
   Future<void> _save(AppStrings s, {required bool publish}) async {
+    if (_busy || _left) return; // a double tap never saves twice
     _collect();
     if (publish) {
       final missing = _d.missingForPublish();
@@ -318,12 +323,18 @@ class _MarketEditScreenState extends ConsumerState<MarketEditScreen> {
       if (publish && _orig == null) {
         // A new ad: straight back to TIR Bazarı with a clear green notice
         // (owner, 07.11.2026).
+        _left = true;
         showPublishedNotice(context, s.t(saved.status == MarketStatus.pending ? msg : 'pub_market_done'));
         context.go('/market');
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t(msg))));
-      context.pop();
+      // Edited / a draft kept: back where it was opened from (the ad page,
+      // Elanlarım), which reads the refreshed ad; opened from a link: the
+      // ad's page (published) or Elanlarım (draft).
+      _left = true;
+      leaveAfterSave(context,
+          fallback: publish && saved.status == MarketStatus.active ? '/market/l/${saved.id}' : '/market/mine',
+          notice: s.t(msg));
     } catch (_) {
       if (mounted) setState(() => _error = 'mk_save_failed');
     } finally {
