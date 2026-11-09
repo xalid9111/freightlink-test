@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/after_save.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/password_service.dart';
 
@@ -63,7 +64,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(strings.t('pw_ok')))],
         ),
       );
-      if (mounted) Navigator.of(context).maybePop();
+      // Back to Ayarlar (or where it was opened from); from a link: Ayarlar.
+      if (mounted) leaveAfterSave(context, fallback: '/settings');
     } on AppException catch (e) {
       if (!mounted) return;
       if (e.code == 'pw_wrong_current') _current.clear();

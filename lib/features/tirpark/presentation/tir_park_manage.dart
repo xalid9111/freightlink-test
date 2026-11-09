@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/after_save.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/map_tiles.dart';
@@ -38,7 +39,7 @@ class TirParkManageScreen extends ConsumerWidget {
     if (approved.isNotEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(s.t('tpo_panel'))),
-        body: TirParkOwnerPanel(parks: approved, s: s, settings: (p) => _ManagedPark(key: ValueKey('tpm-park-${p.id}'), park: p, s: s)),
+        body: TirParkOwnerPanel(parks: approved, s: s, settings: (p) => _ManagedPark(key: ValueKey('tpm-park-${p.id}'), park: p, s: s, leaveOnSave: true)),
       );
     }
     final loading = (async.isLoading && !async.hasValue) || (reqAsync.isLoading && !reqAsync.hasValue);
@@ -144,6 +145,7 @@ class _OwnerApplyState extends ConsumerState<_OwnerApply> {
   }
 
   Future<void> _send() async {
+    if (_busy) return; // a double tap never sends twice
     final s = widget.s;
     final name = _name.text.trim();
     if (name.length < 2) {
@@ -203,7 +205,11 @@ class _OwnerApplyState extends ConsumerState<_OwnerApply> {
 class _ManagedPark extends ConsumerStatefulWidget {
   final TirPark park;
   final AppStrings s;
-  const _ManagedPark({super.key, required this.park, required this.s});
+  /// Shown as the panel's Ayarlar page (from the gear): a successful save
+  /// goes back to the panel (owner, 09.11.2026). Inline (a park still
+  /// waiting) it stays where it is.
+  final bool leaveOnSave;
+  const _ManagedPark({super.key, required this.park, required this.s, this.leaveOnSave = false});
 
   @override
   ConsumerState<_ManagedPark> createState() => _ManagedParkState();
@@ -237,6 +243,7 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
     ..showSnackBar(SnackBar(content: Text(t)));
 
   Future<void> _save() async {
+    if (_busy) return; // a double tap never saves twice
     final cap = int.tryParse(_capacity.text.trim());
     final price = double.tryParse(_price.text.trim().replaceAll(',', '.'));
     if (cap == null || cap < 1 || price == null || price <= 0 || _phone.text.trim().length < 5) {
@@ -257,7 +264,13 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
       ref.invalidate(myManagedParksProvider);
       ref.invalidate(tirParksProvider);
       ref.invalidate(tirParkSummaryProvider(park.id));
-      _snack(s.t('tpm_saved'));
+      if (!mounted) return;
+      if (widget.leaveOnSave) {
+        // Back to the panel, which reads the park again on return.
+        leaveAfterSave(context, fallback: '/tirpark/manage', notice: s.t('tpm_saved'));
+      } else {
+        _snack(s.t('tpm_saved'));
+      }
     } catch (_) {
       _snack(s.t('tpm_err_invalid'));
     } finally {
@@ -336,7 +349,7 @@ class _ManagedParkState extends ConsumerState<_ManagedPark> {
             const SizedBox(height: 14),
             // The park's own payment details (owner, 01.11.2026, 0080):
             // drivers transfer to them directly; FreightLink takes no money.
-            _PayDetailsForm(parkId: park.id, s: s),
+            _PayDetailsForm(parkId: park.id, s: s, leaveOnSave: widget.leaveOnSave),
             const SizedBox(height: 14),
             Text(s.t('tpm_bookings'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
             _Bookings(parkId: park.id, s: s, onCheckOut: _checkOut),
@@ -530,7 +543,8 @@ class _ReviewRowState extends ConsumerState<_ReviewRow> {
 class _PayDetailsForm extends ConsumerStatefulWidget {
   final String parkId;
   final AppStrings s;
-  const _PayDetailsForm({required this.parkId, required this.s});
+  final bool leaveOnSave;
+  const _PayDetailsForm({required this.parkId, required this.s, this.leaveOnSave = false});
 
   @override
   ConsumerState<_PayDetailsForm> createState() => _PayDetailsFormState();
@@ -556,6 +570,7 @@ class _PayDetailsFormState extends ConsumerState<_PayDetailsForm> {
   }
 
   Future<void> _save() async {
+    if (_busy) return; // a double tap never saves twice
     final card = _card.text.replaceAll(RegExp(r'\D'), '');
     final acc = _account.text.replaceAll(RegExp(r'\s'), '');
     if (_holder.text.trim().length < 2 || (card.isEmpty && acc.isEmpty) || (card.isNotEmpty && (card.length < 12 || card.length > 19))) {
@@ -572,7 +587,12 @@ class _PayDetailsFormState extends ConsumerState<_PayDetailsForm> {
           note: _note.text.trim().isEmpty ? null : _note.text.trim());
       ref.invalidate(parkPayDetailsProvider(widget.parkId));
       ref.invalidate(tirParksProvider);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_saved'))));
+      if (!mounted) return;
+      if (widget.leaveOnSave) {
+        leaveAfterSave(context, fallback: '/tirpark/manage', notice: s.t('tpm_saved'));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_saved'))));
+      }
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tpm_paydet_invalid'))));
     } finally {
@@ -677,6 +697,7 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
   }
 
   Future<void> _send(AppStrings s, TirParkOwnerRequest req) async {
+    if (_busy) return; // a double tap never sends twice
     final cap = int.tryParse(_capacity.text.trim());
     final price = double.tryParse(_price.text.trim().replaceAll(',', '.'));
     if (_phone.text.trim().length < 5 || cap == null || cap < 1 || price == null || price <= 0) {
@@ -701,8 +722,9 @@ class _TirParkManageFormScreenState extends ConsumerState<TirParkManageFormScree
       ref.invalidate(myOwnerRequestProvider);
       ref.invalidate(tirParksProvider);
       if (!mounted) return;
-      showPublishedNotice(context, s.t('tpo_setup_done'));
-      Navigator.of(context).maybePop();
+      // "Parkı qur" → the owner panel (as before); opened from a link (no
+      // page under it, maybePop used to stay here): the panel's address.
+      leaveAfterSave(context, fallback: '/tirpark/manage', notice: s.t('tpo_setup_done'), published: true);
     } on TirParkRefused catch (e) {
       setState(() => _error = switch (e.reason) {
             'duplicate_nearby' => 'tpm_err_dup',

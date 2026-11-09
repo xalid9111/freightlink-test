@@ -102,7 +102,7 @@ void main() {
       final f = src('lib/features/cargo/presentation/cargo_quick_form.dart');
       expect(f, contains('canPop: !_submitting'));
       expect(f, contains('container.invalidate(marketplaceProvider);'));
-      expect(f, contains("context.go('/cargo/\$id');"));
+      expect(f, contains("leaveAfterSave(context, fallback: '/cargo/\$id'"));
       expect(f.contains("context.pushReplacement('/cargo/\$id')"), isFalse);
     });
     test('form: no past loading date; price and weight kept exactly', () {

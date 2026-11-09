@@ -119,8 +119,10 @@ void main() {
     });
     test('saving an edit never fails on "nothing to go back to"', () {
       final form = File('lib/features/cargo/presentation/cargo_quick_form.dart').readAsStringSync();
-      expect(form, contains('      if (context.canPop()) {'));
-      expect(form, contains("context.go('/cargo/\$id');"));
+      // leaveAfterSave: pop when there is a page to go back to, else go
+      // to the load's page (core/router/after_save.dart, 09.11.2026).
+      expect(form, contains("leaveAfterSave(context, fallback: '/cargo/\$id'"));
+      expect(File('lib/core/router/after_save.dart').readAsStringSync(), contains('if (nav.canPop()) {'));
       expect(form, contains("source: 'cargo.save'"));
     });
     test('picture failures are reported to AutoFix (not hidden)', () {

@@ -450,7 +450,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   a "Park işlədirəm" request → TIRPark, each at once with a clear green
   notice ("… dərc olundu ✓", showPublishedNotice); an error keeps the form
   and what was typed; editing a saved one goes back where it came from;
-  "Parkı qur" still opens the owner panel. Prostoy (free waiting 24 / 36 /
+  "Parkı qur" still opens the owner panel.
+  One rule for every add / edit form (owner, 09.11.2026,
+  core/router/after_save.dart leaveAfterSave): the form stays until the
+  server has answered; after success a short notice, then back to the page
+  it was opened from (which reads the refreshed data), or — opened from a
+  link, nothing to go back to — the section's main page (load edit → the
+  load, ad → the ad / Elanlarım, service → its page, İş Mərkəzi forms →
+  /jobs, Şəxsi məlumatlarım → Profil, password → Ayarlar, park setup and
+  the panel's Ayarlar → /tirpark/manage, ad order edit → /ads); new items
+  still go straight to their section; an error keeps the form and what was
+  typed; a double tap never saves twice. Payment / booking flows unchanged.
+  Prostoy (free waiting 24 / 36 /
   48 h) is optional: nothing chosen on a new load, a second tap takes the
   choice off; a load without it shows no Prostoy row.
 - Browsing without an account (owner, 07.11.2026, 0107): the link opens

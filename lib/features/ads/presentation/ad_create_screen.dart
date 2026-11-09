@@ -11,6 +11,7 @@ import '../../../core/autofix/autofix.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/router/after_save.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/ad_models.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -292,6 +293,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
   }
 
   Future<void> _submit(AppStrings s, Map<int, AdPackage> durations, String lang) async {
+    if (_busy) return; // a double tap never saves / orders twice
     final err = _validate(s, durations);
     if (err != null) {
       _toast(err);
@@ -319,7 +321,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
         if (!mounted) return;
         ref.invalidate(liveAdsProvider);
         _toast('Yadda saxlandı — reklam yeniləndi');
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) leaveAfterSave(context, fallback: '/admin/ads');
       } catch (e) {
         final k = _errKey(e);
         _toast(k.isEmpty ? '${s.t('ad_action_failed')} ($e)' : s.t('adv_err_$k'));
@@ -342,7 +344,7 @@ class _AdCreateScreenState extends ConsumerState<AdCreateScreen> {
         if (!mounted) return;
         ref.invalidate(myAdOrdersProvider);
         _toast(s.t(o.receiptPath != null ? 'adv_saved_review' : 'adv_saved'));
-        if (mounted) context.pop();
+        if (mounted) leaveAfterSave(context, fallback: '/ads');
       } catch (e) {
         final k = _errKey(e);
         _toast(k.isEmpty ? '${s.t('ad_action_failed')}${_errCode(e)}' : s.t('adv_err_$k'));

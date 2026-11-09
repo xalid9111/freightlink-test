@@ -19,6 +19,7 @@ import '../domain/cargo_pictures.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../domain/truck_types.dart';
 import '../../../core/widgets/published_notice.dart';
+import '../../../core/router/after_save.dart';
 import 'widgets/cargo_category_bar.dart';
 import 'widgets/cargo_picture_field.dart';
 import 'providers/cargo_media_providers.dart';
@@ -84,6 +85,9 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   CargoModel? _original;
   bool _loaded = false;
   bool _submitting = false;
+
+  /// Saved and on the way back: a second tap creates nothing (owner, 09.11.2026).
+  bool _left = false;
   String? _error;
 
   bool get _isEdit => widget.editCargoId != null;
@@ -231,6 +235,7 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
   }
 
   Future<void> _submit() async {
+    if (_submitting || _left) return; // a double tap never saves twice
     final strings = ref.read(stringsProvider);
     final o0 = _original;
     // Untouched ends in edit mode keep exactly what was stored.
@@ -346,18 +351,16 @@ class _CargoQuickFormState extends ConsumerState<CargoQuickForm> {
         // A new load: straight back to Yüklər with a clear green notice
         // (owner, 07.11.2026). go, not pop: opened from "Yüklərim" (a page
         // above the tabs) it would otherwise stay hidden behind it.
+        _left = true;
         showPublishedNotice(context, strings.t('pub_cargo_done'));
         context.go('/cargo');
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('quick_saved'))));
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        // Opened on its own (iPhone reloads the page after the photo
-        // picker): nothing to go back to — show the saved load.
-        context.go('/cargo/$id');
-      }
+      // Edited: back where it was opened from (the load page / Yüklərim),
+      // which reads the refreshed load; opened on its own (iPhone reloads
+      // the page after the photo picker) — the saved load's page.
+      _left = true;
+      leaveAfterSave(context, fallback: '/cargo/$id', notice: strings.t('quick_saved'));
     } on AppException catch (e) {
       if (mounted) setState(() => _error = strings.error(e.code));
     } catch (e, st) {
