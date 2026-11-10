@@ -324,6 +324,28 @@ class DayProgress {
   static double _r2(double v) => (v * 100).roundToDouble() / 100;
 }
 
+/// One month / year card (0115): the net income and the closed days'
+/// minus / plus against their own targets.
+class AdbizPeriodSum {
+  final int key;
+  final double net, gap;
+  const AdbizPeriodSum(this.key, this.net, this.gap);
+
+  factory AdbizPeriodSum.fromJson(Map<String, dynamic> j) =>
+      AdbizPeriodSum((j['key'] as num).toInt(), _d(j['net']), _d(j['gap']));
+}
+
+/// The cards of one year: its 12 months and every year with work.
+class AdbizPeriods {
+  final List<AdbizPeriodSum> months, years;
+  const AdbizPeriods({this.months = const [], this.years = const []});
+
+  factory AdbizPeriods.fromJson(Map<String, dynamic> j) => AdbizPeriods(
+        months: [for (final m in (j['months'] as List? ?? const [])) AdbizPeriodSum.fromJson(Map<String, dynamic>.from(m as Map))],
+        years: [for (final y in (j['years'] as List? ?? const [])) AdbizPeriodSum.fromJson(Map<String, dynamic>.from(y as Map))],
+      );
+}
+
 /// Day / month / year of a date — the owner's report periods.
 enum AdbizPeriod { day, month, year }
 

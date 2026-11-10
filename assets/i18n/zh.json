@@ -2138,5 +2138,12 @@
   "adb_result_miss_text": "未达目标时的文字",
   "adb_result_hit_text": "达到目标时的文字",
   "adb_result_text_hint": "员工在当天结束时看到。{qalan}、{gəlir}、{hədəf} 会替换为当天的数字。留空 = 标准文字。",
-  "adb_result_default": "标准文字"
+  "adb_result_default": "标准文字",
+  "adb_delete_day": "删除当天",
+  "adb_delete_day_title": "删除这一天？",
+  "adb_delete_day_body": "{date}\n将一并删除 {jobs} 项工作（{jobs_sum} AZN）和 {x} 笔支出（{x_sum} AZN）。此操作无法撤销。",
+  "adb_day_deleted": "已删除。",
+  "adb_pick_day": "删除哪位员工的这一天？",
+  "adb_need_sql115": "运行 SQL 0115 后开放。",
+  "adb_tiles_legend": "绿色：净收入 · 红色：各天相对目标的差额"
 }

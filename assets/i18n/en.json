@@ -2138,5 +2138,12 @@
   "adb_result_miss_text": "Message below the target",
   "adb_result_hit_text": "Message at / over the target",
   "adb_result_text_hint": "The worker sees it when the day closes. {qalan}, {gəlir}, {hədəf} become the day's numbers. Empty = the standard text.",
-  "adb_result_default": "Standard text"
+  "adb_result_default": "Standard text",
+  "adb_delete_day": "Delete the day",
+  "adb_delete_day_title": "Delete this day?",
+  "adb_delete_day_body": "{date}\n{jobs} jobs ({jobs_sum} AZN) and {x} expenses ({x_sum} AZN) will be deleted with it. This cannot be undone.",
+  "adb_day_deleted": "The day was deleted.",
+  "adb_pick_day": "Whose day should be deleted?",
+  "adb_need_sql115": "This opens after SQL 0115 is run.",
+  "adb_tiles_legend": "Green: net income · Red: the days' minus / plus against the target"
 }

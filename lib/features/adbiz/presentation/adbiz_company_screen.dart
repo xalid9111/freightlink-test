@@ -5,10 +5,11 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/birth_date_field.dart' show monthName;
 import '../../finance/domain/finance_models.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
-import 'adbiz_notebook_screen.dart' show adbizAmount;
+import 'adbiz_notebook_screen.dart' show adbizAmount, adbizConfirmDeleteDay;
 import 'adbiz_providers.dart';
 import 'adbiz_widgets.dart';
 
@@ -47,6 +48,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
   }
 
   void _refresh() {
+    ref.invalidate(adbizPeriodsProvider((companyId: widget.companyId, year: _date.year)));
     ref.invalidate(adbizReportProvider(_key));
     ref.invalidate(adbizExpensesProvider(_key));
     ref.invalidate(adbizCompaniesProvider);
@@ -159,6 +161,44 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     if (r == null || !mounted) return;
     await _run(s, () => ref.read(adbizRepositoryProvider).companySave(id: c.id, name: r.$1, dailyTarget: r.$2, ownerManagesStaff: r.$3),
         done: s.t('adb_saved'));
+  }
+
+  // ---- delete a (test) work day from the archive (0115) -----------------------------------
+  Future<void> _deleteDayOn(AppStrings s, DateTime date, List<AdbizWorkerSum> workers) async {
+    if (_busy) return;
+    final repo = ref.read(adbizRepositoryProvider);
+    try {
+      final days = await repo.daysOn(widget.companyId, date);
+      if (days.isEmpty || !mounted) return;
+      String nameOf(String uid) => workers.where((w) => w.userId == uid).firstOrNull?.name ?? '';
+      var day = days.first;
+      if (days.length > 1) {
+        // Several workers worked that date: which day goes?
+        final picked = await showDialog<AdbizDay>(
+          context: context,
+          builder: (ctx) => SimpleDialog(
+            title: Text(s.t('adb_pick_day')),
+            children: [
+              for (final d in days)
+                SimpleDialogOption(
+                  key: ValueKey('adb-pick-${d.id}'),
+                  onPressed: () => Navigator.pop(ctx, d),
+                  child: Text(nameOf(d.userId)),
+                ),
+            ],
+          ),
+        );
+        if (picked == null || !mounted) return;
+        day = picked;
+      }
+      final entries = await repo.entries(day.id);
+      final expenses = await repo.dayExpenses(day.id);
+      if (!mounted) return;
+      if (!await adbizConfirmDeleteDay(context, s, day.workDate, nameOf(day.userId), entries, expenses)) return;
+      await _run(s, () => repo.deleteDay(day.id), done: s.t('adb_day_deleted'));
+    } catch (e) {
+      if (mounted) adbizSnack(context, e is AdbizNotReady ? s.t('adb_need_sql115') : adbizError(s, e));
+    }
   }
 
   // ---- the owner's words, the target switch, a worker's task (0113) ---------------------
@@ -485,7 +525,16 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
             dense: true,
             leading: Icon(Icons.event_note_outlined, color: AppColors.adbTextSoft),
             title: Text(dmy(d), style: TextStyle(color: AppColors.adbText)),
-            trailing: Text(money(v), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adbIncome)),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(money(v), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adbIncome)),
+              IconButton(
+                key: ValueKey('adb-arch-del-${isoDate(d)}'),
+                tooltip: s.t('adb_delete_day'),
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.delete_outline, size: 20, color: AppColors.adbSpend),
+                onPressed: _busy ? null : () => _deleteDayOn(s, d, r?.workers ?? const []),
+              ),
+            ]),
             onTap: () => setState(() {
               _period = AdbizPeriod.day;
               _date = d;
@@ -493,6 +542,54 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           ),
       ]),
     );
+
+    // Ay / İl: the month or year cards of the owner's picture (0115).
+    Widget? cards;
+    if (_period != AdbizPeriod.day) {
+      final per = ref.watch(adbizPeriodsProvider((companyId: widget.companyId, year: _date.year)));
+      final lang = ref.watch(currentLocaleProvider).languageCode;
+      String cap(String t) => t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
+      if (per.hasError) {
+        cards = Text(per.error is AdbizNotReady ? s.t('adb_need_sql115') : adbizError(s, per.error!),
+            key: const ValueKey('adb-cards-wait'), style: TextStyle(color: AppColors.adbTextSoft));
+      } else if (per.valueOrNull != null) {
+        final p = per.valueOrNull!;
+        final items = _period == AdbizPeriod.month
+            ? [
+                for (final m in p.months)
+                  AdbizPeriodTile(
+                    key: ValueKey('adb-month-${m.key}'),
+                    title: cap(monthName(m.key, lang)),
+                    sum: m,
+                    selected: m.key == _date.month,
+                    onTap: () => setState(() => _date = DateTime(_date.year, m.key, 1)),
+                  ),
+              ]
+            : [
+                for (final y in p.years)
+                  AdbizPeriodTile(
+                    key: ValueKey('adb-year-${y.key}'),
+                    title: '${y.key}',
+                    sum: y,
+                    selected: y.key == _date.year,
+                    onTap: () => setState(() {
+                      _period = AdbizPeriod.month;
+                      _date = DateTime(y.key, 1, 1);
+                    }),
+                  ),
+              ];
+        cards = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          LayoutBuilder(builder: (context, c) {
+            final cols = c.maxWidth >= 360 ? 4 : 3;
+            const gapW = 10.0;
+            final w = (c.maxWidth - gapW * (cols - 1)) / cols;
+            return Wrap(spacing: gapW, runSpacing: 14, children: [for (final t in items) SizedBox(width: w, child: t)]);
+          }),
+          const SizedBox(height: 8),
+          Text(s.t('adb_tiles_legend'), key: const ValueKey('adb-tiles-legend'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+        ]);
+      }
+    }
 
     Widget body;
     if (rep.hasError && r == null) {
@@ -507,6 +604,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
         final left = <Widget>[
           periodBar,
           gap,
+          if (cards != null) ...[cards, gap],
           totals,
           const SizedBox(height: 12),
           if (cardLine != null) ...[cardLine, const SizedBox(height: 10)],
@@ -1009,4 +1107,55 @@ class _AdbizCompanyDialogState extends State<AdbizCompanyDialog> {
           FilledButton(key: const ValueKey('adb-company-save'), onPressed: _ok, child: Text(s.t('adb_save'))),
         ],
       );
+}
+
+/// A month / year card (owner's picture, 10.11.2026): the name over it, the
+/// net income on the dark green top, the days' minus / plus on the red
+/// bottom; a tap opens that month (or that year's months).
+class AdbizPeriodTile extends StatelessWidget {
+  final String title;
+  final AdbizPeriodSum sum;
+  final bool selected;
+  final VoidCallback onTap;
+  const AdbizPeriodTile({super.key, required this.title, required this.sum, required this.onTap, this.selected = false});
+
+  static String whole(double v) => '${v.round()} AZN';
+
+  @override
+  Widget build(BuildContext context) {
+    Widget half(Color bg, String text, String k, {required bool top}) => Container(
+          height: 56,
+          color: bg,
+          alignment: Alignment.topRight,
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topRight,
+            child: Text(text, key: ValueKey(k),
+                style: TextStyle(fontSize: 17, fontWeight: top ? FontWeight.w600 : FontWeight.w400, color: AppColors.adbTileText)),
+          ),
+        );
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(title, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: selected ? AppColors.adbTeal : AppColors.adbLine, width: selected ? 2.5 : 1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              half(AppColors.adbTileNet, whole(sum.net), 'adb-tile-net-$title', top: true),
+              half(AppColors.adbTileGap, whole(sum.gap), 'adb-tile-gap-$title', top: false),
+            ]),
+          ),
+        ),
+      ]),
+    );
+  }
 }

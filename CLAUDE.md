@@ -654,6 +654,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   logo (utep_reklam_logo_white.png) at night, the logo in its own colours
   (utep_reklam_logo.png) by day, picked by the theme's brightness; size and
   place unchanged.
+  Month / year cards and deleting a day (owner's picture, 10.11.2026, SQL
+  0115): on the owner panel "Ay" shows the year's 12 month cards and "İl"
+  the years — each card: the name over it, the net income (jobs −
+  expenses) on a dark green top, and on a red bottom the sum over its
+  closed days of (the day's money left − that day's own target), so a
+  month with no days is 0 / 0; past months come from the stored days; a
+  tap on a month opens it, on a year its months; "5784 AZN" (no ₼). The
+  owner / Baş admin deletes a (test) day — Arxiv 🗑 (a worker is picked
+  when several worked that date) or "Günü sil" in the worker's notebook —
+  always asked first, naming the jobs and rasxod that go with it; the whole
+  day is kept in the history (adbiz_audit 'day.delete'); a worker never
+  deletes.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

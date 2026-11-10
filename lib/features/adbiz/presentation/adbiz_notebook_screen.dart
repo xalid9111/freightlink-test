@@ -398,6 +398,23 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     }
   }
 
+  /// The owner / Baş admin deletes this day (a test day) with its jobs and
+  /// rasxod — after a question that names what goes (0115; kept in the
+  /// history on the server).
+  Future<void> _deleteDay(List<AdbizEntry> entries, List<AdbizExpense> expenses) async {
+    if (_busy) return;
+    if (!await adbizConfirmDeleteDay(context, s, day.workDate, null, entries, expenses)) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(adbizRepositoryProvider).deleteDay(day.id);
+      if (mounted) adbizSnack(context, s.t('adb_day_deleted'));
+    } catch (e) {
+      if (mounted) adbizSnack(context, e is AdbizNotReady ? s.t('adb_need_sql115') : adbizError(s, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _reopen() async {
     if (_busy) return;
     final body = widget.manager ? s.t('adb_reopen_body') : s.t('adb_reopen_worker_body');
@@ -718,6 +735,20 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             label: Text(s.t('adb_reopen')),
           ),
         ),
+      // The owner / Baş admin may delete the day (e.g. a test day), asked first.
+      if (widget.manager) ...[
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 48,
+          child: TextButton.icon(
+            key: const ValueKey('adb-delete-day'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            onPressed: _busy ? null : () => _deleteDay(entries, expenses),
+            icon: const Icon(Icons.delete_outline),
+            label: Text(s.t('adb_delete_day')),
+          ),
+        ),
+      ],
       if (!_open && !widget.manager && !workerReopen)
         Text(s.t(day.closedAutomatically(today) ? 'adb_closed_auto' : 'adb_closed_note'),
             key: const ValueKey('adb-closed-note'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
@@ -1202,4 +1233,19 @@ class AdbizDayResultBanner extends StatelessWidget {
       ]),
     );
   }
+}
+
+
+/// Asks before a work day is deleted, naming what goes with it (owner,
+/// 10.11.2026: "silmədən əvvəl soruşsun").
+Future<bool> adbizConfirmDeleteDay(BuildContext context, AppStrings s, DateTime date, String? name, List<AdbizEntry> entries,
+    List<AdbizExpense> expenses) {
+  final body = s.t('adb_delete_day_body', {
+    'date': [dmy(date), if (name != null && name.isNotEmpty) name].join(' · '),
+    'jobs': '${entries.length}',
+    'jobs_sum': adbizNum(entries.fold<double>(0, (a, e) => a + e.amount)),
+    'x': '${expenses.length}',
+    'x_sum': adbizNum(expenses.fold<double>(0, (a, e) => a + e.amount)),
+  });
+  return adbizConfirm(context, s, s.t('adb_delete_day_title'), body, ok: s.t('adb_delete'));
 }
