@@ -106,6 +106,14 @@ class AdbizRepository {
       (await _c.rpc('adbiz_add_day_expense',
           params: {'p_day': dayId, 'p_title': title, 'p_amount': amount, 'p_client_key': clientKey})) as String);
 
+  /// Closes the forgotten open days of earlier dates (each day ends at 23:59
+  /// Baku, 0112). Before SQL 0112 there is nothing to do.
+  Future<void> sweep() async {
+    try {
+      await _run(() => _c.rpc('adbiz_sweep'));
+    } catch (_) {}
+  }
+
   Future<String> openDay() => _run(() async => (await _c.rpc('adbiz_open_day')) as String);
 
   Future<String> openDayFor(String userId, DateTime date) =>

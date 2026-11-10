@@ -2107,5 +2107,8 @@
   "adb_income_day": "Income collected",
   "adb_left_money": "Money left",
   "adb_to_target": "Left to the target",
-  "adb_calc": "Worked out"
+  "adb_calc": "Worked out",
+  "adb_auto_close_note": "The day closes by itself at 23:59.",
+  "adb_closed_auto": "The day closed by itself at 23:59.",
+  "adb_reopen_worker_body": "Closed the day by mistake? Open it again — you can add jobs and expenses again."
 }

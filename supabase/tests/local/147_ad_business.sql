@@ -67,7 +67,10 @@ select tests.check((select status = 'closed' from public.adbiz_days where id = (
 select tests.check(tests.err(format($$ select public.adbiz_add_entry(%L, 'late', 10) $$, (select id from t where k = 'd'))) like '%day_closed%', 'C11 closed: no new job');
 select tests.check(tests.err(format($$ select public.adbiz_update_entry(%L, 'x', 99) $$, (select id from t where k = 'e1'))) like '%day_closed%', 'C12 closed: no change');
 select tests.check(tests.err(format($$ select public.adbiz_delete_entry(%L) $$, (select id from t where k = 'e1'))) like '%day_closed%', 'C13 closed: no delete');
-select tests.check(tests.err(format($$ select public.adbiz_reopen_day(%L) $$, (select id from t where k = 'd'))) like '%not_allowed%', 'C14 the worker cannot re-open');
+-- 0112: the worker may re-open TODAY's day he closed himself, and close it again.
+select public.adbiz_reopen_day((select id from t where k = 'd'));
+select tests.check((select status = 'open' from public.adbiz_days where id = (select id from t where k = 'd')), 'C14 the worker re-opens the day he closed by mistake (0112)');
+select public.adbiz_close_day((select id from t where k = 'd'));
 
 -- ---- another company sees nothing --------------------------------------------------------
 select tests.login(:bwork);

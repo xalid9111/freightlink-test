@@ -613,6 +613,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   never changes / deletes a saved one (server: only the company's owner /
   Baş admin, audited); rasxod = adbiz_expenses with day_id / user_id, so the
   owner's report counts it.
+  A day ends at 23:59 Baku (owner, 10.11.2026, SQL 0112): an open day of an
+  earlier date counts as closed — the worker writes only into today's open
+  day; the forgotten day is closed on the server (closed_at 23:59:59,
+  closed_by empty = automatic, audited) when the notebook / business page
+  opens (adbiz_sweep), when the next day opens, and nightly by pg_cron if
+  the project has it. "Gün 23:59-da avtomatik bağlanır" stands under "Günü
+  bağla". A worker who closed TODAY's day himself may open it again the
+  same day ("Günü yenidən aç"); a day closed by the owner / Baş admin or
+  automatically stays theirs to re-open.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

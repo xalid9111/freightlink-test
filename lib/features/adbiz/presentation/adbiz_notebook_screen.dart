@@ -30,6 +30,14 @@ class _AdbizNotebookScreenState extends ConsumerState<AdbizNotebookScreen> {
   String? _selected;
   bool _busy = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // A day ends at 23:59 Baku: the forgotten open days of earlier dates
+    // are closed on the server when the notebook opens (0112).
+    Future.microtask(() => ref.read(adbizRepositoryProvider).sweep());
+  }
+
   Future<void> _open(AppStrings s, {required bool manager, required String uid, DateTime? date}) async {
     if (_busy) return; // one tap = one day
     setState(() => _busy = true);
@@ -108,9 +116,10 @@ class _AdbizNotebookScreenState extends ConsumerState<AdbizNotebookScreen> {
               margin: const EdgeInsets.only(bottom: 6),
               child: ListTile(
                 key: ValueKey('adb-hist-${d.id}'),
-                leading: Icon(d.isOpen ? Icons.lock_open : Icons.lock_outline, color: d.isOpen ? AppColors.online : AppColors.textSoft),
+                leading: Icon(d.openOn(today) ? Icons.lock_open : Icons.lock_outline,
+                    color: d.openOn(today) ? AppColors.online : AppColors.textSoft),
                 title: Text(dmy(d.workDate)),
-                subtitle: Text('${s.t(d.isOpen ? 'adb_day_open' : 'adb_day_closed')} · ${s.t('adb_target')}: ${money(d.target)}'),
+                subtitle: Text('${s.t(d.openOn(today) ? 'adb_day_open' : 'adb_day_closed')} · ${s.t('adb_target')}: ${money(d.target)}'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => setState(() => _selected = d.id),
               ),
@@ -245,7 +254,10 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
 
   /// The worker adds jobs and expenses into his own open day; the owner /
   /// Baş admin into any day of his workers.
-  bool get _canAdd => widget.manager || day.isOpen;
+  bool get _canAdd => widget.manager || day.openOn(bakuToday());
+
+  /// The day as shown: open only until 23:59 of its date (0112).
+  bool get _open => day.openOn(bakuToday());
 
   /// Changing / deleting a saved job or expense: only the owner / Baş admin
   /// (owner, 10.11.2026; the server refuses the worker too).
@@ -368,7 +380,8 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
 
   Future<void> _reopen() async {
     if (_busy) return;
-    if (!await adbizConfirm(context, s, s.t('adb_reopen'), s.t('adb_reopen_body'))) return;
+    final body = widget.manager ? s.t('adb_reopen_body') : s.t('adb_reopen_worker_body');
+    if (!await adbizConfirm(context, s, s.t('adb_reopen'), body)) return;
     setState(() => _busy = true);
     try {
       await ref.read(adbizRepositoryProvider).reopenDay(day.id);
@@ -399,7 +412,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             Text(dmy(day.workDate), style: TextStyle(color: AppColors.textSoft)),
           ]),
         ),
-        _StatusChip(s: s, open: day.isOpen),
+        _StatusChip(s: s, open: _open),
       ]),
     );
 
@@ -597,8 +610,13 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     );
 
     // 6. Günü bağla (or the owner's / Baş admin's re-open).
+    final today = bakuToday();
+    final me = ref.watch(currentUserIdProvider);
+    // The worker re-opens only TODAY's day he closed himself (by mistake);
+    // a day closed automatically or by the owner stays closed for him (0112).
+    final workerReopen = !widget.manager && !day.isOpen && day.workDate == today && day.closedBy != null && day.closedBy == me;
     final actions = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      if (day.isOpen && _canAdd)
+      if (day.isOpen && _canAdd) ...[
         SizedBox(
           height: 54,
           child: OutlinedButton.icon(
@@ -608,7 +626,21 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             label: Text(s.t('adb_close_day'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
           ),
         ),
-      if (!day.isOpen && widget.manager)
+        const SizedBox(height: 6),
+        Text(s.t('adb_auto_close_note'), key: const ValueKey('adb-auto-close-note'),
+            textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+      ],
+      if (workerReopen)
+        SizedBox(
+          height: 50,
+          child: OutlinedButton.icon(
+            key: const ValueKey('adb-worker-reopen'),
+            onPressed: _busy ? null : _reopen,
+            icon: const Icon(Icons.lock_open),
+            label: Text(s.t('adb_reopen')),
+          ),
+        ),
+      if (!_open && widget.manager)
         SizedBox(
           height: 50,
           child: OutlinedButton.icon(
@@ -618,8 +650,9 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             label: Text(s.t('adb_reopen')),
           ),
         ),
-      if (!day.isOpen && !widget.manager)
-        Text(s.t('adb_closed_note'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+      if (!_open && !widget.manager && !workerReopen)
+        Text(s.t(day.closedAutomatically(today) ? 'adb_closed_auto' : 'adb_closed_note'),
+            key: const ValueKey('adb-closed-note'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
     ]);
 
     final summary = AdbizCard(

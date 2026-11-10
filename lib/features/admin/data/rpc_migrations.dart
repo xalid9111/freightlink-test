@@ -209,6 +209,7 @@ const kRpcMigration = <String, String>{
   'cargo_feed_count': '0109_cargo_feed_pages.sql',
   'adbiz_add_entry': '0110_ad_business.sql',
   'adbiz_add_day_expense': '0111_ad_business_day_expenses.sql',
+  'adbiz_sweep': '0112_ad_business_day_auto_close.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',
   'adbiz_admin_company_set_active': '0110_ad_business.sql',
   'adbiz_admin_member_set': '0110_ad_business.sql',
