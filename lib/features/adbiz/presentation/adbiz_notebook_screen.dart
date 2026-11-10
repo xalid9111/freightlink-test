@@ -877,10 +877,12 @@ class DayMoneyCard extends StatelessWidget {
   }
 }
 
-/// The living bar (owner, 10.11.2026: "şkala canlı olsun"): it fills
-/// smoothly to the new value, and a star at the target end blinks and glows;
-/// at the target the star stays lit. Phones that ask for less motion get the
-/// same picture without the animation.
+/// The living bar (owner, 10.11.2026: "şkala canlı olsun"; later the same
+/// day the owner's picture, "daha canlı"): a thin outlined capsule, a neon
+/// line of light that fills it smoothly, a twinkling spark at the line's
+/// tip and a glowing ringed star at the target end (lit steadily once the
+/// target is reached). Phones that ask for less motion get the same picture
+/// standing still.
 class AdbizLiveBar extends StatefulWidget {
   final double value;
   final bool reached;
@@ -914,7 +916,7 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    const star = 40.0;
+    const star = 44.0;
     return SizedBox(
       height: star,
       child: Stack(alignment: Alignment.centerLeft, clipBehavior: Clip.none, children: [
@@ -924,14 +926,18 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
             tween: Tween(begin: 0, end: widget.value),
             duration: const Duration(milliseconds: 900),
             curve: Curves.easeOutCubic,
-            builder: (context, v, _) => ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
+            builder: (context, v, _) => AnimatedBuilder(
+              animation: _blink,
+              builder: (context, _) => CustomPaint(
                 key: const ValueKey('adb-progress'),
-                value: v,
-                minHeight: 16,
-                backgroundColor: AppColors.line,
-                color: AppColors.online,
+                size: const Size(double.infinity, star),
+                painter: AdbizNeonBarPainter(
+                  value: v,
+                  twinkle: Curves.easeInOut.transform(_blink.value),
+                  neon: AppColors.adbNeon,
+                  core: AppColors.adbNeonCore,
+                  track: AppColors.adbTrack,
+                ),
               ),
             ),
           ),
@@ -949,12 +955,13 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
                 height: star,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: glow.withValues(alpha: 0.10 + 0.20 * t),
-                  boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.25 + 0.55 * t), blurRadius: 6 + 16 * t, spreadRadius: 1 + 3 * t)],
+                  color: AppColors.adbTrack,
+                  border: Border.all(color: glow.withValues(alpha: 0.65 + 0.35 * t), width: 2.5),
+                  boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.25 + 0.5 * t), blurRadius: 6 + 14 * t, spreadRadius: 0.5 + 2 * t)],
                 ),
                 child: Transform.scale(
-                  scale: 0.85 + 0.25 * t,
-                  child: Icon(Icons.auto_awesome, size: 20, color: glow.withValues(alpha: 0.55 + 0.45 * t)),
+                  scale: 0.88 + 0.2 * t,
+                  child: Icon(Icons.auto_awesome, size: 22, color: AppColors.adbStarIcon.withValues(alpha: 0.7 + 0.3 * t)),
                 ),
               );
             },
@@ -963,6 +970,73 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
       ]),
     );
   }
+}
+
+/// Draws the owner's neon bar: the outlined capsule, the glowing line up to
+/// [value] (0–1) and the spark at its tip, which [twinkle] (0–1) breathes.
+class AdbizNeonBarPainter extends CustomPainter {
+  final double value, twinkle;
+  final Color neon, core, track;
+  const AdbizNeonBarPainter({required this.value, required this.twinkle, required this.neon, required this.core, required this.track});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const h = 14.0;
+    final cy = size.height / 2;
+    final capsule = RRect.fromRectAndRadius(Rect.fromLTWH(0, cy - h / 2, size.width, h), const Radius.circular(h / 2));
+    canvas.drawRRect(capsule, Paint()..color = track);
+    canvas.drawRRect(
+        capsule,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = neon.withValues(alpha: 0.55));
+    final v = value.clamp(0.0, 1.0);
+    if (v <= 0) return;
+    const pad = h / 2;
+    final x0 = pad, x1 = pad + (size.width - 2 * pad) * v;
+    final a = Offset(x0, cy), b = Offset(x1, cy);
+    // The glow around the line, then its bright core growing whiter to the tip.
+    canvas.drawLine(
+        a,
+        b,
+        Paint()
+          ..color = neon.withValues(alpha: 0.75)
+          ..strokeWidth = 7
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    canvas.drawLine(
+        a,
+        b,
+        Paint()
+          ..strokeWidth = 2.6
+          ..strokeCap = StrokeCap.round
+          ..shader = LinearGradient(colors: [neon, core]).createShader(Rect.fromPoints(a, b.translate(0.01, 0))));
+    // The spark at the tip: a soft halo, four rays and a white heart.
+    final r = 9 + 5 * twinkle;
+    canvas.drawCircle(b, r, Paint()
+      ..color = neon.withValues(alpha: 0.55 + 0.3 * twinkle)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 + 4 * twinkle));
+    final ray = Paint()
+      ..color = core.withValues(alpha: 0.85)
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    final long = 10 + 7 * twinkle, short = 5 + 4 * twinkle;
+    canvas.drawLine(b.translate(-long, 0), b.translate(long, 0), ray);
+    canvas.drawLine(b.translate(0, -long), b.translate(0, long), ray);
+    final d = short * 0.7;
+    final thin = Paint()
+      ..color = neon.withValues(alpha: 0.8)
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(b.translate(-d, -d), b.translate(d, d), thin);
+    canvas.drawLine(b.translate(-d, d), b.translate(d, -d), thin);
+    canvas.drawCircle(b, 2.6 + 0.8 * twinkle, Paint()..color = core);
+  }
+
+  @override
+  bool shouldRepaint(AdbizNeonBarPainter old) =>
+      old.value != value || old.twinkle != twinkle || old.neon != neon || old.core != core || old.track != track;
 }
 
 /// A whole amount on the card: 235 → "235 AZN", 12.5 → "12.50 AZN" (the ₼

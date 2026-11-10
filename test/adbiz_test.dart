@@ -449,12 +449,19 @@ void main() {
       expect(find.byKey(const ValueKey('adb-banner-minus')), findsOneWidget);
     });
 
-    test('the star at the bar\'s end: green by day, the accent at night', () {
+    test('the neon bar (owner\'s picture): green line and star, a spark at the tip, deeper by day', () {
       AppColors.use(AppPalette.light);
       expect(AppColors.adbStar, AppColors.online);
+      expect(AppColors.adbNeon, AppColors.online);
       AppColors.use(AppPalette.dark);
-      expect(AppColors.adbStar, AppColors.accent);
-      expect(src('lib/features/adbiz/presentation/adbiz_notebook_screen.dart'), contains('final glow = AppColors.adbStar;'));
+      expect(AppColors.adbNeon, const Color(0xFF3DFF6E));
+      expect(AppColors.adbStar, AppColors.adbNeon, reason: 'the star is green at night too (owner\'s picture)');
+      final nb = src('lib/features/adbiz/presentation/adbiz_notebook_screen.dart');
+      expect(nb, contains('final glow = AppColors.adbStar;'));
+      expect(nb, contains('painter: AdbizNeonBarPainter('));
+      const p = AdbizNeonBarPainter(value: 0.6, twinkle: 0.5, neon: Color(0xFF3DFF6E), core: Color(0xFFFFFFFF), track: Color(0xFF000000));
+      expect(p.shouldRepaint(const AdbizNeonBarPainter(value: 0.6, twinkle: 0.7, neon: Color(0xFF3DFF6E), core: Color(0xFFFFFFFF), track: Color(0xFF000000))),
+          isTrue, reason: 'the spark twinkles');
     });
 
     test('the model: card money, the words, 0113 known by its columns', () {
