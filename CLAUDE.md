@@ -650,6 +650,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   numbers; empty = the app's words); shown in the close-day dialog and on
   the closed day's card; the titles ("Gün bağlandı" / "Təbriklər!") stay;
   owner / Baş admin only, audited.
+  The UTEP logo (owner's files, 10.11.2026): no white plate — the white
+  logo (utep_reklam_logo_white.png) at night, the logo in its own colours
+  (utep_reklam_logo.png) by day, picked by the theme's brightness; size and
+  place unchanged.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
