@@ -666,6 +666,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   always asked first, naming the jobs and rasxod that go with it; the whole
   day is kept in the history (adbiz_audit 'day.delete'); a worker never
   deletes.
+  The old account carried over (owner, 10.11.2026, SQL 0116: "hesabı köçür,
+  bu proqramla davam edəcəm"): adbiz_month_import holds a month's figures
+  from before the program (net, minus / plus); 0116 added UTEP Reklam's
+  2026 table once — January to November (November = up to 10.11), no
+  December, never over the owner's own fixes. Every card = old figures +
+  the program's days; months and years then simply go on from the
+  program. The chosen month's "Köhnə hesab" row on the Ay view with ✏️
+  (owner / Baş admin; both empty = taken off; audited); no direct writes.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

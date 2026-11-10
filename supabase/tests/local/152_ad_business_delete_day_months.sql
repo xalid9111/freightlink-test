@@ -27,6 +27,8 @@ select public.adbiz_admin_member_set(:bwork, (select id from t where k = 'b'), '
 
 -- Two closed days in March 2026 (target 235): 250 − 0 = +15, 200 − 20 = −55 → −40; a company expense of 30.
 reset role;
+-- The old account (0116) is checked in suite 153; here only the program's days count.
+delete from public.adbiz_month_import;
 insert into public.adbiz_days (id, company_id, user_id, work_date, target, status, closed_at)
 values ('dd150000-0000-4000-8000-000000000001', :utep, :worker, '2026-03-10', 235, 'closed', now()),
        ('dd150000-0000-4000-8000-000000000002', :utep, :worker, '2026-03-11', 235, 'closed', now()),

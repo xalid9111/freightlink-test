@@ -329,10 +329,24 @@ class DayProgress {
 class AdbizPeriodSum {
   final int key;
   final double net, gap;
-  const AdbizPeriodSum(this.key, this.net, this.gap);
 
-  factory AdbizPeriodSum.fromJson(Map<String, dynamic> j) =>
-      AdbizPeriodSum((j['key'] as num).toInt(), _d(j['net']), _d(j['gap']));
+  /// The old account carried over (0116): this month has old figures, and
+  /// what they are (already inside [net] / [gap]).
+  final bool imported;
+  final double impNet, impGap;
+  const AdbizPeriodSum(this.key, this.net, this.gap, {this.imported = false, this.impNet = 0, this.impGap = 0});
+
+  factory AdbizPeriodSum.fromJson(Map<String, dynamic> j) => AdbizPeriodSum((j['key'] as num).toInt(), _d(j['net']), _d(j['gap']),
+      imported: j['imported'] == true, impNet: _d(j['imp_net']), impGap: _d(j['imp_gap']));
+}
+
+/// A typed signed amount: "-215", "11", "−4693", "5 784,50" → the number;
+/// null when it is not one.
+double? parseSigned(String s) {
+  final t = s.trim().replaceAll('−', '-').replaceAll(RegExp(r'[^0-9,.\-]'), '').replaceAll(',', '.');
+  if (t.isEmpty || t == '-') return null;
+  final v = double.tryParse(t);
+  return v == null ? null : (v * 100).roundToDouble() / 100;
 }
 
 /// The cards of one year: its 12 months and every year with work.

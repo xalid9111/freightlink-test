@@ -217,6 +217,7 @@ const kRpcMigration = <String, String>{
   'adbiz_company_result_texts_save': '0114_ad_business_result_texts.sql',
   'adbiz_delete_day': '0115_ad_business_delete_day_months.sql',
   'adbiz_report_periods': '0115_ad_business_delete_day_months.sql',
+  'adbiz_month_import_save': '0116_ad_business_month_import.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',
   'adbiz_admin_company_set_active': '0110_ad_business.sql',
   'adbiz_admin_member_set': '0110_ad_business.sql',

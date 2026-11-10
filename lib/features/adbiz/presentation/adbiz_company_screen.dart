@@ -201,6 +201,15 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     }
   }
 
+  // ---- the old account (0116): a month's figures from before the program --------------------
+  Future<void> _editOldMonth(AppStrings s, int year, int month, String label, AdbizPeriodSum? sum) async {
+    final r = await showDialog<(double?, double?)>(
+        context: context, builder: (_) => AdbizOldMonthDialog(s: s, title: '${s.t('adb_old_account')} · $label $year', sum: sum));
+    if (r == null || !mounted) return;
+    await _run(s, () => ref.read(adbizRepositoryProvider).monthImportSave(widget.companyId, year, month, r.$1, r.$2),
+        done: s.t('adb_saved'));
+  }
+
   // ---- the owner's words, the target switch, a worker's task (0113) ---------------------
   Future<void> _editWords(AppStrings s, AdbizCompany c) async {
     final r = await showDialog<(String, String, String, String)>(context: context, builder: (_) => AdbizWordsDialog(s: s, company: c));
@@ -578,6 +587,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     }),
                   ),
               ];
+        final sel = _period == AdbizPeriod.month ? p.months.where((m) => m.key == _date.month).firstOrNull : null;
+        final soft = TextStyle(fontSize: 13.5, color: AppColors.adbTextSoft);
         cards = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           LayoutBuilder(builder: (context, c) {
             final cols = c.maxWidth >= 360 ? 4 : 3;
@@ -587,6 +598,35 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           }),
           const SizedBox(height: 8),
           Text(s.t('adb_tiles_legend'), key: const ValueKey('adb-tiles-legend'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+          // The chosen month's old account (figures from before the program), ✏️ to fix.
+          if (_period == AdbizPeriod.month) ...[
+            const SizedBox(height: 10),
+            AdbizGlass(
+              key: const ValueKey('adb-old-month'),
+              padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+              child: Row(children: [
+                Icon(Icons.history, color: AppColors.adbTeal),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${s.t('adb_old_account')} · ${cap(monthName(_date.month, lang))}',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+                    Text(
+                        sel?.imported == true
+                            ? '${s.t('adb_old_net')}: ${AdbizPeriodTile.whole(sel!.impNet)}  ·  ${s.t('adb_old_gap_short')}: ${AdbizPeriodTile.whole(sel.impGap)}'
+                            : s.t('adb_old_account_none'),
+                        key: const ValueKey('adb-old-month-text'),
+                        style: soft),
+                  ]),
+                ),
+                IconButton(
+                  key: const ValueKey('adb-old-month-edit'),
+                  icon: Icon(Icons.edit_outlined, color: AppColors.adbText),
+                  onPressed: _busy ? null : () => _editOldMonth(s, _date.year, _date.month, cap(monthName(_date.month, lang)), sel),
+                ),
+              ]),
+            ),
+          ],
         ]);
       }
     }
@@ -1121,6 +1161,9 @@ class AdbizPeriodTile extends StatelessWidget {
 
   static String whole(double v) => '${v.round()} AZN';
 
+  /// A plain amount for a field: 5784 → "5784", 12.5 → "12.5".
+  static String num(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+
   @override
   Widget build(BuildContext context) {
     Widget half(Color bg, String text, String k, {required bool top}) => Container(
@@ -1158,4 +1201,79 @@ class AdbizPeriodTile extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// A month's old figures (0116): net income and the minus / plus (signed);
+/// "Sil" takes them off (the month then shows only the program's days).
+class AdbizOldMonthDialog extends StatefulWidget {
+  final AppStrings s;
+  final String title;
+  final AdbizPeriodSum? sum;
+  const AdbizOldMonthDialog({super.key, required this.s, required this.title, this.sum});
+
+  @override
+  State<AdbizOldMonthDialog> createState() => _AdbizOldMonthDialogState();
+}
+
+class _AdbizOldMonthDialogState extends State<AdbizOldMonthDialog> {
+  late final _net = TextEditingController(text: widget.sum?.imported == true ? AdbizPeriodTile.num(widget.sum!.impNet) : '');
+  late final _gap = TextEditingController(text: widget.sum?.imported == true ? AdbizPeriodTile.num(widget.sum!.impGap) : '');
+  String? _error;
+
+  AppStrings get s => widget.s;
+
+  @override
+  void dispose() {
+    _net.dispose();
+    _gap.dispose();
+    super.dispose();
+  }
+
+  void _ok() {
+    final net = _net.text.trim().isEmpty ? 0.0 : parseSigned(_net.text);
+    final gap = _gap.text.trim().isEmpty ? 0.0 : parseSigned(_gap.text);
+    if (net == null || gap == null) {
+      setState(() => _error = s.t('adb_err_invalid_argument'));
+      return;
+    }
+    Navigator.pop(context, (net, gap));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(widget.title),
+        scrollable: true,
+        content: SizedBox(
+          width: 420,
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(s.t('adb_old_hint'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+            const SizedBox(height: 10),
+            TextField(
+              key: const ValueKey('adb-old-net'),
+              controller: _net,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+              decoration: InputDecoration(labelText: s.t('adb_old_net'), suffixText: 'AZN'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const ValueKey('adb-old-gap'),
+              controller: _gap,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+              decoration: InputDecoration(labelText: s.t('adb_old_gap'), suffixText: 'AZN'),
+            ),
+            if (_error != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_error!, style: TextStyle(color: AppColors.danger))),
+          ]),
+        ),
+        actions: [
+          if (widget.sum?.imported == true)
+            TextButton(
+              key: const ValueKey('adb-old-clear'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+              onPressed: () => Navigator.pop(context, (null, null)),
+              child: Text(s.t('adb_old_clear')),
+            ),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(s.t('common_cancel'))),
+          FilledButton(key: const ValueKey('adb-old-save'), onPressed: _ok, child: Text(s.t('adb_save'))),
+        ],
+      );
 }

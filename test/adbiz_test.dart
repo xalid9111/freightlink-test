@@ -53,6 +53,11 @@ class _Repo implements AdbizRepository {
   @override
   Future<void> sweep() async => sweeps++;
 
+  final imports = <(int, int, double?, double?)>[];
+  @override
+  Future<void> monthImportSave(String companyId, int year, int month, double? net, double? gap) async =>
+      imports.add((year, month, net, gap));
+
   final deleted = <String>[];
   @override
   Future<void> deleteDay(String dayId) async => deleted.add(dayId);
@@ -490,7 +495,11 @@ void main() {
                 'by_day': [{'date': isoDate(_today), 'income': 270}],
               })),
           adbizPeriodsProvider.overrideWith((ref, k) async => AdbizPeriods.fromJson({
-                'months': [for (var m = 1; m <= 12; m++) {'key': m, 'net': m == 1 ? 5784 : 0, 'gap': m == 1 ? -215 : (m == 3 ? 11 : 0)}],
+                'months': [
+                  for (var m = 1; m <= 12; m++)
+                    {'key': m, 'net': m == 1 ? 5784 : 0, 'gap': m == 1 ? -215 : (m == 3 ? 11 : 0),
+                     'imported': m == 1, 'imp_net': m == 1 ? 5784 : 0, 'imp_gap': m == 1 ? -215 : 0}
+                ],
                 'years': [{'key': 2025, 'net': 100, 'gap': -135}, {'key': _today.year, 'net': 61792, 'gap': -10197}],
               })),
           adbizExpensesProvider.overrideWith((ref, k) async => const <AdbizExpense>[]),
@@ -565,6 +574,40 @@ void main() {
       await t.tap(find.byKey(const ValueKey('adb-month-3')));
       await t.pump();
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-period-label'))).data, '03.${_today.year}');
+    });
+
+    testWidgets('the old account: the chosen month\'s old figures, ✏️ fixes or takes them off', (t) async {
+      final repo = await pumpPanel(t);
+      await t.tap(find.byKey(const ValueKey('adb-period-month')));
+      await t.pump();
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-month-1')));
+      await t.pump();
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-old-month-text'))).data, contains('5784 AZN'));
+      await t.tap(find.byKey(const ValueKey('adb-old-month-edit')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(t.widget<TextField>(find.byKey(const ValueKey('adb-old-net'))).controller!.text, '5784');
+      await t.enterText(find.byKey(const ValueKey('adb-old-net')), '5800');
+      await t.enterText(find.byKey(const ValueKey('adb-old-gap')), '−199');
+      await t.tap(find.byKey(const ValueKey('adb-old-save')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(repo.imports.single, (_today.year, 1, 5800.0, -199.0));
+      // A month without old figures says so; ✏️ adds them.
+      await t.tap(find.byKey(const ValueKey('adb-month-5')));
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-old-month-text'))).data, 'adb_old_account_none');
+    });
+
+    test('signed amounts as typed', () {
+      expect(parseSigned('-215'), -215);
+      expect(parseSigned('−4693'), -4693);
+      expect(parseSigned('11'), 11);
+      expect(parseSigned('5 784,50'), 5784.5);
+      expect(parseSigned(''), isNull);
+      expect(parseSigned('abc'), isNull);
     });
 
     testWidgets('İl: the year cards; a tap opens that year\'s months', (t) async {
@@ -737,6 +780,14 @@ void main() {
         .hasMatch(s115), isTrue);
     expect(s115, contains("and d.status = 'closed' and d.target > 0"));
     expect(src('supabase/tests/local/run_local.sh'), contains('152_ad_business_delete_day_months.sql'));
+    // 0116: the owner's 2026 table carried over once (never over his own fixes); no direct writes.
+    final s116 = src('supabase/migrations/0116_ad_business_month_import.sql');
+    expect(s116, contains('(1, 5784, -215)'));
+    expect(s116, contains('(11, 1306, -4693)'));
+    expect(s116, isNot(contains('(12, ')), reason: 'December is not carried over');
+    expect(s116, contains('on conflict (company_id, year, month) do nothing'));
+    expect(s116, contains('revoke all on public.adbiz_month_import from anon, authenticated;'));
+    expect(src('supabase/tests/local/run_local.sh'), contains('153_ad_business_month_import.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');

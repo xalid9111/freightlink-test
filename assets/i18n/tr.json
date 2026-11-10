@@ -2145,5 +2145,12 @@
   "adb_day_deleted": "Gün silindi.",
   "adb_pick_day": "Hangi çalışanın günü silinsin?",
   "adb_need_sql115": "Bu işlev SQL 0115 çalıştırıldıktan sonra açılır.",
-  "adb_tiles_legend": "Yeşil: net gelir · Kırmızı: günlerin hedefe göre eksisi / fazlası"
+  "adb_tiles_legend": "Yeşil: net gelir · Kırmızı: günlerin hedefe göre eksisi / fazlası",
+  "adb_old_account": "Eski hesap",
+  "adb_old_account_none": "Bu ay için eski hesap yok — ✏️ ile ekleyin",
+  "adb_old_net": "Net gelir",
+  "adb_old_gap": "Eksi / fazla (örn. -215 veya 11)",
+  "adb_old_gap_short": "Eksi / fazla",
+  "adb_old_hint": "Programdan önceki rakamlar. Kartta programdaki günlerle toplanır.",
+  "adb_old_clear": "Eski hesabı sil"
 }
