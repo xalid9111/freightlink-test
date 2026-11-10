@@ -43,12 +43,26 @@ class AdbizCompany {
   final String id, name;
   final double dailyTarget;
   final bool ownerManagesStaff, isActive;
+
+  /// The owner's words (0113): the caption shown instead of "Hədəfə qalan"
+  /// and the task for every worker; null = none.
+  final String? targetLabel, taskNote;
+
+  /// The workers see the target, the bar and "Mənfi" (0113; on by default).
+  final bool showTarget;
+
+  /// SQL 0113 is run: the card tick, the words and the switch work.
+  final bool v113;
   const AdbizCompany({
     required this.id,
     required this.name,
     this.dailyTarget = 0,
     this.ownerManagesStaff = false,
     this.isActive = true,
+    this.targetLabel,
+    this.taskNote,
+    this.showTarget = true,
+    this.v113 = false,
   });
 
   factory AdbizCompany.fromJson(Map<String, dynamic> j) => AdbizCompany(
@@ -57,7 +71,16 @@ class AdbizCompany {
         dailyTarget: _d(j['daily_target']),
         ownerManagesStaff: j['owner_manages_staff'] == true,
         isActive: j['is_active'] != false,
+        targetLabel: _txt(j['target_label']),
+        taskNote: _txt(j['task_note']),
+        showTarget: j['show_target'] != false,
+        v113: j.containsKey('show_target'),
       );
+}
+
+String? _txt(Object? v) {
+  final t = '${v ?? ''}'.trim();
+  return t.isEmpty ? null : t;
 }
 
 class AdbizDay {
@@ -107,7 +130,10 @@ class AdbizEntry {
   final String id, dayId, title;
   final double amount;
   final DateTime? createdAt;
-  const AdbizEntry({required this.id, required this.dayId, required this.title, required this.amount, this.createdAt});
+
+  /// Paid by card (the tick, 0113); false = cash.
+  final bool paidCard;
+  const AdbizEntry({required this.id, required this.dayId, required this.title, required this.amount, this.createdAt, this.paidCard = false});
 
   factory AdbizEntry.fromJson(Map<String, dynamic> j) => AdbizEntry(
         id: j['id'] as String,
@@ -115,8 +141,13 @@ class AdbizEntry {
         title: (j['title'] as String?) ?? '',
         amount: _d(j['amount']),
         createdAt: _t(j['created_at']),
+        paidCard: j['paid_card'] == true,
       );
 }
+
+/// The money of the jobs paid by card.
+double cardTotal(Iterable<AdbizEntry> entries) =>
+    (entries.where((e) => e.paidCard).fold<double>(0, (s, e) => s + e.amount) * 100).roundToDouble() / 100;
 
 class AdbizExpense {
   final String id, title;
@@ -151,17 +182,22 @@ class AdbizExpense {
 class AdbizWorkerSum {
   final String userId, name, role;
   final bool isActive;
-  final double total;
+  final double total, card;
   final int days;
   final double? personalTarget;
+
+  /// The owner's task for this worker (0113).
+  final String? taskNote;
   const AdbizWorkerSum({
     required this.userId,
     required this.name,
     required this.role,
     this.isActive = true,
     this.total = 0,
+    this.card = 0,
     this.days = 0,
     this.personalTarget,
+    this.taskNote,
   });
 
   factory AdbizWorkerSum.fromJson(Map<String, dynamic> j) => AdbizWorkerSum(
@@ -170,6 +206,8 @@ class AdbizWorkerSum {
         role: (j['role'] as String?) ?? 'worker',
         isActive: j['is_active'] != false,
         total: _d(j['total']),
+        card: _d(j['card']),
+        taskNote: _txt(j['task_note']),
         days: (j['days'] as num?)?.toInt() ?? 0,
         personalTarget: _dn(j['personal_target']),
       );
@@ -177,6 +215,10 @@ class AdbizWorkerSum {
 
 class AdbizReport {
   final double income, expenses, net;
+
+  /// Jobs paid by card / in cash (0113; before it everything counts as cash).
+  final double card;
+  double get cash => income - card;
   final int daysOpen, daysClosed;
   final List<AdbizWorkerSum> workers;
   final List<(DateTime, double)> byDay;
@@ -184,6 +226,7 @@ class AdbizReport {
     this.income = 0,
     this.expenses = 0,
     this.net = 0,
+    this.card = 0,
     this.daysOpen = 0,
     this.daysClosed = 0,
     this.workers = const [],
@@ -194,6 +237,7 @@ class AdbizReport {
         income: _d(j['income']),
         expenses: _d(j['expenses']),
         net: _d(j['net']),
+        card: _d(j['card']),
         daysOpen: (j['days_open'] as num?)?.toInt() ?? 0,
         daysClosed: (j['days_closed'] as num?)?.toInt() ?? 0,
         workers: [

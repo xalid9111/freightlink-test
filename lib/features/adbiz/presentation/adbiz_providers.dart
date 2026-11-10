@@ -47,3 +47,17 @@ final adbizExpensesProvider = FutureProvider.autoDispose.family<List<AdbizExpens
   final (from, to) = periodRange(k.period, k.date);
   return ref.watch(adbizRepositoryProvider).expenses(k.companyId, from, to);
 });
+
+/// One company (the worker reads only his own; the owner his; the Baş admin
+/// any) — its target switch and the owner's words (0113). null = unknown.
+final adbizCompanyProvider = Provider.autoDispose.family<AdbizCompany?, String>((ref, id) =>
+    (ref.watch(adbizCompaniesProvider).valueOrNull ?? const <AdbizCompany>[]).where((c) => c.id == id).firstOrNull);
+
+/// The owner's task for one worker (0113); null = none / not readable.
+final adbizMemberTaskProvider = FutureProvider.autoDispose.family<String?, String>((ref, userId) async {
+  try {
+    return await ref.watch(adbizRepositoryProvider).memberTaskOf(userId);
+  } catch (_) {
+    return null;
+  }
+});

@@ -625,6 +625,25 @@ files to the owner separately (they are run by hand in the SQL editor).
   bağla". A worker who closed TODAY's day himself may open it again the
   same day ("Günü yenidən aç"); a day closed by the owner / Baş admin or
   automatically stays theirs to re-open.
+  Owner panel + motivation (owner's picture and words, 10.11.2026, SQL
+  0113): "Reklam biznes idarəetməsi" looks like the owner's picture — dark
+  teal glass (AppColors.adb*, only inside UTEP; a light version by day):
+  header (UTEP logo | company | profile ⌄ menu), Gün · Ay · İl pills with ‹
+  date ›, Ümumi gəlir · Xərclər · Xalis mənfəət, "Kartla … · Nağd …",
+  Aktiv / Bağlanmış günlər, İşçilər (+ İşçi əlavə et when allowed; a row:
+  name, role, amount, card amount, ⋯ = days / task / …), Gündəlik hədəf
+  (✏️ Baş admin only; the switch = the workers see the target, bar and
+  Mənfi or not), "Yazı və tapşırıq", Xərclər, Arxiv. Amounts as "60 AZN"
+  (no ₼ in the font). The owner / Baş admin writes the words shown instead
+  of "Hədəfə qalan", a task for every worker and one per worker (audited).
+  A job paid by card: a "Kart" tick when adding it, the same tick at the
+  end of every saved job — the worker puts / takes it off only on his own
+  open day (a mistake), the owner / Baş admin any day; card money is income,
+  shown apart in the report. Closing the day shows the result at once:
+  "Təbriklər!" at / over the target, otherwise how much stayed in the minus;
+  a closed day (also automatic) shows the same. Day mode: the bar's star is
+  green (night keeps the accent). 0113 also fixed the rights checks for an
+  account in no company (null = let through; now a plain no).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

@@ -9,6 +9,8 @@ import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
 import 'package:freightlink/features/adbiz/data/adbiz_repository.dart';
 import 'package:freightlink/features/adbiz/domain/adbiz_models.dart';
+import 'package:freightlink/core/theme/app_theme.dart';
+import 'package:freightlink/features/adbiz/presentation/adbiz_company_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_notebook_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_providers.dart';
 import 'package:freightlink/features/auth/presentation/profile_screen.dart';
@@ -19,6 +21,10 @@ String src(String p) => File(p).readAsStringSync();
 class _Repo implements AdbizRepository {
   int opens = 0;
   final adds = <(String, String, double, String)>[];
+  final cards = <bool?>[];
+  final ticks = <(String, bool)>[];
+  @override
+  Future<void> setEntryCard(String id, bool on) async => ticks.add((id, on));
   int failAdds = 0;
   final closes = <String>[];
   @override
@@ -29,8 +35,9 @@ class _Repo implements AdbizRepository {
   }
 
   @override
-  Future<String> addEntry(String dayId, String title, double amount, String clientKey) async {
+  Future<String> addEntry(String dayId, String title, double amount, String clientKey, {bool? card}) async {
     adds.add((dayId, title, amount, clientKey));
+    cards.add(card);
     if (failAdds > 0) {
       failAdds--;
       throw Exception('offline');
@@ -66,8 +73,15 @@ final _today = bakuToday();
 AdbizDay _day({String status = 'open', double target = 235, String? closedBy}) =>
     AdbizDay(id: 'd1', companyId: 'c', userId: 'me', workDate: _today, status: status, target: target, closedBy: closedBy);
 
+/// The company after SQL 0113 (the card tick, the owner's words, the switch).
+const _c113 = AdbizCompany(id: 'c', name: 'UTEP Reklam', dailyTarget: 235, v113: true);
+
 Future<void> _pumpNotebook(WidgetTester t, _Repo repo,
-    {List<AdbizDay> days = const [], List<AdbizEntry> entries = const [], List<AdbizExpense> expenses = const []}) async {
+    {List<AdbizDay> days = const [],
+    List<AdbizEntry> entries = const [],
+    List<AdbizExpense> expenses = const [],
+    AdbizCompany? company,
+    String? task}) async {
   t.view.physicalSize = const Size(390, 1400);
   t.view.devicePixelRatio = 1;
   addTearDown(t.view.reset);
@@ -79,6 +93,8 @@ Future<void> _pumpNotebook(WidgetTester t, _Repo repo,
       adbizDaysProvider('me').overrideWith((ref) => Stream.value(days)),
       adbizEntriesProvider('d1').overrideWith((ref) => Stream.value(entries)),
       adbizDayExpensesProvider('d1').overrideWith((ref) => Stream.value(expenses)),
+      adbizCompaniesProvider.overrideWith((ref) async => [if (company != null) company]),
+      adbizMemberTaskProvider('me').overrideWith((ref) async => task),
     ],
     child: const MaterialApp(home: AdbizNotebookScreen()),
   ));
@@ -288,6 +304,191 @@ void main() {
     });
   });
 
+  group('the owner\'s words, the card tick, the day\'s result (0113)', () {
+    testWidgets('before SQL 0113: no tick, the old call', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()]);
+      expect(find.byKey(const ValueKey('adb-job-card')), findsNothing);
+      await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Nömrə');
+      await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '20');
+      await t.tap(find.byKey(const ValueKey('adb-add-job')));
+      await t.pump();
+      expect(repo.cards.single, isNull, reason: 'no p_card before 0113');
+    });
+
+    testWidgets('a tick = paid by card; a second tap takes it off; the tick at the end of a saved job', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()], company: _c113, entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 20, paidCard: true),
+        AdbizEntry(id: 'e2', dayId: 'd1', title: 'Kalçuk', amount: 25),
+      ]);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-card-total'))).data, '20.00 AZN');
+      await t.tap(find.byKey(const ValueKey('adb-job-card')));
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-job-card')));
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-job-card')));
+      await t.pump();
+      await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
+      await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '35');
+      await t.testTextInput.receiveAction(TextInputAction.done);
+      await t.pump();
+      expect(repo.cards.single, isTrue);
+      // A mistake on a saved job: the worker takes the tick off / puts it on (his open day).
+      await t.tap(find.byKey(const ValueKey('adb-card-e1')));
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-card-e2')));
+      await t.pump();
+      expect(repo.ticks, [('e1', false), ('e2', true)]);
+      // …but still no edit / delete of the name or amount.
+      expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    });
+
+    testWidgets('a closed day: the worker\'s tick is shown, not changeable', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day(status: 'closed', closedBy: 'owner')], company: _c113, entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 20, paidCard: true),
+      ]);
+      await t.tap(find.byKey(const ValueKey('adb-card-e1')), warnIfMissed: false);
+      await t.pump();
+      expect(repo.ticks, isEmpty);
+    });
+
+    testWidgets('the owner\'s caption and tasks on the worker\'s panel', (t) async {
+      await _pumpNotebook(t, _Repo(),
+          days: [_day()],
+          company: const AdbizCompany(id: 'c', name: 'U', v113: true, targetLabel: 'Bu gün 235-ə çatırıq!', taskNote: 'Yeni nömrələr'),
+          task: 'Gəncə yolunda 3 vitrin');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-caption'))).data, 'Bu gün 235-ə çatırıq!');
+      expect(find.byKey(const ValueKey('adb-task-card')), findsOneWidget);
+      expect(find.text('Yeni nömrələr'), findsOneWidget);
+      expect(find.text('Gəncə yolunda 3 vitrin'), findsOneWidget);
+    });
+
+    testWidgets('the owner switched the target off: no target, bar or Mənfi', (t) async {
+      await _pumpNotebook(t, _Repo(),
+          days: [_day()],
+          company: const AdbizCompany(id: 'c', name: 'U', v113: true, showTarget: false),
+          entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 20)]);
+      expect(find.byKey(const ValueKey('adb-minus')), findsNothing);
+      expect(find.byKey(const ValueKey('adb-star')), findsNothing);
+      expect(find.byKey(const ValueKey('adb-to-target')), findsNothing);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-collected'))).data, '20 AZN');
+    });
+
+    Future<void> closeWith(WidgetTester t, List<AdbizEntry> e) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()], company: _c113, entries: e);
+      await t.tap(find.byKey(const ValueKey('adb-close-day')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.closes, ['d1']);
+    }
+
+    testWidgets('closing below the target: what stayed in the minus, at once', (t) async {
+      await closeWith(t, const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 52)]);
+      expect(find.byKey(const ValueKey('adb-result-minus')), findsOneWidget);
+      expect(find.text('adb_result_minus'), findsOneWidget);
+      expect(adbizDayResult(_s, const DayProgress(52, 235)).$1, isFalse);
+    });
+
+    testWidgets('closing at / over the target: Təbriklər', (t) async {
+      await closeWith(t, const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Vitrin', amount: 250)]);
+      expect(find.byKey(const ValueKey('adb-result-reached')), findsOneWidget);
+    });
+
+    testWidgets('a closed day (also at 23:59 automatically) shows its result', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed')], company: _c113,
+          entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 52)]);
+      expect(find.byKey(const ValueKey('adb-banner-minus')), findsOneWidget);
+    });
+
+    test('the star at the bar\'s end: green by day, the accent at night', () {
+      AppColors.use(AppPalette.light);
+      expect(AppColors.adbStar, AppColors.online);
+      AppColors.use(AppPalette.dark);
+      expect(AppColors.adbStar, AppColors.accent);
+      expect(src('lib/features/adbiz/presentation/adbiz_notebook_screen.dart'), contains('final glow = AppColors.adbStar;'));
+    });
+
+    test('the model: card money, the words, 0113 known by its columns', () {
+      final c = AdbizCompany.fromJson({'id': 'c', 'name': 'U', 'target_label': '  ', 'task_note': 'Tapşırıq', 'show_target': false});
+      expect((c.v113, c.showTarget, c.targetLabel, c.taskNote), (true, false, null, 'Tapşırıq'));
+      expect(AdbizCompany.fromJson({'id': 'c', 'name': 'U'}).v113, isFalse);
+      expect(cardTotal(const [
+        AdbizEntry(id: '1', dayId: 'd', title: 'a', amount: 20, paidCard: true),
+        AdbizEntry(id: '2', dayId: 'd', title: 'b', amount: 25),
+        AdbizEntry(id: '3', dayId: 'd', title: 'c', amount: 15.5, paidCard: true),
+      ]), 35.5);
+      final r = AdbizReport.fromJson({'income': 60, 'card': 40, 'workers': [{'user_id': 'u', 'card': 40, 'task_note': 'x'}]});
+      expect((r.card, r.cash, r.workers.single.card, r.workers.single.taskNote), (40.0, 20.0, 40.0, 'x'));
+    });
+  });
+
+  group('the owner\'s panel (owner\'s picture)', () {
+    Future<_Repo> pumpPanel(WidgetTester t, {bool v113 = true, bool chief = false}) async {
+      t.view.physicalSize = const Size(412, 2400);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      final repo = _Repo();
+      final rep = AdbizReport.fromJson({
+        'income': 60, 'card': 40, 'expenses': 8, 'net': 52, 'days_open': 1, 'days_closed': 0,
+        'workers': [{'user_id': 'u1', 'name': 'İmran MMC', 'role': 'worker', 'total': 60, 'card': 40, 'days': 1}],
+      });
+      await t.pumpWidget(ProviderScope(
+        overrides: [
+          stringsProvider.overrideWithValue(_s),
+          adbizRepositoryProvider.overrideWithValue(repo),
+          adbizMeProvider.overrideWith((ref) async => AdbizMe(chief: chief, companyId: 'c', companyName: 'UTEP Reklam', role: 'owner')),
+          adbizCompaniesProvider.overrideWith((ref) async =>
+              [AdbizCompany(id: 'c', name: 'UTEP Reklam', dailyTarget: 245, v113: v113, taskNote: v113 ? 'Hamıya' : null)]),
+          adbizReportProvider.overrideWith((ref, k) async => rep),
+          adbizExpensesProvider.overrideWith((ref, k) async => const <AdbizExpense>[]),
+        ],
+        child: const MaterialApp(home: AdbizCompanyScreen(companyId: 'c')),
+      ));
+      await t.pump();
+      await t.pump();
+      return repo;
+    }
+
+    testWidgets('Gün · Ay · İl, the three totals, card / cash, the days, the worker, the target card', (t) async {
+      await pumpPanel(t);
+      expect(find.byKey(const ValueKey('adb-period-day')), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-period-label')), findsOneWidget);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-income'))).data, '60 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-expenses'))).data, '8 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '52 AZN');
+      final line = t.widget<Text>(find.byKey(const ValueKey('adb-card-line'))).textSpan!.toPlainText();
+      expect(line, contains('40 AZN'));
+      expect(line, contains('20 AZN'));
+      expect(find.byKey(const ValueKey('adb-days-line')), findsOneWidget);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-total-u1'))).data, '60 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-card-u1'))).data, '40 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-company-target-value'))).data, '245 AZN');
+      expect(find.byKey(const ValueKey('adb-company-edit')), findsNothing, reason: 'the target is the Baş admin\'s');
+      expect(find.byKey(const ValueKey('adb-show-target')), findsOneWidget);
+      expect(find.text('Hamıya'), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-words-edit')), findsOneWidget);
+      expect(find.byKey(const ValueKey('utep-logo')), findsOneWidget);
+    });
+
+    testWidgets('before SQL 0113: no card line, the switch and the words wait', (t) async {
+      await pumpPanel(t, v113: false);
+      expect(find.byKey(const ValueKey('adb-card-line')), findsNothing);
+      expect(t.widget<Switch>(find.byKey(const ValueKey('adb-show-target'))).onChanged, isNull);
+      expect(find.byKey(const ValueKey('adb-words-edit')), findsNothing);
+    });
+
+    testWidgets('the Baş admin edits the target (pencil)', (t) async {
+      await pumpPanel(t, chief: true);
+      expect(find.byKey(const ValueKey('adb-company-edit')), findsOneWidget);
+    });
+  });
+
   group('Profil', () {
     Future<void> pumpEntry(WidgetTester t, AdbizMe? me) async {
       await t.pumpWidget(ProviderScope(
@@ -342,6 +543,14 @@ void main() {
     expect(s112, contains('v_own := d.user_id = auth.uid() and d.closed_by = auth.uid() and d.work_date = public._adbiz_today()'));
     expect(s112, contains("cron.schedule('adbiz-auto-close', '0 20 * * *'"));
     expect(src('supabase/tests/local/run_local.sh'), contains('149_ad_business_auto_close.sql'));
+    // 0113: the words, the switch, the card tick; the rights checks never null.
+    final s113 = src('supabase/migrations/0113_ad_business_texts_card.sql');
+    expect(s113, contains('drop function if exists public.adbiz_add_entry(uuid, text, numeric, uuid);'));
+    expect(s113, contains('p_card boolean default false'));
+    expect(s113, contains("or coalesce(public.adbiz_my_role() = 'owner' and public.adbiz_my_company() = p_company, false);"));
+    expect(RegExp(r'adbiz_entry_set_card[\s\S]*?if not public\._adbiz_day_writable\(d\) then').hasMatch(s113), isTrue);
+    expect(s113, contains("'card', v_card"));
+    expect(src('supabase/tests/local/run_local.sh'), contains('150_ad_business_texts_card.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');

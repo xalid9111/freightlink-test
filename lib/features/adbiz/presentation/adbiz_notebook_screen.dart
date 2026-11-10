@@ -242,6 +242,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
   bool _busy = false;
   bool _xBusy = false;
   bool _showExpenses = true;
+  bool _card = false;
   String? _error, _xError;
 
   /// The keys of the job / expense being added: the same for a repeated tap,
@@ -274,6 +275,10 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     super.dispose();
   }
 
+  /// SQL 0113 is run for this day's company: the card tick and the owner's
+  /// words work.
+  bool get _v113 => ref.read(adbizCompanyProvider(day.companyId))?.v113 == true;
+
   Future<void> _add() async {
     if (_busy) return;
     final title = _title.text.trim();
@@ -287,10 +292,11 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
       _error = null;
     });
     try {
-      await ref.read(adbizRepositoryProvider).addEntry(day.id, title, amount, _key);
+      await ref.read(adbizRepositoryProvider).addEntry(day.id, title, amount, _key, card: _v113 ? _card : null);
       _key = adbizClientKey();
       _title.clear();
       _amount.clear();
+      _card = false;
       if (mounted) _titleFocus.requestFocus();
     } catch (e) {
       // The typed job stays in the form; the same key is used again.
@@ -335,6 +341,16 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     }
   }
 
+  /// The card tick of a saved job: the worker on his own open day (a
+  /// mistake), the owner / Baş admin any day (0113, audited).
+  Future<void> _setCard(AdbizEntry e, bool on) async {
+    try {
+      await ref.read(adbizRepositoryProvider).setEntryCard(e.id, on);
+    } catch (err) {
+      if (mounted) adbizSnack(context, adbizError(s, err));
+    }
+  }
+
   Future<void> _delete(AdbizEntry e) async {
     if (!await adbizConfirm(context, s, s.t('adb_delete_job'), '${e.title} · ${money(e.amount)}', ok: s.t('adb_delete'))) return;
     try {
@@ -363,14 +379,16 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     }
   }
 
-  Future<void> _close(DayProgress p) async {
+  Future<void> _close(DayProgress p, {required bool showTarget}) async {
     if (_busy) return;
     final body = s.t('adb_close_body', {'sum': money(p.net), 'target': money(p.target)});
     if (!await adbizConfirm(context, s, s.t('adb_close_day'), body, ok: s.t('adb_close_day'))) return;
     setState(() => _busy = true);
     try {
       await ref.read(adbizRepositoryProvider).closeDay(day.id);
-      if (mounted) adbizSnack(context, s.t('adb_closed_done'));
+      // The day's result, at once (owner, 10.11.2026): "Təbriklər!" when
+      // the target is reached, otherwise how much stayed in the minus.
+      if (mounted) await showAdbizDayResult(context, s, p, showTarget: showTarget);
     } catch (e) {
       if (mounted) adbizSnack(context, adbizError(s, e));
     } finally {
@@ -399,6 +417,13 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     final entries = ref.watch(adbizEntriesProvider(day.id)).valueOrNull ?? const <AdbizEntry>[];
     final expenses = ref.watch(adbizDayExpensesProvider(day.id)).valueOrNull ?? const <AdbizExpense>[];
     final p = DayProgress.of(entries, day.target, expenses);
+    final company = ref.watch(adbizCompanyProvider(day.companyId));
+    final v113 = company?.v113 == true;
+    final showTarget = company?.showTarget ?? true;
+    final myTask = ref.watch(adbizMemberTaskProvider(day.userId)).valueOrNull;
+    final card = cardTotal(entries);
+    // The worker's own tick on a saved job: only on his open day (0113).
+    bool canTick(AdbizEntry e) => v113 && (widget.manager || _open);
 
     // 1. Bugünkü iş günü.
     final header = AdbizCard(
@@ -417,7 +442,11 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     );
 
     // 2. Hədəf · Toplanan gəlir · Rasxod → Qalan məbləğ + Hesablanma → bar.
-    final numbers = DayMoneyCard(s: s, p: p);
+    final numbers = DayMoneyCard(s: s, p: p, showTarget: showTarget, caption: company?.targetLabel);
+
+    // The owner's task (0113): for every worker and / or for this one.
+    final tasks = [if (company?.taskNote != null) company!.taskNote!, if (myTask != null) myTask];
+    final taskCard = tasks.isEmpty ? null : AdbizTaskCard(s: s, tasks: tasks);
 
     // 3. Yeni iş əlavə et.
     final form = !_canAdd
@@ -459,6 +488,18 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
                   ),
                 ),
               ]),
+              if (v113) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AdbizCardTick(
+                    key: const ValueKey('adb-job-card'),
+                    s: s,
+                    value: _card,
+                    onChanged: _busy ? null : (v) => setState(() => _card = v),
+                  ),
+                ),
+              ],
               if (_error != null)
                 Padding(padding: const EdgeInsets.only(top: 6), child: Text(_error!, style: TextStyle(color: AppColors.danger))),
               const SizedBox(height: 12),
@@ -515,6 +556,15 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             amount: money(entries[i].amount),
             onEdit: _canFix ? () => _edit(entries[i]) : null,
             onDelete: _canFix ? () => _delete(entries[i]) : null,
+            tick: !v113
+                ? null
+                : AdbizCardTick(
+                    key: ValueKey('adb-card-${entries[i].id}'),
+                    s: s,
+                    compact: true,
+                    value: entries[i].paidCard,
+                    onChanged: canTick(entries[i]) ? (v) => _setCard(entries[i], v) : null,
+                  ),
           ),
         const SizedBox(height: 6),
         _TotalBar(
@@ -524,6 +574,17 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
           color: AppColors.online,
           valueKey: 'adb-total',
         ),
+        if (v113 && card > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: Row(children: [
+              Icon(Icons.credit_card, size: 18, color: AppColors.blue),
+              const SizedBox(width: 8),
+              Expanded(child: Text(s.t('adb_card_total'), style: TextStyle(color: AppColors.textSoft))),
+              Text(money(card), key: const ValueKey('adb-card-total'),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.blue)),
+            ]),
+          ),
       ]),
     );
 
@@ -616,12 +677,17 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     // a day closed automatically or by the owner stays closed for him (0112).
     final workerReopen = !widget.manager && !day.isOpen && day.workDate == today && day.closedBy != null && day.closedBy == me;
     final actions = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // A closed day (also closed automatically at 23:59) shows its result.
+      if (!_open && showTarget && p.target > 0) ...[
+        AdbizDayResultBanner(s: s, p: p),
+        const SizedBox(height: 10),
+      ],
       if (day.isOpen && _canAdd) ...[
         SizedBox(
           height: 54,
           child: OutlinedButton.icon(
             key: const ValueKey('adb-close-day'),
-            onPressed: _busy ? null : () => _close(p),
+            onPressed: _busy ? null : () => _close(p, showTarget: showTarget),
             icon: const Icon(Icons.check),
             label: Text(s.t('adb_close_day'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
           ),
@@ -659,11 +725,12 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(s.t('adb_day_summary'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 8),
-        _Line(s.t('adb_target'), money(p.target), AppColors.text),
+        if (showTarget) _Line(s.t('adb_target'), money(p.target), AppColors.text),
         _Line(s.t('adb_income_day'), money(p.collected), AppColors.online),
         _Line(s.t('adb_spent'), money(p.spent), AppColors.danger),
         _Line(s.t('adb_left_money'), money(p.net), AppColors.blue),
-        _Line(s.t('adb_to_target'), adbizTargetLine(p), AppColors.accent),
+        if (showTarget) _Line(company?.targetLabel ?? s.t('adb_to_target'), adbizTargetLine(p), AppColors.accent),
+        if (v113) _Line(s.t('adb_card_total'), money(card), AppColors.blue),
       ]),
     );
 
@@ -674,6 +741,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
         const SizedBox(height: 10),
         numbers,
         const SizedBox(height: 10),
+        if (taskCard != null) ...[taskCard, const SizedBox(height: 10)],
         if (form != null) ...[form, const SizedBox(height: 10)],
         list,
         const SizedBox(height: 10),
@@ -700,7 +768,14 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
 class DayMoneyCard extends StatelessWidget {
   final AppStrings s;
   final DayProgress p;
-  const DayMoneyCard({super.key, required this.s, required this.p});
+
+  /// The owner's switch (0113): off = no target, bar or "Mənfi" — only the
+  /// jobs and the rasxod.
+  final bool showTarget;
+
+  /// The owner's words instead of "Hədəfə qalan" (0113); null = the default.
+  final String? caption;
+  const DayMoneyCard({super.key, required this.s, required this.p, this.showTarget = true, this.caption});
 
   Widget _col(IconData icon, String label, String value, Color color, String key) => Column(children: [
         Icon(icon, color: color, size: 32),
@@ -719,6 +794,16 @@ class DayMoneyCard extends StatelessWidget {
     final sep = Container(width: 1, height: 80, color: AppColors.line);
     final left = p.remaining;
     final done = p.reached;
+    if (!showTarget) {
+      return AdbizCard(
+        padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
+        child: Row(children: [
+          Expanded(child: _col(Icons.trending_up, s.t('adb_income_day'), adbizAmount(p.collected), AppColors.online, 'adb-collected')),
+          sep,
+          Expanded(child: _col(Icons.payments_outlined, s.t('adb_spent'), adbizAmount(p.spent), AppColors.danger, 'adb-spent')),
+        ]),
+      );
+    }
     return AdbizCard(
       padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -739,7 +824,7 @@ class DayMoneyCard extends StatelessWidget {
         const SizedBox(height: 8),
         AdbizLiveBar(value: p.bar, reached: done),
         Divider(height: 30, color: AppColors.line),
-        Text(s.t('adb_to_target'), textAlign: TextAlign.center,
+        Text(caption ?? s.t('adb_to_target'), key: const ValueKey('adb-caption'), textAlign: TextAlign.center,
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 4),
         FittedBox(
@@ -824,7 +909,7 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
             animation: _blink,
             builder: (context, _) {
               final t = widget.reached ? 1.0 : Curves.easeInOut.transform(_blink.value);
-              final glow = AppColors.accent;
+              final glow = AppColors.adbStar;
               return Container(
                 key: const ValueKey('adb-star'),
                 width: star,
@@ -872,7 +957,11 @@ class _Row extends StatelessWidget {
   final String title, time, amount;
   final Color? amountColor;
   final VoidCallback? onEdit, onDelete;
-  const _Row({super.key, required this.n, required this.title, required this.time, required this.amount, this.amountColor, this.onEdit, this.onDelete});
+
+  /// The card tick at the end of a job (0113).
+  final Widget? tick;
+  const _Row(
+      {super.key, required this.n, required this.title, required this.time, required this.amount, this.amountColor, this.onEdit, this.onDelete, this.tick});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -894,7 +983,11 @@ class _Row extends StatelessWidget {
               if (time.isNotEmpty) Text(time, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
             ]),
           ),
-          Text(amount, style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: amountColor ?? AppColors.text)),
+          // The card tick under the amount, at the end of the job (0113).
+          Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+            Text(amount, style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: amountColor ?? AppColors.text)),
+            if (tick != null) tick!,
+          ]),
           if (onEdit != null)
             IconButton(
                 visualDensity: VisualDensity.compact,
@@ -959,6 +1052,135 @@ class _StatusChip extends StatelessWidget {
         Icon(Icons.circle, size: 9, color: c),
         const SizedBox(width: 6),
         Text(s.t(open ? 'adb_day_open' : 'adb_day_closed'), style: TextStyle(color: c, fontWeight: FontWeight.w500, fontSize: 13)),
+      ]),
+    );
+  }
+}
+
+
+/// The card tick (owner, 10.11.2026): "☐ Kart" — a tap puts the tick, a
+/// second tap takes it off. [onChanged] null = shown, not changeable.
+class AdbizCardTick extends StatelessWidget {
+  final AppStrings s;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final bool compact;
+  const AdbizCardTick({super.key, required this.s, required this.value, this.onChanged, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final on = onChanged != null;
+    final c = value ? AppColors.blue : AppColors.textSoft;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: on ? () => onChanged!(!value) : null,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 6, vertical: 4),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Checkbox(
+              value: value,
+              onChanged: on ? (v) => onChanged!(v ?? false) : null,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              activeColor: AppColors.blue,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.credit_card, size: compact ? 15 : 18, color: on || value ? c : c.withValues(alpha: 0.5)),
+          const SizedBox(width: 3),
+          Text(s.t('adb_card'),
+              style: TextStyle(fontSize: compact ? 12.5 : 14, color: on || value ? c : c.withValues(alpha: 0.5),
+                  fontWeight: value ? FontWeight.w500 : FontWeight.w400)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// The owner's task(s) for the worker (0113), under the numbers.
+class AdbizTaskCard extends StatelessWidget {
+  final AppStrings s;
+  final List<String> tasks;
+  const AdbizTaskCard({super.key, required this.s, required this.tasks});
+
+  @override
+  Widget build(BuildContext context) => AdbizCard(
+        key: const ValueKey('adb-task-card'),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.assignment_outlined, color: AppColors.accent, size: 26),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(s.t('adb_task'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+              for (final t in tasks)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(t, style: TextStyle(fontSize: 15, color: AppColors.text)),
+                ),
+            ]),
+          ),
+        ]),
+      );
+}
+
+/// What the day's result says (owner, 10.11.2026): the target reached =
+/// congratulations; otherwise how much stayed in the minus.
+(bool reached, String title, String body) adbizDayResult(AppStrings s, DayProgress p) => p.reached
+    ? (true, s.t('adb_result_reached_title'), s.t('adb_result_reached', {'net': adbizNum(p.net), 'target': adbizNum(p.target)}))
+    : (false, s.t('adb_result_minus_title'), s.t('adb_result_minus', {'left': adbizNum(p.remaining)}));
+
+/// Shown at once when the worker closes the day.
+Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress p, {required bool showTarget}) {
+  if (!showTarget || p.target <= 0) {
+    adbizSnack(context, s.t('adb_closed_done'));
+    return Future.value();
+  }
+  final (ok, title, body) = adbizDayResult(s, p);
+  final c = ok ? AppColors.online : AppColors.danger;
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      key: ValueKey(ok ? 'adb-result-reached' : 'adb-result-minus'),
+      icon: Icon(ok ? Icons.celebration_outlined : Icons.flag_outlined, size: 48, color: c),
+      title: Text(title, textAlign: TextAlign.center, style: TextStyle(color: c, fontWeight: FontWeight.w600)),
+      content: Text(body, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppColors.text)),
+      actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('adb_ok')))],
+      actionsAlignment: MainAxisAlignment.center,
+    ),
+  );
+}
+
+/// The same result on a closed day (also one closed automatically at 23:59).
+class AdbizDayResultBanner extends StatelessWidget {
+  final AppStrings s;
+  final DayProgress p;
+  const AdbizDayResultBanner({super.key, required this.s, required this.p});
+
+  @override
+  Widget build(BuildContext context) {
+    final (ok, title, body) = adbizDayResult(s, p);
+    final c = ok ? AppColors.online : AppColors.danger;
+    return Container(
+      key: ValueKey(ok ? 'adb-banner-reached' : 'adb-banner-minus'),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.withValues(alpha: 0.5)),
+      ),
+      child: Row(children: [
+        Icon(ok ? Icons.celebration_outlined : Icons.flag_outlined, color: c, size: 30),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c)),
+            const SizedBox(height: 2),
+            Text(body, style: TextStyle(color: AppColors.text)),
+          ]),
+        ),
       ]),
     );
   }
