@@ -2145,5 +2145,12 @@
   "adb_day_deleted": "Gün silindi.",
   "adb_pick_day": "Hansı işçinin günü silinsin?",
   "adb_need_sql115": "Bu funksiya SQL 0115 işlədiləndən sonra açılır.",
-  "adb_tiles_legend": "Yaşıl: xalis gəlir · Qırmızı: günlərin hədəfə görə mənfisi / artığı"
+  "adb_tiles_legend": "Yaşıl: xalis gəlir · Qırmızı: günlərin hədəfə görə mənfisi / artığı",
+  "adb_old_account": "Köhnə hesab",
+  "adb_old_account_none": "Bu ay üçün köhnə hesab yoxdur — ✏️ ilə əlavə edin",
+  "adb_old_net": "Xalis gəlir",
+  "adb_old_gap": "Mənfi / artıq (məs. -215 və ya 11)",
+  "adb_old_gap_short": "Mənfi / artıq",
+  "adb_old_hint": "Proqramdan əvvəlki rəqəmlər. Kartda proqramda yazılan günlərlə toplanır.",
+  "adb_old_clear": "Köhnə hesabı sil"
 }

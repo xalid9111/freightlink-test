@@ -2145,5 +2145,12 @@
   "adb_day_deleted": "The day was deleted.",
   "adb_pick_day": "Whose day should be deleted?",
   "adb_need_sql115": "This opens after SQL 0115 is run.",
-  "adb_tiles_legend": "Green: net income · Red: the days' minus / plus against the target"
+  "adb_tiles_legend": "Green: net income · Red: the days' minus / plus against the target",
+  "adb_old_account": "Old account",
+  "adb_old_account_none": "No old figures for this month — add them with ✏️",
+  "adb_old_net": "Net income",
+  "adb_old_gap": "Minus / plus (e.g. -215 or 11)",
+  "adb_old_gap_short": "Minus / plus",
+  "adb_old_hint": "Figures from before the program. On the card they are added to the days written in the program.",
+  "adb_old_clear": "Remove the old figures"
 }

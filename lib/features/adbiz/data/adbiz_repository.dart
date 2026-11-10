@@ -93,6 +93,11 @@ class AdbizRepository {
         return AdbizPeriods.fromJson(Map<String, dynamic>.from(r as Map));
       });
 
+  /// A month's old figures (0116, owner / Baş admin; both null = taken off).
+  Future<void> monthImportSave(String companyId, int year, int month, double? net, double? gap) => _run(() => _c.rpc(
+      'adbiz_month_import_save',
+      params: {'p_company': companyId, 'p_year': year, 'p_month': month, 'p_net': net, 'p_gap': gap}));
+
   Future<List<AdbizEntry>> entries(String dayId) => _run(() async {
         final r = await _c.from('adbiz_entries').select().eq('day_id', dayId).order('created_at');
         return [for (final x in r) AdbizEntry.fromJson(x)];

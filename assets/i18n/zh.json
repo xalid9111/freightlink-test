@@ -2145,5 +2145,12 @@
   "adb_day_deleted": "已删除。",
   "adb_pick_day": "删除哪位员工的这一天？",
   "adb_need_sql115": "运行 SQL 0115 后开放。",
-  "adb_tiles_legend": "绿色：净收入 · 红色：各天相对目标的差额"
+  "adb_tiles_legend": "绿色：净收入 · 红色：各天相对目标的差额",
+  "adb_old_account": "旧账",
+  "adb_old_account_none": "本月没有旧账 —— 用 ✏️ 添加",
+  "adb_old_net": "净收入",
+  "adb_old_gap": "差额（如 -215 或 11）",
+  "adb_old_gap_short": "差额",
+  "adb_old_hint": "使用程序之前的数据。卡片上会与程序中记录的天数相加。",
+  "adb_old_clear": "删除旧账"
 }
