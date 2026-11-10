@@ -2134,5 +2134,9 @@
   "adb_task_none": "Tapşırıq yazılmayıb",
   "adb_open_days": "Günlərinə bax",
   "adb_refresh": "Yenilə",
-  "adb_need_sql": "Bu funksiya SQL 0113 işlədiləndən sonra açılır."
+  "adb_need_sql": "Bu funksiya SQL 0113 işlədiləndən sonra açılır.",
+  "adb_result_miss_text": "Hədəfə çatmayanda yazı",
+  "adb_result_hit_text": "Hədəfə çatanda yazı",
+  "adb_result_text_hint": "Gün bağlananda işçi görür. {qalan}, {gəlir}, {hədəf} həmin günün rəqəmləri ilə əvəz olunur. Boş = standart yazı.",
+  "adb_result_default": "Standart yazı"
 }

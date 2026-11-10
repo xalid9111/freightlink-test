@@ -53,6 +53,14 @@ class AdbizCompany {
 
   /// SQL 0113 is run: the card tick, the words and the switch work.
   final bool v113;
+
+  /// The owner's day-result messages (0114): below the target / at or over
+  /// it; {qalan}, {gəlir}, {hədəf} become the day's numbers. null = the
+  /// app's own words.
+  final String? resultMissText, resultHitText;
+
+  /// SQL 0114 is run: the result messages can be written.
+  final bool v114;
   const AdbizCompany({
     required this.id,
     required this.name,
@@ -63,6 +71,9 @@ class AdbizCompany {
     this.taskNote,
     this.showTarget = true,
     this.v113 = false,
+    this.resultMissText,
+    this.resultHitText,
+    this.v114 = false,
   });
 
   factory AdbizCompany.fromJson(Map<String, dynamic> j) => AdbizCompany(
@@ -75,6 +86,9 @@ class AdbizCompany {
         taskNote: _txt(j['task_note']),
         showTarget: j['show_target'] != false,
         v113: j.containsKey('show_target'),
+        resultMissText: _txt(j['result_miss_text']),
+        resultHitText: _txt(j['result_hit_text']),
+        v114: j.containsKey('result_miss_text'),
       );
 }
 

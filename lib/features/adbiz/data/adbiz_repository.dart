@@ -181,6 +181,11 @@ class AdbizRepository {
   Future<void> companyTexts(String companyId, String? label, String? task) =>
       _run(() => _c.rpc('adbiz_company_texts_save', params: {'p_company': companyId, 'p_label': label, 'p_task': task}));
 
+  /// The owner's day-result messages (0114): below / at the target; empty =
+  /// the app's own words.
+  Future<void> companyResultTexts(String companyId, String? miss, String? hit) => _run(
+      () => _c.rpc('adbiz_company_result_texts_save', params: {'p_company': companyId, 'p_miss': miss, 'p_hit': hit}));
+
   /// The workers see the target or not (0113).
   Future<void> companyShowTarget(String companyId, bool on) =>
       _run(() => _c.rpc('adbiz_company_show_target', params: {'p_company': companyId, 'p_on': on}));
