@@ -631,7 +631,6 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
         _Line(s.t('adb_spent'), money(p.spent), AppColors.danger),
         _Line(s.t('adb_left_money'), money(p.net), AppColors.blue),
         _Line(s.t('adb_to_target'), money(p.remaining), AppColors.accent),
-        _Line(s.t('adb_percent'), p.percentLabel, AppColors.blue),
       ]),
     );
 
@@ -661,8 +660,8 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
 }
 
 /// Hədəf · Toplanan gəlir · Rasxod, then Qalan məbləğ with how it is worked
-/// out (collected − rasxod), what is left to the target, the bar and the
-/// percent (owner's picture, 10.11.2026).
+/// out (collected − rasxod), the bar and what is left to the target as an
+/// amount (owner's picture, 10.11.2026; no percent).
 class DayMoneyCard extends StatelessWidget {
   final AppStrings s;
   final DayProgress p;
@@ -740,13 +739,14 @@ class DayMoneyCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Text(p.percentLabel, key: const ValueKey('adb-percent'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+          const SizedBox(width: 12),
+          // What is left to the target, as an amount — no percent (owner, 10.11.2026).
+          Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+            Text(s.t('adb_to_target'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            Text(money(p.remaining), key: const ValueKey('adb-to-target'),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.accent)),
+          ]),
         ]),
-        const SizedBox(height: 6),
-        Text('${s.t('adb_to_target')}: ${money(p.remaining)}', key: const ValueKey('adb-to-target'),
-            style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
         if (p.reached)
           Padding(
             padding: const EdgeInsets.only(top: 6),

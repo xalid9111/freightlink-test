@@ -604,8 +604,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   UTEP header (logo | UTEP Reklam / Reklam idarəetmə sistemi | name + role),
   Bugünkü iş günü, Gündəlik hədəf · Toplanan gəlir · Rasxod, Qalan məbləğ
   (= jobs − the day's rasxod) with "Hesablanma: 120.00 − 30.00 = 90.00",
-  the bar + % (one decimal) and "Hədəfə qalan" (target − money left: 235 −
-  90 = 145, 38.3 %), Yeni iş əlavə et, Görülən işlər (+ "Düzəliş yalnız
+  the bar and "Hədəfə qalan" as an amount beside it (target − money left:
+  235 − 90 = 145.00 AZN; NO percent anywhere on the worker panel, owner
+  10.11.2026), Yeni iş əlavə et, Görülən işlər (+ "Düzəliş yalnız
   admin tərəfindən mümkündür") + Cəmi (Gəlir), Rasxod (xərc əlavə et) +
   Günün xərcləri (Cəmi), Günü bağla. No net-profit card for the worker
   (owner panel only). The worker adds jobs and rasxod into his open day but

@@ -174,7 +174,7 @@ void main() {
       expect(find.text('235.00 AZN'), findsWidgets);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-collected'))).data, '45.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '45.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, contains('190.00 AZN'));
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '190.00 AZN');
       expect(find.byKey(const ValueKey('adb-close-day')), findsOneWidget);
       await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
       await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '35');
@@ -201,8 +201,10 @@ void main() {
       ]);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '90.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, contains('145.00 AZN'));
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-percent'))).data, '38.3%');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '145.00 AZN');
+      // No percent anywhere on the worker's panel — the amount left is shown (owner, 10.11.2026).
+      expect(find.textContaining('%'), findsNothing);
+      expect(find.byKey(const ValueKey('adb-percent')), findsNothing);
       expect(find.textContaining('120.00 − 30.00 = 90.00 AZN'), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '120.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent-total'))).data, '30.00 AZN');
