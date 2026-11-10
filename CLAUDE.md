@@ -581,6 +581,25 @@ files to the owner separately (they are run by hand in the SQL editor).
   shop (spare_parts + shop_* only, ServiceProvider.isShop) only on
   Mağazalar, a service (also one that sells parts) only on Servislər,
   parks only on Parklar.
+- UTEP Reklam — ad business management (owner, 10.11.2026, SQL 0110,
+  lib/features/adbiz): a separate sub-module, many companies (UTEP Reklam
+  first; the existing ads / banner / Premium untouched). Only the Baş admin
+  (is_chief_admin) switches it on for an existing account — at once, no
+  invitation — as Sahibkar or İşçi of a company, switches it off / on,
+  creates companies, sets each company's daily target (nothing hard-coded)
+  and a worker's own target (history kept; a new target counts only for
+  days opened later), and may let an owner add / take off workers
+  (owner_manages_staff, off at the start). Entered only from Profil (a
+  card with the UTEP Reklam logo — that logo only inside this module):
+  "Reklam iş dəftəri" (open the day → target / collected / remaining /
+  bar → jobs name + amount, Enter saves → close the day, also below the
+  target; a closed day is the worker's no more), "Reklam biznes
+  idarəetməsi" for the owner (day / month / year income, expenses, net
+  profit, workers, open / closed days, archive) and "Reklam idarəetməsi"
+  for the Baş admin (every company). Data kept apart by RLS + server
+  checks; no direct writes; every money change audited (adbiz_audit:
+  old / new / who / when); a double tap never adds twice (client_key);
+  users.role never changed; live on every device (realtime streams).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
