@@ -23,6 +23,16 @@ final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, Stri
 final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>(
     (ref, dayId) => ref.watch(adbizRepositoryProvider).watchEntries(dayId));
 
+/// Live: one day's expenses (rasxod). Before SQL 0111 there is no day_id:
+/// the day simply has no expenses.
+final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExpense>, String>((ref, dayId) async* {
+  try {
+    yield* ref.watch(adbizRepositoryProvider).watchDayExpenses(dayId);
+  } catch (_) {
+    yield const <AdbizExpense>[];
+  }
+});
+
 final adbizCompaniesProvider = FutureProvider.autoDispose<List<AdbizCompany>>(
     (ref) => ref.watch(adbizRepositoryProvider).companies());
 

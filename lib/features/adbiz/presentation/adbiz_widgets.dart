@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../finance/domain/finance_models.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
 
@@ -91,53 +90,6 @@ class AdbizStat extends StatelessWidget {
           ]),
         ),
       ]);
-}
-
-/// Hədəf · Toplanan · Qalan + the bar with the percentage.
-class DayProgressCard extends StatelessWidget {
-  final AppStrings s;
-  final DayProgress p;
-  const DayProgressCard({super.key, required this.s, required this.p});
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = [
-      AdbizStat(icon: Icons.track_changes, label: s.t('adb_target'), value: money(p.target), color: AppColors.text, valueKey: 'adb-target'),
-      AdbizStat(icon: Icons.savings_outlined, label: s.t('adb_collected'), value: money(p.collected), color: AppColors.online, valueKey: 'adb-collected'),
-      AdbizStat(icon: Icons.speed, label: s.t('adb_remaining'), value: money(p.remaining), color: AppColors.accent, valueKey: 'adb-remaining'),
-    ];
-    return AdbizCard(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        LayoutBuilder(
-          builder: (context, c) => c.maxWidth >= 420
-              ? Row(children: [for (final w in stats) Expanded(child: w)])
-              : Column(children: [for (final w in stats) Padding(padding: const EdgeInsets.only(bottom: 8), child: w)]),
-        ),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                key: const ValueKey('adb-progress'),
-                value: p.bar,
-                minHeight: 12,
-                backgroundColor: AppColors.line,
-                color: AppColors.online,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text('${p.percent}%', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
-        ]),
-        if (p.reached)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(s.t('adb_target_reached'), style: TextStyle(color: AppColors.online, fontWeight: FontWeight.w500)),
-          ),
-      ]),
-    );
-  }
 }
 
 String hhmm(DateTime? t) => t == null ? '' : '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';

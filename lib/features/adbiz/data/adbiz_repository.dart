@@ -92,6 +92,20 @@ class AdbizRepository {
       .order('work_date', ascending: false)
       .map((rows) => [for (final x in rows) AdbizDay.fromJson(x)]);
 
+  /// Live: one day's expenses (rasxod, 0111) — the worker sees his own.
+  Stream<List<AdbizExpense>> watchDayExpenses(String dayId) => _c
+      .from('adbiz_expenses')
+      .stream(primaryKey: ['id'])
+      .eq('day_id', dayId)
+      .order('created_at', ascending: true)
+      .map((rows) => [for (final x in rows) AdbizExpense.fromJson(x)]);
+
+  /// A day expense into the worker's own open day (the owner / Baş admin:
+  /// any day); a double tap sends the same key = one expense.
+  Future<String> addDayExpense(String dayId, String title, double amount, String clientKey) => _run(() async =>
+      (await _c.rpc('adbiz_add_day_expense',
+          params: {'p_day': dayId, 'p_title': title, 'p_amount': amount, 'p_client_key': clientKey})) as String);
+
   Future<String> openDay() => _run(() async => (await _c.rpc('adbiz_open_day')) as String);
 
   Future<String> openDayFor(String userId, DateTime date) =>

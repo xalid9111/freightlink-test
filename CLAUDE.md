@@ -600,6 +600,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   checks; no direct writes; every money change audited (adbiz_audit:
   old / new / who / when); a double tap never adds twice (client_key);
   users.role never changed; live on every device (realtime streams).
+  Worker panel (owner's picture, 10.11.2026, SQL 0111): in this order — the
+  UTEP header (logo | UTEP Reklam / Reklam idarəetmə sistemi | name + role),
+  Bugünkü iş günü, Gündəlik hədəf · Toplanan gəlir · Rasxod, Qalan məbləğ
+  (= jobs − the day's rasxod) with "Hesablanma: 120.00 − 30.00 = 90.00",
+  the bar + % (one decimal) and "Hədəfə qalan" (target − money left: 235 −
+  90 = 145, 38.3 %), Yeni iş əlavə et, Görülən işlər (+ "Düzəliş yalnız
+  admin tərəfindən mümkündür") + Cəmi (Gəlir), Rasxod (xərc əlavə et) +
+  Günün xərcləri (Cəmi), Günü bağla. No net-profit card for the worker
+  (owner panel only). The worker adds jobs and rasxod into his open day but
+  never changes / deletes a saved one (server: only the company's owner /
+  Baş admin, audited); rasxod = adbiz_expenses with day_id / user_id, so the
+  owner's report counts it.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

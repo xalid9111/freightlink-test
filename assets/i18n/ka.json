@@ -2095,5 +2095,17 @@
   "adb_err_chief_admin_only": "ამის გაკეთება მხოლოდ მთავარ ადმინს შეუძლია.",
   "adb_err_invalid_argument": "მონაცემები არასწორია.",
   "adb_err_not_found": "ვერ მოიძებნა.",
-  "adb_err_other_company": "ეს მომხმარებელი სხვა სარეკლამო კომპანიაშია."
+  "adb_err_other_company": "ეს მომხმარებელი სხვა სარეკლამო კომპანიაშია.",
+  "adb_system": "რეკლამის მართვის სისტემა",
+  "adb_new_job": "ახალი სამუშაოს დამატება",
+  "adb_fix_admin_only": "შესწორება მხოლოდ ადმინს შეუძლია",
+  "adb_total_income": "სულ (შემოსავალი)",
+  "adb_spent": "ხარჯი",
+  "adb_add_day_expense": "ხარჯის დამატება",
+  "adb_expense_name": "ხარჯის დასახელება",
+  "adb_day_expenses_total": "დღის ხარჯები (სულ)",
+  "adb_income_day": "შეგროვებული შემოსავალი",
+  "adb_left_money": "დარჩენილი თანხა",
+  "adb_to_target": "მიზნამდე დარჩა",
+  "adb_calc": "გამოთვლა"
 }
