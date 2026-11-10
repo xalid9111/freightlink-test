@@ -24,7 +24,7 @@ select public.adbiz_admin_member_set(:owner, :utep, 'owner');
 select public.adbiz_admin_member_set(:worker, :utep, 'worker');
 select public.adbiz_admin_member_set(:bwork, (select id from t where k = 'b'), 'worker');
 select tests.login(:owner);
-insert into t values ('cx', public.adbiz_expense_save(null, null, current_date, 'Ofis kirayəsi', 500));
+insert into t values ('cx', public.adbiz_expense_save(null, null, public._adbiz_today(), 'Ofis kirayəsi', 500));
 
 -- ---- the worker: jobs 120, expense 30 → 90 left, 145 to the target ----------------------------
 select tests.login(:worker);
