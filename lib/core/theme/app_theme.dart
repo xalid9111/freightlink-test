@@ -176,6 +176,9 @@ class AppColors {
   static Color get adbNeon => isDay ? const Color(0xFF16A34A) : const Color(0xFF3DFF6E);
   static Color get adbNeonCore => isDay ? const Color(0xFF0B6B2C) : const Color(0xFFF2FFF4);
   static Color get adbTrack => isDay ? const Color(0xFFEAF6EE) : const Color(0xFF05090A);
+  /// The bar's fill (owner's picture, 10.11.2026): dark red at the start,
+  /// then red, orange, yellow and green at the target; day and night.
+  static const List<Color> adbHeat = [Color(0xFF7A0A0A), Color(0xFFD7261E), Color(0xFFFF7A00), Color(0xFFFFE81A), Color(0xFF3DFF6E)];
   static Color get adbStarIcon => isDay ? const Color(0xFF0B6B2C) : const Color(0xFFFFFFFF);
   static const Color vipGold = Color(0xFFFFC83D);
   /// VIP medal: gold rim shade and the dark centre / ribbons.

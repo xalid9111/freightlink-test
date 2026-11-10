@@ -843,10 +843,10 @@ class DayMoneyCard extends StatelessWidget {
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           Expanded(child: _col(Icons.track_changes, s.t('adb_target_short'), adbizAmount(p.target), AppColors.text, 'adb-target')),
           sep,
+          // Only Hədəf and Mənfi here (owner, 10.11.2026): the rasxod has its own
+          // card below and is already taken off in Mənfi.
           Expanded(child: _col(Icons.savings_outlined, s.t('adb_minus'), adbizAmount(left),
               done ? AppColors.online : AppColors.danger, 'adb-minus')),
-          sep,
-          Expanded(child: _col(Icons.payments_outlined, s.t('adb_spent'), adbizAmount(p.spent), AppColors.danger, 'adb-spent')),
         ]),
         Divider(height: 28, color: AppColors.line),
         Align(
@@ -972,16 +972,22 @@ class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderSt
   }
 }
 
-/// Draws the owner's neon bar: the outlined capsule, the glowing line up to
-/// [value] (0–1) and the spark at its tip, which [twinkle] (0–1) breathes.
+/// Draws the owner's bar (owner's pictures, 10.11.2026): the outlined
+/// capsule and a thick glowing fill whose colour follows the place on the
+/// way to the target — dark red at the start, then orange, yellow and green
+/// at the target — with the twinkling spark at its tip ([twinkle] 0–1).
 class AdbizNeonBarPainter extends CustomPainter {
   final double value, twinkle;
   final Color neon, core, track;
   const AdbizNeonBarPainter({required this.value, required this.twinkle, required this.neon, required this.core, required this.track});
 
+  /// Dark red → red → orange → yellow → green, over the whole way.
+  static const heat = AppColors.adbHeat;
+  static const heatStops = [0.0, 0.15, 0.3, 0.48, 1.0];
+
   @override
   void paint(Canvas canvas, Size size) {
-    const h = 14.0;
+    const h = 18.0, inner = 12.0;
     final cy = size.height / 2;
     final capsule = RRect.fromRectAndRadius(Rect.fromLTWH(0, cy - h / 2, size.width, h), const Radius.circular(h / 2));
     canvas.drawRRect(capsule, Paint()..color = track);
@@ -990,48 +996,54 @@ class AdbizNeonBarPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.6
-          ..color = neon.withValues(alpha: 0.55));
+          ..color = neon.withValues(alpha: 0.6));
     final v = value.clamp(0.0, 1.0);
     if (v <= 0) return;
-    const pad = h / 2;
-    final x0 = pad, x1 = pad + (size.width - 2 * pad) * v;
-    final a = Offset(x0, cy), b = Offset(x1, cy);
-    // The glow around the line, then its bright core growing whiter to the tip.
-    canvas.drawLine(
-        a,
-        b,
+    const pad = (h - inner) / 2;
+    final way = Rect.fromLTWH(pad, cy - inner / 2, size.width - 2 * pad, inner);
+    final x1 = way.left + way.width * v;
+    final fill = RRect.fromRectAndRadius(Rect.fromLTRB(way.left, way.top, x1 < way.left + inner ? way.left + inner : x1, way.bottom),
+        const Radius.circular(inner / 2));
+    final shader = const LinearGradient(colors: heat, stops: heatStops).createShader(way);
+    // The glow under the fill, then the fill itself.
+    canvas.drawRRect(
+        fill.inflate(2),
         Paint()
-          ..color = neon.withValues(alpha: 0.75)
-          ..strokeWidth = 7
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
-    canvas.drawLine(
-        a,
-        b,
+          ..shader = shader
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7));
+    canvas.drawRRect(fill, Paint()..shader = shader);
+    // A soft light along the top of the fill.
+    canvas.drawLine(Offset(way.left + inner / 2, cy - 1.5), Offset(x1 - inner / 2 > way.left + inner / 2 ? x1 - inner / 2 : way.left + inner / 2, cy - 1.5),
         Paint()
-          ..strokeWidth = 2.6
-          ..strokeCap = StrokeCap.round
-          ..shader = LinearGradient(colors: [neon, core]).createShader(Rect.fromPoints(a, b.translate(0.01, 0))));
-    // The spark at the tip: a soft halo, four rays and a white heart.
+          ..color = core.withValues(alpha: 0.25)
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round);
+    // The spark at the tip: a halo in the tip's own colour, four rays and a white heart.
+    final b = Offset(x1, cy);
+    final tip = _heatAt(v);
     final r = 9 + 5 * twinkle;
     canvas.drawCircle(b, r, Paint()
-      ..color = neon.withValues(alpha: 0.55 + 0.3 * twinkle)
+      ..color = tip.withValues(alpha: 0.55 + 0.3 * twinkle)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 + 4 * twinkle));
     final ray = Paint()
-      ..color = core.withValues(alpha: 0.85)
+      ..color = core.withValues(alpha: 0.9)
       ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round;
-    final long = 10 + 7 * twinkle, short = 5 + 4 * twinkle;
+    final long = 12 + 8 * twinkle;
     canvas.drawLine(b.translate(-long, 0), b.translate(long, 0), ray);
     canvas.drawLine(b.translate(0, -long), b.translate(0, long), ray);
-    final d = short * 0.7;
-    final thin = Paint()
-      ..color = neon.withValues(alpha: 0.8)
-      ..strokeWidth = 1.1
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(b.translate(-d, -d), b.translate(d, d), thin);
-    canvas.drawLine(b.translate(-d, d), b.translate(d, -d), thin);
-    canvas.drawCircle(b, 2.6 + 0.8 * twinkle, Paint()..color = core);
+    canvas.drawCircle(b, 3 + 0.8 * twinkle, Paint()..color = core);
+  }
+
+  /// The bar's colour at a place on the way (0–1).
+  static Color _heatAt(double t) {
+    for (var i = 1; i < heatStops.length; i++) {
+      if (t <= heatStops[i]) {
+        final f = (t - heatStops[i - 1]) / (heatStops[i] - heatStops[i - 1]);
+        return Color.lerp(heat[i - 1], heat[i], f)!;
+      }
+    }
+    return heat.last;
   }
 
   @override

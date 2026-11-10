@@ -680,6 +680,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   ringed star at the target end (AdbizNeonBarPainter; AppColors.adbNeon /
   adbNeonCore / adbTrack / adbStar — green at night too now, a deeper green
   by day); still for phones asking for less motion; numbers unchanged.
+  Later the same day (owner's pictures): the numbers card shows ONLY Hədəf
+  and Mənfi (no Rasxod column; the rasxod keeps its own card and is taken
+  off in Mənfi), and the bar is a thick glowing fill coloured by its place
+  on the way — dark red at the start, then red, orange, yellow, green at the
+  target (AppColors.adbHeat), the spark at the tip, the green star at the end;
+  "111/245" over it, no percent.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
