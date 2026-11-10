@@ -644,6 +644,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   a closed day (also automatic) shows the same. Day mode: the bar's star is
   green (night keeps the accent). 0113 also fixed the rights checks for an
   account in no company (null = let through; now a plain no).
+  The day-result message is the owner's to write (owner, 10.11.2026, SQL
+  0114): "Yazı və tapşırıq" ✏️ has "Hədəfə çatmayanda yazı" and "Hədəfə
+  çatanda yazı" (200 letters; {qalan} / {gəlir} / {hədəf} become the day's
+  numbers; empty = the app's words); shown in the close-day dialog and on
+  the closed day's card; the titles ("Gün bağlandı" / "Təbriklər!") stay;
+  owner / Baş admin only, audited.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

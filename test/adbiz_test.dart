@@ -400,6 +400,32 @@ void main() {
       expect(find.byKey(const ValueKey('adb-result-reached')), findsOneWidget);
     });
 
+    test('the owner\'s own result message (0114): the day\'s numbers filled in; empty = the app\'s words', () {
+      const p = DayProgress(182, 235);
+      expect(adbizFillResult('Bu gün {qalan} AZN çatmadı ({gəlir}/{hədəf})', p), 'Bu gün 53 AZN çatmadı (182/235)');
+      const c = AdbizCompany(id: 'c', name: 'U', v114: true, resultMissText: 'Sabah {qalan} AZN çox!', resultHitText: 'Əla, {gəlir}!');
+      expect(adbizDayResult(_s, p, company: c).$3, 'Sabah 53 AZN çox!');
+      expect(adbizDayResult(_s, const DayProgress(250, 235), company: c).$3, 'Əla, 250!');
+      expect(adbizDayResult(_s, p, company: const AdbizCompany(id: 'c', name: 'U')).$3, 'adb_result_minus', reason: 'no own text');
+      final j = AdbizCompany.fromJson({'id': 'c', 'name': 'U', 'show_target': true, 'result_miss_text': ' ', 'result_hit_text': 'x'});
+      expect((j.v114, j.resultMissText, j.resultHitText), (true, null, 'x'));
+      expect(AdbizCompany.fromJson({'id': 'c', 'name': 'U', 'show_target': true}).v114, isFalse);
+    });
+
+    testWidgets('closing the day shows the owner\'s own message', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()],
+          company: const AdbizCompany(id: 'c', name: 'U', v113: true, v114: true, resultMissText: 'Bu gün {qalan} AZN çatmadı. Sabah güclü ol!'),
+          entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 182)]);
+      await t.tap(find.byKey(const ValueKey('adb-close-day')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('Bu gün 53 AZN çatmadı. Sabah güclü ol!'), findsOneWidget);
+    });
+
     testWidgets('a closed day (also at 23:59 automatically) shows its result', (t) async {
       await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed')], company: _c113,
           entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 52)]);
@@ -429,7 +455,7 @@ void main() {
   });
 
   group('the owner\'s panel (owner\'s picture)', () {
-    Future<_Repo> pumpPanel(WidgetTester t, {bool v113 = true, bool chief = false}) async {
+    Future<_Repo> pumpPanel(WidgetTester t, {bool v113 = true, bool chief = false, bool v114 = false}) async {
       t.view.physicalSize = const Size(412, 2400);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);
@@ -444,7 +470,8 @@ void main() {
           adbizRepositoryProvider.overrideWithValue(repo),
           adbizMeProvider.overrideWith((ref) async => AdbizMe(chief: chief, companyId: 'c', companyName: 'UTEP Reklam', role: 'owner')),
           adbizCompaniesProvider.overrideWith((ref) async =>
-              [AdbizCompany(id: 'c', name: 'UTEP Reklam', dailyTarget: 245, v113: v113, taskNote: v113 ? 'Hamıya' : null)]),
+              [AdbizCompany(id: 'c', name: 'UTEP Reklam', dailyTarget: 245, v113: v113, taskNote: v113 ? 'Hamıya' : null,
+                  v114: v114, resultMissText: v114 ? 'Sabah {qalan} AZN çox!' : null)]),
           adbizReportProvider.overrideWith((ref, k) async => rep),
           adbizExpensesProvider.overrideWith((ref, k) async => const <AdbizExpense>[]),
         ],
@@ -481,6 +508,27 @@ void main() {
       expect(find.byKey(const ValueKey('adb-card-line')), findsNothing);
       expect(t.widget<Switch>(find.byKey(const ValueKey('adb-show-target'))).onChanged, isNull);
       expect(find.byKey(const ValueKey('adb-words-edit')), findsNothing);
+    });
+
+    testWidgets('SQL 0114: the result messages on the words card and in its editor', (t) async {
+      await pumpPanel(t, v114: true);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-words-miss'))).data, 'Sabah {qalan} AZN çox!');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-words-hit'))).data, 'adb_result_default');
+      await t.tap(find.byKey(const ValueKey('adb-words-edit')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.byKey(const ValueKey('adb-words-miss-field')), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-words-hit-field')), findsOneWidget);
+    });
+
+    testWidgets('before SQL 0114: no result-message fields', (t) async {
+      await pumpPanel(t);
+      expect(find.byKey(const ValueKey('adb-words-miss')), findsNothing);
+      await t.tap(find.byKey(const ValueKey('adb-words-edit')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.byKey(const ValueKey('adb-words-miss-field')), findsNothing);
+      expect(find.byKey(const ValueKey('adb-words-label-field')), findsOneWidget);
     });
 
     testWidgets('the Baş admin edits the target (pencil)', (t) async {
@@ -551,6 +599,11 @@ void main() {
     expect(RegExp(r'adbiz_entry_set_card[\s\S]*?if not public\._adbiz_day_writable\(d\) then').hasMatch(s113), isTrue);
     expect(s113, contains("'card', v_card"));
     expect(src('supabase/tests/local/run_local.sh'), contains('150_ad_business_texts_card.sql'));
+    // 0114: the owner's day-result messages, owner / Baş admin only.
+    final s114 = src('supabase/migrations/0114_ad_business_result_texts.sql');
+    expect(s114, contains('if not public.adbiz_can_manage(p_company) then'));
+    expect(s114, contains('public._adbiz_text(p_miss, 200)'));
+    expect(src('supabase/tests/local/run_local.sh'), contains('151_ad_business_result_texts.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');

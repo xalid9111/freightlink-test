@@ -2134,5 +2134,9 @@
   "adb_task_none": "No task written",
   "adb_open_days": "See his days",
   "adb_refresh": "Refresh",
-  "adb_need_sql": "This opens after SQL 0113 is run."
+  "adb_need_sql": "This opens after SQL 0113 is run.",
+  "adb_result_miss_text": "Message below the target",
+  "adb_result_hit_text": "Message at / over the target",
+  "adb_result_text_hint": "The worker sees it when the day closes. {qalan}, {gəlir}, {hədəf} become the day's numbers. Empty = the standard text.",
+  "adb_result_default": "Standard text"
 }

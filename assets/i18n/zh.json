@@ -2134,5 +2134,9 @@
   "adb_task_none": "未填写任务",
   "adb_open_days": "查看工作日",
   "adb_refresh": "刷新",
-  "adb_need_sql": "运行 SQL 0113 后开放。"
+  "adb_need_sql": "运行 SQL 0113 后开放。",
+  "adb_result_miss_text": "未达目标时的文字",
+  "adb_result_hit_text": "达到目标时的文字",
+  "adb_result_text_hint": "员工在当天结束时看到。{qalan}、{gəlir}、{hədəf} 会替换为当天的数字。留空 = 标准文字。",
+  "adb_result_default": "标准文字"
 }

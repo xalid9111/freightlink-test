@@ -163,9 +163,14 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
 
   // ---- the owner's words, the target switch, a worker's task (0113) ---------------------
   Future<void> _editWords(AppStrings s, AdbizCompany c) async {
-    final r = await showDialog<(String, String)>(context: context, builder: (_) => AdbizWordsDialog(s: s, company: c));
+    final r = await showDialog<(String, String, String, String)>(context: context, builder: (_) => AdbizWordsDialog(s: s, company: c));
     if (r == null || !mounted) return;
-    await _run(s, () => ref.read(adbizRepositoryProvider).companyTexts(c.id, r.$1, r.$2), done: s.t('adb_saved'));
+    await _run(s, () async {
+      final repo = ref.read(adbizRepositoryProvider);
+      await repo.companyTexts(c.id, r.$1, r.$2);
+      // The day-result messages only once SQL 0114 is run.
+      if (c.v114) await repo.companyResultTexts(c.id, r.$3, r.$4);
+    }, done: s.t('adb_saved'));
   }
 
   Future<void> _workerTask(AppStrings s, AdbizWorkerSum w) async {
@@ -406,6 +411,16 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     Text(s.t('adb_task_all'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
                     Text(company.taskNote ?? s.t('adb_task_none'), key: const ValueKey('adb-words-task'),
                         style: TextStyle(fontSize: 15.5, color: company.taskNote == null ? AppColors.adbTextSoft : AppColors.adbText)),
+                    if (company.v114) ...[
+                      const SizedBox(height: 8),
+                      Text(s.t('adb_result_miss_text'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+                      Text(company.resultMissText ?? s.t('adb_result_default'), key: const ValueKey('adb-words-miss'),
+                          style: TextStyle(fontSize: 15.5, color: company.resultMissText == null ? AppColors.adbTextSoft : AppColors.adbText)),
+                      const SizedBox(height: 8),
+                      Text(s.t('adb_result_hit_text'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+                      Text(company.resultHitText ?? s.t('adb_result_default'), key: const ValueKey('adb-words-hit'),
+                          style: TextStyle(fontSize: 15.5, color: company.resultHitText == null ? AppColors.adbTextSoft : AppColors.adbText)),
+                    ],
                   ],
                 ]),
               ),
@@ -755,7 +770,8 @@ class AdbizWorkerRow extends StatelessWidget {
 }
 
 /// The owner's words (0113): the caption instead of "Hədəfə qalan" and the
-/// task for every worker; empty = none.
+/// task for every worker; with 0114 also the day-result messages (below /
+/// at the target). Empty = none / the app's own words.
 class AdbizWordsDialog extends StatefulWidget {
   final AppStrings s;
   final AdbizCompany company;
@@ -768,19 +784,23 @@ class AdbizWordsDialog extends StatefulWidget {
 class _AdbizWordsDialogState extends State<AdbizWordsDialog> {
   late final _label = TextEditingController(text: widget.company.targetLabel ?? '');
   late final _task = TextEditingController(text: widget.company.taskNote ?? '');
+  late final _miss = TextEditingController(text: widget.company.resultMissText ?? '');
+  late final _hit = TextEditingController(text: widget.company.resultHitText ?? '');
 
   AppStrings get s => widget.s;
 
   @override
   void dispose() {
-    _label.dispose();
-    _task.dispose();
+    for (final c in [_label, _task, _miss, _hit]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(s.t('adb_words')),
+        scrollable: true,
         content: SizedBox(
           width: 460,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -799,13 +819,41 @@ class _AdbizWordsDialogState extends State<AdbizWordsDialog> {
               maxLines: 6,
               decoration: InputDecoration(labelText: s.t('adb_task_all'), helperText: s.t('adb_words_hint')),
             ),
+            if (widget.company.v114) ...[
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('adb-words-miss-field'),
+                controller: _miss,
+                maxLength: 200,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                    labelText: s.t('adb_result_miss_text'),
+                    hintText: s.t('adb_result_minus', {'left': '{qalan}'}),
+                    helperText: s.t('adb_result_text_hint'),
+                    helperMaxLines: 3),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('adb-words-hit-field'),
+                controller: _hit,
+                maxLength: 200,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                    labelText: s.t('adb_result_hit_text'),
+                    hintText: s.t('adb_result_reached', {'net': '{gəlir}', 'target': '{hədəf}'}),
+                    helperText: s.t('adb_result_text_hint'),
+                    helperMaxLines: 3),
+              ),
+            ],
           ]),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(s.t('common_cancel'))),
           FilledButton(
             key: const ValueKey('adb-words-save'),
-            onPressed: () => Navigator.pop(context, (_label.text.trim(), _task.text.trim())),
+            onPressed: () => Navigator.pop(context, (_label.text.trim(), _task.text.trim(), _miss.text.trim(), _hit.text.trim())),
             child: Text(s.t('adb_save')),
           ),
         ],

@@ -388,7 +388,9 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
       await ref.read(adbizRepositoryProvider).closeDay(day.id);
       // The day's result, at once (owner, 10.11.2026): "Təbriklər!" when
       // the target is reached, otherwise how much stayed in the minus.
-      if (mounted) await showAdbizDayResult(context, s, p, showTarget: showTarget);
+      if (mounted) {
+        await showAdbizDayResult(context, s, p, showTarget: showTarget, company: ref.read(adbizCompanyProvider(day.companyId)));
+      }
     } catch (e) {
       if (mounted) adbizSnack(context, adbizError(s, e));
     } finally {
@@ -679,7 +681,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     final actions = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       // A closed day (also closed automatically at 23:59) shows its result.
       if (!_open && showTarget && p.target > 0) ...[
-        AdbizDayResultBanner(s: s, p: p),
+        AdbizDayResultBanner(s: s, p: p, company: company),
         const SizedBox(height: 10),
       ],
       if (day.isOpen && _canAdd) ...[
@@ -1127,18 +1129,33 @@ class AdbizTaskCard extends StatelessWidget {
 }
 
 /// What the day's result says (owner, 10.11.2026): the target reached =
-/// congratulations; otherwise how much stayed in the minus.
-(bool reached, String title, String body) adbizDayResult(AppStrings s, DayProgress p) => p.reached
-    ? (true, s.t('adb_result_reached_title'), s.t('adb_result_reached', {'net': adbizNum(p.net), 'target': adbizNum(p.target)}))
-    : (false, s.t('adb_result_minus_title'), s.t('adb_result_minus', {'left': adbizNum(p.remaining)}));
+/// congratulations; otherwise how much stayed in the minus. The owner's own
+/// message (0114) replaces the app's words; {qalan} / {gəlir} / {hədəf}
+/// become the day's numbers.
+(bool reached, String title, String body) adbizDayResult(AppStrings s, DayProgress p, {AdbizCompany? company}) {
+  final own = p.reached ? company?.resultHitText : company?.resultMissText;
+  final body = own != null
+      ? adbizFillResult(own, p)
+      : p.reached
+          ? s.t('adb_result_reached', {'net': adbizNum(p.net), 'target': adbizNum(p.target)})
+          : s.t('adb_result_minus', {'left': adbizNum(p.remaining)});
+  return (p.reached, s.t(p.reached ? 'adb_result_reached_title' : 'adb_result_minus_title'), body);
+}
+
+/// The owner's message with the day's numbers: {qalan} = still missing to
+/// the target, {gəlir} = money left (jobs − rasxod), {hədəf} = the target.
+String adbizFillResult(String text, DayProgress p) => text
+    .replaceAll('{qalan}', adbizNum(p.remaining))
+    .replaceAll('{gəlir}', adbizNum(p.net < 0 ? 0 : p.net))
+    .replaceAll('{hədəf}', adbizNum(p.target));
 
 /// Shown at once when the worker closes the day.
-Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress p, {required bool showTarget}) {
+Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress p, {required bool showTarget, AdbizCompany? company}) {
   if (!showTarget || p.target <= 0) {
     adbizSnack(context, s.t('adb_closed_done'));
     return Future.value();
   }
-  final (ok, title, body) = adbizDayResult(s, p);
+  final (ok, title, body) = adbizDayResult(s, p, company: company);
   final c = ok ? AppColors.online : AppColors.danger;
   return showDialog<void>(
     context: context,
@@ -1157,11 +1174,12 @@ Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress 
 class AdbizDayResultBanner extends StatelessWidget {
   final AppStrings s;
   final DayProgress p;
-  const AdbizDayResultBanner({super.key, required this.s, required this.p});
+  final AdbizCompany? company;
+  const AdbizDayResultBanner({super.key, required this.s, required this.p, this.company});
 
   @override
   Widget build(BuildContext context) {
-    final (ok, title, body) = adbizDayResult(s, p);
+    final (ok, title, body) = adbizDayResult(s, p, company: company);
     final c = ok ? AppColors.online : AppColors.danger;
     return Container(
       key: ValueKey(ok ? 'adb-banner-reached' : 'adb-banner-minus'),

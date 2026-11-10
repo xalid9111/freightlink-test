@@ -2134,5 +2134,9 @@
   "adb_task_none": "Görev yazılmadı",
   "adb_open_days": "Günlerine bak",
   "adb_refresh": "Yenile",
-  "adb_need_sql": "Bu işlev SQL 0113 çalıştırıldıktan sonra açılır."
+  "adb_need_sql": "Bu işlev SQL 0113 çalıştırıldıktan sonra açılır.",
+  "adb_result_miss_text": "Hedefe ulaşılmayınca yazı",
+  "adb_result_hit_text": "Hedefe ulaşınca yazı",
+  "adb_result_text_hint": "Gün kapanınca çalışan görür. {qalan}, {gəlir}, {hədəf} günün rakamlarıyla değişir. Boş = standart yazı.",
+  "adb_result_default": "Standart yazı"
 }
