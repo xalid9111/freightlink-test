@@ -13,6 +13,7 @@ import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_company_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_notebook_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_providers.dart';
+import 'package:freightlink/features/adbiz/presentation/adbiz_widgets.dart';
 import 'package:freightlink/features/auth/presentation/profile_screen.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
 
@@ -537,6 +538,26 @@ void main() {
     });
   });
 
+  group('the UTEP logo (owner, 10.11.2026): white at night, its own colours by day, no plate', () {
+    Future<void> pumpLogo(WidgetTester t, Brightness b) async {
+      await t.pumpWidget(MaterialApp(theme: ThemeData(brightness: b), home: const Scaffold(body: Center(child: UtepLogo(height: 30)))));
+    }
+
+    String asset(WidgetTester t) => ((t.widget<Image>(find.byType(Image)).image) as AssetImage).assetName;
+
+    testWidgets('night: the white logo', (t) async {
+      await pumpLogo(t, Brightness.dark);
+      expect(asset(t), 'assets/images/utep/utep_reklam_logo_white.png');
+      expect(find.descendant(of: find.byKey(const ValueKey('utep-logo')), matching: find.byType(DecoratedBox)), findsNothing,
+          reason: 'no white plate');
+    });
+
+    testWidgets('day: the logo in its own colours', (t) async {
+      await pumpLogo(t, Brightness.light);
+      expect(asset(t), 'assets/images/utep/utep_reklam_logo.png');
+    });
+  });
+
   group('Profil', () {
     Future<void> pumpEntry(WidgetTester t, AdbizMe? me) async {
       await t.pumpWidget(ProviderScope(
@@ -611,6 +632,7 @@ void main() {
       expect(f.readAsStringSync().contains('utep_reklam_logo'), isFalse, reason: p);
     }
     expect(File('assets/images/utep/utep_reklam_logo.png').existsSync(), isTrue);
+    expect(File('assets/images/utep/utep_reklam_logo_white.png').existsSync(), isTrue);
     expect(src('pubspec.yaml'), contains('    - assets/images/utep/'));
     final router = src('lib/core/router/app_router.dart');
     expect(router, contains("path: 'adbiz',"));

@@ -6,20 +6,26 @@ import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
 
 /// UTEP Reklam's own logo — only in this module (owner, 10.11.2026); the
-/// rest of the app keeps its own. On a white plate, so it reads in the
-/// night theme too (like the brand logos).
+/// rest of the app keeps its own. Owner, 10.11.2026 (later): no white plate —
+/// the white logo at night, the logo in its own colours by day (both are
+/// the owner's transparent files).
 const kUtepLogo = 'assets/images/utep/utep_reklam_logo.png';
+const kUtepLogoWhite = 'assets/images/utep/utep_reklam_logo_white.png';
+
+/// The UTEP logo file for the current mode.
+String utepLogoAsset(Brightness b) => b == Brightness.light ? kUtepLogo : kUtepLogoWhite;
 
 class UtepLogo extends StatelessWidget {
   final double height;
   const UtepLogo({super.key, this.height = 34});
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Padding(
         key: const ValueKey('utep-logo'),
+        // The same room as the old white plate, so nothing around it moves.
         padding: EdgeInsets.symmetric(horizontal: height * 0.25, vertical: height * 0.12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(height * 0.25)),
-        child: Image.asset(kUtepLogo, height: height, fit: BoxFit.contain, filterQuality: FilterQuality.medium),
+        child: Image.asset(utepLogoAsset(Theme.of(context).brightness),
+            height: height, fit: BoxFit.contain, filterQuality: FilterQuality.medium),
       );
 }
 
