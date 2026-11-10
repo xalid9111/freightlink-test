@@ -2138,5 +2138,12 @@
   "adb_result_miss_text": "Hedefe ulaşılmayınca yazı",
   "adb_result_hit_text": "Hedefe ulaşınca yazı",
   "adb_result_text_hint": "Gün kapanınca çalışan görür. {qalan}, {gəlir}, {hədəf} günün rakamlarıyla değişir. Boş = standart yazı.",
-  "adb_result_default": "Standart yazı"
+  "adb_result_default": "Standart yazı",
+  "adb_delete_day": "Günü sil",
+  "adb_delete_day_title": "Gün silinsin mi?",
+  "adb_delete_day_body": "{date}\n{jobs} iş ({jobs_sum} AZN) ve {x} masraf ({x_sum} AZN) birlikte silinecek. Bu geri alınamaz.",
+  "adb_day_deleted": "Gün silindi.",
+  "adb_pick_day": "Hangi çalışanın günü silinsin?",
+  "adb_need_sql115": "Bu işlev SQL 0115 çalıştırıldıktan sonra açılır.",
+  "adb_tiles_legend": "Yeşil: net gelir · Kırmızı: günlerin hedefe göre eksisi / fazlası"
 }

@@ -53,6 +53,17 @@ class _Repo implements AdbizRepository {
   @override
   Future<void> sweep() async => sweeps++;
 
+  final deleted = <String>[];
+  @override
+  Future<void> deleteDay(String dayId) async => deleted.add(dayId);
+  @override
+  Future<List<AdbizDay>> daysOn(String companyId, DateTime date) async =>
+      [AdbizDay(id: 'dX', companyId: companyId, userId: 'u1', workDate: date, status: 'closed', target: 235)];
+  @override
+  Future<List<AdbizEntry>> entries(String dayId) async => const [AdbizEntry(id: 'e', dayId: 'dX', title: 'Test', amount: 270)];
+  @override
+  Future<List<AdbizExpense>> dayExpenses(String dayId) async => [AdbizExpense(id: 'x', title: 'Çay', spentOn: _today, amount: 8)];
+
   final reopens = <String>[];
   @override
   Future<void> reopenDay(String dayId) async => reopens.add(dayId);
@@ -473,7 +484,15 @@ void main() {
           adbizCompaniesProvider.overrideWith((ref) async =>
               [AdbizCompany(id: 'c', name: 'UTEP Reklam', dailyTarget: 245, v113: v113, taskNote: v113 ? 'Hamıya' : null,
                   v114: v114, resultMissText: v114 ? 'Sabah {qalan} AZN çox!' : null)]),
-          adbizReportProvider.overrideWith((ref, k) async => rep),
+          adbizReportProvider.overrideWith((ref, k) async => AdbizReport.fromJson({
+                'income': rep.income, 'card': rep.card, 'expenses': rep.expenses, 'net': rep.net, 'days_open': 1, 'days_closed': 0,
+                'workers': [{'user_id': 'u1', 'name': 'İmran MMC', 'role': 'worker', 'total': 60, 'card': 40, 'days': 1}],
+                'by_day': [{'date': isoDate(_today), 'income': 270}],
+              })),
+          adbizPeriodsProvider.overrideWith((ref, k) async => AdbizPeriods.fromJson({
+                'months': [for (var m = 1; m <= 12; m++) {'key': m, 'net': m == 1 ? 5784 : 0, 'gap': m == 1 ? -215 : (m == 3 ? 11 : 0)}],
+                'years': [{'key': 2025, 'net': 100, 'gap': -135}, {'key': _today.year, 'net': 61792, 'gap': -10197}],
+              })),
           adbizExpensesProvider.overrideWith((ref, k) async => const <AdbizExpense>[]),
         ],
         child: const MaterialApp(home: AdbizCompanyScreen(companyId: 'c')),
@@ -532,9 +551,96 @@ void main() {
       expect(find.byKey(const ValueKey('adb-words-label-field')), findsOneWidget);
     });
 
+    testWidgets('Ay: the 12 month cards (net income over the days\' minus / plus); a tap opens that month', (t) async {
+      await pumpPanel(t);
+      await t.tap(find.byKey(const ValueKey('adb-period-month')));
+      await t.pump();
+      await t.pump();
+      for (var m = 1; m <= 12; m++) {
+        expect(find.byKey(ValueKey('adb-month-$m')), findsOneWidget);
+      }
+      expect(find.text('5784 AZN'), findsOneWidget);
+      expect(find.text('-215 AZN'), findsOneWidget);
+      expect(find.text('11 AZN'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('adb-month-3')));
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-period-label'))).data, '03.${_today.year}');
+    });
+
+    testWidgets('İl: the year cards; a tap opens that year\'s months', (t) async {
+      await pumpPanel(t);
+      await t.tap(find.byKey(const ValueKey('adb-period-year')));
+      await t.pump();
+      await t.pump();
+      expect(find.text('61792 AZN'), findsOneWidget);
+      expect(find.text('-10197 AZN'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('adb-year-2025')));
+      await t.pump();
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-period-label'))).data, '01.2025');
+      expect(find.byKey(const ValueKey('adb-month-1')), findsOneWidget);
+    });
+
+    testWidgets('the day view shows no cards', (t) async {
+      await pumpPanel(t);
+      expect(find.byKey(const ValueKey('adb-month-1')), findsNothing);
+    });
+
+    testWidgets('Arxiv: delete a (test) day — asked first, with what goes', (t) async {
+      final repo = await pumpPanel(t);
+      await t.tap(find.byKey(ValueKey('adb-arch-del-${isoDate(_today)}')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.text('adb_delete_day_title'), findsOneWidget, reason: 'asked before deleting');
+      expect(repo.deleted, isEmpty);
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(repo.deleted, ['dX']);
+    });
+
     testWidgets('the Baş admin edits the target (pencil)', (t) async {
       await pumpPanel(t, chief: true);
       expect(find.byKey(const ValueKey('adb-company-edit')), findsOneWidget);
+    });
+  });
+
+  group('deleting a day in the notebook (0115)', () {
+    testWidgets('the owner / Baş admin: "Günü sil", asked first', (t) async {
+      t.view.physicalSize = const Size(390, 1600);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      final repo = _Repo();
+      final day = AdbizDay(id: 'd9', companyId: 'c', userId: 'w1', workDate: _today, status: 'closed', target: 235);
+      await t.pumpWidget(ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue('boss'),
+          stringsProvider.overrideWithValue(_s),
+          adbizRepositoryProvider.overrideWithValue(repo),
+          adbizDaysProvider('w1').overrideWith((ref) => Stream.value([day])),
+          adbizEntriesProvider('d9').overrideWith((ref) => Stream.value(const [AdbizEntry(id: 'e', dayId: 'd9', title: 'Test', amount: 270)])),
+          adbizDayExpensesProvider('d9').overrideWith((ref) => Stream.value(const <AdbizExpense>[])),
+          adbizCompaniesProvider.overrideWith((ref) async => const [_c113]),
+          adbizMemberTaskProvider('w1').overrideWith((ref) async => null),
+        ],
+        child: const MaterialApp(home: AdbizNotebookScreen(userId: 'w1', userName: 'İmran')),
+      ));
+      await t.pump();
+      await t.pump();
+      await t.ensureVisible(find.byKey(const ValueKey('adb-delete-day')));
+      await t.tap(find.byKey(const ValueKey('adb-delete-day')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.text('adb_delete_day_title'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(repo.deleted, ['d9']);
+    });
+
+    testWidgets('the worker: no "Günü sil"', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed')], company: _c113);
+      expect(find.byKey(const ValueKey('adb-delete-day')), findsNothing);
     });
   });
 
@@ -625,6 +731,12 @@ void main() {
     expect(s114, contains('if not public.adbiz_can_manage(p_company) then'));
     expect(s114, contains('public._adbiz_text(p_miss, 200)'));
     expect(src('supabase/tests/local/run_local.sh'), contains('151_ad_business_result_texts.sql'));
+    // 0115: delete a day (owner / Baş admin, kept in the history); the month / year cards.
+    final s115 = src('supabase/migrations/0115_ad_business_delete_day_months.sql');
+    expect(RegExp(r"adbiz_delete_day[\s\S]*?if not public\.adbiz_can_manage\(d\.company_id\) then[\s\S]*?_adbiz_log\(d\.company_id, 'day\.delete'")
+        .hasMatch(s115), isTrue);
+    expect(s115, contains("and d.status = 'closed' and d.target > 0"));
+    expect(src('supabase/tests/local/run_local.sh'), contains('152_ad_business_delete_day_months.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');

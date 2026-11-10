@@ -2138,5 +2138,12 @@
   "adb_result_miss_text": "Hədəfə çatmayanda yazı",
   "adb_result_hit_text": "Hədəfə çatanda yazı",
   "adb_result_text_hint": "Gün bağlananda işçi görür. {qalan}, {gəlir}, {hədəf} həmin günün rəqəmləri ilə əvəz olunur. Boş = standart yazı.",
-  "adb_result_default": "Standart yazı"
+  "adb_result_default": "Standart yazı",
+  "adb_delete_day": "Günü sil",
+  "adb_delete_day_title": "Gün silinsin?",
+  "adb_delete_day_body": "{date}\n{jobs} iş ({jobs_sum} AZN) və {x} rasxod ({x_sum} AZN) birlikdə silinəcək. Bu geri qaytarılmır.",
+  "adb_day_deleted": "Gün silindi.",
+  "adb_pick_day": "Hansı işçinin günü silinsin?",
+  "adb_need_sql115": "Bu funksiya SQL 0115 işlədiləndən sonra açılır.",
+  "adb_tiles_legend": "Yaşıl: xalis gəlir · Qırmızı: günlərin hədəfə görə mənfisi / artığı"
 }

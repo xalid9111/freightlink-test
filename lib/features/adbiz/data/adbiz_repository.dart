@@ -71,6 +71,28 @@ class AdbizRepository {
         return [for (final x in r) AdbizDay.fromJson(x)];
       });
 
+  /// One day's expenses (rasxod) once.
+  Future<List<AdbizExpense>> dayExpenses(String dayId) => _run(() async {
+        final r = await _c.from('adbiz_expenses').select().eq('day_id', dayId);
+        return [for (final x in r) AdbizExpense.fromJson(x)];
+      });
+
+  /// The company's days of one date (every worker's; owner / Baş admin).
+  Future<List<AdbizDay>> daysOn(String companyId, DateTime date) => _run(() async {
+        final r = await _c.from('adbiz_days').select().eq('company_id', companyId).eq('work_date', isoDate(date));
+        return [for (final x in r) AdbizDay.fromJson(x)];
+      });
+
+  /// Deletes one work day with its jobs and rasxod (owner / Baş admin; kept
+  /// whole in the history, 0115).
+  Future<void> deleteDay(String dayId) => _run(() => _c.rpc('adbiz_delete_day', params: {'p_day': dayId}));
+
+  /// The month / year cards of a year (0115).
+  Future<AdbizPeriods> periods(String companyId, int year) => _run(() async {
+        final r = await _c.rpc('adbiz_report_periods', params: {'p_company': companyId, 'p_year': year});
+        return AdbizPeriods.fromJson(Map<String, dynamic>.from(r as Map));
+      });
+
   Future<List<AdbizEntry>> entries(String dayId) => _run(() async {
         final r = await _c.from('adbiz_entries').select().eq('day_id', dayId).order('created_at');
         return [for (final x in r) AdbizEntry.fromJson(x)];

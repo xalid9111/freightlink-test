@@ -61,3 +61,7 @@ final adbizMemberTaskProvider = FutureProvider.autoDispose.family<String?, Strin
     return null;
   }
 });
+
+/// The month / year cards of a company's year (0115); an error = not ready.
+final adbizPeriodsProvider = FutureProvider.autoDispose.family<AdbizPeriods, ({String companyId, int year})>(
+    (ref, k) => ref.watch(adbizRepositoryProvider).periods(k.companyId, k.year));

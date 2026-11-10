@@ -166,6 +166,11 @@ class AppColors {
   static Color get adbNet => isDay ? const Color(0xFF2563EB) : const Color(0xFF3BA2FF);
   /// The worker's bar star: orange glow at night, green by day (owner,
   /// 10.11.2026: "gündüz rejimində şkalanın sonu yaşıl").
+  /// The month / year cards (owner's picture, 10.11.2026): dark green top =
+  /// net income, red bottom = the days' minus / plus; the same by day and night.
+  static const Color adbTileNet = Color(0xFF2E6B63);
+  static const Color adbTileGap = Color(0xFFA52A1A);
+  static const Color adbTileText = Color(0xFFFFFFFF);
   static Color get adbStar => isDay ? const Color(0xFF16A34A) : _p.accent;
   static const Color vipGold = Color(0xFFFFC83D);
   /// VIP medal: gold rim shade and the dark centre / ribbons.

@@ -2138,5 +2138,12 @@
   "adb_result_miss_text": "Текст, если цель не достигнута",
   "adb_result_hit_text": "Текст, если цель достигнута",
   "adb_result_text_hint": "Работник видит при закрытии дня. {qalan}, {gəlir}, {hədəf} заменяются числами дня. Пусто = стандартный текст.",
-  "adb_result_default": "Стандартный текст"
+  "adb_result_default": "Стандартный текст",
+  "adb_delete_day": "Удалить день",
+  "adb_delete_day_title": "Удалить этот день?",
+  "adb_delete_day_body": "{date}\nВместе с ним удалятся {jobs} работ ({jobs_sum} AZN) и {x} расходов ({x_sum} AZN). Это нельзя отменить.",
+  "adb_day_deleted": "День удалён.",
+  "adb_pick_day": "Чей день удалить?",
+  "adb_need_sql115": "Откроется после запуска SQL 0115.",
+  "adb_tiles_legend": "Зелёный: чистый доход · Красный: минус / плюс дней к цели"
 }
