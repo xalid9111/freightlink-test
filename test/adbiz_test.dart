@@ -108,7 +108,11 @@ void main() {
       expect(p.percentExact, 38.3);
       expect(p.percentLabel, '38.3%');
       expect(p.bar, closeTo(0.383, 0.001));
-      expect(adbizCalcLine(p), '120.00 − 30.00 = 90.00 AZN');
+      expect(adbizCalcLine(p), '120 − 30 = 90 AZN');
+      expect(adbizTargetLine(p), '235 − 90 = 145 AZN');
+      expect(adbizTargetLine(const DayProgress(250, 235)), '0 AZN', reason: 'target passed');
+      expect(adbizTargetLine(const DayProgress(10, 235, 40)), '235 − (-30) = 265 AZN');
+      expect(adbizCalcLine(const DayProgress(20.5, 235, 8)), '20.50 − 8 = 12.50 AZN');
       // More rasxod than income: nothing left, the bar empty, the target whole.
       const minus = DayProgress(20, 235, 50);
       expect((minus.net, minus.bar, minus.percentExact), (-30.0, 0.0, 0.0));
@@ -174,7 +178,7 @@ void main() {
       expect(find.text('235.00 AZN'), findsWidgets);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-collected'))).data, '45.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '45.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '190.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 45 = 190 AZN');
       expect(find.byKey(const ValueKey('adb-close-day')), findsOneWidget);
       await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
       await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '35');
@@ -201,11 +205,11 @@ void main() {
       ]);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '90.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '145.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 90 = 145 AZN');
       // No percent anywhere on the worker's panel — the amount left is shown (owner, 10.11.2026).
       expect(find.textContaining('%'), findsNothing);
       expect(find.byKey(const ValueKey('adb-percent')), findsNothing);
-      expect(find.textContaining('120.00 − 30.00 = 90.00 AZN'), findsOneWidget);
+      expect(find.textContaining('120 − 30 = 90 AZN'), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '120.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent-total'))).data, '30.00 AZN');
       // The worker: no edit / delete on saved jobs or expenses, the lock note.

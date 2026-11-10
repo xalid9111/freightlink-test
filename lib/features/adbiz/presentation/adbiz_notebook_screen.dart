@@ -630,7 +630,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
         _Line(s.t('adb_income_day'), money(p.collected), AppColors.online),
         _Line(s.t('adb_spent'), money(p.spent), AppColors.danger),
         _Line(s.t('adb_left_money'), money(p.net), AppColors.blue),
-        _Line(s.t('adb_to_target'), money(p.remaining), AppColors.accent),
+        _Line(s.t('adb_to_target'), adbizTargetLine(p), AppColors.accent),
       ]),
     );
 
@@ -743,7 +743,7 @@ class DayMoneyCard extends StatelessWidget {
           // What is left to the target, as an amount — no percent (owner, 10.11.2026).
           Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
             Text(s.t('adb_to_target'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-            Text(money(p.remaining), key: const ValueKey('adb-to-target'),
+            Text(adbizTargetLine(p), key: const ValueKey('adb-to-target'),
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.accent)),
           ]),
         ]),
@@ -757,9 +757,20 @@ class DayMoneyCard extends StatelessWidget {
   }
 }
 
-/// "120.00 − 30.00 = 90.00 AZN".
-String adbizCalcLine(DayProgress p) =>
-    '${p.collected.toStringAsFixed(2)} − ${p.spent.toStringAsFixed(2)} = ${money(p.net)}';
+/// A plain amount: 235 → "235", 12.5 → "12.50" (the formula lines).
+String adbizNum(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
+
+/// "120 − 30 = 90 AZN" (owner, 10.11.2026: the formula, in numbers).
+String adbizCalcLine(DayProgress p) => '${adbizNum(p.collected)} − ${adbizNum(p.spent)} = ${adbizNum(p.net)} AZN';
+
+/// What is left to the target, as a formula: "235 − 90 = 145 AZN" (owner,
+/// 10.11.2026; no percent). Money left below 0 shows in brackets; the target
+/// reached or passed: "0 AZN".
+String adbizTargetLine(DayProgress p) {
+  if (p.remaining <= 0) return '0 AZN';
+  final left = p.net < 0 ? '(${adbizNum(p.net)})' : adbizNum(p.net);
+  return '${adbizNum(p.target)} − $left = ${adbizNum(p.remaining)} AZN';
+}
 
 /// A numbered row: n · name (time) · amount (· edit / delete for managers).
 class _Row extends StatelessWidget {
