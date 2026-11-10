@@ -49,5 +49,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # If GitHub Pages times out while syncing (10.11.2026, its own trouble),
+      # the deployment stays tied to that commit: "Re-run" of the same run
+      # waits on an empty status and fails again. Deploy with a new commit on
+      # main (a pull request) instead.
       - id: deployment
         uses: actions/deploy-pages@v4
