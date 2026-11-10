@@ -1,3 +1,5 @@
+import '../../adbiz/presentation/adbiz_providers.dart';
+import '../../adbiz/presentation/adbiz_widgets.dart';
 import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -184,6 +186,9 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ]);
                 }),
+                // UTEP Reklam (owner, 10.11.2026, 0110): only for an account the
+                // Baş admin switched on (and for the Baş admin himself).
+                const AdbizProfileEntry(),
                 // Every platform admin (owner, 04.11.2026 — an admin the owner
                 // appoints must get in): Admin Panel; Maliyyə only for the
                 // finance owner (server is_finance_admin()).
@@ -230,6 +235,65 @@ class ProfileScreen extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// UTEP Reklam in Profil (owner, 10.11.2026, 0110): nothing for an account
+/// the Baş admin has not switched on. A worker: "Reklam iş dəftəri"; an
+/// owner: his business page too; the Baş admin: "Reklam idarəetməsi".
+class AdbizProfileEntry extends ConsumerWidget {
+  const AdbizProfileEntry({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(adbizMeProvider).valueOrNull;
+    if (me == null || (!me.chief && !me.isMember)) return const SizedBox.shrink();
+    final strings = ref.watch(stringsProvider);
+    return Padding(
+      key: const ValueKey('pf-adbiz'),
+      padding: const EdgeInsets.only(top: 14),
+      child: _MenuCard(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+          child: Row(children: [
+            const UtepLogo(height: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(me.companyName ?? strings.t('adb_admin'),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+            ),
+          ]),
+        ),
+        if (me.isMember)
+          _MenuRow(
+            key: const ValueKey('pf-adbiz-notebook'),
+            icon: Icons.edit_note,
+            iconColor: AppColors.accent,
+            title: strings.t('adb_notebook'),
+            subtitle: strings.t('adb_notebook_sub'),
+            onTap: () => context.pushOnce('/profile/adbiz'),
+          ),
+        if (me.isOwner)
+          _MenuRow(
+            key: const ValueKey('pf-adbiz-business'),
+            icon: Icons.insights_outlined,
+            iconColor: AppColors.blue,
+            title: strings.t('adb_business'),
+            subtitle: strings.t('adb_business_sub'),
+            onTap: () => context.pushOnce('/profile/adbiz/company/${me.companyId}'),
+          ),
+        if (me.chief)
+          _MenuRow(
+            key: const ValueKey('pf-adbiz-admin'),
+            icon: Icons.admin_panel_settings_outlined,
+            iconColor: AppColors.vipGold,
+            title: strings.t('adb_admin'),
+            subtitle: strings.t('adb_admin_sub'),
+            onTap: () => context.pushOnce('/profile/adbiz/admin'),
+          ),
+      ]),
     );
   }
 }

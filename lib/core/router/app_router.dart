@@ -52,6 +52,9 @@ import '../../features/tirpark/presentation/tir_park_screen.dart';
 import '../widgets/deferred_page.dart';
 import '../../features/market/presentation/market_module.dart' deferred as market;
 import 'guest_access.dart';
+import '../../features/adbiz/presentation/adbiz_admin_screen.dart';
+import '../../features/adbiz/presentation/adbiz_company_screen.dart';
+import '../../features/adbiz/presentation/adbiz_notebook_screen.dart';
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -434,6 +437,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 GoRoute(path: 'personal', builder: (context, state) => const NavRoom(child: ProfilePersonalScreen())),
                 GoRoute(path: 'activity', builder: (context, state) => const NavRoom(child: ProfileActivityScreen())),
                 GoRoute(path: 'tirpark', builder: (context, state) => const NavRoom(child: ProfileTirParkScreen())),
+                // UTEP Reklam (owner, 10.11.2026, 0110): only from Profil; the
+                // server decides who sees what (Baş admin / owner / worker).
+                GoRoute(
+                  path: 'adbiz',
+                  builder: (context, state) => const NavRoom(child: AdbizNotebookScreen()),
+                  routes: [
+                    GoRoute(path: 'admin', builder: (context, state) => const NavRoom(child: AdbizAdminScreen())),
+                    GoRoute(
+                        path: 'company/:id',
+                        builder: (context, state) => NavRoom(child: AdbizCompanyScreen(companyId: state.pathParameters['id']!))),
+                    GoRoute(
+                        path: 'worker/:uid',
+                        builder: (context, state) => NavRoom(
+                            child: AdbizNotebookScreen(
+                                userId: state.pathParameters['uid']!, userName: state.uri.queryParameters['name']))),
+                  ],
+                ),
               ],
             ),
           ]),
