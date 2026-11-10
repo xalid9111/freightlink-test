@@ -2110,5 +2110,7 @@
   "adb_calc": "Worked out",
   "adb_auto_close_note": "The day closes by itself at 23:59.",
   "adb_closed_auto": "The day closed by itself at 23:59.",
-  "adb_reopen_worker_body": "Closed the day by mistake? Open it again — you can add jobs and expenses again."
+  "adb_reopen_worker_body": "Closed the day by mistake? Open it again — you can add jobs and expenses again.",
+  "adb_minus": "Short",
+  "adb_target_short": "Target"
 }

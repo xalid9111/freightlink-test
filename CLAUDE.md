@@ -602,11 +602,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   users.role never changed; live on every device (realtime streams).
   Worker panel (owner's picture, 10.11.2026, SQL 0111): in this order — the
   UTEP header (logo | UTEP Reklam / Reklam idarəetmə sistemi | name + role),
-  Bugünkü iş günü, Gündəlik hədəf · Toplanan gəlir · Rasxod, Qalan məbləğ
-  (= jobs − the day's rasxod) with its formula,
-  the bar and "Hədəfə qalan" beside it as a formula in numbers ("235 − 90 =
-  145 AZN"; "Hesablanma: 120 − 30 = 90 AZN"; NO percent anywhere on the
-  worker panel, owner 10.11.2026), Yeni iş əlavə et, Görülən işlər (+ "Düzəliş yalnız
+  Bugünkü iş günü, then the numbers card of the owner's design (10.11.2026,
+  later the same day): Hədəf · Mənfi (still missing to the target) · Rasxod
+  in whole amounts ("235 AZN"; ₼ is not in the font), "money left / target"
+  ("90/235", money left = jobs − the day's rasxod) over a LIVING bar (fills
+  smoothly; a star at the target end blinks and glows to motivate — still
+  for phones asking for less motion), and "Hədəfə qalan" in big numbers
+  under it (235 − 90 = 145); no calculation box, NO percent anywhere on the
+  worker panel; Yeni iş əlavə et, Görülən işlər (+ "Düzəliş yalnız
   admin tərəfindən mümkündür") + Cəmi (Gəlir), Rasxod (xərc əlavə et) +
   Günün xərcləri (Cəmi), Günü bağla. No net-profit card for the worker
   (owner panel only). The worker adds jobs and rasxod into his open day but
