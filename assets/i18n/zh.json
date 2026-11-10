@@ -2110,5 +2110,7 @@
   "adb_calc": "计算",
   "adb_auto_close_note": "当天将在 23:59 自动结束。",
   "adb_closed_auto": "当天已在 23:59 自动结束。",
-  "adb_reopen_worker_body": "误结束了当天？重新开启后可继续添加工作和支出。"
+  "adb_reopen_worker_body": "误结束了当天？重新开启后可继续添加工作和支出。",
+  "adb_minus": "差额",
+  "adb_target_short": "目标"
 }

@@ -196,10 +196,10 @@ void main() {
         AdbizEntry(id: 'e0', dayId: 'd1', title: 'Nömrə', amount: 20),
         AdbizEntry(id: 'e9', dayId: 'd1', title: 'Kalçuk', amount: 25),
       ]);
-      expect(find.text('235.00 AZN'), findsWidgets);
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-collected'))).data, '45.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '45.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 45 = 190 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-target'))).data, '235 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '190 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-progress-label'))).data, '45/235');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '190 AZN');
       expect(find.byKey(const ValueKey('adb-close-day')), findsOneWidget);
       await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
       await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '35');
@@ -224,13 +224,17 @@ void main() {
       ], expenses: [
         AdbizExpense(id: 'x1', title: 'Yanacaq', spentOn: _today, amount: 30, dayId: 'd1', userId: 'me'),
       ]);
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '90.00 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 90 = 145 AZN');
+      // The owner's design (10.11.2026): Hədəf · Mənfi · Rasxod, "90/235" over the
+      // living bar, "Hədəfə qalan" in big numbers; 120 − 30 = 90 left → 145 short.
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '145 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-progress-label'))).data, '90/235');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '145 AZN');
+      expect(find.byKey(const ValueKey('adb-star')), findsOneWidget, reason: 'the blinking star at the target');
+      expect(find.byKey(const ValueKey('adb-calc')), findsNothing, reason: 'no calculation box in the design');
       // No percent anywhere on the worker's panel — the amount left is shown (owner, 10.11.2026).
       expect(find.textContaining('%'), findsNothing);
       expect(find.byKey(const ValueKey('adb-percent')), findsNothing);
-      expect(find.textContaining('120 − 30 = 90 AZN'), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '120.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent-total'))).data, '30.00 AZN');
       // The worker: no edit / delete on saved jobs or expenses, the lock note.
@@ -259,9 +263,11 @@ void main() {
       await _pumpNotebook(t, repo, days: [_day(status: 'closed', closedBy: 'me')]);
       expect(find.byKey(const ValueKey('adb-worker-reopen')), findsOneWidget);
       await t.tap(find.byKey(const ValueKey('adb-worker-reopen')));
-      await t.pumpAndSettle();
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400)); // the star keeps blinking: no pumpAndSettle
       await t.tap(find.byKey(const ValueKey('adb-confirm')));
-      await t.pumpAndSettle();
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
       expect(repo.reopens, ['d1']);
     });
 

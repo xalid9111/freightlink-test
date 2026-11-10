@@ -692,103 +692,164 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
   }
 }
 
-/// Hədəf · Toplanan gəlir · Rasxod, then Qalan məbləğ with how it is worked
-/// out (collected − rasxod), the bar and what is left to the target as an
-/// amount (owner's picture, 10.11.2026; no percent).
+/// The day's numbers (owner's design, 10.11.2026): Hədəf · Mənfi (what is
+/// still missing to the target) · Rasxod in whole amounts, the bar with
+/// "money left / target" over it — it fills smoothly when a job comes in and
+/// a star at the target blinks (to keep the worker going) — and "Hədəfə
+/// qalan" in big numbers under it. No percent.
 class DayMoneyCard extends StatelessWidget {
   final AppStrings s;
   final DayProgress p;
   const DayMoneyCard({super.key, required this.s, required this.p});
 
   Widget _col(IconData icon, String label, String value, Color color, String key) => Column(children: [
-        Icon(icon, color: color, size: 30),
-        const SizedBox(height: 6),
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 8),
         Text(label, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-        const SizedBox(height: 2),
+            style: TextStyle(fontSize: 14, color: color == AppColors.text ? AppColors.textSoft : color)),
+        const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(value, key: ValueKey(key), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: color)),
+          child: Text(value, key: ValueKey(key), style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: color)),
         ),
       ]);
 
   @override
   Widget build(BuildContext context) {
-    final sep = Container(width: 1, height: 70, color: AppColors.line);
+    final sep = Container(width: 1, height: 80, color: AppColors.line);
+    final left = p.remaining;
+    final done = p.reached;
     return AdbizCard(
+      padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          Expanded(child: _col(Icons.track_changes, s.t('adb_target'), money(p.target), AppColors.text, 'adb-target')),
+          Expanded(child: _col(Icons.track_changes, s.t('adb_target_short'), adbizAmount(p.target), AppColors.text, 'adb-target')),
           sep,
-          Expanded(child: _col(Icons.savings_outlined, s.t('adb_income_day'), money(p.collected), AppColors.online, 'adb-collected')),
+          Expanded(child: _col(Icons.savings_outlined, s.t('adb_minus'), adbizAmount(left),
+              done ? AppColors.online : AppColors.danger, 'adb-minus')),
           sep,
-          Expanded(child: _col(Icons.payments_outlined, s.t('adb_spent'), money(p.spent), AppColors.danger, 'adb-spent')),
+          Expanded(child: _col(Icons.payments_outlined, s.t('adb_spent'), adbizAmount(p.spent), AppColors.danger, 'adb-spent')),
         ]),
-        Divider(height: 22, color: AppColors.line),
-        LayoutBuilder(builder: (context, c) {
-          final left = Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.account_balance_wallet_outlined, color: AppColors.blue, size: 30),
-            const SizedBox(width: 10),
-            Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(s.t('adb_left_money'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-              Text(money(p.net), key: const ValueKey('adb-left'),
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.blue)),
-            ]),
-          ]);
-          final calc = Container(
-            key: const ValueKey('adb-calc'),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.line.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.info_outline, size: 18, color: AppColors.blue),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${s.t('adb_calc')}:', style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-                  Text(adbizCalcLine(p), style: TextStyle(fontSize: 12.5, color: AppColors.text)),
-                ]),
-              ),
-            ]),
-          );
-          return c.maxWidth >= 360
-              ? Row(children: [left, const SizedBox(width: 10), const Spacer(), Flexible(child: calc)])
-              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [left, const SizedBox(height: 8), calc]);
-        }),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                key: const ValueKey('adb-progress'),
-                value: p.bar,
-                minHeight: 14,
-                backgroundColor: AppColors.line,
-                color: AppColors.online,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // What is left to the target, as an amount — no percent (owner, 10.11.2026).
-          Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-            Text(s.t('adb_to_target'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
-            Text(adbizTargetLine(p), key: const ValueKey('adb-to-target'),
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.accent)),
-          ]),
-        ]),
-        if (p.reached)
+        Divider(height: 28, color: AppColors.line),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text('${adbizNum(p.net < 0 ? 0 : p.net)}/${adbizNum(p.target)}', key: const ValueKey('adb-progress-label'),
+              style: TextStyle(fontSize: 15, color: AppColors.text)),
+        ),
+        const SizedBox(height: 8),
+        AdbizLiveBar(value: p.bar, reached: done),
+        Divider(height: 30, color: AppColors.line),
+        Text(s.t('adb_to_target'), textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(adbizAmount(left), key: const ValueKey('adb-to-target'),
+              style: TextStyle(fontSize: 46, height: 1.1, fontWeight: FontWeight.w600,
+                  color: done ? AppColors.online : AppColors.danger)),
+        ),
+        if (done)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(s.t('adb_target_reached'), style: TextStyle(color: AppColors.online, fontWeight: FontWeight.w500)),
+            child: Text(s.t('adb_target_reached'), textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.online, fontWeight: FontWeight.w500)),
           ),
       ]),
     );
   }
 }
+
+/// The living bar (owner, 10.11.2026: "şkala canlı olsun"): it fills
+/// smoothly to the new value, and a star at the target end blinks and glows;
+/// at the target the star stays lit. Phones that ask for less motion get the
+/// same picture without the animation.
+class AdbizLiveBar extends StatefulWidget {
+  final double value;
+  final bool reached;
+  const AdbizLiveBar({super.key, required this.value, this.reached = false});
+
+  @override
+  State<AdbizLiveBar> createState() => _AdbizLiveBarState();
+}
+
+class _AdbizLiveBarState extends State<AdbizLiveBar> with SingleTickerProviderStateMixin {
+  late final AnimationController _blink =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (still) {
+      _blink.value = 1;
+      _blink.stop();
+    } else if (!_blink.isAnimating) {
+      _blink.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const star = 40.0;
+    return SizedBox(
+      height: star,
+      child: Stack(alignment: Alignment.centerLeft, clipBehavior: Clip.none, children: [
+        Padding(
+          padding: const EdgeInsets.only(right: star / 2),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: widget.value),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                key: const ValueKey('adb-progress'),
+                value: v,
+                minHeight: 16,
+                backgroundColor: AppColors.line,
+                color: AppColors.online,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          child: AnimatedBuilder(
+            animation: _blink,
+            builder: (context, _) {
+              final t = widget.reached ? 1.0 : Curves.easeInOut.transform(_blink.value);
+              final glow = AppColors.accent;
+              return Container(
+                key: const ValueKey('adb-star'),
+                width: star,
+                height: star,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: glow.withValues(alpha: 0.10 + 0.20 * t),
+                  boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.25 + 0.55 * t), blurRadius: 6 + 16 * t, spreadRadius: 1 + 3 * t)],
+                ),
+                child: Transform.scale(
+                  scale: 0.85 + 0.25 * t,
+                  child: Icon(Icons.auto_awesome, size: 20, color: glow.withValues(alpha: 0.55 + 0.45 * t)),
+                ),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// A whole amount on the card: 235 → "235 AZN", 12.5 → "12.50 AZN" (the ₼
+/// sign is not in the app's font, so AZN is written out).
+String adbizAmount(double v) => '${adbizNum(v)} AZN';
 
 /// A plain amount: 235 → "235", 12.5 → "12.50" (the formula lines).
 String adbizNum(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);

@@ -2110,5 +2110,7 @@
   "adb_calc": "Hesaplama",
   "adb_auto_close_note": "Gün 23:59’da otomatik kapanır.",
   "adb_closed_auto": "Gün 23:59’da otomatik kapandı.",
-  "adb_reopen_worker_body": "Günü yanlışlıkla mı kapattınız? Gün yeniden açılsın — yeni iş ve masraf ekleyebileceksiniz."
+  "adb_reopen_worker_body": "Günü yanlışlıkla mı kapattınız? Gün yeniden açılsın — yeni iş ve masraf ekleyebileceksiniz.",
+  "adb_minus": "Eksik",
+  "adb_target_short": "Hedef"
 }
