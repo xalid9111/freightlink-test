@@ -2107,5 +2107,8 @@
   "adb_income_day": "Toplanan gəlir",
   "adb_left_money": "Qalan məbləğ",
   "adb_to_target": "Hədəfə qalan",
-  "adb_calc": "Hesablanma"
+  "adb_calc": "Hesablanma",
+  "adb_auto_close_note": "Gün 23:59-da avtomatik bağlanır.",
+  "adb_closed_auto": "Gün 23:59-da avtomatik bağlanıb.",
+  "adb_reopen_worker_body": "Günü səhvən bağlamısınız? Gün yenidən açılsın — yeni iş və rasxod əlavə edə biləcəksiniz."
 }

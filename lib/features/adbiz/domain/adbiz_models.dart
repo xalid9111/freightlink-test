@@ -65,6 +65,10 @@ class AdbizDay {
   final DateTime workDate;
   final double target;
   final DateTime? openedAt, closedAt;
+
+  /// Who closed it; null on a closed day = closed automatically after 23:59
+  /// (0112).
+  final String? closedBy;
   const AdbizDay({
     required this.id,
     required this.companyId,
@@ -74,6 +78,7 @@ class AdbizDay {
     this.target = 0,
     this.openedAt,
     this.closedAt,
+    this.closedBy,
   });
 
   factory AdbizDay.fromJson(Map<String, dynamic> j) => AdbizDay(
@@ -85,9 +90,17 @@ class AdbizDay {
         target: _d(j['target']),
         openedAt: _t(j['opened_at']),
         closedAt: _t(j['closed_at']),
+        closedBy: j['closed_by'] as String?,
       );
 
   bool get isOpen => status == 'open';
+
+  /// Open for work on [today]: an open day of an earlier date counts as
+  /// closed — every day ends at 23:59 Baku (owner, 10.11.2026, 0112).
+  bool openOn(DateTime today) => isOpen && !workDate.isBefore(today);
+
+  /// Closed by nobody = closed automatically after 23:59.
+  bool closedAutomatically(DateTime today) => (!isOpen && closedBy == null) || (isOpen && workDate.isBefore(today));
 }
 
 class AdbizEntry {

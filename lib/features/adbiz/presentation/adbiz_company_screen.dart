@@ -31,6 +31,17 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
 
   AdbizPeriodKey get _key => (companyId: widget.companyId, period: _period, date: _date);
 
+  @override
+  void initState() {
+    super.initState();
+    // A day ends at 23:59 Baku: forgotten open days are closed first, then
+    // the open / closed counts are read again (0112).
+    Future.microtask(() async {
+      await ref.read(adbizRepositoryProvider).sweep();
+      if (mounted) _refresh();
+    });
+  }
+
   void _refresh() {
     ref.invalidate(adbizReportProvider(_key));
     ref.invalidate(adbizExpensesProvider(_key));

@@ -41,6 +41,14 @@ class _Repo implements AdbizRepository {
   @override
   Future<void> closeDay(String dayId) async => closes.add(dayId);
 
+  int sweeps = 0;
+  @override
+  Future<void> sweep() async => sweeps++;
+
+  final reopens = <String>[];
+  @override
+  Future<void> reopenDay(String dayId) async => reopens.add(dayId);
+
   final dayX = <(String, String, double, String)>[];
   @override
   Future<String> addDayExpense(String dayId, String title, double amount, String clientKey) async {
@@ -55,8 +63,8 @@ class _Repo implements AdbizRepository {
 const _s = AppStrings({});
 final _today = bakuToday();
 
-AdbizDay _day({String status = 'open', double target = 235}) =>
-    AdbizDay(id: 'd1', companyId: 'c', userId: 'me', workDate: _today, status: status, target: target);
+AdbizDay _day({String status = 'open', double target = 235, String? closedBy}) =>
+    AdbizDay(id: 'd1', companyId: 'c', userId: 'me', workDate: _today, status: status, target: target, closedBy: closedBy);
 
 Future<void> _pumpNotebook(WidgetTester t, _Repo repo,
     {List<AdbizDay> days = const [], List<AdbizEntry> entries = const [], List<AdbizExpense> expenses = const []}) async {
@@ -117,6 +125,19 @@ void main() {
       const minus = DayProgress(20, 235, 50);
       expect((minus.net, minus.bar, minus.percentExact), (-30.0, 0.0, 0.0));
       expect(const DayProgress(100, 200).percentLabel, '50%');
+    });
+
+    test('a day ends at 23:59 (Baku): an open day of an earlier date counts as closed', () {
+      final today = DateTime(2026, 11, 10);
+      final y = AdbizDay(id: 'y', companyId: 'c', userId: 'me', workDate: DateTime(2026, 11, 9));
+      expect(y.openOn(today), isFalse);
+      expect(y.closedAutomatically(today), isTrue);
+      final t = AdbizDay(id: 't', companyId: 'c', userId: 'me', workDate: today);
+      expect(t.openOn(today), isTrue);
+      final mine = AdbizDay(id: 'm', companyId: 'c', userId: 'me', workDate: today, status: 'closed', closedBy: 'me');
+      expect((mine.openOn(today), mine.closedAutomatically(today)), (false, false));
+      expect(AdbizDay.fromJson({'id': 'x', 'company_id': 'c', 'user_id': 'u', 'work_date': '2026-11-09', 'status': 'closed'})
+          .closedAutomatically(today), isTrue, reason: 'closed by nobody = automatic');
     });
 
     test('amounts as typed', () {
@@ -226,13 +247,38 @@ void main() {
       expect(repo.dayX.single.$3, 12.5);
     });
 
+    testWidgets('an open day says it closes by itself at 23:59; the notebook sweeps forgotten days', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()]);
+      expect(find.byKey(const ValueKey('adb-auto-close-note')), findsOneWidget);
+      expect(repo.sweeps, 1);
+    });
+
+    testWidgets('closed today by mistake: the worker opens it again', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day(status: 'closed', closedBy: 'me')]);
+      expect(find.byKey(const ValueKey('adb-worker-reopen')), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('adb-worker-reopen')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pumpAndSettle();
+      expect(repo.reopens, ['d1']);
+    });
+
+    testWidgets('closed by the owner (or automatically): not the worker\'s to re-open', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed', closedBy: 'owner')]);
+      expect(find.byKey(const ValueKey('adb-worker-reopen')), findsNothing);
+      expect(find.text('adb_closed_note'), findsOneWidget);
+    });
+
     testWidgets('a closed day: the worker cannot write or close any more', (t) async {
       await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed')]);
       expect(find.byKey(const ValueKey('adb-job-title')), findsNothing);
       expect(find.byKey(const ValueKey('adb-exp-title')), findsNothing);
       expect(find.byKey(const ValueKey('adb-close-day')), findsNothing);
       expect(find.byKey(const ValueKey('adb-reopen-day')), findsNothing, reason: 're-opening is the owner''s / Baş admin''s');
-      expect(find.text('adb_closed_note'), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-worker-reopen')), findsNothing, reason: 'closed by nobody = automatic');
+      expect(find.text('adb_closed_auto'), findsOneWidget);
     });
   });
 
@@ -284,6 +330,12 @@ void main() {
     expect(RegExp(r'adbiz_update_entry[\s\S]*?if not public\.adbiz_can_manage\(d\.company_id\) then').hasMatch(s111), isTrue);
     expect(RegExp(r'adbiz_delete_entry[\s\S]*?if not public\.adbiz_can_manage\(d\.company_id\) then').hasMatch(s111), isTrue);
     expect(src('supabase/tests/local/run_local.sh'), contains('148_ad_business_day_expenses.sql'));
+    // 0112: the day closes after 23:59; the worker re-opens only today's day he closed.
+    final s112 = src('supabase/migrations/0112_ad_business_day_auto_close.sql');
+    expect(s112, contains('and p_day.work_date = public._adbiz_today()'));
+    expect(s112, contains('v_own := d.user_id = auth.uid() and d.closed_by = auth.uid() and d.work_date = public._adbiz_today()'));
+    expect(s112, contains("cron.schedule('adbiz-auto-close', '0 20 * * *'"));
+    expect(src('supabase/tests/local/run_local.sh'), contains('149_ad_business_auto_close.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');
