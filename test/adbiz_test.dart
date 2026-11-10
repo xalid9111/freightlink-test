@@ -259,7 +259,8 @@ void main() {
       ]);
       // The owner's design (10.11.2026): Hədəf · Mənfi · Rasxod, "90/235" over the
       // living bar, "Hədəfə qalan" in big numbers; 120 − 30 = 90 left → 145 short.
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30 AZN');
+      // Only Hədəf and Mənfi on the numbers card (owner, 10.11.2026); the rasxod has its own card.
+      expect(find.byKey(const ValueKey('adb-spent')), findsNothing);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '145 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-progress-label'))).data, '90/235');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '145 AZN');
@@ -459,6 +460,11 @@ void main() {
       final nb = src('lib/features/adbiz/presentation/adbiz_notebook_screen.dart');
       expect(nb, contains('final glow = AppColors.adbStar;'));
       expect(nb, contains('painter: AdbizNeonBarPainter('));
+      // The owner's colours: dark red first, then orange, yellow and green at the target.
+      expect(AdbizNeonBarPainter.heat.first, const Color(0xFF7A0A0A));
+      expect(AdbizNeonBarPainter.heat.last, const Color(0xFF3DFF6E));
+      expect(AdbizNeonBarPainter.heatStops.first, 0.0);
+      expect(AdbizNeonBarPainter.heatStops.last, 1.0);
       const p = AdbizNeonBarPainter(value: 0.6, twinkle: 0.5, neon: Color(0xFF3DFF6E), core: Color(0xFFFFFFFF), track: Color(0xFF000000));
       expect(p.shouldRepaint(const AdbizNeonBarPainter(value: 0.6, twinkle: 0.7, neon: Color(0xFF3DFF6E), core: Color(0xFFFFFFFF), track: Color(0xFF000000))),
           isTrue, reason: 'the spark twinkles');
