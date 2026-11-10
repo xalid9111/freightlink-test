@@ -2095,5 +2095,17 @@
   "adb_err_chief_admin_only": "仅总管理员可操作。",
   "adb_err_invalid_argument": "数据无效。",
   "adb_err_not_found": "未找到。",
-  "adb_err_other_company": "该用户属于另一家广告公司。"
+  "adb_err_other_company": "该用户属于另一家广告公司。",
+  "adb_system": "广告管理系统",
+  "adb_new_job": "添加新工作",
+  "adb_fix_admin_only": "仅管理员可修改",
+  "adb_total_income": "合计（收入）",
+  "adb_spent": "支出",
+  "adb_add_day_expense": "添加支出",
+  "adb_expense_name": "支出名称",
+  "adb_day_expenses_total": "当日支出（合计）",
+  "adb_income_day": "已收收入",
+  "adb_left_money": "剩余金额",
+  "adb_to_target": "距目标还差",
+  "adb_calc": "计算"
 }

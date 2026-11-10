@@ -41,6 +41,13 @@ class _Repo implements AdbizRepository {
   @override
   Future<void> closeDay(String dayId) async => closes.add(dayId);
 
+  final dayX = <(String, String, double, String)>[];
+  @override
+  Future<String> addDayExpense(String dayId, String title, double amount, String clientKey) async {
+    dayX.add((dayId, title, amount, clientKey));
+    return 'x${dayX.length}';
+  }
+
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
@@ -51,7 +58,8 @@ final _today = bakuToday();
 AdbizDay _day({String status = 'open', double target = 235}) =>
     AdbizDay(id: 'd1', companyId: 'c', userId: 'me', workDate: _today, status: status, target: target);
 
-Future<void> _pumpNotebook(WidgetTester t, _Repo repo, {List<AdbizDay> days = const [], List<AdbizEntry> entries = const []}) async {
+Future<void> _pumpNotebook(WidgetTester t, _Repo repo,
+    {List<AdbizDay> days = const [], List<AdbizEntry> entries = const [], List<AdbizExpense> expenses = const []}) async {
   t.view.physicalSize = const Size(390, 1400);
   t.view.devicePixelRatio = 1;
   addTearDown(t.view.reset);
@@ -62,6 +70,7 @@ Future<void> _pumpNotebook(WidgetTester t, _Repo repo, {List<AdbizDay> days = co
       adbizRepositoryProvider.overrideWithValue(repo),
       adbizDaysProvider('me').overrideWith((ref) => Stream.value(days)),
       adbizEntriesProvider('d1').overrideWith((ref) => Stream.value(entries)),
+      adbizDayExpensesProvider('d1').overrideWith((ref) => Stream.value(expenses)),
     ],
     child: const MaterialApp(home: AdbizNotebookScreen()),
   ));
@@ -87,6 +96,27 @@ void main() {
       expect(over.percent, 128, reason: 'more than the target is shown, never cut');
       expect(over.reached, isTrue);
       expect(const DayProgress(10, 0).bar, 1, reason: 'no target set: the bar is full once there is work');
+    });
+
+    test('the owner\'s example: 120 income, 30 rasxod → 90 left, 145 to 235, 38.3 %', () {
+      final e = [
+        for (final (i, a) in [20.0, 25.0, 35.0, 40.0].indexed) AdbizEntry(id: '$i', dayId: 'd', title: 'x', amount: a),
+      ];
+      final x = [AdbizExpense(id: 'x', title: 'Yanacaq', spentOn: DateTime(2026, 11, 10), amount: 30)];
+      final p = DayProgress.of(e, 235, x);
+      expect((p.collected, p.spent, p.net, p.remaining), (120.0, 30.0, 90.0, 145.0));
+      expect(p.percentExact, 38.3);
+      expect(p.percentLabel, '38.3%');
+      expect(p.bar, closeTo(0.383, 0.001));
+      expect(adbizCalcLine(p), '120 − 30 = 90 AZN');
+      expect(adbizTargetLine(p), '235 − 90 = 145 AZN');
+      expect(adbizTargetLine(const DayProgress(250, 235)), '0 AZN', reason: 'target passed');
+      expect(adbizTargetLine(const DayProgress(10, 235, 40)), '235 − (-30) = 265 AZN');
+      expect(adbizCalcLine(const DayProgress(20.5, 235, 8)), '20.50 − 8 = 12.50 AZN');
+      // More rasxod than income: nothing left, the bar empty, the target whole.
+      const minus = DayProgress(20, 235, 50);
+      expect((minus.net, minus.bar, minus.percentExact), (-30.0, 0.0, 0.0));
+      expect(const DayProgress(100, 200).percentLabel, '50%');
     });
 
     test('amounts as typed', () {
@@ -146,8 +176,9 @@ void main() {
         AdbizEntry(id: 'e9', dayId: 'd1', title: 'Kalçuk', amount: 25),
       ]);
       expect(find.text('235.00 AZN'), findsWidgets);
-      expect(find.text('45.00 AZN'), findsWidgets);
-      expect(find.text('190.00 AZN'), findsWidgets);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-collected'))).data, '45.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '45.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 45 = 190 AZN');
       expect(find.byKey(const ValueKey('adb-close-day')), findsOneWidget);
       await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
       await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '35');
@@ -162,9 +193,43 @@ void main() {
       expect(repo.adds[1].$3, 35);
     });
 
+    testWidgets('rasxod: added by the worker (Enter), taken off the money left; no changes to saved rows', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()], entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 20),
+        AdbizEntry(id: 'e2', dayId: 'd1', title: 'Kalçuk', amount: 25),
+        AdbizEntry(id: 'e3', dayId: 'd1', title: 'Banner', amount: 35),
+        AdbizEntry(id: 'e4', dayId: 'd1', title: 'Vinil', amount: 40),
+      ], expenses: [
+        AdbizExpense(id: 'x1', title: 'Yanacaq', spentOn: _today, amount: 30, dayId: 'd1', userId: 'me'),
+      ]);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent'))).data, '30.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-left'))).data, '90.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-to-target'))).data, '235 − 90 = 145 AZN');
+      // No percent anywhere on the worker's panel — the amount left is shown (owner, 10.11.2026).
+      expect(find.textContaining('%'), findsNothing);
+      expect(find.byKey(const ValueKey('adb-percent')), findsNothing);
+      expect(find.textContaining('120 − 30 = 90 AZN'), findsOneWidget);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '120.00 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent-total'))).data, '30.00 AZN');
+      // The worker: no edit / delete on saved jobs or expenses, the lock note.
+      expect(find.byIcon(Icons.edit_outlined), findsNothing);
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+      expect(find.byKey(const ValueKey('adb-fix-admin-only')), findsOneWidget);
+      // No net-profit card for the worker (the owner's panel only).
+      expect(find.text('adb_net'), findsNothing);
+      await t.enterText(find.byKey(const ValueKey('adb-exp-title')), 'Boya');
+      await t.enterText(find.byKey(const ValueKey('adb-exp-amount')), '12,5');
+      await t.testTextInput.receiveAction(TextInputAction.done);
+      await t.pump();
+      expect(repo.dayX.single.$2, 'Boya');
+      expect(repo.dayX.single.$3, 12.5);
+    });
+
     testWidgets('a closed day: the worker cannot write or close any more', (t) async {
       await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed')]);
       expect(find.byKey(const ValueKey('adb-job-title')), findsNothing);
+      expect(find.byKey(const ValueKey('adb-exp-title')), findsNothing);
       expect(find.byKey(const ValueKey('adb-close-day')), findsNothing);
       expect(find.byKey(const ValueKey('adb-reopen-day')), findsNothing, reason: 're-opening is the owner''s / Baş admin''s');
       expect(find.text('adb_closed_note'), findsOneWidget);
@@ -213,6 +278,12 @@ void main() {
     expect(sql, isNot(contains('update users set role')), reason: 'the FreightLink role is never changed');
     expect(sql, contains("'UTEP Reklam', 0)"), reason: 'the target comes from the Baş admin, nothing hard-coded');
     expect(src('supabase/tests/local/run_local.sh'), contains('147_ad_business.sql'));
+    // 0111: the worker's rasxod; saved rows changed only by the owner / Baş admin.
+    final s111 = src('supabase/migrations/0111_ad_business_day_expenses.sql');
+    expect(s111, contains('function public.adbiz_add_day_expense('));
+    expect(RegExp(r'adbiz_update_entry[\s\S]*?if not public\.adbiz_can_manage\(d\.company_id\) then').hasMatch(s111), isTrue);
+    expect(RegExp(r'adbiz_delete_entry[\s\S]*?if not public\.adbiz_can_manage\(d\.company_id\) then').hasMatch(s111), isTrue);
+    expect(src('supabase/tests/local/run_local.sh'), contains('148_ad_business_day_expenses.sql'));
     // The logo only inside the module (and its Profil entry).
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
       final p = f.path.replaceAll('\\', '/');

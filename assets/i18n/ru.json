@@ -2095,5 +2095,17 @@
   "adb_err_chief_admin_only": "Это может только главный админ.",
   "adb_err_invalid_argument": "Неверные данные.",
   "adb_err_not_found": "Не найдено.",
-  "adb_err_other_company": "Этот пользователь в другой рекламной компании."
+  "adb_err_other_company": "Этот пользователь в другой рекламной компании.",
+  "adb_system": "Система управления рекламой",
+  "adb_new_job": "Новая работа",
+  "adb_fix_admin_only": "Изменения вносит только администратор",
+  "adb_total_income": "Итого (доход)",
+  "adb_spent": "Расход",
+  "adb_add_day_expense": "Добавить расход",
+  "adb_expense_name": "Название расхода",
+  "adb_day_expenses_total": "Расходы за день (итого)",
+  "adb_income_day": "Собранный доход",
+  "adb_left_money": "Остаток",
+  "adb_to_target": "До цели",
+  "adb_calc": "Расчёт"
 }

@@ -2095,5 +2095,17 @@
   "adb_err_chief_admin_only": "Yalnız Baş Admin edə bilər.",
   "adb_err_invalid_argument": "Məlumatlar düzgün deyil.",
   "adb_err_not_found": "Tapılmadı.",
-  "adb_err_other_company": "Bu istifadəçi başqa reklam şirkətindədir."
+  "adb_err_other_company": "Bu istifadəçi başqa reklam şirkətindədir.",
+  "adb_system": "Reklam idarəetmə sistemi",
+  "adb_new_job": "Yeni iş əlavə et",
+  "adb_fix_admin_only": "Düzəliş yalnız admin tərəfindən mümkündür",
+  "adb_total_income": "Cəmi (Gəlir)",
+  "adb_spent": "Rasxod",
+  "adb_add_day_expense": "Xərc əlavə et",
+  "adb_expense_name": "Xərcin adı",
+  "adb_day_expenses_total": "Günün xərcləri (Cəmi)",
+  "adb_income_day": "Toplanan gəlir",
+  "adb_left_money": "Qalan məbləğ",
+  "adb_to_target": "Hədəfə qalan",
+  "adb_calc": "Hesablanma"
 }

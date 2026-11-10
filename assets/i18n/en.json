@@ -2095,5 +2095,17 @@
   "adb_err_chief_admin_only": "Only the chief admin can do this.",
   "adb_err_invalid_argument": "The details are not valid.",
   "adb_err_not_found": "Not found.",
-  "adb_err_other_company": "This user belongs to another ad company."
+  "adb_err_other_company": "This user belongs to another ad company.",
+  "adb_system": "Ad management system",
+  "adb_new_job": "Add a new job",
+  "adb_fix_admin_only": "Only an admin can make changes",
+  "adb_total_income": "Total (income)",
+  "adb_spent": "Expenses",
+  "adb_add_day_expense": "Add an expense",
+  "adb_expense_name": "Expense",
+  "adb_day_expenses_total": "The day’s expenses (total)",
+  "adb_income_day": "Income collected",
+  "adb_left_money": "Money left",
+  "adb_to_target": "Left to the target",
+  "adb_calc": "Worked out"
 }

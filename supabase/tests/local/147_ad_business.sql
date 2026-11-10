@@ -56,13 +56,14 @@ select tests.check(public.adbiz_add_entry((select id from t where k = 'd'), 'Nö
 insert into t values ('e2', public.adbiz_add_entry((select id from t where k = 'd'), 'Kalçuk', 25, 'c0000000-0000-4000-8000-000000000002'));
 select tests.check((select count(*) = 2 and sum(amount) = 45 from public.adbiz_entries), 'C5 two jobs, 45');
 select tests.check(tests.err(format($$ select public.adbiz_add_entry(%L, 'x', 0) $$, (select id from t where k = 'd'))) like '%invalid_argument%', 'C6 no zero amounts');
-select public.adbiz_update_entry((select id from t where k = 'e2'), 'Kalçuk', 30);
+select tests.check(tests.err(format($$ select public.adbiz_update_entry(%L, 'Kalçuk', 30) $$, (select id from t where k = 'e2'))) like '%not_allowed%',
+  'C6b a worker never changes a saved job, even on an open day (0111)');
 select tests.check(not exists (select 1 from public.adbiz_expenses), 'C7 a worker sees no expenses');
 select tests.check(not exists (select 1 from public.adbiz_audit), 'C8 …nor the history');
 select tests.check(tests.err(format($$ insert into public.adbiz_entries (day_id, company_id, user_id, title, amount) values (%L, %L, auth.uid(), 'x', 1) $$,
   (select id from t where k = 'd'), :utep)) like '%permission denied%', 'C9 no direct writes');
 select public.adbiz_close_day((select id from t where k = 'd'));
-select tests.check((select status = 'closed' from public.adbiz_days where id = (select id from t where k = 'd')), 'C10 closed below the target (50 < 235)');
+select tests.check((select status = 'closed' from public.adbiz_days where id = (select id from t where k = 'd')), 'C10 closed below the target (45 < 235)');
 select tests.check(tests.err(format($$ select public.adbiz_add_entry(%L, 'late', 10) $$, (select id from t where k = 'd'))) like '%day_closed%', 'C11 closed: no new job');
 select tests.check(tests.err(format($$ select public.adbiz_update_entry(%L, 'x', 99) $$, (select id from t where k = 'e1'))) like '%day_closed%', 'C12 closed: no change');
 select tests.check(tests.err(format($$ select public.adbiz_delete_entry(%L) $$, (select id from t where k = 'e1'))) like '%day_closed%', 'C13 closed: no delete');
@@ -86,9 +87,9 @@ select public.adbiz_close_day((select id from t where k = 'd'));
 select tests.check((select count(*) = 2 from public.adbiz_audit where action in ('day.reopen', 'day.close') and actor_id = :owner), 'E3 re-open + close by the owner, logged');
 insert into t values ('x', public.adbiz_expense_save(null, null, current_date, 'Boya', 12, 'c0000000-0000-4000-8000-000000000009'));
 select tests.check(public.adbiz_expense_save(null, null, current_date, 'Boya', 12, 'c0000000-0000-4000-8000-000000000009') = (select id from t where k = 'x'), 'E4 expense double tap = one');
-select tests.check((public.adbiz_report(:utep, public._adbiz_today() - 1, public._adbiz_today()) ->> 'income')::numeric = 52
+select tests.check((public.adbiz_report(:utep, public._adbiz_today() - 1, public._adbiz_today()) ->> 'income')::numeric = 47
                and (public.adbiz_report(:utep, public._adbiz_today() - 1, public._adbiz_today()) ->> 'expenses')::numeric = 12
-               and (public.adbiz_report(:utep, public._adbiz_today() - 1, public._adbiz_today()) ->> 'net')::numeric = 40, 'E5 income 52, expenses 12, net 40');
+               and (public.adbiz_report(:utep, public._adbiz_today() - 1, public._adbiz_today()) ->> 'net')::numeric = 35, 'E5 income 47, expenses 12, net 35');
 select tests.check(tests.err(format($$ select public.adbiz_report(%L, current_date - 1, current_date) $$, (select id from t where k = 'b'))) like '%not_allowed%', 'E6 not another company''s report');
 select tests.check(tests.err($$ select public.adbiz_owner_add_worker('owner3@t.test') $$) like '%not_allowed%', 'E7 adding workers needs the Baş admin''s permission');
 select tests.check(tests.err(format($$ select public.adbiz_member_set_active(%L, false) $$, :worker)) like '%not_allowed%', 'E8 …and so does taking one off');
@@ -102,7 +103,7 @@ select public.adbiz_admin_member_target(:worker, 180);
 select tests.check((select personal_target = 180 from public.adbiz_members where user_id = :worker), 'F3 a worker''s own target');
 select tests.check(exists (select 1 from public.adbiz_entries) and exists (select 1 from public.adbiz_companies where name = 'Reklam B'), 'F4 the Baş admin sees every company');
 select public.adbiz_delete_entry((select id from t where k = 'e2'));
-select tests.check(exists (select 1 from public.adbiz_audit where action = 'entry.delete' and actor_id = :chief and old_value ->> 'amount' = '30.00'), 'F5 a deleted job stays in the history');
+select tests.check(exists (select 1 from public.adbiz_audit where action = 'entry.delete' and actor_id = :chief and old_value ->> 'amount' = '25.00'), 'F5 a deleted job stays in the history');
 select tests.check(tests.err(format($$ select public.adbiz_open_day_for(%L, current_date + 3) $$, :worker)) like '%invalid_argument%', 'F6 no future days');
 
 select tests.login(:owner);

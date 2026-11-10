@@ -109,13 +109,29 @@ class AdbizExpense {
   final String id, title;
   final DateTime spentOn;
   final double amount;
-  const AdbizExpense({required this.id, required this.title, required this.spentOn, required this.amount});
+
+  /// A worker's day expense (rasxod, 0111): its day and worker; null = a
+  /// company expense the owner wrote.
+  final String? dayId, userId;
+  final DateTime? createdAt;
+  const AdbizExpense({
+    required this.id,
+    required this.title,
+    required this.spentOn,
+    required this.amount,
+    this.dayId,
+    this.userId,
+    this.createdAt,
+  });
 
   factory AdbizExpense.fromJson(Map<String, dynamic> j) => AdbizExpense(
         id: j['id'] as String,
         title: (j['title'] as String?) ?? '',
         spentOn: _date(j['spent_on']),
         amount: _d(j['amount']),
+        dayId: j['day_id'] as String?,
+        userId: j['user_id'] as String?,
+        createdAt: _t(j['created_at']),
       );
 }
 
@@ -204,20 +220,37 @@ class AdbizUserHit {
       );
 }
 
-/// The day's numbers (owner, 10.11.2026): collected = the sum of the jobs,
-/// remaining never below 0, the bar full at the target — the target only
-/// motivates, collecting more is fine (no upper limit), percent shows it.
+/// The day's numbers (owner, 10.11.2026): collected = the sum of the jobs;
+/// spent = the day's expenses (rasxod, 0111); the day's money left (net) =
+/// collected − spent; what is left to the target and the bar follow the
+/// money left (120 − 30 = 90 → 145 to 235, 38.3 %). Remaining never below
+/// 0; the target only motivates — more is fine (no upper limit).
 class DayProgress {
-  final double collected, target;
-  const DayProgress(this.collected, this.target);
+  final double collected, target, spent;
+  const DayProgress(this.collected, this.target, [this.spent = 0]);
 
-  factory DayProgress.of(Iterable<AdbizEntry> entries, double target) =>
-      DayProgress(entries.fold<double>(0, (s, e) => s + e.amount), target);
+  factory DayProgress.of(Iterable<AdbizEntry> entries, double target, [Iterable<AdbizExpense> expenses = const []]) =>
+      DayProgress(
+        entries.fold<double>(0, (s, e) => s + e.amount),
+        target,
+        expenses.fold<double>(0, (s, e) => s + e.amount),
+      );
 
-  double get remaining => (target - collected) > 0 ? target - collected : 0;
-  double get bar => target <= 0 ? (collected > 0 ? 1 : 0) : (collected / target).clamp(0, 1).toDouble();
-  int get percent => target <= 0 ? 0 : (collected / target * 100).round();
-  bool get reached => target > 0 && collected >= target;
+  double get net => _r2(collected - spent);
+  double get remaining => (target - net) > 0 ? _r2(target - net) : 0;
+  double get bar => target <= 0 ? (net > 0 ? 1 : 0) : (net / target).clamp(0, 1).toDouble();
+
+  /// Percent of the target, one decimal (38.3); never below 0.
+  double get percentExact => target <= 0 || net <= 0 ? 0 : (net / target * 1000).round() / 10;
+  int get percent => percentExact.round();
+  String get percentLabel {
+    final v = percentExact;
+    return v == v.roundToDouble() ? '${v.toInt()}%' : '${v.toStringAsFixed(1)}%';
+  }
+
+  bool get reached => target > 0 && net >= target;
+
+  static double _r2(double v) => (v * 100).roundToDouble() / 100;
 }
 
 /// Day / month / year of a date — the owner's report periods.
