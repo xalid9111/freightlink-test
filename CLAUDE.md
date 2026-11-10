@@ -674,6 +674,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   the program's days; months and years then simply go on from the
   program. The chosen month's "Köhnə hesab" row on the Ay view with ✏️
   (owner / Baş admin; both empty = taken off; audited); no direct writes.
+  The worker's bar (owner's picture, 10.11.2026, "daha canlı"): a thin
+  outlined capsule, a neon green line of light filling it (glow + a core
+  whitening to the tip), a twinkling four-ray spark at the tip and a green
+  ringed star at the target end (AdbizNeonBarPainter; AppColors.adbNeon /
+  adbNeonCore / adbTrack / adbStar — green at night too now, a deeper green
+  by day); still for phones asking for less motion; numbers unchanged.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
