@@ -151,6 +151,22 @@ class AppColors {
   static Color get promoBump => isDay ? const Color(0xFF16A34A) : const Color(0xFF34D46A);
   static Color get promoVip => isDay ? const Color(0xFFE2620A) : const Color(0xFFFF9124);
   static Color get promoPremium => isDay ? const Color(0xFFB98600) : const Color(0xFFFFC83D);
+  /// UTEP Reklam owner panel (owner's picture, 10.11.2026): dark teal glass
+  /// at night, a light version by day — only inside the UTEP module.
+  static Color get adbBg => isDay ? const Color(0xFFF2F7F7) : const Color(0xFF061416);
+  static Color get adbBgGlow => isDay ? const Color(0xFFDDEFEE) : const Color(0xFF0C2E30);
+  static Color get adbPanel => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF0C2225);
+  static Color get adbPanelHi => isDay ? const Color(0xFFE6F4F2) : const Color(0xFF0F3634);
+  static Color get adbLine => isDay ? const Color(0xFFCFE3E1) : const Color(0xFF1C4447);
+  static Color get adbTeal => isDay ? const Color(0xFF0E8C80) : const Color(0xFF1FC7B4);
+  static Color get adbText => isDay ? const Color(0xFF10262A) : const Color(0xFFFFFFFF);
+  static Color get adbTextSoft => isDay ? const Color(0xFF5B7276) : const Color(0xFFB4C6C8);
+  static Color get adbIncome => isDay ? const Color(0xFF16A34A) : const Color(0xFF4ADE80);
+  static Color get adbSpend => isDay ? const Color(0xFFDC2626) : const Color(0xFFFF6B6B);
+  static Color get adbNet => isDay ? const Color(0xFF2563EB) : const Color(0xFF3BA2FF);
+  /// The worker's bar star: orange glow at night, green by day (owner,
+  /// 10.11.2026: "gündüz rejimində şkalanın sonu yaşıl").
+  static Color get adbStar => isDay ? const Color(0xFF16A34A) : _p.accent;
   static const Color vipGold = Color(0xFFFFC83D);
   /// VIP medal: gold rim shade and the dark centre / ribbons.
   static const Color vipGoldDark = Color(0xFF7A5200);

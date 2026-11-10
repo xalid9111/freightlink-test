@@ -119,9 +119,19 @@ class AdbizRepository {
   Future<String> openDayFor(String userId, DateTime date) =>
       _run(() async => (await _c.rpc('adbiz_open_day_for', params: {'p_user': userId, 'p_date': isoDate(date)})) as String);
 
-  Future<String> addEntry(String dayId, String title, double amount, String clientKey) => _run(() async =>
-      (await _c.rpc('adbiz_add_entry', params: {'p_day': dayId, 'p_title': title, 'p_amount': amount, 'p_client_key': clientKey}))
-          as String);
+  /// [card] is sent only once SQL 0113 is run (null = the old call).
+  Future<String> addEntry(String dayId, String title, double amount, String clientKey, {bool? card}) => _run(() async =>
+      (await _c.rpc('adbiz_add_entry', params: {
+        'p_day': dayId,
+        'p_title': title,
+        'p_amount': amount,
+        'p_client_key': clientKey,
+        if (card != null) 'p_card': card,
+      })) as String);
+
+  /// The card tick of a saved job (0113): the worker on his own open day,
+  /// the owner / Baş admin on any day; audited.
+  Future<void> setEntryCard(String id, bool on) => _run(() => _c.rpc('adbiz_entry_set_card', params: {'p_entry': id, 'p_on': on}));
 
   Future<void> updateEntry(String id, String title, double amount) =>
       _run(() => _c.rpc('adbiz_update_entry', params: {'p_entry': id, 'p_title': title, 'p_amount': amount}));
@@ -165,6 +175,27 @@ class AdbizRepository {
           })) as String);
 
   Future<void> expenseDelete(String id) => _run(() => _c.rpc('adbiz_expense_delete', params: {'p_id': id}));
+
+  /// The owner's words for the workers (0113): the caption instead of
+  /// "Hədəfə qalan" and the task for every worker (empty = none).
+  Future<void> companyTexts(String companyId, String? label, String? task) =>
+      _run(() => _c.rpc('adbiz_company_texts_save', params: {'p_company': companyId, 'p_label': label, 'p_task': task}));
+
+  /// The workers see the target or not (0113).
+  Future<void> companyShowTarget(String companyId, bool on) =>
+      _run(() => _c.rpc('adbiz_company_show_target', params: {'p_company': companyId, 'p_on': on}));
+
+  /// A task for one worker (0113).
+  Future<void> memberTask(String userId, String? task) =>
+      _run(() => _c.rpc('adbiz_member_task_save', params: {'p_user': userId, 'p_task': task}));
+
+  /// One member's task (the worker reads his own row, the owner his
+  /// company's; null before 0113 or none).
+  Future<String?> memberTaskOf(String userId) => _run(() async {
+        final r = await _c.from('adbiz_members').select().eq('user_id', userId).maybeSingle();
+        final t = '${r?['task_note'] ?? ''}'.trim();
+        return t.isEmpty ? null : t;
+      });
 
   // ---- Baş admin ------------------------------------------------------------------
   Future<String> companySave({String? id, required String name, required double dailyTarget, bool ownerManagesStaff = false}) =>
