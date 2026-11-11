@@ -86,6 +86,8 @@ class _AdminTirParksPageState extends ConsumerState<AdminTirParksPage> {
           title: Text('Önə çıxar qiymətləri (TIRPark)'),
           children: [PlacePromoPrices(PlaceTarget.tirpark, run: runAdmin)],
         ),
+        // OSM map data (owner, 11.11.2026, 0117): how much, from when.
+        const _OsmStatus(),
         Text('TIRPark — parklar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
         const SizedBox(height: 4),
         Text('İstifadəçilərin əlavə etdiyi parklar təsdiqdən sonra hamıya görünür. Rədd / gizlət heç nəyi silmir.',
@@ -311,6 +313,56 @@ class _OwnerRequestsState extends ConsumerState<_OwnerRequests> {
             ),
           ),
       ]),
+    );
+  }
+}
+
+const _osmHow = 'Avropa və Asiya ayda bir dəfə Geofabrik-dən toplu yenilənir (GitHub → Actions → OSM truck parks). '
+    'Azərbaycan daxil edilmir — orada yalnız platformanın parkları görünür. Səhv obyekti xəritədə ona basıb "Gizlət (admin)" ilə gizlədin.';
+
+/// Admin → TIRPark → "Xəritə məlumatı (OpenStreetMap)": totals per country
+/// and the last monthly import (0117). Wrong objects are hidden from the map
+/// sheet itself ("Gizlət (admin)").
+class _OsmStatus extends ConsumerWidget {
+  const _OsmStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(adminOsmStatusProvider);
+    final st = async.valueOrNull;
+    String day(Object? v) {
+      final d = DateTime.tryParse('${v ?? ''}')?.toLocal();
+      return d == null ? '—' : '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+    }
+
+    final countries = (st?['countries'] as List?) ?? const [];
+    return ExpansionTile(
+      key: const ValueKey('atp-osm'),
+      tilePadding: EdgeInsets.zero,
+      title: const Text('Xəritə məlumatı (OpenStreetMap)'),
+      subtitle: st == null
+          ? null
+          : Text(st['last_run'] == null ? 'Hələ idxal olunmayıb' : 'Son yenilənmə: ${day(st['last_run'])}',
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+      childrenPadding: const EdgeInsets.only(bottom: 12),
+      children: [
+        if (async.hasError) Text(async.error is TirParkNotReady ? 'SQL 0117 hələ işə salınmayıb.' : 'Alınmadı. Yenidən cəhd edin.', style: TextStyle(color: AppColors.danger)),
+        if (st != null)
+          Text('Göstərilən: ${st['shown'] ?? 0} · Cəmi: ${st['total'] ?? 0} · Gizli: ${st['hidden'] ?? 0}',
+              style: TextStyle(fontSize: 13.5, color: AppColors.text)),
+        const SizedBox(height: 6),
+        Text(_osmHow, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+        const SizedBox(height: 6),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          for (final c in countries)
+            if (c is Map)
+              Chip(
+                visualDensity: VisualDensity.compact,
+                label: Text('${c['country']} · ${c['count']} · ${day(c['last_run'])}', style: const TextStyle(fontSize: 12)),
+              ),
+        ]),
+      ],
     );
   }
 }

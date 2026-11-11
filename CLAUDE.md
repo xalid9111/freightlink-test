@@ -19,10 +19,12 @@ to copy-paste.
 | Deploy | repo `.github/workflows/deploy.yml` ("Deploy FreightLink Web") | `flutter build web` from the repo root, publishes `build/web` to GitHub Pages (`--base-href /freightlink-test/`). Must trigger on **push to `main` only** (`on: push: branches: [main]`) — verify this whenever the deploy file changes |
 | Quality gate | repo `.github/workflows/autofix-ci.yml` (reference copy: `docs/autofix/autofix-ci.yml`) | every branch / PR: static checks, SQL/RLS tests on a throw-away Postgres, `flutter analyze`, `flutter test`, `flutter build web`; result also in Admin → AutoFix |
 | Edge Functions | repo `.github/workflows/supabase-functions.yml` ("Supabase functions") | deploys one function from `supabase/functions/` to Supabase, **only by hand** (Actions → Run workflow, works from a phone); needs the secret `SUPABASE_ACCESS_TOKEN` |
+| OSM truck parks | repo `.github/workflows/osm-truck-parks.yml` ("OSM truck parks") | TIRPark map data (0117): once a month (+ by hand) downloads Geofabrik's country extracts, filters lorry parking with osmium (`scripts/osm_truck_parks`) and upserts `osm_truck_parks` through the Supabase SQL API (secret `SUPABASE_ACCESS_TOKEN`); never AZ, never Overpass, never Pages |
 | Database | Supabase project `jqdqtfmxnqezlsetelpi` | changed **only** by forward-only migrations in `supabase/migrations/` that the owner runs in the SQL editor |
 | Runtime errors | AutoFix (`lib/core/autofix`, migration 0034) | Admin → AutoFix (xətalar) |
 
-Only `deploy.yml`, `autofix-ci.yml` and the manual `supabase-functions.yml`
+Only `deploy.yml`, `autofix-ci.yml`, the manual `supabase-functions.yml`
+and the monthly / manual data job `osm-truck-parks.yml` (owner, 11.11.2026)
 are active workflows. Never add a second Pages deploy workflow (the old `ci.yml` / `deploy-web.yml` from the
 ZIP era were intentionally not carried over).
 
@@ -385,6 +387,25 @@ files to the owner separately (they are run by hand in the SQL editor).
   qoşul" and "+" keep /service-join.
   "Park rezervasiyalarım" (Rezervasiyalar və statuslar) stands on Profil
   right under "TIR Parkı"; its screen unchanged.
+  OSM map data (owner, 11.11.2026, 0117): Azerbaijan shows ONLY the
+  platform's own parks (no OSM object with AZ / inside its border is ever
+  stored); in Europe and Asia OpenStreetMap places marked for lorries
+  (amenity=parking / highway=rest_area|services + hgv=yes|designated|only,
+  not private) show on the TIRPark map as a blue "P" pin with "OSM", from
+  zoom 7, one screen at a time (osm_truck_parks_in_bounds, ≤ 400, 0.5° grid,
+  0.4 s after the map stops, 10 min cache), never in "Yaxınlıqdakı parklar"
+  and hidden while a facility filter is on. A tap opens a sheet: name (or
+  "TIR dayanacağı"), "Xəritə məlumatı", only the source's facts (fee,
+  capacity:hgv, hours, operator, toilets / shower / guard / light), "not
+  checked by the platform, no booking", Marşrut, "© OpenStreetMap ·
+  ODbL"; admins "Gizlət" (logged). Own table osm_truck_parks (source_id =
+  OSM id, upsert = no duplicates, unseen 120 days = not shown, nothing
+  deleted), apart from tir_parks: no booking, management, reviews, promo
+  or favourites. An OSM object within 150 m of an approved platform park is
+  not shown. Data comes in bulk from Geofabrik extracts monthly (phase 1:
+  Europe, TR, GE, RU, KZ, UZ, KG, TJ, TM, IR; the rest of Asia = group
+  asia-rest, by hand); the app never asks an outside API; public Overpass is
+  not used. Admin → TIRPark → "Xəritə məlumatı" shows totals per country.
   Users add NO parking spots (owner, 07.11.2026, 0100): no "Dayanacaq
   əlavə et" in Profil → TIR Parkı, no /tirpark?add= mode; the map's
   "TIR parkı əlavə et +" stays and opens Profil → TIR Parkı (Park

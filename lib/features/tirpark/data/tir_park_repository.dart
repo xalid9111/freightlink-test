@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../domain/osm_truck_park.dart';
 import '../domain/tir_park.dart';
 
 /// Migration 0077 not run yet in Supabase.
@@ -65,6 +67,34 @@ class TirParkRepository {
             .limit(3000)
             .timeout(_timeout);
         return [for (final r in rows as List) TirPark.fromJson(Map<String, dynamic>.from(r as Map))];
+      });
+
+  /// OSM truck parking inside one map area (0117, "Xəritə məlumatı"): read
+  /// from our own table, never from an outside API. Before 0117 runs: none.
+  Future<List<OsmTruckPark>> osmInBounds(OsmBounds b) async {
+    try {
+      final res = await _c.rpc('osm_truck_parks_in_bounds', params: {
+        'p_south': b.south,
+        'p_west': b.west,
+        'p_north': b.north,
+        'p_east': b.east,
+      }).timeout(_timeout);
+      final items = (res is Map ? res['items'] : null) as List? ?? const [];
+      return [for (final r in items) OsmTruckPark.fromJson(Map<String, dynamic>.from(r as Map))];
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || e.code == '42883' || e.code == 'PGRST205' || e.code == '42P01') return const [];
+      rethrow;
+    }
+  }
+
+  /// Admins: hide / show one OSM object (logged on the server).
+  Future<void> adminOsmSetHidden(String sourceId, bool hidden) => _run(
+      () => _c.rpc('admin_osm_park_set_hidden', params: {'p_source_id': sourceId, 'p_hidden': hidden}).timeout(_timeout));
+
+  /// Admins: totals per country and the last import.
+  Future<Map<String, dynamic>> adminOsmStatus() => _run(() async {
+        final res = await _c.rpc('admin_osm_parks_status').timeout(_timeout);
+        return Map<String, dynamic>.from(res as Map);
       });
 
   /// Admin list: every state, pending first.
@@ -491,6 +521,23 @@ final tirParksProvider = FutureProvider.autoDispose<List<TirPark>>((ref) {
   ref.watch(currentUserIdProvider);
   return ref.watch(tirParkRepositoryProvider).parks();
 });
+
+/// OSM objects of one map area; kept 10 minutes so panning back and forth
+/// never asks the server again.
+final osmTruckParksProvider = FutureProvider.autoDispose.family<List<OsmTruckPark>, OsmBounds>((ref, b) async {
+  final link = ref.keepAlive();
+  final timer = Timer(const Duration(minutes: 10), link.close);
+  ref.onDispose(timer.cancel);
+  try {
+    return await ref.watch(tirParkRepositoryProvider).osmInBounds(b);
+  } catch (_) {
+    link.close();
+    rethrow;
+  }
+});
+
+final adminOsmStatusProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) => ref.watch(tirParkRepositoryProvider).adminOsmStatus());
 
 /// "Boş yerlər: n" on the park cards. Before 0081 runs (or offline) the
 /// cards simply show no booking line.

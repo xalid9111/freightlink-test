@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,12 +11,16 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../services/geo_service.dart';
 import '../../chat/presentation/widgets/location_message.dart' show ChatLocation, showNavigationPicker;
 import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
+import '../domain/osm_truck_park.dart';
 import '../domain/tir_park.dart';
 import 'map_page_banner.dart';
+import 'osm_parks.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
@@ -43,6 +49,13 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   final _searchFocus = FocusNode();
   final _sheet = DraggableScrollableController();
   LatLng _center = kDefaultServiceCenter;
+  // OSM map data (owner, 11.11.2026, 0117): the screen's area, asked for
+  // 0.4 s after the map stops moving, from zoom 7 on; the last answer stays
+  // on the map while the next one loads.
+  OsmBounds? _osmBounds;
+  Timer? _osmTimer;
+  List<OsmTruckPark> _lastOsm = const [];
+  String? _osmSelected;
   bool _mapReady = false;
   Map<String, PlacePromo> _lastPromos = const {};
   String? _selectedId;
@@ -58,6 +71,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   @override
   void dispose() {
     disposePremium();
+    _osmTimer?.cancel();
     _search.dispose();
     _searchFocus.dispose();
     _sheet.dispose();
@@ -140,6 +154,48 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
         ChatLocation(url: 'https://maps.google.com/?q=${p.lat},${p.lng}', lat: p.lat, lng: p.lng),
       );
 
+  void _osmFrom(MapCamera c) {
+    final v = c.visibleBounds;
+    final b = OsmBounds.of(south: v.south, west: v.west, north: v.north, east: v.east, zoom: c.zoom);
+    if (b != _osmBounds && mounted) setState(() => _osmBounds = b);
+  }
+
+  /// A tap on an OSM pin: its facts in a sheet — no booking, no park page.
+  Future<void> _openOsm(OsmTruckPark p, AppStrings s) async {
+    setState(() => _osmSelected = p.id);
+    final admin = ref.read(currentUserProvider)?.role == AppConstants.roleAdmin;
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (sheet) => OsmParkSheet(
+        s: s,
+        park: p,
+        onNavigate: () => showNavigationPicker(
+          context,
+          s,
+          ChatLocation(url: 'https://maps.google.com/?q=${p.lat},${p.lng}', lat: p.lat, lng: p.lng),
+        ),
+        onHide: !admin
+            ? null
+            : () async {
+                Navigator.of(sheet).pop();
+                try {
+                  await ref.read(tirParkRepositoryProvider).adminOsmSetHidden(p.id, true);
+                  ref.invalidate(osmTruckParksProvider);
+                  if (mounted) {
+                    setState(() => _lastOsm = [for (final o in _lastOsm) if (o.id != p.id) o]);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('osm_hidden'))));
+                  }
+                } catch (_) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('svc_save_failed'))));
+                }
+              },
+      ),
+    );
+    if (mounted) setState(() => _osmSelected = null);
+  }
+
   /// A promoted, approved park: the premium marker (0093 / 05.11.2026).
   bool _premium(TirPark p, Map<String, PlacePromo> promos) => p.isApproved && (promos[p.id]?.isPromoted ?? false);
 
@@ -157,6 +213,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
       if (p.id == _selectedId) selected = p;
     }
     final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
+    // OSM map data: only on the map (never in the list), hidden while a
+    // facility filter is on (the filter is about the platform's parks).
+    final osmOn = _osmBounds != null && _needs.isEmpty;
+    final osmAsync = osmOn ? ref.watch(osmTruckParksProvider(_osmBounds!)) : null;
+    if (osmAsync != null && osmAsync.hasValue) _lastOsm = osmAsync.value!;
+    final osm = osmOn ? (osmAsync?.valueOrNull ?? _lastOsm) : const <OsmTruckPark>[];
     // "Önə çıxar" (owner, 04.11.2026, 0093): promoted parks around their own
     // place first (Premium on top), then the rest nearest first.
     final promoAsync = ref.watch(placePromoStateProvider(placePromoKey(PlaceTarget.tirpark, shownOnMap.map((p) => p.id))));
@@ -207,6 +269,11 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                       _mapReady = true;
                       premiumMapReady();
                       if (me != null) _move(me, 11);
+                      _osmFrom(_map.camera);
+                    },
+                    onPositionChanged: (camera, _) {
+                      _osmTimer?.cancel();
+                      _osmTimer = Timer(const Duration(milliseconds: 400), () => _osmFrom(camera));
                     },
                     onTap: (_, __) {
                       _searchFocus.unfocus();
@@ -223,6 +290,19 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                           color: AppColors.accent,
                           strokeWidth: 4,
                         ),
+                      ]),
+                    // OSM map data under the platform's pins.
+                    if (osm.isNotEmpty)
+                      MarkerLayer(markers: [
+                        for (final o in osm)
+                          Marker(
+                            key: ValueKey('tp-osm-${o.id}'),
+                            point: LatLng(o.lat, o.lng),
+                            width: OsmParkPin.width,
+                            height: OsmParkPin.height,
+                            alignment: Alignment.center,
+                            child: GestureDetector(onTap: () => _openOsm(o, s), child: OsmParkPin(selected: o.id == _osmSelected)),
+                          ),
                       ]),
                     MarkerLayer(markers: [
                       for (final p in shownOnMap)
