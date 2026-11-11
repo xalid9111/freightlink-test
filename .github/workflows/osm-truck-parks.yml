@@ -1,0 +1,101 @@
+# OSM truck parks — TIRPark map data (owner, 11.11.2026, SQL 0117).
+#
+# Brings lorry parking places from OpenStreetMap into the database table
+# public.osm_truck_parks in BULK: each country's Geofabrik extract
+# (download.geofabrik.de, rebuilt daily) is downloaded once, filtered with
+# osmium-tool, and written through public.osm_truck_parks_upsert() (one row
+# per OSM object, so a new run updates and never duplicates). The app only
+# reads that table; the public Overpass servers are not used.
+#
+# Azerbaijan is never imported (platform parks only): it is in no group, the
+# script refuses it, drops points inside its border, and the database refuses
+# the code AZ.
+#
+# Runs once a month (phase 1: Europe, Türkiyə, Gürcüstan, Rusiya, Central
+# Asia, İran) and by hand (Actions → "OSM truck parks" → Run workflow; the
+# rest of Asia = group asia-rest, by hand until the owner adds it to the
+# monthly run). Never runs on push, never touches the site deploy or user data.
+#
+# Needs the repository secret SUPABASE_ACCESS_TOKEN (already used by
+# "Supabase functions"); it is never printed. SQL 0117 must be run first.
+# Data © OpenStreetMap contributors, ODbL 1.0.
+name: OSM truck parks
+
+on:
+  schedule:
+    - cron: '23 2 5 * *'   # the 5th of every month, 02:23 UTC
+  workflow_dispatch:
+    inputs:
+      group:
+        description: Countries to bring in
+        type: choice
+        options: [phase-1, europe-a, europe-b, europe-c, europe-d, eurasia, asia-rest]
+        default: phase-1
+      country:
+        description: Or one country only (ISO code, e.g. GE) — overrides the group
+        required: false
+        default: ''
+      dry_run:
+        description: Only count, write nothing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osm-truck-parks
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      groups: ${{ steps.p.outputs.groups }}
+    steps:
+      - id: p
+        env:
+          GROUP: ${{ inputs.group || 'phase-1' }}
+          COUNTRY: ${{ inputs.country }}
+        run: |
+          if [ -n "$COUNTRY" ]; then echo 'groups=["country"]' >> "$GITHUB_OUTPUT";
+          elif [ "$GROUP" = "phase-1" ]; then echo 'groups=["europe-a","europe-b","europe-c","europe-d","eurasia"]' >> "$GITHUB_OUTPUT";
+          else echo "groups=[\"$GROUP\"]" >> "$GITHUB_OUTPUT"; fi
+
+  import:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 2   # polite to Geofabrik: at most two downloads at a time
+      matrix:
+        group: ${{ fromJson(needs.plan.outputs.groups) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the access token is set
+        if: ${{ !inputs.dry_run }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Add the repository secret SUPABASE_ACCESS_TOKEN first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Install osmium-tool
+        run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+
+      - name: Import ${{ matrix.group }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GROUP: ${{ matrix.group }}
+          COUNTRY: ${{ inputs.country }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          if [ "$GROUP" = "country" ]; then
+            python3 scripts/osm_truck_parks/import_parks.py --country "$COUNTRY" $DRY
+          else
+            python3 scripts/osm_truck_parks/import_parks.py --group "$GROUP" $DRY
+          fi
