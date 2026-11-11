@@ -1,6 +1,8 @@
 """Unit tests for the OSM truck parking import (no network)."""
+import importlib.util
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -118,6 +120,25 @@ class ImportTest(unittest.TestCase):
             self.assertIn(cc, phase1)
         self.assertNotIn('asia-rest', ip.PHASE_1)
         self.assertTrue(all(not p.startswith('asia/azerbaijan') for lst in ip.GROUPS.values() for _, p in lst))
+
+
+    @unittest.skipUnless(importlib.util.find_spec('osmium'), 'pyosmium not installed')
+    def test_pyosmium_path_reads_points_ways_and_areas(self):
+        osm = '''<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+ <node id="1" version="1" lat="41.70" lon="44.80"><tag k="amenity" v="parking"/><tag k="hgv" v="designated"/><tag k="name" v="P1"/></node>
+ <node id="10" version="1" lat="41.80" lon="44.90"/>
+ <node id="11" version="1" lat="41.80" lon="44.91"/>
+ <node id="12" version="1" lat="41.81" lon="44.91"/>
+ <node id="13" version="1" lat="41.81" lon="44.90"/>
+ <way id="5" version="1"><nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="13"/><nd ref="10"/><tag k="amenity" v="parking"/><tag k="hgv" v="yes"/></way>
+</osm>'''
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / 't.osm'
+            src.write_text(osm, encoding='utf-8')
+            rows, _ = ip.select_parks(list(ip.extract_features_py(src, Path(tmp))), [])
+        self.assertEqual([r['id'] for r in rows], ['node/1', 'way/5'])
+        self.assertAlmostEqual(rows[1]['lat'], 41.805)
 
 
 if __name__ == '__main__':

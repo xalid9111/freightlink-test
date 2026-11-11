@@ -84,8 +84,18 @@ jobs:
             exit 1
           fi
 
-      - name: Install osmium-tool
-        run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+      # osmium-tool from Ubuntu; when the Ubuntu mirrors do not answer
+      # (11.11.2026: the runner could not resolve archive.ubuntu.com) the
+      # script uses pyosmium from PyPI instead — the same result.
+      - name: Install osmium
+        run: |
+          if timeout 150 sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 install -y -q --no-install-recommends osmium-tool; then
+            osmium --version | head -1
+          else
+            echo "::warning::osmium-tool not installed from Ubuntu — using pyosmium from PyPI"
+            python3 -m pip install --quiet --break-system-packages osmium || python3 -m pip install --quiet osmium
+            python3 -c "import osmium; print('pyosmium ready')"
+          fi
 
       - name: Import ${{ matrix.group }}
         env:

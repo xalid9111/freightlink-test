@@ -32,6 +32,7 @@ import json
 import math
 import os
 import secrets
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -280,6 +281,58 @@ def download(url: str, dest: Path) -> str | None:
 
 
 def extract_features(pbf: Path, work: Path):
+    """GeoJSON-like features of the parking / rest area objects in [pbf]:
+    osmium-tool when installed, else pyosmium (pip) — the same output."""
+    if shutil.which('osmium'):
+        yield from _extract_cli(pbf, work)
+    else:
+        yield from extract_features_py(pbf, work)
+
+
+def extract_features_py(pbf: Path, work: Path):
+    """pyosmium: pass 1 keeps the matching objects + the nodes they use
+    (like osmium tags-filter), pass 2 builds points / rings / areas."""
+    import osmium  # pip install osmium
+
+    filtered = work / 'filtered_py.osm.pbf'
+    tag_filter = osmium.filter.KeyFilter('amenity', 'highway')
+    with osmium.BackReferenceWriter(str(filtered), ref_src=str(pbf), overwrite=True) as writer:
+        for obj in osmium.FileProcessor(str(pbf)).with_filter(tag_filter):
+            tags = obj.tags
+            if tags.get('amenity') == 'parking' or tags.get('highway') in ('rest_area', 'services'):
+                writer.add(obj)
+
+    def ring(nodes):
+        out = []
+        for n in nodes:
+            try:
+                out.append([n.lon, n.lat])
+            except Exception:  # a node missing from the extract
+                pass
+        return out
+
+    proc = osmium.FileProcessor(str(filtered)).with_locations().with_areas()
+    for obj in proc:
+        tags = {t.k: t.v for t in obj.tags}
+        if not (tags.get('amenity') == 'parking' or tags.get('highway') in ('rest_area', 'services')):
+            continue
+        if obj.is_node():
+            try:
+                yield {'id': f'n{obj.id}', 'properties': tags, 'geometry': {'type': 'Point', 'coordinates': [obj.location.lon, obj.location.lat]}}
+            except Exception:
+                continue
+        elif obj.is_way():
+            coords = ring(obj.nodes)
+            if coords:
+                yield {'id': f'w{obj.id}', 'properties': tags, 'geometry': {'type': 'LineString', 'coordinates': coords}}
+        elif obj.is_area():
+            polys = [[ring(outer)] for outer in obj.outer_rings()]
+            polys = [p for p in polys if p[0]]
+            if polys:
+                yield {'id': f'a{obj.id}', 'properties': tags, 'geometry': {'type': 'MultiPolygon', 'coordinates': polys}}
+
+
+def _extract_cli(pbf: Path, work: Path):
     filtered = work / 'filtered.osm.pbf'
     seq = work / 'parks.geojsonseq'
     subprocess.run(['osmium', 'tags-filter', '--overwrite', '-o', str(filtered), str(pbf),
