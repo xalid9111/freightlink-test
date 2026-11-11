@@ -26,18 +26,24 @@ CargoModel load({String? truck, String? size, bool groupage = false}) => CargoMo
 
 void main() {
   group('category filter', () {
-    test('a tile selects, a second tap keeps it (owner 25.10.2026); one tile at a time', () {
+    test('a tile selects, a second tap takes it off (owner 11.11.2026); one tile at a time', () {
       var f = const CargoCategoryFilter();
-      f = f.tapTruck('tent');
-      expect(f.truckType, 'tent');
-      f = f.tapTruck('tent');
-      expect(f.truckType, 'tent');
-      f = f.tapGroupage();
+      f = f.tapTruck('ref');
+      expect(f.truckType, 'ref');
+      f = f.tapTruck('ref');
+      expect((f.truckType, f.groupage, f.isActive), (null, false, false));
+      expect(f.savedKey, '', reason: 'nothing chosen is kept on the device either');
+      f = f.tapTruck('tent').tapGroupage();
       expect((f.truckType, f.groupage), (null, true));
       f = f.tapGroupage();
-      expect((f.truckType, f.groupage), (null, true));
-      f = f.tapTruck('van');
-      expect((f.truckType, f.groupage), ('van', false));
+      expect((f.truckType, f.groupage, f.isActive), (null, false, false));
+      f = f.tapTruck('tent').tapTruck('van');
+      expect((f.truckType, f.groupage), ('van', false), reason: 'another tile still changes the choice');
+    });
+
+    test('the second tap leaves big / small as it was', () {
+      final f = const CargoCategoryFilter().tapSize(kLoadSizeBig).tapTruck('ref').tapTruck('ref');
+      expect((f.truckType, f.size), (null, kLoadSizeBig));
     });
 
     test('size works together with a tile', () {
