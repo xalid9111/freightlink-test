@@ -266,8 +266,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   starts with it.
 - Load types (owner, 25.10.2026, 0063): 13 choices — the first 7 never
   move (TENT … SİSTERN), then Qazel · Manipulyator · Evakuator · Furqon ·
-  Lowbed · Avtodaşıyıcı. A second tap keeps the choice; only another tile
-  or "Sıfırla" changes it. The chosen tile (or QRUPAJ) is kept on the
+  Lowbed · Avtodaşıyıcı. A second tap on the chosen tile takes the choice
+  off (owner, 11.11.2026 — "Sıfırla" no longer needed for it; big / small
+  and the route stay); another tile changes it. The chosen tile (or QRUPAJ) is kept on the
   device per account and brought into view on open; big / small is not
   kept. Typed spellings ("Tent", "soyuducu reff", "Qazel" …) are matched
   by `truckCategoryOf` — stored loads are never rewritten.

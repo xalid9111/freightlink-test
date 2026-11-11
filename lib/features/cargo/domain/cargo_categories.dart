@@ -98,11 +98,15 @@ class CargoCategoryFilter {
 
   bool get isActive => truckType != null || groupage || size != null;
 
-  /// Tap a tile: select it. A second tap keeps it (owner, 25.10.2026);
-  /// another tile or "Sıfırla" changes it. Truck type and groupage
-  /// exclude each other (one tile at a time).
-  CargoCategoryFilter tapTruck(String code) => CargoCategoryFilter(truckType: code, size: size);
-  CargoCategoryFilter tapGroupage() => CargoCategoryFilter(groupage: true, size: size);
+  /// Tap a tile: select it. A second tap on the chosen tile takes the
+  /// choice off (owner, 11.11.2026 — replaces "a second tap keeps it" of
+  /// 25.10.2026), so "Sıfırla" is not needed for it; another tile changes
+  /// it. Truck type and groupage exclude each other (one tile at a time).
+  /// Big / small and the route stay as they are.
+  CargoCategoryFilter tapTruck(String code) =>
+      truckType == code ? CargoCategoryFilter(size: size) : CargoCategoryFilter(truckType: code, size: size);
+  CargoCategoryFilter tapGroupage() =>
+      groupage ? CargoCategoryFilter(size: size) : CargoCategoryFilter(groupage: true, size: size);
   CargoCategoryFilter tapSize(String s) =>
       CargoCategoryFilter(truckType: truckType, groupage: groupage, size: size == s ? null : s);
 
