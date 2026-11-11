@@ -34,3 +34,4 @@ Thumbs.db
 # --- Supabase local CLI state ---
 supabase/.temp/
 supabase/.branches/
+__pycache__/
