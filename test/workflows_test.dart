@@ -40,4 +40,11 @@ void main() {
     final names = Directory('.github/workflows').listSync().map((e) => e.uri.pathSegments.last).toSet();
     expect(names, {'deploy.yml', 'autofix-ci.yml', 'supabase-functions.yml', 'osm-truck-parks.yml'});
   });
+
+  test('the site lives at the root of tirlink.app: base href "/" (owner, 13.11.2026)', () {
+    final d = File('.github/workflows/deploy.yml').readAsStringSync();
+    expect(d.contains('--base-href "/"'), isTrue, reason: 'a sub-folder base href opens tirlink.app on a black screen');
+    expect(d.contains('github.event.repository.name'), isFalse);
+    expect(File('web/index.html').readAsStringSync().contains(r'<base href="$FLUTTER_BASE_HREF">'), isTrue);
+  });
 }

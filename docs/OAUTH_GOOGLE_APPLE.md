@@ -2,7 +2,7 @@
 
 Tətbiqin kodu hazırdır: `AuthRepositoryImpl.signInWithGoogle / signInWithApple`
 Supabase OAuth axınını açır. İstifadəçi provayderdə daxil olur və tətbiqin
-öz ünvanına (`https://xalid9111.github.io/freightlink-test/`) qaytarılır.
+öz ünvanına (`https://tirlink.app/`; 13.11.2026-dan əsas domen) qaytarılır.
 `supabase_flutter` sessiyanı ünvandan oxuyur, sonra `authStateChanges`
 `public.users` sətrini yükləyir.
 
@@ -17,10 +17,12 @@ panellərində saxlanır, repoya heç nə yazılmır.
 
 Dashboard → **Authentication → URL Configuration**:
 
-1. **Site URL:** `https://xalid9111.github.io/freightlink-test/`
+1. **Site URL:** `https://tirlink.app/`
 2. **Redirect URLs** siyahısına əlavə edin:
-   - `https://xalid9111.github.io/freightlink-test/`
-   - `https://xalid9111.github.io/freightlink-test/**`
+   - `https://tirlink.app/`
+   - `https://tirlink.app/**`
+   - `https://www.tirlink.app/**`
+   - köhnə ünvan da qala bilər: `https://xalid9111.github.io/freightlink-test/**`
 
 Supabase-in callback ünvanı (Google / Apple panelində lazım olacaq):
 `https://jqdqtfmxnqezlsetelpi.supabase.co/auth/v1/callback`
@@ -29,7 +31,7 @@ Supabase-in callback ünvanı (Google / Apple panelində lazım olacaq):
 
 1. Google Cloud Console → **APIs & Services → OAuth consent screen**: tətbiq adı və e-poçtu yazın, "External" seçin.
 2. **Credentials → Create credentials → OAuth client ID → Web application**:
-   - **Authorized JavaScript origins:** `https://xalid9111.github.io`
+   - **Authorized JavaScript origins:** `https://tirlink.app` (və `https://www.tirlink.app`; köhnə `https://xalid9111.github.io` qala bilər)
    - **Authorized redirect URIs:** `https://jqdqtfmxnqezlsetelpi.supabase.co/auth/v1/callback`
 3. Yaranan **Client ID** və **Client secret**-i Supabase Dashboard → **Authentication → Providers → Google** bölməsinə yazın və **Enable** edin.
 
