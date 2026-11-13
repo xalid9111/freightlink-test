@@ -708,6 +708,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   on the way — dark red at the start, then red, orange, yellow, green at the
   target (AppColors.adbHeat), the spark at the tip, the green star at the end;
   "111/245" over it, no percent.
+  Never wait for realtime (owner, 13.11.2026: "the last 50 AZN job did not
+  show"): the notebook's days, jobs and rasxod are the realtime stream PLUS
+  a plain server read at once and every 20 s (adbizLive), and every write
+  on the device reads the day again at once (adbizResync); a realtime error
+  never empties the list.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

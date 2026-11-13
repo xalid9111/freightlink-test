@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -15,23 +17,72 @@ final adbizMeProvider = FutureProvider<AdbizMe?>((ref) async {
   }
 });
 
+/// How often a live list is read again from the server, whatever realtime
+/// says (owner, 13.11.2026: a job saved on the server did not show because
+/// the realtime message was late / lost). A device's own writes re-read at
+/// once (adbizResync); this catches the other devices' changes.
+const kAdbizResyncEvery = Duration(seconds: 20);
+
+/// A live list: the realtime stream PLUS a plain server read every
+/// [kAdbizResyncEvery], so a lost or late realtime message never leaves a
+/// saved row out for long. A realtime error never empties the list.
+Stream<List<T>> adbizLive<T>(Ref ref, Stream<List<T>> Function() live, Future<List<T>> Function() read,
+    {Duration every = kAdbizResyncEvery}) {
+  final out = StreamController<List<T>>();
+  StreamSubscription<List<T>>? sub;
+  try {
+    sub = live().listen(out.add, onError: (_) {});
+  } catch (_) {}
+  Future<void> reread() async {
+    try {
+      final rows = await read();
+      if (!out.isClosed) out.add(rows);
+    } catch (_) {}
+  }
+
+  // The first answer does not wait for realtime either.
+  unawaited(reread());
+  final timer = Timer.periodic(every, (_) => reread());
+  ref.onDispose(() {
+    timer.cancel();
+    sub?.cancel();
+    out.close();
+  });
+  return out.stream;
+}
+
 /// Live: one person's days (newest first).
-final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, String>(
-    (ref, userId) => ref.watch(adbizRepositoryProvider).watchDays(userId));
+final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, String>((ref, userId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchDays(userId), () => repo.days(userId));
+});
 
 /// Live: one day's jobs (oldest first) — the same on every device.
-final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>(
-    (ref, dayId) => ref.watch(adbizRepositoryProvider).watchEntries(dayId));
+final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>((ref, dayId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchEntries(dayId), () => repo.entries(dayId));
+});
 
 /// Live: one day's expenses (rasxod). Before SQL 0111 there is no day_id:
 /// the day simply has no expenses.
-final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExpense>, String>((ref, dayId) async* {
-  try {
-    yield* ref.watch(adbizRepositoryProvider).watchDayExpenses(dayId);
-  } catch (_) {
-    yield const <AdbizExpense>[];
-  }
+final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExpense>, String>((ref, dayId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchDayExpenses(dayId), () async {
+    try {
+      return await repo.dayExpenses(dayId);
+    } catch (_) {
+      return const <AdbizExpense>[];
+    }
+  });
 });
+
+/// After a write on this device: read the day again at once (never wait for
+/// realtime to show what was just saved).
+void adbizResync(WidgetRef ref, AdbizDay day) {
+  ref.invalidate(adbizEntriesProvider(day.id));
+  ref.invalidate(adbizDayExpensesProvider(day.id));
+  ref.invalidate(adbizDaysProvider(day.userId));
+}
 
 final adbizCompaniesProvider = FutureProvider.autoDispose<List<AdbizCompany>>(
     (ref) => ref.watch(adbizRepositoryProvider).companies());
