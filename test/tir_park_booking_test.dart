@@ -212,7 +212,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tpb-terms')), findsOneWidget, reason: 'conditions shown first');
     expect(find.text('Maşınların nömrələri: 99-ZB-911, 10-AA-002'), findsOneWidget, reason: 'every plate in the summary');
-    expect(find.textContaining('FreightLink pul qəbul etmir'), findsWidgets);
+    expect(find.textContaining('TırLink pul qəbul etmir'), findsWidgets);
     expect(repo.booked, isEmpty, reason: 'nothing is held before the driver agrees');
     await tester.tap(find.byKey(const ValueKey('tpb-go')));
     for (var i = 0; i < 12; i++) {

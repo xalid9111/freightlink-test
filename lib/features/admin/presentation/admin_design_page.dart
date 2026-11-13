@@ -8,7 +8,7 @@ import '../../../core/theme/theme_mode.dart';
 import '../data/night_theme_repository.dart';
 
 /// Admin → Dizayn və Rənglər → Gecə rejimi (owner, 29.10.2026; 0076).
-/// "Klassik FreightLink", "Bordo Premium" or the admin's own combination:
+/// "Klassik TırLink", "Bordo Premium" or the admin's own combination:
 /// 7 colours (HEX or the colour picker), gradient and glow levels, a live
 /// preview, the readability check; Önizlə (this device only), Yadda saxla
 /// (a named draft), Yayımla (everybody), Əvvəlki temaya qayıt, Sıfırla.
@@ -114,7 +114,7 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
       _snack('Mətn fonda oxunaqlı deyil (kontrast 4.5-dən azdır). Rəngləri dəyişin.');
       return;
     }
-    final name = spec.isClassic ? 'Klassik FreightLink' : (_choice == 'bordo' ? 'Bordo Premium' : (_name ?? 'Öz kombinasiyam'));
+    final name = spec.isClassic ? 'Klassik TırLink' : (_choice == 'bordo' ? 'Bordo Premium' : (_name ?? 'Öz kombinasiyam'));
     if (!await _confirm('Yayımlansın?', '"$name" gecə rejimində bütün istifadəçilərə tətbiq olunacaq. Gündüz rejimi dəyişmir.')) return;
     await _guard(() async {
       await ref.read(nightThemeRepositoryProvider).publish(spec, name);
@@ -135,12 +135,12 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
   }
 
   Future<void> _reset() async {
-    if (!await _confirm('Sıfırlansın?', 'Klassik FreightLink gecə rəngləri hamı üçün geri qayıdacaq.')) return;
+    if (!await _confirm('Sıfırlansın?', 'Klassik TırLink gecə rəngləri hamı üçün geri qayıdacaq.')) return;
     await _guard(() async {
-      await ref.read(nightThemeRepositoryProvider).publish(null, 'Klassik FreightLink');
+      await ref.read(nightThemeRepositoryProvider).publish(null, 'Klassik TırLink');
       ref.invalidate(publishedNightThemeProvider);
       _pick('classic', NightThemeSpec.classic);
-      _snack('Klassik FreightLink geri qayıtdı');
+      _snack('Klassik TırLink geri qayıtdı');
       await applyPublishedNightTheme(null);
     });
   }
@@ -186,7 +186,7 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
             style: TextStyle(color: AppColors.textSoft, fontSize: 13.5)),
         const SizedBox(height: 8),
         Text(
-          'Hazırda yayımlanıb: ${pub?.spec == null ? 'Klassik FreightLink' : (pub?.name ?? 'Öz kombinasiya')}'
+          'Hazırda yayımlanıb: ${pub?.spec == null ? 'Klassik TırLink' : (pub?.name ?? 'Öz kombinasiya')}'
           '${pub?.updatedAt == null ? '' : ' · ${pub!.updatedAt!.toLocal().toString().substring(0, 16)}'}',
           key: const ValueKey('design-published'),
           style: TextStyle(color: AppColors.text, fontSize: 14),
@@ -209,7 +209,7 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
           ),
         const SizedBox(height: 16),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          chip('design-classic', 'Klassik FreightLink', _choice == 'classic', () => _pick('classic', NightThemeSpec.classic)),
+          chip('design-classic', 'Klassik TırLink', _choice == 'classic', () => _pick('classic', NightThemeSpec.classic)),
           chip('design-bordo', 'Bordo Premium', _choice == 'bordo', () => _pick('bordo', NightThemeSpec.bordo)),
           chip('design-custom', 'Öz kombinasiyam', _choice == 'custom', () => setState(() => _choice = 'custom')),
           for (final t in saved.valueOrNull ?? const <SavedNightTheme>[])

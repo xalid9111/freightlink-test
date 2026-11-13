@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/router/guest_access.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'change_password_screen.dart' show ForgotPasswordButton;
 import 'providers/auth_providers.dart';
+import '../../../core/widgets/tirlink_wordmark.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -89,11 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      AppConstants.appName,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
+                    const Center(child: TirLinkWordmark(size: 30, align: CrossAxisAlignment.center)),
                     const SizedBox(height: 6),
                     Text(
                       strings.t('app_tagline'),

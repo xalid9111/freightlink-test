@@ -20,6 +20,7 @@ import 'admin_pages.dart';
 import 'admin_providers.dart';
 import '../../../core/widgets/deferred_page.dart';
 import '../../market/presentation/market_module.dart' deferred as market;
+import '../../../core/widgets/tirlink_wordmark.dart';
 
 class AdminSection {
   final String key;
@@ -269,7 +270,7 @@ class _SideNav extends ConsumerWidget {
               children: [
                 Icon(Icons.local_shipping, color: AppColors.accent),
                 const SizedBox(width: 8),
-                Text('FreightLink', style: AppFonts.display(size: 20, color: AppColors.text)),
+                const TirLinkWordmark(size: 20, showSite: false),
                 const SizedBox(width: 6),
                 Text('ADMIN', style: AppFonts.mono(size: 10, color: AppColors.accent)),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../constants/app_constants.dart';
 import '../localization/app_strings.dart';
 import '../localization/locale_controller.dart';
 import '../presence/online_users.dart';
@@ -19,6 +20,7 @@ import '../notify/notify_settings.dart';
 import '../../models/group_models.dart';
 import 'floating_nav.dart';
 import 'safe_navigation.dart';
+import '../widgets/tirlink_wordmark.dart';
 
 /// Bottom navigation shell (brief §14): Home/Loads, Search, Shipments,
 /// Services, Messages, Profile — wraps all 6 authenticated branches. Uses
@@ -55,7 +57,7 @@ class MainShell extends ConsumerWidget {
     void alert() {
       final ns = ref.read(notifySettingsProvider);
       if (ns.msgSound) playMessageSound();
-      if (ns.msgNotify) showMessageNotification('FreightLink', strings.t('notif_new_message'));
+      if (ns.msgNotify) showMessageNotification(AppConstants.appName, strings.t('notif_new_message'));
     }
     // A sound per NEW unread message (its id never seen before), not per
     // count change: the list now also comes from a server read every 20 s
@@ -260,14 +262,11 @@ class _SideNav extends ConsumerWidget {
                 children: [
                   Icon(Icons.show_chart, color: AppColors.accentFill, size: 30),
                   const SizedBox(width: 4),
-                  Flexible(
+                  const Flexible(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text.rich(TextSpan(children: [
-                        TextSpan(text: 'Freight', style: AppFonts.display(size: 26, color: AppColors.text)),
-                        TextSpan(text: 'Link', style: AppFonts.display(size: 26, color: AppColors.accent)),
-                      ])),
+                      child: TirLinkWordmark(size: 26),
                     ),
                   ),
                 ],

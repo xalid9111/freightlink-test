@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../config/supabase_config.dart';
+import '../constants/app_constants.dart';
 import '../localization/locale_controller.dart';
 import 'message_alert.dart';
 
@@ -105,7 +106,7 @@ final newCargoWatcherProvider = Provider<void>((ref) {
         final fresh = list.where((r) => !before.contains('${r['id']}') && '${r['owner_id']}' != uid);
         if (fresh.isNotEmpty) {
           if (s.cargoSound) playCargoSound();
-          if (s.cargoNotify) showCargoNotification('FreightLink', ref.read(stringsProvider).t('notif_new_cargo'));
+          if (s.cargoNotify) showCargoNotification(AppConstants.appName, ref.read(stringsProvider).t('notif_new_cargo'));
         }
       }
       known = {...?before, for (final r in list) '${r['id']}'};
