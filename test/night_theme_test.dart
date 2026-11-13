@@ -29,7 +29,7 @@ void main() {
     expect(ChatColors.background, ChatPalette.light.background);
   });
 
-  test('Klassik FreightLink is exactly the existing night', () {
+  test('Klassik TırLink is exactly the existing night', () {
     expect(NightThemeSpec.classic.isClassic, isTrue);
     expect(NightThemeSpec.classic.toPalette(), same(AppPalette.dark));
     expect(paletteFor(null), same(AppPalette.dark));
@@ -96,7 +96,7 @@ void main() {
       child: const MaterialApp(home: Scaffold(body: AdminDesignPage())),
     ));
     await tester.pumpAndSettle();
-    for (final t in ['Klassik FreightLink', 'Bordo Premium', 'Öz kombinasiyam', 'Black Edition', '1. Əsas fon', '4. Aktiv ikonlar və vurğular',
+    for (final t in ['Klassik TırLink', 'Bordo Premium', 'Öz kombinasiyam', 'Black Edition', '1. Əsas fon', '4. Aktiv ikonlar və vurğular',
       '7. Gradientin intensivliyi', '8. Kölgə və yumşaq parıltı', 'Önizlə (yalnız bu cihaz)', 'Yadda saxla', 'Yayımla', 'Əvvəlki temaya qayıt',
       'Sıfırla (Klassik)']) {
       expect(find.text(t), findsWidgets, reason: t);

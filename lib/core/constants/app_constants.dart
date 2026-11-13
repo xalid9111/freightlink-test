@@ -2,7 +2,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'FreightLink';
+  static const String appName = 'TırLink';
 
   // User roles — mirrors the `role` check constraint on public.users.
   static const String roleCargoOwner = 'cargo_owner';

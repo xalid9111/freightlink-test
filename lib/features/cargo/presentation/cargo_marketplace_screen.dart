@@ -39,6 +39,7 @@ import '../../jobs/presentation/job_widgets.dart';
 import '../../empty_trucks/data/empty_truck_repository.dart';
 import '../../empty_trucks/domain/empty_truck.dart';
 import '../../empty_trucks/presentation/empty_truck_widgets.dart';
+import '../../../core/widgets/tirlink_wordmark.dart';
 
 part 'cargo_marketplace_desktop.dart';
 
@@ -429,13 +430,11 @@ class _Hero extends ConsumerWidget {
                     Row(children: [
                       Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
                       const SizedBox(width: 4),
-                      Flexible(
+                      // TırLink + www.tirlink.app (owner, 13.11.2026).
+                      const Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text.rich(TextSpan(children: [
-                            TextSpan(text: 'Freight', style: AppFonts.display(size: 18, color: AppColors.text)),
-                            TextSpan(text: 'Link', style: AppFonts.display(size: 18, color: AppColors.accent)),
-                          ])),
+                          child: TirLinkWordmark(size: 18),
                         ),
                       ),
                     ]),

@@ -214,7 +214,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
                       Text('${fmtDateTime(a.startsAt.toUtc().toIso8601String())} → ${fmtDateTime(a.endsAt.toUtc().toIso8601String())}',
                           style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
                       Text(
-                        '${a.destinationType == 'external' ? (a.destinationUrl ?? '—') : 'FreightLink profili'}'
+                        '${a.destinationType == 'external' ? (a.destinationUrl ?? '—') : 'TırLink profili'}'
                         '${a.orderId != null && stats[a.orderId] != null ? ' · ${stats[a.orderId]!.impressions} baxış · ${stats[a.orderId]!.clicks} klik' : ''}',
                         style: TextStyle(color: AppColors.textSoft, fontSize: 12.5),
                       ),
@@ -371,7 +371,7 @@ class _AdminAdsPageState extends ConsumerState<AdminAdsPage> {
             KV('Keçid', switch (o.destinationType) {
               'external' => o.destinationUrl,
               'service' => 'Servis profili (servis reklamı)',
-              _ => 'FreightLink profili',
+              _ => 'TırLink profili',
             }),
             KV('Hədəf ölkələr', o.targetCountries.isEmpty ? 'Hamısı' : o.targetCountries.join(', ')),
             if (((o.routeFrom ?? '').isNotEmpty && Countries.find(o.routeFrom) == null) ||
