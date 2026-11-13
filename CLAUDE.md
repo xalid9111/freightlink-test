@@ -214,6 +214,30 @@ files to the owner separately (they are run by hand in the SQL editor).
   cards (server refuses Yüklər); paid promotions run to their end, nothing
   deleted. Yüklər shows only the parks / services / shops whose Premium
   chose it (0103).
+- Daşıyıcılar — empty truck ads (owner's picture, 13.11.2026, SQL 0118):
+  under the route search on Yüklər two equal buttons "Yüklər | Daşıyıcılar"
+  (loadsSectionProvider; Yüklər first). Yüklər works exactly as before;
+  Daşıyıcılar shows only empty truck ads (own table empty_truck_ads, never
+  cargo; the old fleet table "trucks" is not used), two in a row like the
+  loads (truck picture of its type, "BOŞ", route "🇦🇿 Bakı → 🇹🇷 İstanbul" /
+  "→ istənilən istiqamət", "📍 Bakı, Azərbaycan", "20 t boş", truck, "İndi" /
+  date); the route search (from = where the truck is, to = where it goes,
+  "any direction" fits all) and the load-type tile (QRUPAJ = takes groupage)
+  filter it; "Mənim elanlarım (n)" above. The orange + under the map keeps
+  its place; on Daşıyıcılar it reads "Boş maşın əlavə et" and opens
+  /trucks/new (computer the same). Form (one page): 1) where now — town
+  picker, "Xəritədən seç", "Hazırkı yerimi təklif et" (GPS shown only as a
+  suggestion, used after "Bu yeri istifadə et"); 2) where to or "İstiqamət
+  fərq etmir"; 3) truck type, free tonnes (0–100), load / body kinds;
+  4) İndi or date + time; 5) phone + WhatsApp from the profile / the last
+  ad, changeable; 6) "Boş maşın elanını paylaş" → Daşıyıcılar + green
+  notice. Ad page /trucks/:id: route, now at, going to, truck, tonnes,
+  kinds, free, contact (call / WhatsApp sheet, Mesaj yaz = direct chat);
+  the owner: Redaktə et, Aktivliyi dayandır / Aktiv et, "Maşın doldu"
+  (asked first; gone from the list, re-activate later); nothing deleted.
+  Server: empty_truck_save / empty_truck_set_status check every field and
+  the owner (admins change status, logged); visitors read active ads
+  without phone / WhatsApp columns and see "Əlaqə üçün daxil olun".
 - İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
   (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
   on the Loads map, right under the "CANLI" badge (owner, 27.10.2026; the

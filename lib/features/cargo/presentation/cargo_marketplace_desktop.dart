@@ -69,6 +69,9 @@ class _DesktopMarketplace extends ConsumerWidget {
 
     final shown = visible(cargoList);
     final searching = filter.isActive || query.trim().isNotEmpty || cat.isActive;
+    // Yüklər | Daşıyıcılar (owner, 13.11.2026), the same as on the phone.
+    final carriers = ref.watch(loadsSectionProvider) == LoadsSection.carriers;
+    final trucks = carriers ? ref.watch(emptyTrucksShownProvider) : const AsyncValue<List<EmptyTruck>>.loading();
     void resetFilters() {
       ref.read(routeFilterProvider.notifier).state = const RouteFilter();
       ref.read(_deskQueryProvider.notifier).state = '';
@@ -96,9 +99,23 @@ class _DesktopMarketplace extends ConsumerWidget {
                 ),
               ),
             ),
-            if (cat.groupage)
+            if (cat.groupage && !carriers)
               SliverToBoxAdapter(child: _DeskBody(child: _EnRouteButton(strings: strings))),
             SliverToBoxAdapter(child: _DeskBody(child: _DeskRouteSearch(strings: strings))),
+            SliverToBoxAdapter(
+              child: _DeskBody(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 18),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: LoadsSectionSwitch(strings: strings, onChanged: _scrollToFeed),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             SliverToBoxAdapter(
               child: _DeskBody(
                 child: Padding(
@@ -108,22 +125,26 @@ class _DesktopMarketplace extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Expanded(child: Text(strings.t('home_open_loads'), style: AppFonts.display(size: 24, color: AppColors.text))),
+                      Expanded(
+                          child: Text(strings.t(carriers ? 'et_list_title' : 'home_open_loads'),
+                              style: AppFonts.display(size: 24, color: AppColors.text))),
                       if (searching)
                         TextButton(
                           key: const ValueKey('cat-reset'),
                           onPressed: resetFilters,
                           child: Text(strings.t('cat_reset')),
                         ),
-                      if (marketplaceAsync.hasValue)
-                        Text(strings.t('home_results', {'count': '${shown.length}'}),
+                      if (carriers ? trucks.hasValue : marketplaceAsync.hasValue)
+                        Text(strings.t('home_results', {'count': '${carriers ? trucks.value!.length : shown.length}'}),
                             style: TextStyle(fontSize: 16, color: AppColors.textSoft)),
                     ],
                   ),
                 ),
               ),
             ),
-            ...marketplaceAsync.when<List<Widget>>(
+            if (carriers)
+              ..._deskCarrierSlivers(context, ref, strings, trucks, anyFilter: searching, onReset: resetFilters)
+            else ...marketplaceAsync.when<List<Widget>>(
               loading: () => [
                 const SliverToBoxAdapter(
                   child: Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator())),
@@ -202,6 +223,51 @@ class _DesktopMarketplace extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Daşıyıcılar on the computer: the same empty truck cards in rows of as
+/// many as fit (the phone's list logic, _carrierSlivers, for the states).
+List<Widget> _deskCarrierSlivers(BuildContext context, WidgetRef ref, AppStrings strings, AsyncValue<List<EmptyTruck>> trucks,
+    {required bool anyFilter, required VoidCallback onReset}) {
+  final list = trucks.valueOrNull;
+  if (list == null || list.isEmpty) {
+    return [for (final w in _carrierSlivers(context, ref, strings, trucks, anyFilter: anyFilter, onReset: onReset)) w];
+  }
+  final mine = ref.watch(myEmptyTrucksProvider).valueOrNull ?? const <EmptyTruck>[];
+  return [
+    SliverToBoxAdapter(
+      child: _DeskBody(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 48),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (mine.isNotEmpty)
+              TextButton.icon(
+                key: const ValueKey('empty-truck-mine'),
+                onPressed: () => context.pushOnce('/trucks/mine'),
+                icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                label: Text(strings.t('et_mine_count', {'n': '${mine.length}'})),
+              ),
+            LayoutBuilder(builder: (context, c) {
+              final columns = ((c.maxWidth - 2 * kTileGap + kTileGap) / (200 + kTileGap)).floor().clamp(3, 8);
+              final rows = <List<LoadCell>>[
+                for (var i = 0; i < list.length; i += columns)
+                  [for (var k = i; k < i + columns && k < list.length; k++) (index: k, vip: false)],
+              ];
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(kTileGap, kTileGap, kTileGap, 0),
+                child: _DeskLoadGrid(
+                  columns: columns,
+                  rows: rows,
+                  buildLoad: (i, _) => EmptyTruckTile(
+                      truck: list[i], strings: strings, onTap: () => context.pushOnce('/trucks/${list[i].id}')),
+                ),
+              );
+            }),
+          ]),
+        ),
+      ),
+    ),
+  ];
 }
 
 /// Open loads in rows of [columns] equal cards (same height per row), 3 mm
@@ -371,7 +437,7 @@ class _DeskHero extends ConsumerWidget {
                   ),
                   child: FilledButton.icon(
                     key: const ValueKey('desk-add-load'),
-                    onPressed: () => context.pushOnce('/cargo/create'),
+                    onPressed: () => context.pushOnce(ref.watch(loadsSectionProvider) == LoadsSection.carriers ? '/trucks/new' : '/cargo/create'),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accentFill,
                       foregroundColor: Colors.white,
@@ -380,7 +446,7 @@ class _DeskHero extends ConsumerWidget {
                       textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                     ),
                     icon: const Icon(Icons.add, size: 26),
-                    label: Text(strings.t('nav_add_cargo')),
+                    label: Text(strings.t(ref.watch(loadsSectionProvider) == LoadsSection.carriers ? 'et_add_button' : 'nav_add_cargo')),
                   ),
                 ),
               ),

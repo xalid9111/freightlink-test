@@ -52,6 +52,31 @@ class GeoService {
     }
   }
 
+  /// The town and country of a map point (OpenStreetMap Nominatim, one
+  /// call when the user asks — the empty truck form's "where am I now",
+  /// owner 13.11.2026). English names; null when nothing is known.
+  Future<({String city, String countryCode})?> reverse(LatLng p) async {
+    try {
+      final uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
+        'format': 'json',
+        'zoom': '10',
+        'accept-language': 'en',
+        'lat': '${p.latitude}',
+        'lon': '${p.longitude}',
+      });
+      final res = await http.get(uri).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return null;
+      final a = (jsonDecode(res.body) as Map<String, dynamic>)['address'] as Map<String, dynamic>?;
+      if (a == null) return null;
+      final city = '${a['city'] ?? a['town'] ?? a['village'] ?? a['municipality'] ?? a['county'] ?? a['state'] ?? ''}'.trim();
+      final cc = '${a['country_code'] ?? ''}'.toUpperCase();
+      if (city.isEmpty || cc.length != 2) return null;
+      return (city: city, countryCode: cc);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<RouteInfo> route(LatLng a, LatLng b) async {
     try {
       final uri = Uri.parse(

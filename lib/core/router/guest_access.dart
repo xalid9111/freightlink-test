@@ -19,6 +19,7 @@ bool isGuestPath(String loc) {
 final _guestPatterns = [
   RegExp(r'^/cargo/(?!create$|en-route$|favorites$)[^/]+$'), // a load (/cargo/:id)
   RegExp(r'^/load/[^/]+$'),
+  RegExp(r'^/trucks/(?!new$|mine$)[^/]+$'), // an empty truck ad (/trucks/:id, 0118)
   RegExp(r'^/market/l/[^/]+$'), // a TIR Bazarı ad
   RegExp(r'^/tirpark/p/[^/]+$'), // a park page
   RegExp(r'^/service/[^/]+$'), // a service / shop page

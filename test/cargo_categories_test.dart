@@ -164,7 +164,7 @@ void main() {
       for (final f in [mobile, desk]) {
         expect(f.contains('CargoTypeTiles('), isTrue);
         expect(f.contains('CargoSizeCards('), isFalse);
-        expect(f.contains('if (cat.groupage)'), isTrue);
+        expect(f.contains('if (cat.groupage && !carriers)'), isTrue, reason: 'the QRUPAJ road button stays on Yüklər');
         expect(f.contains("key: const ValueKey('cat-reset')"), isTrue);
       }
     });
