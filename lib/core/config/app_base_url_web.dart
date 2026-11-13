@@ -1,7 +1,7 @@
 import 'package:web/web.dart' as web;
 
 /// The app's own address (base href), e.g.
-/// https://xalid9111.github.io/freightlink-test/ — where Google / Apple
+/// https://tirlink.app/ (owner's domain since 13.11.2026) — where Google / Apple
 /// send the user back after signing in.
 String? appBaseUrl() {
   try {

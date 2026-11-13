@@ -25,7 +25,7 @@
 3. Repo **Settings → Pages → Source: GitHub Actions**.
 4. **Actions** tab → "Deploy Web (GitHub Pages)" → **Run workflow**
    (also runs on every push to `main`). ~5–8 min.
-5. URL: `https://<github-user>.github.io/<repo-name>/`
+5. URL: `https://tirlink.app/` (owner's domain, `--base-href "/"`; 13.11.2026)
 
 ## Path B — you have Flutter 3.35.x locally (Netlify Drop)
 ```
