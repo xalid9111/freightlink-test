@@ -36,6 +36,9 @@ import '../../../repositories/profile_repository.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/providers/group_providers.dart';
 import '../../jobs/presentation/job_widgets.dart';
+import '../../empty_trucks/data/empty_truck_repository.dart';
+import '../../empty_trucks/domain/empty_truck.dart';
+import '../../empty_trucks/presentation/empty_truck_widgets.dart';
 
 part 'cargo_marketplace_desktop.dart';
 
@@ -53,6 +56,10 @@ class CargoMarketplaceScreen extends ConsumerWidget {
     final filter = ref.watch(routeFilterProvider);
     final cat = ref.watch(cargoCategoryFilterProvider);
     final anyFilter = filter.isActive || cat.isActive;
+    // Yüklər | Daşıyıcılar (owner, 13.11.2026): the loads below work exactly
+    // as before; Daşıyıcılar shows only the empty truck ads (0118).
+    final carriers = ref.watch(loadsSectionProvider) == LoadsSection.carriers;
+    final trucks = carriers ? ref.watch(emptyTrucksShownProvider) : const AsyncValue<List<EmptyTruck>>.loading();
     // Page by page from the server (owner, 09.11.2026, SQL 0109, "Turbo.az
     // kimi"): without a filter the page shows the promoted loads + one page
     // at a time and never downloads the whole feed. With a filter on (or
@@ -172,6 +179,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           ref.invalidate(activeCarriersCountProvider);
           ref.invalidate(newCargo24hCountProvider);
           ref.invalidate(categoryFeedProvider);
+          ref.invalidate(emptyTrucksProvider);
+          ref.invalidate(myEmptyTrucksProvider);
         },
         // Open Loads feed: plain scroll, no card animation (owner,
         // 22.10.2026); only the detent haptic stays.
@@ -194,8 +203,15 @@ class CargoMarketplaceScreen extends ConsumerWidget {
               ),
             ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
+            // Yüklər | Daşıyıcılar (owner's picture, 13.11.2026).
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: LoadsSectionSwitch(strings: strings, onChanged: _scrollToFeed),
+              ),
+            ),
             // QRUPAJ (small loads): the carrier's own road → loads on the way.
-            if (cat.groupage)
+            if (cat.groupage && !carriers)
               SliverToBoxAdapter(child: _EnRouteButton(strings: strings)),
             SliverToBoxAdapter(
               child: Padding(
@@ -205,7 +221,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text(strings.t('home_open_loads'), style: AppFonts.display(size: 22, color: AppColors.text)),
+                    Text(strings.t(carriers ? 'et_list_title' : 'home_open_loads'), style: AppFonts.display(size: 22, color: AppColors.text)),
                     const Spacer(),
                     if (anyFilter)
                       TextButton(
@@ -213,14 +229,19 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                         onPressed: resetFilters,
                         child: Text(strings.t('cat_reset')),
                       ),
-                    if (usePages ? feed.count != null : marketplaceAsync.hasValue)
-                      Text(strings.t('home_results', {'count': '${usePages ? feed.count : shown.length}'}),
+                    if (carriers ? trucks.hasValue : (usePages ? feed.count != null : marketplaceAsync.hasValue))
+                      Text(
+                          strings.t('home_results', {
+                            'count': '${carriers ? trucks.value!.length : (usePages ? feed.count : shown.length)}',
+                          }),
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
                   ],
                 ),
               ),
             ),
-            if (usePages) ...pagedSlivers() else ...marketplaceAsync.when<List<Widget>>(
+            if (carriers)
+              ..._carrierSlivers(context, ref, strings, trucks, anyFilter: anyFilter, onReset: resetFilters)
+            else if (usePages) ...pagedSlivers() else ...marketplaceAsync.when<List<Widget>>(
               loading: () => [
                 if (firstPart != null && firstPart.loads.isNotEmpty) ...[
                   // The first rows at once; the rest of the feed follows.
@@ -277,6 +298,89 @@ class CargoMarketplaceScreen extends ConsumerWidget {
   }
 }
 
+
+/// Daşıyıcılar (owner, 13.11.2026): the empty truck ads, two in a row like
+/// the loads; the owner's own ads one tap away; the Loads page's route search
+/// and load-type tile filter them.
+List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings strings, AsyncValue<List<EmptyTruck>> trucks,
+    {required bool anyFilter, required VoidCallback onReset}) {
+  final bottom = math.max(96.0, MediaQuery.paddingOf(context).bottom + 16);
+  final mine = ref.watch(myEmptyTrucksProvider).valueOrNull ?? const <EmptyTruck>[];
+  final mineRow = mine.isEmpty
+      ? null
+      : SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('empty-truck-mine'),
+                onPressed: () => context.pushOnce('/trucks/mine'),
+                icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                label: Text(strings.t('et_mine_count', {'n': '${mine.length}'})),
+              ),
+            ),
+          ),
+        );
+  return trucks.when<List<Widget>>(
+    loading: () => [
+      if (mineRow != null) mineRow,
+      const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))),
+    ],
+    error: (e, _) => [
+      if (mineRow != null) mineRow,
+      SliverToBoxAdapter(
+        child: e is EmptyTruckNotReady
+            ? Padding(
+                padding: EdgeInsets.fromLTRB(24, 24, 24, bottom),
+                child: Text(strings.t('et_not_ready'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSoft)),
+              )
+            : _ErrorState(
+                message: strings.t('home_error_loading'),
+                retryLabel: strings.t('home_retry'),
+                onRetry: () => ref.invalidate(emptyTrucksProvider),
+              ),
+      ),
+    ],
+    data: (list) {
+      if (list.isEmpty) {
+        return [
+          if (mineRow != null) mineRow,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 24, bottom),
+              child: Column(children: [
+                Icon(anyFilter ? Icons.search_off : Icons.local_shipping_outlined, size: 40, color: AppColors.textSoft),
+                const SizedBox(height: 10),
+                Text(strings.t(anyFilter ? 'route_no_results' : 'et_empty'), textAlign: TextAlign.center),
+                if (anyFilter) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton(onPressed: onReset, child: Text(strings.t('cat_reset'))),
+                ],
+              ]),
+            ),
+          ),
+        ];
+      }
+      return [
+        if (mineRow != null) mineRow,
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(12, 0, 12, bottom),
+          sliver: SliverList.builder(
+            itemCount: (list.length + 1) ~/ 2,
+            itemBuilder: (context, i) => Padding(
+              padding: const EdgeInsets.only(bottom: kTileGap),
+              child: _TileRow(children: [
+                for (final t in list.skip(i * 2).take(2))
+                  EmptyTruckTile(truck: t, strings: strings, onTap: () => context.pushOnce('/trucks/${t.id}')),
+              ]),
+            ),
+          ),
+        ),
+      ];
+    },
+  );
+}
 
 /// Dark hero: brand row, live-map title, the animated map and REAL stats
 /// computed from the open marketplace (no invented numbers).
@@ -410,7 +514,14 @@ class _Hero extends ConsumerWidget {
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
-                    child: _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                    // Same place; the name and the form follow Yüklər |
+                    // Daşıyıcılar (owner, 13.11.2026).
+                    child: ref.watch(loadsSectionProvider) == LoadsSection.carriers
+                        ? _AddLoadButton(
+                            key: const ValueKey('add-empty-truck'),
+                            label: strings.t('et_add_button'),
+                            onTap: () => context.pushOnce('/trucks/new'))
+                        : _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
                   ),
                 ),
               ],
@@ -534,7 +645,7 @@ List<Shadow> _readableOnMap() => [
 class _AddLoadButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  const _AddLoadButton({required this.label, required this.onTap});
+  const _AddLoadButton({super.key, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

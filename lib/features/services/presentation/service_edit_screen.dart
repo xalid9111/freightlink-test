@@ -385,7 +385,7 @@ class _ServiceEditScreenState extends ConsumerState<ServiceEditScreen> {
     final s = ref.read(stringsProvider);
     final p = await Navigator.of(context).push<LatLng>(MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => _MapPlacePicker(start: _point ?? ref.read(userLocationProvider).point ?? kDefaultServiceCenter, s: s),
+      builder: (_) => MapPlacePicker(start: _point ?? ref.read(userLocationProvider).point ?? kDefaultServiceCenter, s: s),
     ));
     if (p == null || !mounted) return;
     setState(() => _point = p);
@@ -1045,16 +1045,16 @@ class _MediaRow extends StatelessWidget {
 }
 
 /// "Xəritədə yeri seç": move the map under the pin, then "Bu yeri seç".
-class _MapPlacePicker extends StatefulWidget {
+class MapPlacePicker extends StatefulWidget {
   final LatLng start;
   final AppStrings s;
-  const _MapPlacePicker({required this.start, required this.s});
+  const MapPlacePicker({super.key, required this.start, required this.s});
 
   @override
-  State<_MapPlacePicker> createState() => _MapPlacePickerState();
+  State<MapPlacePicker> createState() => _MapPlacePickerState();
 }
 
-class _MapPlacePickerState extends State<_MapPlacePicker> {
+class _MapPlacePickerState extends State<MapPlacePicker> {
   final _map = MapController();
   late LatLng _centre = widget.start;
 

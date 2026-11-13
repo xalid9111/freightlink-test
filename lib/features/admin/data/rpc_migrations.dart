@@ -219,6 +219,8 @@ const kRpcMigration = <String, String>{
   'adbiz_report_periods': '0115_ad_business_delete_day_months.sql',
   'adbiz_month_import_save': '0116_ad_business_month_import.sql',
   'osm_truck_parks_in_bounds': '0117_osm_truck_parks.sql',
+  'empty_truck_save': '0118_empty_truck_ads.sql',
+  'empty_truck_set_status': '0118_empty_truck_ads.sql',
   'admin_osm_park_set_hidden': '0117_osm_truck_parks.sql',
   'admin_osm_parks_status': '0117_osm_truck_parks.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',

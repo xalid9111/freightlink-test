@@ -1,3 +1,5 @@
+import '../../features/empty_trucks/presentation/empty_truck_detail_screen.dart';
+import '../../features/empty_trucks/presentation/empty_truck_form_screen.dart';
 import '../../features/favorites/favorites.dart' show FavoritesScreen, favTabOf;
 import 'package:flutter/widgets.dart' show GlobalKey, Listenable, NavigatorState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,6 +164,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/cargo/create',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: CargoQuickForm()),
+      ),
+      // "Daşıyıcılar" — empty truck ads (owner, 13.11.2026, 0118).
+      GoRoute(
+        path: '/trucks/new',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: EmptyTruckFormScreen()),
+      ),
+      GoRoute(
+        path: '/trucks/mine',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 0, child: MyEmptyTrucksScreen()),
+      ),
+      GoRoute(
+        path: '/trucks/:id/edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeskFrame(section: 0, child: EmptyTruckFormScreen(editId: state.pathParameters['id'])),
+      ),
+      GoRoute(
+        path: '/trucks/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeskFrame(section: 0, child: EmptyTruckDetailScreen(id: state.pathParameters['id']!)),
       ),
       // "Yolüstü yük" (owner, 21.10.2026): small loads on the carrier's road.
       GoRoute(
