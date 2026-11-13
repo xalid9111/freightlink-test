@@ -11,3 +11,7 @@ void playCargoSound() => impl.playSound('cargo');
 void showMessageNotification(String title, String body) => impl.showNotification(title, body, 'fl-msg');
 
 void showCargoNotification(String title, String body) => impl.showNotification(title, body, 'fl-cargo');
+
+/// "Səsi yoxla" in Settings (owner, 13.11.2026): plays the message sound
+/// and asks for notifications; returns what the browser allows.
+String testNotifySound() => impl.testSound();

@@ -10,7 +10,9 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/layout/desktop_layout.dart';
 import '../../../core/widgets/map_tiles.dart';
+import '../../../core/widgets/page_hero.dart' show PageHeroBanner, kDesktopMapBannerHeight;
 import '../../../core/constants/app_constants.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../services/geo_service.dart';
@@ -241,18 +243,39 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
       body: SafeArea(
         bottom: false,
         child: Column(children: [
-          MapPageBanner(
-            s: s,
-            page: 'tirpark',
-            brandIcon: Icons.local_shipping_outlined,
-            editIcon: Icons.local_parking,
-            brandAccent: 'TIR',
-            brandRest: 'Park',
-            defaultTitle: s.t('tp_title_1'),
-            defaultAccent: s.t('tp_title_2'),
-            defaultSubtitle: s.t('tp_subtitle'),
-            asset: 'assets/images/tirpark/banner.jpg',
-          ),
+          // The computer: the same wide banner as Servislər / Mağazalar, the
+          // whole picture shown (owner, 13.11.2026); the phone keeps its own.
+          if (isDesktopLayout(context))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: LayoutBuilder(
+                builder: (context, c) => PageHeroBanner(
+                  page: 'tirpark',
+                  strings: s,
+                  kicker: 'TIRPark',
+                  defaultTitle: s.t('tp_title_1'),
+                  defaultAccent: s.t('tp_title_2'),
+                  defaultSubtitle: s.t('tp_subtitle'),
+                  icon: Icons.local_parking,
+                  compact: false,
+                  whole: true,
+                  height: kDesktopMapBannerHeight(c.maxWidth),
+                ),
+              ),
+            )
+          else
+            MapPageBanner(
+              s: s,
+              page: 'tirpark',
+              brandIcon: Icons.local_shipping_outlined,
+              editIcon: Icons.local_parking,
+              brandAccent: 'TIR',
+              brandRest: 'Park',
+              defaultTitle: s.t('tp_title_1'),
+              defaultAccent: s.t('tp_title_2'),
+              defaultSubtitle: s.t('tp_subtitle'),
+              asset: 'assets/images/tirpark/banner.jpg',
+            ),
           Expanded(
             child: Stack(children: [
               Positioned.fill(

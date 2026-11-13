@@ -2171,5 +2171,10 @@
   "osm_lit": "照明",
   "osm_attrib": "© OpenStreetMap 贡献者 · ODbL",
   "osm_hide": "隐藏（管理员）",
-  "osm_hidden": "已从地图隐藏"
+  "osm_hidden": "已从地图隐藏",
+  "settings_test_sound": "测试声音和通知",
+  "settings_test_sound_ok": "已播放声音，通知已允许。如果没听到，请检查手机音量和静音开关。",
+  "settings_test_sound_denied": "已播放声音，但浏览器阻止了通知。请在浏览器 / 手机设置中允许本网站的通知。",
+  "settings_test_sound_ask": "已播放声音。如出现通知请求，请点“允许”。",
+  "settings_test_sound_no_notify": "已播放声音。此浏览器不显示通知：在 iPhone 上请将应用添加到主屏幕并从那里打开。"
 }

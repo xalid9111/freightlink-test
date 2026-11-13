@@ -17,3 +17,16 @@ void showNotification(String title, String body, String tag) {
     _notify(title.toJS, body.toJS, tag.toJS);
   } catch (_) {}
 }
+
+@JS('flMsgAlert.test')
+external JSString? _test();
+
+/// "Səsi yoxla": plays the message sound, asks for notifications; returns
+/// 'granted' | 'denied' | 'default' | 'unsupported'.
+String testSound() {
+  try {
+    return _test()?.toDart ?? 'unsupported';
+  } catch (_) {
+    return 'unsupported';
+  }
+}

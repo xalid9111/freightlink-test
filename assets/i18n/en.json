@@ -2171,5 +2171,10 @@
   "osm_lit": "Lit",
   "osm_attrib": "© OpenStreetMap contributors · ODbL",
   "osm_hide": "Hide (admin)",
-  "osm_hidden": "Hidden from the map"
+  "osm_hidden": "Hidden from the map",
+  "settings_test_sound": "Test sound and notifications",
+  "settings_test_sound_ok": "The sound played and notifications are allowed. If you heard nothing, check the phone volume and the silent switch.",
+  "settings_test_sound_denied": "The sound played, but the browser blocks notifications. Allow notifications for this site in the browser / phone settings.",
+  "settings_test_sound_ask": "The sound played. If a notification request appears, tap \"Allow\".",
+  "settings_test_sound_no_notify": "The sound played. This browser shows no notifications: on iPhone add the app to the Home Screen and open it from there."
 }

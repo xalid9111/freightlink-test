@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/realtime/live_resync.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
@@ -23,33 +22,10 @@ final adbizMeProvider = FutureProvider<AdbizMe?>((ref) async {
 /// once (adbizResync); this catches the other devices' changes.
 const kAdbizResyncEvery = Duration(seconds: 20);
 
-/// A live list: the realtime stream PLUS a plain server read every
-/// [kAdbizResyncEvery], so a lost or late realtime message never leaves a
-/// saved row out for long. A realtime error never empties the list.
+/// A live list (see core/realtime/live_resync.dart).
 Stream<List<T>> adbizLive<T>(Ref ref, Stream<List<T>> Function() live, Future<List<T>> Function() read,
-    {Duration every = kAdbizResyncEvery}) {
-  final out = StreamController<List<T>>();
-  StreamSubscription<List<T>>? sub;
-  try {
-    sub = live().listen(out.add, onError: (_) {});
-  } catch (_) {}
-  Future<void> reread() async {
-    try {
-      final rows = await read();
-      if (!out.isClosed) out.add(rows);
-    } catch (_) {}
-  }
-
-  // The first answer does not wait for realtime either.
-  unawaited(reread());
-  final timer = Timer.periodic(every, (_) => reread());
-  ref.onDispose(() {
-    timer.cancel();
-    sub?.cancel();
-    out.close();
-  });
-  return out.stream;
-}
+        {Duration every = kAdbizResyncEvery}) =>
+    liveWithResync(ref, live, read, every: every);
 
 /// Live: one person's days (newest first).
 final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, String>((ref, userId) {

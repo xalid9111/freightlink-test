@@ -2171,5 +2171,10 @@
   "osm_lit": "İşıqlandırma",
   "osm_attrib": "© OpenStreetMap iştirakçıları · ODbL",
   "osm_hide": "Gizlət (admin)",
-  "osm_hidden": "Xəritədən gizlədildi"
+  "osm_hidden": "Xəritədən gizlədildi",
+  "settings_test_sound": "Səsi və bildirişi yoxla",
+  "settings_test_sound_ok": "Səs çalındı, bildirişlərə icazə var. Eşitmədinizsə, telefonun səsini və səssiz rejim düyməsini yoxlayın.",
+  "settings_test_sound_denied": "Səs çalındı, amma brauzer bildirişləri bağlayıb. Brauzerin / telefonun ayarlarında bu sayt üçün bildirişlərə icazə verin.",
+  "settings_test_sound_ask": "Səs çalındı. Bildiriş sorğusu çıxsa, \"İcazə ver\" basın.",
+  "settings_test_sound_no_notify": "Səs çalındı. Bu brauzer bildiriş göstərmir: iPhone-da tətbiqi ana ekrana əlavə edib oradan açın."
 }

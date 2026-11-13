@@ -5,6 +5,8 @@ import '../localization/app_strings.dart';
 import '../localization/locale_controller.dart';
 import '../presence/online_users.dart';
 import '../../features/chat/presentation/providers/chat_providers.dart';
+import '../../models/message_model.dart';
+import '../notify/new_items_badges.dart';
 import '../../features/chat/presentation/providers/group_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../repositories/profile_repository.dart';
@@ -23,6 +25,10 @@ import 'safe_navigation.dart';
 /// go_router's StatefulShellRoute so each tab keeps its own navigation
 /// stack and scroll position when switching away and back, instead of
 /// a plain IndexedStack hand-rolled in application code.
+/// Unread message ids already announced, per account (a sound only for a
+/// message never seen before).
+final Map<String, Set<String>> _seenUnread = {};
+
 final NavDebounce _tabGuard = NavDebounce(window: const Duration(milliseconds: 400));
 
 class MainShell extends ConsumerWidget {
@@ -51,10 +57,16 @@ class MainShell extends ConsumerWidget {
       if (ns.msgSound) playMessageSound();
       if (ns.msgNotify) showMessageNotification('FreightLink', strings.t('notif_new_message'));
     }
-    ref.listen<AsyncValue<int>>(unreadCountProvider, (prev, next) {
-      final before = prev?.valueOrNull;
-      final after = next.valueOrNull;
-      if (before != null && after != null && after > before) alert();
+    // A sound per NEW unread message (its id never seen before), not per
+    // count change: the list now also comes from a server read every 20 s
+    // (owner, 13.11.2026), so a late realtime update never rings twice.
+    ref.listen<AsyncValue<List<MessageModel>>>(receivedMessagesProvider, (prev, next) {
+      final list = next.valueOrNull;
+      if (list == null || uid == null) return;
+      final ids = {for (final m in list) if (m.readAt == null) m.id};
+      final seen = _seenUnread[uid];
+      _seenUnread[uid] = {...?seen, ...ids};
+      if (seen != null && ids.any((id) => !seen.contains(id))) alert();
     });
     ref.listen<AsyncValue<List<GroupMessage>>>(myGroupMessagesProvider, (prev, next) {
       final before = prev?.valueOrNull;
@@ -70,7 +82,17 @@ class MainShell extends ConsumerWidget {
     // still work. Owner's layout: Yüklər · Servislər · TIR Bazarı (centre)
     // · Mesajlar · Profil; "Yük əlavə et" (+) sits on the Loads page under
     // the map.
-    final items = _navItems(strings, unread.toInt());
+    final fresh = ref.watch(newItemsProvider);
+    // The open section has nothing new: TIRPark (5) / TIR Bazarı (6).
+    final openSection = switch (navigationShell.currentIndex) {
+      5 => NewItemsSection.tirpark,
+      6 => NewItemsSection.market,
+      _ => null,
+    };
+    if (openSection != null && (fresh[openSection] ?? 0) > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(newItemsProvider.notifier).markSeen(openSection));
+    }
+    final items = _navItems(strings, unread.toInt(), fresh);
     void goTo(int branch) {
       // One tap = one tab switch (iPhone sometimes delivers a tap twice).
       if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
@@ -147,11 +169,13 @@ class MainShell extends ConsumerWidget {
 /// The phone's bottom bar: the floating capsule.
 typedef _BottomBar = FloatingNavBar;
 
-List<_NavItem> _navItems(AppStrings strings, int unread) => <_NavItem>[
+List<_NavItem> _navItems(AppStrings strings, int unread, [Map<NewItemsSection, int> fresh = const {}]) => <_NavItem>[
       _NavItem(0, Icons.local_shipping_outlined, Icons.local_shipping, strings.t('nav_home')),
       // TIRPark (owner, 31.10.2026) in place of Servislər, which opens from it.
-      _NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark')),
-      _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market')),
+      // New parks / services / shops and new TIR Bazarı ads since the last
+      // look (owner, 13.11.2026).
+      _NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark'), badge: fresh[NewItemsSection.tirpark] ?? 0),
+      _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market'), badge: fresh[NewItemsSection.market] ?? 0),
       _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread),
       _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),
     ];
@@ -180,7 +204,7 @@ class DeskFrame extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SideNav(
-            items: _navItems(strings, unread.toInt()),
+            items: _navItems(strings, unread.toInt(), ref.watch(newItemsProvider)),
             current: section,
             onTap: (branch) {
               if (!_tabGuard.allow('tab:$branch', DateTime.now())) return;
@@ -385,6 +409,7 @@ class _ResumeRefresherState extends ConsumerState<ResumeRefresher> {
     ref.invalidate(conversationMessagesProvider);
     ref.invalidate(conversationByIdProvider);
     ref.invalidate(receivedMessagesProvider); // drives both unread badges
+    ref.read(newItemsProvider.notifier).refresh(); // TIRPark / TIR Bazarı counts
   }
 
   @override

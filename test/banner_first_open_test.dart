@@ -168,7 +168,7 @@ void main() {
     expect(p, contains('final ready = sync || frame != null;'));
     expect(p, contains('if (!ready) (placeholder ?? fallback)(c),'));
     expect(p, contains('if (ready && overlay != null) overlay!,'));
-    expect(p, contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)'));
+    expect(p, contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null,'));
     expect(src('lib/features/market/presentation/market_home_desktop.dart'),
         contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)'));
   });

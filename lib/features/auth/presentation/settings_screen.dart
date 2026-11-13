@@ -7,6 +7,7 @@ import '../../../core/feedback/wheel_feedback.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/localization/localization_service.dart';
+import '../../../core/notify/message_alert.dart';
 import '../../../core/notify/notify_settings.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -111,6 +112,26 @@ class SettingsScreen extends ConsumerWidget {
                 label: s.t('settings_haptic'),
                 value: haptic,
                 onChanged: (v) => ref.read(wheelSettingsProvider.notifier).setHaptic(v),
+              ),
+              // "Səsi yoxla" (owner, 13.11.2026): plays the message sound
+              // inside the tap (so the browser allows sound from then on),
+              // asks for notifications and says what the browser allows.
+              _LinkRow(
+                key: const ValueKey('settings-test-sound'),
+                icon: Icons.notifications_active_outlined,
+                label: s.t('settings_test_sound'),
+                onTap: () {
+                  final perm = testNotifySound();
+                  final key = switch (perm) {
+                    'granted' => 'settings_test_sound_ok',
+                    'denied' => 'settings_test_sound_denied',
+                    'default' => 'settings_test_sound_ask',
+                    _ => 'settings_test_sound_no_notify',
+                  };
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(duration: const Duration(seconds: 6), content: Text(s.t(key))));
+                },
               ),
             ],
           ),
@@ -276,7 +297,7 @@ class _LinkRow extends StatelessWidget {
   final String label;
   final String? value;
   final VoidCallback onTap;
-  const _LinkRow({required this.icon, required this.label, required this.onTap, this.value});
+  const _LinkRow({super.key, required this.icon, required this.label, required this.onTap, this.value});
 
   @override
   Widget build(BuildContext context) {

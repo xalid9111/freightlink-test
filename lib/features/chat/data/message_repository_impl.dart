@@ -148,6 +148,18 @@ class MessageRepositoryImpl implements MessageRepository {
   }
 
   @override
+  Future<List<MessageModel>> fetchReceived(String userId) async {
+    final rows = await _client
+        .from('messages')
+        .select()
+        .eq('receiver_id', userId)
+        .order('created_at', ascending: false)
+        .limit(1000)
+        .timeout(const Duration(seconds: 15));
+    return [for (final r in rows as List) MessageModel.fromJson(Map<String, dynamic>.from(r as Map))];
+  }
+
+  @override
   Future<void> markConversationRead({required String conversationId, required String userId}) async {
     await _client
         .from('messages')

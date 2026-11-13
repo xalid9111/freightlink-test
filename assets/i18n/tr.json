@@ -2171,5 +2171,10 @@
   "osm_lit": "Aydınlatma",
   "osm_attrib": "© OpenStreetMap katkıda bulunanlar · ODbL",
   "osm_hide": "Gizle (admin)",
-  "osm_hidden": "Haritadan gizlendi"
+  "osm_hidden": "Haritadan gizlendi",
+  "settings_test_sound": "Sesi ve bildirimi test et",
+  "settings_test_sound_ok": "Ses çalındı, bildirimlere izin var. Duymadıysanız telefonun sesini ve sessiz mod düğmesini kontrol edin.",
+  "settings_test_sound_denied": "Ses çalındı ama tarayıcı bildirimleri engelledi. Tarayıcı / telefon ayarlarında bu site için bildirimlere izin verin.",
+  "settings_test_sound_ask": "Ses çalındı. Bildirim isteği çıkarsa \"İzin ver\"e basın.",
+  "settings_test_sound_no_notify": "Ses çalındı. Bu tarayıcı bildirim göstermiyor: iPhone'da uygulamayı ana ekrana ekleyip oradan açın."
 }
