@@ -261,6 +261,24 @@ files to the owner separately (they are run by hand in the SQL editor).
   (typed SİL / DELETE …, delete_my_account('DELETE'): the same as the
   admin's delete + the e-mail freed, Google link and sessions removed,
   sign-in banned; never for admins / the Founder; audited).
+  "Hesabı sil" is shown to admins too; for them a tap only says that an
+  admin's account is not deleted this way (owner, 13.11.2026).
+- Reset-password e-mail (owner, 13.11.2026): the Supabase "Reset password"
+  template links to https://tirlink.app/#/reset-password?token_hash=…&type=
+  recovery (docs/RESET_PASSWORD_EMAIL.md) so the link works in any browser
+  (Gmail's, Safari, the Home Screen app), not only the one that asked.
+- Təklif və iradlar + problems for the admins (owner, 13.11.2026, SQL 0120):
+  Profil → Hesab və görünüş → "Təklif və iradlar" (/support: Təklif / irad ·
+  Ödəniş problemi · VIP / reklam problemi, text, Göndər → green "Təşəkkürlər!
+  Adminlər qeydinizi nəzərə alacaq."); "Ödənişlə problem var? Bildir" on the
+  payment sheet (with the payment). support_reports, written only through
+  support_report_submit (own payment only, 10 an hour), read: own / admins.
+  The server also finds LIVE payment problems itself (failed 30 days, unpaid
+  > 30 min, paid but the VIP / Premium / İrəli çək / verified order not
+  'paid'), once each. Admins: Profil → admin card → "Bildirişlər" with the
+  red count of new ones (/admin-reports: Yeni · Baxılır · Həll olundu ·
+  Hamısı; Mesaj yaz to the user, Maliyyə for the finance owner; status
+  changes logged in the Audit Log). Nothing in payments / ads is changed.
 - İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
   (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
   on the Loads map, right under the "CANLI" badge (owner, 27.10.2026; the

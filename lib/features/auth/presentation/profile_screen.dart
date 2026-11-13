@@ -38,6 +38,7 @@ import '../../tirpark/data/tir_park_repository.dart';
 import '../../tirpark/domain/tir_park.dart';
 import '../../finance/presentation/finance_providers.dart';
 import '../../admin/presentation/head_admin.dart';
+import '../../support/support.dart';
 
 /// Profile (owner's design): title + settings gear, a card with photo,
 /// name, role · country and badges, a contact card (e-mail / phone), the
@@ -216,6 +217,15 @@ class ProfileScreen extends ConsumerWidget {
                       const TextSizePicker(),
                     ]),
                   ),
+                  // Təklif və iradlar (owner, 13.11.2026, 0120).
+                  _MenuRow(
+                    key: const ValueKey('pf-feedback'),
+                    icon: Icons.lightbulb_outline,
+                    iconColor: AppColors.blue,
+                    title: strings.t('sup_title'),
+                    subtitle: strings.t('sup_row_sub'),
+                    onTap: () => openSupportForm(context),
+                  ),
                   _MenuRow(
                     icon: Icons.settings,
                     iconColor: AppColors.text,
@@ -361,6 +371,20 @@ class _HeadAdminCard extends ConsumerWidget {
                 onTap: () => context.pushOnce('/finance'),
               );
             }),
+            // Bildirişlər (0120): suggestions, payment / VIP problems — the
+            // red count = the ones nobody looked at yet.
+            Consumer(builder: (context, ref, _) {
+              final n = ref.watch(adminSupportCountProvider).valueOrNull ?? 0;
+              return _MenuRow(
+                key: const ValueKey('pf-admin-reports'),
+                icon: Icons.notifications_active_outlined,
+                iconColor: AppColors.accent,
+                title: strings.t('sup_admin_title'),
+                subtitle: strings.t('sup_admin_sub'),
+                badge: n,
+                onTap: () => context.pushOnce('/admin-reports'),
+              );
+            }),
             _MenuRow(
               key: const ValueKey('pf-admin'),
               icon: Icons.admin_panel_settings_outlined,
@@ -426,16 +450,19 @@ class ProfilePersonalScreen extends ConsumerWidget {
             subtitle: strings.t('pf_change_password_sub'),
             onTap: () => context.pushOnce('/change-password'),
           ),
-          if (user.role != AppConstants.roleAdmin)
-            _MenuRow(
-              key: const ValueKey('pf-delete-account'),
-              icon: Icons.person_remove_outlined,
-              iconColor: AppColors.danger,
-              titleColor: AppColors.danger,
-              title: strings.t('pf_delete_account'),
-              subtitle: strings.t('pf_delete_account_sub'),
-              onTap: () => deleteMyAccount(context, ref, strings),
-            ),
+          // Shown to everybody (owner, 13.11.2026); an admin's account is
+          // not deleted this way (the server refuses it too).
+          _MenuRow(
+            key: const ValueKey('pf-delete-account'),
+            icon: Icons.person_remove_outlined,
+            iconColor: AppColors.danger,
+            titleColor: AppColors.danger,
+            title: strings.t('pf_delete_account'),
+            subtitle: strings.t('pf_delete_account_sub'),
+            onTap: user.role == AppConstants.roleAdmin
+                ? () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('pf_delete_admin'))))
+                : () => deleteMyAccount(context, ref, strings),
+          ),
         ]),
       ],
     ]);

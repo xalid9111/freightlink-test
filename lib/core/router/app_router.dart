@@ -57,6 +57,7 @@ import 'guest_access.dart';
 import '../../features/adbiz/presentation/adbiz_admin_screen.dart';
 import '../../features/adbiz/presentation/adbiz_company_screen.dart';
 import '../../features/adbiz/presentation/adbiz_notebook_screen.dart';
+import '../../features/support/support.dart';
 
 /// Phase 1 shipped `appRouter` as a bare top-level GoRouter. Phase 3
 /// promoted it to a Riverpod provider for auth-aware redirects. A later
@@ -170,6 +171,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/trucks/new',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeskFrame(section: 0, child: EmptyTruckFormScreen()),
+      ),
+      // Təklif və iradlar / Problem bildir and the admins' list (0120).
+      GoRoute(
+        path: '/support',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => DeskFrame(
+            section: 4,
+            child: SupportFormScreen(
+                kind: supportKindOf(state.uri.queryParameters['kind']), paymentId: state.uri.queryParameters['payment'])),
+      ),
+      GoRoute(
+        path: '/admin-reports',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeskFrame(section: 4, child: AdminSupportScreen()),
       ),
       GoRoute(
         path: '/trucks/mine',

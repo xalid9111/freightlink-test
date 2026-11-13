@@ -9,6 +9,7 @@ import '../../ads/presentation/ads_providers.dart';
 import '../data/finance_repository.dart';
 import '../domain/finance_models.dart';
 import 'finance_providers.dart';
+import '../../support/support.dart';
 
 DeviceKind currentDeviceKind() => switch (defaultTargetPlatform) {
       TargetPlatform.iOS || TargetPlatform.macOS => DeviceKind.apple,
@@ -236,6 +237,20 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           ],
           const SizedBox(height: 10),
           Text(s.t('pay_server_note'), style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+          // Problem bildir (owner, 13.11.2026, 0120): goes to the admins with
+          // this payment, if one was started.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const ValueKey('pay-report-problem'),
+              onPressed: _busy
+                  ? null
+                  : () => openSupportForm(context,
+                      kind: widget.vip != null && !widget.vip!.tirParkBooking ? SupportKind.promo : SupportKind.payment, paymentId: p?.id),
+              icon: Icon(Icons.report_problem_outlined, size: 18, color: AppColors.accent),
+              label: Text(s.t('sup_report_problem')),
+            ),
+          ),
         ]),
       ),
     );

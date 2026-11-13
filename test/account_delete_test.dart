@@ -23,7 +23,7 @@ void main() {
     final personal = p.substring(p.indexOf('class ProfilePersonalScreen'), p.indexOf('class ProfileActivityScreen'));
     expect(personal.contains("ValueKey('pf-change-password')") && personal.contains("context.pushOnce('/change-password')"), isTrue);
     expect(personal.contains("ValueKey('pf-delete-account')"), isTrue);
-    expect(personal.contains('user.role != AppConstants.roleAdmin'), isTrue, reason: 'admins are not offered it');
+    expect(personal.contains("strings.t('pf_delete_admin')"), isTrue, reason: 'shown to admins too, with an explanation');
     expect(p.contains("rpc('delete_my_account', params: {'p_confirm': 'DELETE'})"), isTrue);
     expect(p.contains('authRepositoryProvider).signOut()'), isTrue);
   });
@@ -32,7 +32,7 @@ void main() {
     for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
       final m = jsonDecode(src('assets/i18n/$l.json')) as Map<String, dynamic>;
       for (final k in ['pf_change_password', 'pf_change_password_sub', 'pf_delete_account', 'pf_delete_account_sub', 'pf_delete_word',
-        'pf_delete_body', 'pf_delete_type', 'pf_delete_not_ready', 'pf_delete_failed', 'pf_delete_done', 'pf_my_trucks_sub']) {
+        'pf_delete_body', 'pf_delete_type', 'pf_delete_not_ready', 'pf_delete_failed', 'pf_delete_done', 'pf_my_trucks_sub', 'pf_delete_admin']) {
         expect((m[k] as String?)?.isNotEmpty, isTrue, reason: '$l $k');
       }
       expect(m['pf_delete_type'], contains('{word}'), reason: l);
