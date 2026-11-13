@@ -2256,5 +2256,16 @@
   "et_filled_body": "İlan kapanacak ve Taşıyıcılar listesinden çıkacak. Sonra tekrar etkinleştirebilirsiniz.",
   "et_status_active": "Aktif",
   "et_status_paused": "Durduruldu",
-  "et_status_filled": "Araç doldu"
+  "et_status_filled": "Araç doldu",
+  "pf_change_password": "Şifreyi yenile",
+  "pf_change_password_sub": "Hesap şifresini değiştir",
+  "pf_delete_account": "Hesabı sil",
+  "pf_delete_account_sub": "Hesap kapanır, tüm ilanlarınız gizlenir",
+  "pf_delete_word": "SİL",
+  "pf_delete_body": "Hesabınız kapanacak: yükleriniz, TIR Pazarı ilanlarınız, servisiniz, iş ilanlarınız ve boş araç ilanlarınız listelerden kalkacak, adınız \"Silinmiş kullanıcı\" olacak ve bu hesapla giriş yapılamayacak. Bu işlem geri alınamaz.",
+  "pf_delete_type": "Onay için {word} yazın",
+  "pf_delete_not_ready": "Bu özellik henüz sunucuda etkin değil",
+  "pf_delete_failed": "Hesap silinemedi, tekrar deneyin",
+  "pf_delete_done": "Hesabınız silindi",
+  "pf_my_trucks_sub": "Düzenle, durdur, etkinleştir, \"Araç doldu\""
 }

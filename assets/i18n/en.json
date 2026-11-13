@@ -2256,5 +2256,16 @@
   "et_filled_body": "The ad is closed and leaves the Carriers list. You can activate it again later.",
   "et_status_active": "Active",
   "et_status_paused": "Paused",
-  "et_status_filled": "Full"
+  "et_status_filled": "Full",
+  "pf_change_password": "Change password",
+  "pf_change_password_sub": "Set a new password for your account",
+  "pf_delete_account": "Delete account",
+  "pf_delete_account_sub": "The account is closed and all your ads are hidden",
+  "pf_delete_word": "DELETE",
+  "pf_delete_body": "Your account will be closed: your loads, TIR Bazarı ads, service, job ads and empty truck ads leave the lists, your name becomes \"Deleted user\" and you can no longer sign in with this account. This cannot be undone.",
+  "pf_delete_type": "Type {word} to confirm",
+  "pf_delete_not_ready": "This is not active on the server yet",
+  "pf_delete_failed": "The account was not deleted, please try again",
+  "pf_delete_done": "Your account was deleted",
+  "pf_my_trucks_sub": "Edit, pause, activate, \"Truck is full\""
 }

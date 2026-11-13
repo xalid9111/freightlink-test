@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../verified/verified_account.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/phone_countries.dart';
 import '../../../core/localization/app_strings.dart';
@@ -413,8 +414,91 @@ class ProfilePersonalScreen extends ConsumerWidget {
           roleLabel: _roleLine(ref, strings, user),
           strings: strings,
         ),
+      // Şifrəni yenilə · Hesabı sil (owner, 13.11.2026).
+      if (user != null) ...[
+        const SizedBox(height: 14),
+        _MenuCard(children: [
+          _MenuRow(
+            key: const ValueKey('pf-change-password'),
+            icon: Icons.lock_reset,
+            iconColor: AppColors.blue,
+            title: strings.t('pf_change_password'),
+            subtitle: strings.t('pf_change_password_sub'),
+            onTap: () => context.pushOnce('/change-password'),
+          ),
+          if (user.role != AppConstants.roleAdmin)
+            _MenuRow(
+              key: const ValueKey('pf-delete-account'),
+              icon: Icons.person_remove_outlined,
+              iconColor: AppColors.danger,
+              titleColor: AppColors.danger,
+              title: strings.t('pf_delete_account'),
+              subtitle: strings.t('pf_delete_account_sub'),
+              onTap: () => deleteMyAccount(context, ref, strings),
+            ),
+        ]),
+      ],
     ]);
   }
+}
+
+/// The typed word, any case ("sil", "SİL", "SIL").
+bool deleteWordMatches(String typed, String word) {
+  String n(String x) => x.trim().replaceAll('İ', 'I').replaceAll('i', 'I').replaceAll('ı', 'I').toUpperCase();
+  return typed.trim().isNotEmpty && n(typed) == n(word);
+}
+
+/// "Hesabı sil" (owner, 13.11.2026, SQL 0119): asked first (the word
+/// typed), then the server closes the account, hides all its ads and
+/// closes the sign-in; the app signs out and opens Yüklər.
+Future<void> deleteMyAccount(BuildContext context, WidgetRef ref, AppStrings strings) async {
+  final word = strings.t('pf_delete_word');
+  final ctrl = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (c) => StatefulBuilder(
+      builder: (c, setD) => AlertDialog(
+        title: Text(strings.t('pf_delete_account')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(strings.t('pf_delete_body')),
+          const SizedBox(height: 12),
+          Text(strings.t('pf_delete_type', {'word': word}), style: TextStyle(color: AppColors.textSoft)),
+          const SizedBox(height: 6),
+          TextField(
+            key: const ValueKey('pf-delete-word'),
+            controller: ctrl,
+            autofocus: true,
+            onChanged: (_) => setD(() {}),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(strings.t('common_cancel'))),
+          FilledButton(
+            key: const ValueKey('pf-delete-confirm'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: deleteWordMatches(ctrl.text, word) ? () => Navigator.pop(c, true) : null,
+            child: Text(strings.t('pf_delete_account')),
+          ),
+        ],
+      ),
+    ),
+  );
+  ctrl.dispose();
+  if (ok != true || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final router = GoRouter.of(context);
+  try {
+    await SupabaseConfig.client.rpc('delete_my_account', params: {'p_confirm': 'DELETE'}).timeout(const Duration(seconds: 20));
+  } catch (e) {
+    final notReady = e is PostgrestException && (e.code == 'PGRST202' || e.code == '42883');
+    messenger.showSnackBar(SnackBar(content: Text(strings.t(notReady ? 'pf_delete_not_ready' : 'pf_delete_failed'))));
+    return;
+  }
+  try {
+    await ref.read(authRepositoryProvider).signOut();
+  } catch (_) {}
+  messenger.showSnackBar(SnackBar(content: Text(strings.t('pf_delete_done'))));
+  router.go('/');
 }
 
 /// Profil → "Mənim fəaliyyətim": the roles (Daşıyıcı · Yük verən · Usta /
@@ -443,6 +527,16 @@ class ProfileActivityScreen extends ConsumerWidget {
           title: strings.t('pf_my_loads'),
           subtitle: strings.t('pf_my_loads_sub'),
           onTap: () => context.pushOnce('/my-cargo'),
+        ),
+        // Boş maşın elanlarım (owner, 13.11.2026): edit, pause / activate,
+        // "Maşın doldu" — the same as on the ad page.
+        _MenuRow(
+          key: const ValueKey('pf-my-trucks'),
+          icon: Icons.local_shipping_outlined,
+          iconColor: AppColors.accent,
+          title: strings.t('et_mine_title'),
+          subtitle: strings.t('pf_my_trucks_sub'),
+          onTap: () => context.pushOnce('/trucks/mine'),
         ),
         Consumer(builder: (context, ref, _) {
           final mine = ref.watch(myServiceProvider).valueOrNull;

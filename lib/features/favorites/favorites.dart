@@ -64,7 +64,9 @@ class LikeHeart extends ConsumerStatefulWidget {
   final FavKind kind;
   final String id;
   final double size;
-  const LikeHeart({super.key, required this.kind, required this.id, this.size = 24});
+  /// Drawn on a picture: a dark round backing (like the load cards' heart).
+  final bool onPhoto;
+  const LikeHeart({super.key, required this.kind, required this.id, this.size = 24, this.onPhoto = false});
 
   @override
   ConsumerState<LikeHeart> createState() => _LikeHeartState();
@@ -100,6 +102,26 @@ class _LikeHeartState extends ConsumerState<LikeHeart> {
     final saved = isFavorite(ref, widget.kind, widget.id);
     if (!_busy) _shown = null;
     final on = _shown ?? saved;
+    if (widget.onPhoto) {
+      return Semantics(
+        button: true,
+        selected: on,
+        label: s.t(on ? 'fav_remove' : 'fav_add'),
+        child: Material(
+          color: Colors.black.withValues(alpha: 0.45),
+          shape: const CircleBorder(),
+          child: InkWell(
+            key: ValueKey('fav-${widget.kind.name}-${widget.id}'),
+            customBorder: const CircleBorder(),
+            onTap: () => _toggle(on, s),
+            child: Padding(
+              padding: const EdgeInsets.all(7),
+              child: Icon(on ? Icons.favorite : Icons.favorite_border, size: widget.size, color: on ? AppColors.accent : Colors.white),
+            ),
+          ),
+        ),
+      );
+    }
     return IconButton(
       key: ValueKey('fav-${widget.kind.name}-${widget.id}'),
       tooltip: s.t(on ? 'fav_remove' : 'fav_add'),

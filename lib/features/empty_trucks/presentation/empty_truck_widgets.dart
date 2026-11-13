@@ -5,6 +5,8 @@ import 'package:intl/intl.dart' show DateFormat;
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
+import '../../favorites/favorites.dart';
 import '../../cargo/domain/truck_types.dart';
 import '../../cargo/presentation/widgets/cargo_picture.dart';
 import '../data/empty_truck_repository.dart';
@@ -40,7 +42,9 @@ class LoadsSectionSwitch extends ConsumerWidget {
           color: on ? AppColors.accent.withValues(alpha: 0.32) : AppColors.card,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: AppColors.accent, width: 1.5),
+            // Only the chosen one has the frame (owner, 13.11.2026: two
+            // frames looked alike and confused).
+            side: on ? BorderSide(color: AppColors.accent, width: 1.5) : BorderSide.none,
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -121,6 +125,10 @@ class EmptyTruckTile extends ConsumerWidget {
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white)),
                   ),
                 ),
+                // Bəyən (owner, 13.11.2026): the carrier goes to
+                // Bəyəndiklərim → Profillər; not on one's own ads.
+                if (ref.watch(currentUserIdProvider) != t.ownerId)
+                  Positioned(top: 6, right: 6, child: LikeHeart(kind: FavKind.user, id: t.ownerId, size: 19, onPhoto: true)),
               ]),
             ),
             Padding(

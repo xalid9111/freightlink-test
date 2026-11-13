@@ -246,6 +246,21 @@ files to the owner separately (they are run by hand in the SQL editor).
   Server: empty_truck_save / empty_truck_set_status check every field and
   the owner (admins change status, logged); visitors read active ads
   without phone / WhatsApp columns and see "Əlaqə üçün daxil olun".
+  Later the same day (owner's picture): only the chosen button of "Yüklər |
+  Daşıyıcılar" has the frame (no second frame); a heart on another
+  carrier's card / ad page puts him in Bəyəndiklərim → Profillər
+  (user_favorites 'user', no heart on one's own ads); Profil → Mənim
+  fəaliyyətim → "Mənim boş maşın elanlarım" (/trucks/mine) with a menu per
+  ad (Redaktə et · Dayandır / Aktiv et · Maşın doldu), as on the ad page.
+- Deleted users and "Hesabı sil" (owner, 13.11.2026, SQL 0119): every ad of
+  a deleted user leaves the lists (_hide_user_ads: loads hidden + paused,
+  TIR Bazarı inactive, service / shop suspended, vacancies closed + hidden,
+  driver profile off + hidden, empty trucks paused) — admin_delete_user
+  and the users deleted before; nothing is deleted. Profil → Şəxsi
+  məlumatlarım has "Şifrəni yenilə" (/change-password) and "Hesabı sil"
+  (typed SİL / DELETE …, delete_my_account('DELETE'): the same as the
+  admin's delete + the e-mail freed, Google link and sessions removed,
+  sign-in banned; never for admins / the Founder; audited).
 - İş Mərkəzi — SmartMatch (owner, 26.10.2026, 0069): the approved icon
   (two people, arrows; no background, no frame) with "İş Mərkəzi" under it
   on the Loads map, right under the "CANLI" badge (owner, 27.10.2026; the
