@@ -2256,5 +2256,16 @@
   "et_filled_body": "Elan bağlanacaq və Daşıyıcılar siyahısından çıxacaq. Sonra yenidən aktiv edə bilərsiniz.",
   "et_status_active": "Aktiv",
   "et_status_paused": "Dayandırılıb",
-  "et_status_filled": "Maşın doldu"
+  "et_status_filled": "Maşın doldu",
+  "pf_change_password": "Şifrəni yenilə",
+  "pf_change_password_sub": "Hesabın şifrəsini dəyiş",
+  "pf_delete_account": "Hesabı sil",
+  "pf_delete_account_sub": "Hesab bağlanır, bütün elanlarınız gizlədilir",
+  "pf_delete_word": "SİL",
+  "pf_delete_body": "Hesabınız bağlanacaq: yükləriniz, TIR Bazarı elanlarınız, servisiniz, iş elanlarınız və boş maşın elanlarınız siyahılardan çıxacaq, adınız \"Silinmiş istifadəçi\" olacaq və bu hesabla daxil olmaq mümkün olmayacaq. Bu addım geri qaytarılmır.",
+  "pf_delete_type": "Təsdiq üçün {word} yazın",
+  "pf_delete_not_ready": "Bu funksiya hələ serverdə aktiv deyil",
+  "pf_delete_failed": "Hesab silinmədi, yenidən cəhd edin",
+  "pf_delete_done": "Hesabınız silindi",
+  "pf_my_trucks_sub": "Redaktə et, dayandır, aktiv et, \"Maşın doldu\""
 }

@@ -221,6 +221,7 @@ const kRpcMigration = <String, String>{
   'osm_truck_parks_in_bounds': '0117_osm_truck_parks.sql',
   'empty_truck_save': '0118_empty_truck_ads.sql',
   'empty_truck_set_status': '0118_empty_truck_ads.sql',
+  'delete_my_account': '0119_deleted_user_ads_self_delete.sql',
   'admin_osm_park_set_hidden': '0117_osm_truck_parks.sql',
   'admin_osm_parks_status': '0117_osm_truck_parks.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',

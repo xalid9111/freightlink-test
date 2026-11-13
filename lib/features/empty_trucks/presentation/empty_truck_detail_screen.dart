@@ -12,6 +12,7 @@ import '../../cargo/presentation/widgets/cargo_picture.dart';
 import '../../chat/data/group_repository.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/widgets/call_options.dart';
+import '../../favorites/favorites.dart';
 import '../data/empty_truck_repository.dart';
 import '../domain/empty_truck.dart';
 import 'empty_truck_widgets.dart';
@@ -79,8 +80,12 @@ class _EmptyTruckDetailScreenState extends ConsumerState<EmptyTruckDetailScreen>
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final async = ref.watch(emptyTruckProvider(widget.id));
     final me = ref.watch(currentUserIdProvider);
+    final owner = async.valueOrNull?.ownerId;
     return Scaffold(
-      appBar: AppBar(title: Text(s.t('et_detail_title'))),
+      appBar: AppBar(title: Text(s.t('et_detail_title')), actions: [
+        // Bəyən: the carrier goes to Bəyəndiklərim → Profillər.
+        if (owner != null && owner != me) LikeHeart(kind: FavKind.user, id: owner),
+      ]),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(s.t(e is EmptyTruckNotReady ? 'et_not_ready' : 'home_error_loading'))),
@@ -234,12 +239,55 @@ class MyEmptyTrucksScreen extends ConsumerWidget {
                       onTap: () => context.pushOnce('/trucks/${t.id}'),
                       title: Text(t.routeLabel(lang, anyLabel: s.t('et_any_direction_short')), maxLines: 2, overflow: TextOverflow.ellipsis),
                       subtitle: Text('${t.placeLabel(lang)} · ${emptyTruckTonsLabel(s, t.freeTons)}'),
-                      trailing: EmptyTruckStatusChip(status: t.status, strings: s),
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        EmptyTruckStatusChip(status: t.status, strings: s),
+                        // Redaktə et · Dayandır / Aktiv et · Maşın doldu right
+                        // from the list (owner, 13.11.2026).
+                        PopupMenuButton<String>(
+                          key: ValueKey('et-mine-menu-${t.id}'),
+                          onSelected: (v) => v == 'edit'
+                              ? context.pushOnce('/trucks/${t.id}/edit')
+                              : _setStatusFromList(context, ref, s, t.id, v),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(value: 'edit', child: Text(s.t('et_edit'))),
+                            if (t.status == 'active') PopupMenuItem(value: 'paused', child: Text(s.t('et_pause'))),
+                            if (t.status != 'active') PopupMenuItem(value: 'active', child: Text(s.t('et_activate'))),
+                            if (t.status != 'filled') PopupMenuItem(value: 'filled', child: Text(s.t('et_filled'))),
+                          ],
+                        ),
+                      ]),
                     ),
                   );
                 },
               ),
       ),
     );
+  }
+}
+
+/// Dayandır / Aktiv et / Maşın doldu from "Mənim elanlarım" ("Maşın doldu"
+/// asked first, as on the ad page).
+Future<void> _setStatusFromList(BuildContext context, WidgetRef ref, AppStrings s, String id, String status) async {
+  if (status == 'filled') {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(s.t('et_filled')),
+        content: Text(s.t('et_filled_body')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(s.t('common_cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(s.t('et_filled'))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+  }
+  try {
+    await ref.read(emptyTruckRepositoryProvider).setStatus(id, status);
+    ref.invalidate(emptyTruckProvider(id));
+    ref.invalidate(emptyTrucksProvider);
+    ref.invalidate(myEmptyTrucksProvider);
+  } catch (_) {
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('et_err_save'))));
   }
 }

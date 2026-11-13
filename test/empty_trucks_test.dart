@@ -161,6 +161,44 @@ void main() {
     expect(r.read(loadsSectionProvider), LoadsSection.carriers);
   });
 
+  testWidgets('only the chosen section has a frame (owner, 13.11.2026)', (t) async {
+    await t.pumpWidget(host(LoadsSectionSwitch(strings: _az)));
+    BorderSide side(String k) => ((t.widget<Material>(
+            find.ancestor(of: find.byKey(ValueKey(k)), matching: find.byType(Material)).first)).shape! as RoundedRectangleBorder)
+        .side;
+    expect(side('loads-section-loads').style, BorderStyle.solid, reason: 'Yüklər chosen: framed');
+    expect(side('loads-section-carriers'), BorderSide.none, reason: 'Daşıyıcılar not chosen: no frame');
+    await t.tap(find.byKey(const ValueKey('loads-section-carriers')));
+    await t.pump();
+    expect(side('loads-section-loads'), BorderSide.none);
+    expect(side('loads-section-carriers').style, BorderStyle.solid);
+  });
+
+  testWidgets('Bəyən: a heart on another carrier\'s card and page, never on one\'s own', (t) async {
+    await t.pumpWidget(host(SizedBox(width: 170, child: EmptyTruckTile(truck: truck(owner: 'o1'), strings: _az, onTap: () {})), uid: 'u2'));
+    await t.pump();
+    expect(find.byKey(const ValueKey('fav-user-o1')), findsOneWidget);
+    await t.pumpWidget(host(SizedBox(width: 170, child: EmptyTruckTile(truck: truck(owner: 'o1'), strings: _az, onTap: () {})), uid: 'o1'));
+    await t.pump();
+    expect(find.byKey(const ValueKey('fav-user-o1')), findsNothing);
+    await t.pumpWidget(host(const EmptyTruckDetailScreen(id: 't1'),
+        uid: 'u2', extra: [emptyTruckProvider('t1').overrideWith((ref) async => truck(owner: 'o1'))]));
+    await t.pumpAndSettle();
+    expect(find.byKey(const ValueKey('fav-user-o1')), findsOneWidget);
+  });
+
+  testWidgets('Mənim elanlarım: edit, pause / activate, "Maşın doldu" from the list', (t) async {
+    await t.pumpWidget(host(const MyEmptyTrucksScreen(),
+        uid: 'o1', extra: [myEmptyTrucksProvider.overrideWith((ref) async => [truck(owner: 'o1')])]));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const ValueKey('et-mine-menu-t1')));
+    await t.pumpAndSettle();
+    expect(find.text(_az.t('et_edit')), findsOneWidget);
+    expect(find.text(_az.t('et_pause')), findsOneWidget);
+    expect(find.text(_az.t('et_filled')), findsWidgets);
+    expect(find.text(_az.t('et_activate')), findsNothing);
+  });
+
   testWidgets('the card: route, the place now, tonnes, truck, "İndi"', (t) async {
     await t.pumpWidget(host(SizedBox(width: 170, child: EmptyTruckTile(truck: truck(), strings: _az, onTap: () {}))));
     await t.pump();
@@ -236,6 +274,11 @@ void main() {
           reason: 'the loads button is unchanged');
       final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
       expect(d.contains('LoadsSectionSwitch(') && d.contains('_deskCarrierSlivers('), isTrue);
+    });
+
+    test('Profil → Mənim fəaliyyətim opens "Mənim boş maşın elanlarım"', () {
+      final p = src('lib/features/auth/presentation/profile_screen.dart');
+      expect(p.contains("key: const ValueKey('pf-my-trucks')") && p.contains("context.pushOnce('/trucks/mine')"), isTrue);
     });
 
     test('its own table, written only through the server functions; loads untouched', () {
