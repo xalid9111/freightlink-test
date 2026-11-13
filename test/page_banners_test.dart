@@ -34,7 +34,7 @@ void main() {
       // Not known yet (first open, 09.11.2026): no texts either.
       expect(f.contains('final texts = shown.known && (!onPhoto || (hero?.showText ?? true));'), isTrue);
       // The shade comes only with the picture's texts (overlay), 09.11.2026.
-      expect(f.contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)'), isTrue);
+      expect(f.contains('overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null,'), isTrue);
       expect(f.contains("key: const ValueKey('page-hero-show-text'),"), isTrue);
       final d = File('lib/features/market/presentation/market_home_desktop.dart').readAsStringSync();
       expect(d.contains('final texts = shown.known && (!onPhoto || (hero?.showText ?? true));'), isTrue);

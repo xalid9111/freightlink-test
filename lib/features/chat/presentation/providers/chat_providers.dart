@@ -5,6 +5,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../../models/message_model.dart';
 import '../../data/message_repository_impl.dart';
 import '../../domain/message_repository.dart';
+import '../../../../core/realtime/live_resync.dart';
 
 final messageRepositoryProvider = Provider<MessageRepository>((ref) => MessageRepositoryImpl());
 
@@ -70,7 +71,11 @@ final conversationMessagesProvider = StreamProvider.autoDispose.family<List<Mess
 final receivedMessagesProvider = StreamProvider<List<MessageModel>>((ref) {
   final uid = ref.watch(currentUserIdProvider);
   if (uid == null) return Stream.value(const <MessageModel>[]);
-  return ref.watch(messageRepositoryProvider).watchReceived(uid);
+  final repo = ref.watch(messageRepositoryProvider);
+  // Realtime + a server read every 20 s (owner, 13.11.2026: no sound on a
+  // new message when the realtime message was late / lost) — the badge and
+  // the sound follow the unread count, which no longer waits for realtime.
+  return liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid), every: const Duration(seconds: 20));
 });
 
 /// Keeps the last value while the stream re-subscribes (no badge flicker

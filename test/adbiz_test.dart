@@ -1,5 +1,6 @@
 // UTEP Reklam (owner, 10.11.2026, SQL 0110): the work notebook, the numbers,
 // who sees the module in Profil, and the wiring (server rules, logo, routes).
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -814,5 +815,44 @@ void main() {
     expect(router, contains("path: 'adbiz',"));
     expect(router, isNot(contains("path: '/adbiz")), reason: 'entered only from Profil');
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('const AdbizProfileEntry(),'));
+  });
+
+  group('live lists never wait for realtime (owner, 13.11.2026: the last 50 AZN job did not show)', () {
+    test('a saved row shows from the server read even when realtime never sends it', () async {
+      final live = StreamController<List<int>>();
+      var serverRows = [10, 20];
+      final p = StreamProvider.autoDispose<List<int>>(
+          (ref) => adbizLive<int>(ref, () => live.stream, () async => serverRows, every: const Duration(milliseconds: 20)));
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final seen = <List<int>>[];
+      c.listen(p, (_, n) => n.whenData(seen.add), fireImmediately: true);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(seen.last, [10, 20], reason: 'the first answer does not wait for realtime');
+      live.add([10, 20]);
+      serverRows = [10, 20, 50]; // saved, but its realtime message is lost
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(seen.last, [10, 20, 50]);
+      live.addError(Exception('realtime dropped'));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(seen.last, [10, 20, 50], reason: 'a realtime error never empties the list');
+      await live.close();
+    });
+
+    test('every write in the notebook reads the day again at once', () {
+      final n = src('lib/features/adbiz/presentation/adbiz_notebook_screen.dart');
+      for (final call in ['addEntry(', 'addDayExpense(', 'updateEntry(', 'setEntryCard(', 'deleteEntry(', 'expenseSave(',
+          'expenseDelete(', 'closeDay(', 'deleteDay(', 'reopenDay(']) {
+        final i = n.indexOf('.$call');
+        expect(i, greaterThan(0), reason: call);
+        expect(n.substring(i, i + 400).contains('adbizResync(ref, day);'), isTrue, reason: '$call is followed by adbizResync');
+      }
+      final pr = src('lib/features/adbiz/presentation/adbiz_providers.dart');
+      expect(pr.contains('kAdbizResyncEvery = Duration(seconds: 20)'), isTrue);
+      for (final name in ['adbizDaysProvider', 'adbizEntriesProvider', 'adbizDayExpensesProvider']) {
+        final i = pr.indexOf('final $name');
+        expect(pr.substring(i, i + 300).contains('adbizLive('), isTrue, reason: name);
+      }
+    });
   });
 }

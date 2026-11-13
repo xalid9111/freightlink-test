@@ -454,6 +454,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   (PageHeroPrefetch); the picture and its texts appear together, at its
   first frame (PageHeroImage overlay). Size, place, look and quality as
   before; an admin's edit still refreshes it.
+  The computer's map banners (owner, 13.11.2026: "banner düzgün
+  görünmür"): Parklar · Servislər · Mağazalar use one wide banner
+  (PageHeroBanner whole: true, kDesktopMapBannerHeight = width × 0.16,
+  200–260): the whole picture is shown, never cropped (BoxFit.contain;
+  centred, or on the right when the app's texts are on), the rest of the
+  banner filled with the same picture blurred and darkened. The phone's
+  banners are unchanged; TIR Bazarı's desktop banner is unchanged.
   Mağazalar has its own banner (owner, 08.11.2026, 0108): shops_hero
   (picture, texts, place, zoom), page 'shops' on the phone and computer, its
   own pencil; until the admin sets one, assets/images/profile/cover_shop.jpg
@@ -708,6 +715,24 @@ files to the owner separately (they are run by hand in the SQL editor).
   on the way — dark red at the start, then red, orange, yellow, green at the
   target (AppColors.adbHeat), the spark at the tip, the green star at the end;
   "111/245" over it, no percent.
+  Never wait for realtime (owner, 13.11.2026: "the last 50 AZN job did not
+  show"): the notebook's days, jobs and rasxod are the realtime stream PLUS
+  a plain server read at once and every 20 s (adbizLive), and every write
+  on the device reads the day again at once (adbizResync); a realtime error
+  never empties the list.
+- Sounds and counts (owner, 13.11.2026): the message sound plays once per
+  NEW unread message id (never per count change), and the received list is
+  realtime + a server read every 20 s (liveWithResync), so a late / lost
+  realtime message still rings; sounds go through Web Audio (decoded once,
+  unlocked by the first tap; the <audio> element is the fallback);
+  Ayarlar → Bildirişlər → "Səsi və bildirişi yoxla" plays it inside the tap,
+  asks for notifications and says what the browser allows. Sound with the
+  app closed needs Web Push (stage 2, not built yet). TIRPark and TIR
+  Bazarı carry a count of what is new since the last look (new approved
+  parks + published services / shops; new active ads, not one's own),
+  kept on the device per account, the first time = now, cleared when the
+  section is opened, counted on the server only (no rows), on open / resume
+  and every minute (core/notify/new_items_badges.dart).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

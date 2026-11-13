@@ -439,7 +439,8 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
                             defaultSubtitle: s.t('shop_hero_subtitle'),
                             icon: Icons.storefront,
                             compact: false,
-                            height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
+                            whole: true,
+                            height: kDesktopMapBannerHeight(c.maxWidth),
                           )
                         : PageHeroBanner(
                             page: 'services',
@@ -450,7 +451,8 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
                             defaultSubtitle: s.t('svc_hero_subtitle'),
                             icon: Icons.handyman,
                             compact: false,
-                            height: (c.maxWidth * 0.16).clamp(180.0, 260.0),
+                            whole: true,
+                            height: kDesktopMapBannerHeight(c.maxWidth),
                           ),
                   ),
                 )

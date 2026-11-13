@@ -281,7 +281,7 @@ void main() {
 
   test('wired: TIRPark tab in place of Servislər (kept, opened from TIRPark), admin approval, safe SQL', () {
     final shell = src('lib/core/router/main_shell.dart');
-    expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark')),"));
+    expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark'), badge: fresh[NewItemsSection.tirpark] ?? 0),"));
     expect(shell.contains("strings.t('nav_services'))"), isFalse);
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');

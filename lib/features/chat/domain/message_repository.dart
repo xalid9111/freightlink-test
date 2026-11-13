@@ -29,6 +29,9 @@ abstract class MessageRepository {
   /// Live list of messages addressed to [userId] (used to count unread).
   Stream<List<MessageModel>> watchReceived(String userId);
 
+  /// The same list read once (the badge's safety net when realtime is late).
+  Future<List<MessageModel>> fetchReceived(String userId);
+
   /// Marks every unread message in [conversationId] addressed to
   /// [userId] as read (RLS messages_mark_read, migration 0002).
   Future<void> markConversationRead({required String conversationId, required String userId});

@@ -44,6 +44,7 @@ class _AdbizNotebookScreenState extends ConsumerState<AdbizNotebookScreen> {
     try {
       final repo = ref.read(adbizRepositoryProvider);
       final id = manager ? await repo.openDayFor(uid, date ?? bakuToday()) : await repo.openDay();
+      ref.invalidate(adbizDaysProvider(uid));
       if (mounted) setState(() => _selected = id);
     } catch (e) {
       if (mounted) adbizSnack(context, adbizError(s, e));
@@ -293,6 +294,9 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     });
     try {
       await ref.read(adbizRepositoryProvider).addEntry(day.id, title, amount, _key, card: _v113 ? _card : null);
+      // Shown at once from the server, never only when realtime arrives
+      // (owner, 13.11.2026: the last 50 AZN job did not show).
+      adbizResync(ref, day);
       _key = adbizClientKey();
       _title.clear();
       _amount.clear();
@@ -320,6 +324,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     });
     try {
       await ref.read(adbizRepositoryProvider).addDayExpense(day.id, title, amount, _xKey);
+      adbizResync(ref, day);
       _xKey = adbizClientKey();
       _xTitle.clear();
       _xAmount.clear();
@@ -336,6 +341,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     if (r == null) return;
     try {
       await ref.read(adbizRepositoryProvider).updateEntry(e.id, r.$1, r.$2);
+      adbizResync(ref, day);
     } catch (err) {
       if (mounted) adbizSnack(context, adbizError(s, err));
     }
@@ -346,6 +352,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
   Future<void> _setCard(AdbizEntry e, bool on) async {
     try {
       await ref.read(adbizRepositoryProvider).setEntryCard(e.id, on);
+      adbizResync(ref, day);
     } catch (err) {
       if (mounted) adbizSnack(context, adbizError(s, err));
     }
@@ -355,6 +362,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     if (!await adbizConfirm(context, s, s.t('adb_delete_job'), '${e.title} · ${money(e.amount)}', ok: s.t('adb_delete'))) return;
     try {
       await ref.read(adbizRepositoryProvider).deleteEntry(e.id);
+      adbizResync(ref, day);
     } catch (err) {
       if (mounted) adbizSnack(context, adbizError(s, err));
     }
@@ -365,6 +373,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     if (r == null) return;
     try {
       await ref.read(adbizRepositoryProvider).expenseSave(id: x.id, spentOn: x.spentOn, title: r.$1, amount: r.$2);
+      adbizResync(ref, day);
     } catch (err) {
       if (mounted) adbizSnack(context, adbizError(s, err));
     }
@@ -374,6 +383,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     if (!await adbizConfirm(context, s, s.t('adb_delete_expense'), '${x.title} · ${money(x.amount)}', ok: s.t('adb_delete'))) return;
     try {
       await ref.read(adbizRepositoryProvider).expenseDelete(x.id);
+      adbizResync(ref, day);
     } catch (err) {
       if (mounted) adbizSnack(context, adbizError(s, err));
     }
@@ -386,6 +396,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     setState(() => _busy = true);
     try {
       await ref.read(adbizRepositoryProvider).closeDay(day.id);
+      adbizResync(ref, day);
       // The day's result, at once (owner, 10.11.2026): "Təbriklər!" when
       // the target is reached, otherwise how much stayed in the minus.
       if (mounted) {
@@ -407,6 +418,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     setState(() => _busy = true);
     try {
       await ref.read(adbizRepositoryProvider).deleteDay(day.id);
+      adbizResync(ref, day);
       if (mounted) adbizSnack(context, s.t('adb_day_deleted'));
     } catch (e) {
       if (mounted) adbizSnack(context, e is AdbizNotReady ? s.t('adb_need_sql115') : adbizError(s, e));
@@ -422,6 +434,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     setState(() => _busy = true);
     try {
       await ref.read(adbizRepositoryProvider).reopenDay(day.id);
+      adbizResync(ref, day);
     } catch (e) {
       if (mounted) adbizSnack(context, adbizError(s, e));
     } finally {

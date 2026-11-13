@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/realtime/live_resync.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
@@ -15,23 +16,49 @@ final adbizMeProvider = FutureProvider<AdbizMe?>((ref) async {
   }
 });
 
+/// How often a live list is read again from the server, whatever realtime
+/// says (owner, 13.11.2026: a job saved on the server did not show because
+/// the realtime message was late / lost). A device's own writes re-read at
+/// once (adbizResync); this catches the other devices' changes.
+const kAdbizResyncEvery = Duration(seconds: 20);
+
+/// A live list (see core/realtime/live_resync.dart).
+Stream<List<T>> adbizLive<T>(Ref ref, Stream<List<T>> Function() live, Future<List<T>> Function() read,
+        {Duration every = kAdbizResyncEvery}) =>
+    liveWithResync(ref, live, read, every: every);
+
 /// Live: one person's days (newest first).
-final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, String>(
-    (ref, userId) => ref.watch(adbizRepositoryProvider).watchDays(userId));
+final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, String>((ref, userId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchDays(userId), () => repo.days(userId));
+});
 
 /// Live: one day's jobs (oldest first) — the same on every device.
-final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>(
-    (ref, dayId) => ref.watch(adbizRepositoryProvider).watchEntries(dayId));
+final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>((ref, dayId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchEntries(dayId), () => repo.entries(dayId));
+});
 
 /// Live: one day's expenses (rasxod). Before SQL 0111 there is no day_id:
 /// the day simply has no expenses.
-final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExpense>, String>((ref, dayId) async* {
-  try {
-    yield* ref.watch(adbizRepositoryProvider).watchDayExpenses(dayId);
-  } catch (_) {
-    yield const <AdbizExpense>[];
-  }
+final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExpense>, String>((ref, dayId) {
+  final repo = ref.watch(adbizRepositoryProvider);
+  return adbizLive(ref, () => repo.watchDayExpenses(dayId), () async {
+    try {
+      return await repo.dayExpenses(dayId);
+    } catch (_) {
+      return const <AdbizExpense>[];
+    }
+  });
 });
+
+/// After a write on this device: read the day again at once (never wait for
+/// realtime to show what was just saved).
+void adbizResync(WidgetRef ref, AdbizDay day) {
+  ref.invalidate(adbizEntriesProvider(day.id));
+  ref.invalidate(adbizDayExpensesProvider(day.id));
+  ref.invalidate(adbizDaysProvider(day.userId));
+}
 
 final adbizCompaniesProvider = FutureProvider.autoDispose<List<AdbizCompany>>(
     (ref) => ref.watch(adbizRepositoryProvider).companies());

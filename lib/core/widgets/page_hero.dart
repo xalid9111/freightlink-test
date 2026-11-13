@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +114,12 @@ class PageHeroImage extends StatelessWidget {
 
   /// Drawn over the picture (not zoomed) once it is shown.
   final Widget? overlay;
+
+  /// The whole picture, never cropped (the computer's wide map banners,
+  /// owner 13.11.2026): shown at its own shape at [wholeAlign], the rest of
+  /// the banner filled with the same picture blurred and darkened.
+  final bool whole;
+  final Alignment wholeAlign;
   const PageHeroImage(
       {super.key,
       required this.url,
@@ -120,10 +127,45 @@ class PageHeroImage extends StatelessWidget {
       required this.zoom,
       required this.fallback,
       this.placeholder,
-      this.overlay});
+      this.overlay,
+      this.whole = false,
+      this.wholeAlign = Alignment.center});
 
   @override
-  Widget build(BuildContext context) => ClipRect(
+  Widget build(BuildContext context) => whole ? _whole(context) : _cover(context);
+
+  Widget _whole(BuildContext context) => ClipRect(
+        child: LayoutBuilder(builder: (context, c) {
+          final w = heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), 1);
+          return Image.network(url,
+              key: ValueKey('whole-$url'),
+              fit: BoxFit.contain,
+              alignment: wholeAlign,
+              gaplessPlayback: true,
+              cacheWidth: w,
+              frameBuilder: (c, child, frame, sync) {
+                final ready = sync || frame != null;
+                return Stack(fit: StackFit.expand, children: [
+                  if (!ready) (placeholder ?? fallback)(c),
+                  if (ready) ...[
+                    // The same picture, blurred and darker, behind it.
+                    ImageFiltered(
+                      key: const ValueKey('page-hero-backdrop'),
+                      imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.clamp),
+                      child: Image.network(url, fit: BoxFit.cover, cacheWidth: w, gaplessPlayback: true),
+                    ),
+                    const ColoredBox(color: Color(0x59000000)),
+                  ],
+                  child,
+                  if (ready && overlay != null) overlay!,
+                ]);
+              },
+              errorBuilder: (c, __, ___) =>
+                  Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!]));
+        }),
+      );
+
+  Widget _cover(BuildContext context) => ClipRect(
         // Decoded at the size it is shown (zoom included), not the full
         // upload: a small picture in memory stays in the image cache while
         // scrolling, so it never has to be read and opened again.
@@ -157,6 +199,10 @@ int? heroDecodeWidth(BoxConstraints c, double devicePixelRatio, double zoom) {
   final z = zoom < 1 ? 1.0 : zoom;
   return (c.maxWidth * devicePixelRatio * z * 2).round().clamp(480, 2400);
 }
+
+/// The computer's map banners (Parklar · Servislər · Mağazalar, owner
+/// 13.11.2026): one height for all three, the whole picture shown.
+double kDesktopMapBannerHeight(double width) => (width * 0.16).clamp(200.0, 260.0);
 
 /// TIRPark's banner too (owner, 31.10.2026, 0078).
 /// Mağazalar its own banner (shops_hero, 0108, owner 08.11.2026).
@@ -383,6 +429,9 @@ class PageHeroBanner extends ConsumerWidget {
   final double height;
   final bool compact;
   final AppStrings strings;
+
+  /// The whole picture, never cropped (computer map banners, 13.11.2026).
+  final bool whole;
   const PageHeroBanner({
     super.key,
     required this.page,
@@ -394,6 +443,7 @@ class PageHeroBanner extends ConsumerWidget {
     required this.height,
     required this.strings,
     this.compact = true,
+    this.whole = false,
   });
 
   @override
@@ -463,7 +513,10 @@ class PageHeroBanner extends ConsumerWidget {
                 fallback: (_) => PageHeroGround(icon: icon, iconSize: height * 0.6),
                 placeholder: (_) => const PageHeroGround(icon: null),
                 // The texts come with the picture, not before it.
-                overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null)
+                overlay: texts ? Stack(fit: StackFit.expand, children: [shade, words]) : null,
+                whole: whole,
+                // With texts on the left the picture stands on the right.
+                wholeAlign: texts ? Alignment.centerRight : Alignment.center)
           else ...[
             PageHeroGround(icon: shown.known ? icon : null, iconSize: height * 0.6),
             if (texts) words,
