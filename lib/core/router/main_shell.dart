@@ -21,6 +21,7 @@ import '../../models/group_models.dart';
 import 'floating_nav.dart';
 import 'safe_navigation.dart';
 import '../widgets/tirlink_wordmark.dart';
+import '../notify/web_push.dart';
 
 /// Bottom navigation shell (brief §14): Home/Loads, Search, Shipments,
 /// Services, Messages, Profile — wraps all 6 authenticated branches. Uses
@@ -409,12 +410,15 @@ class _ResumeRefresherState extends ConsumerState<ResumeRefresher> {
     ref.invalidate(conversationByIdProvider);
     ref.invalidate(receivedMessagesProvider); // drives both unread badges
     ref.read(newItemsProvider.notifier).refresh(); // TIRPark / TIR Bazarı counts
+    pushResync(); // Web Push (0121): a device that allowed it stays known
   }
 
   @override
   void initState() {
     super.initState();
     _listener = AppLifecycleListener(onResume: _refresh, onShow: _refresh);
+    // Web Push: a quiet re-check well after the first screen (never asks).
+    Future<void>.delayed(const Duration(seconds: 8), pushResync);
   }
 
   @override

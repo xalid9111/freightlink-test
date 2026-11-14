@@ -36,3 +36,8 @@ verify_jwt = true
 # without a Supabase JWT; it is authenticated by the provider's signature.
 [functions.payments-webhook]
 verify_jwt = false
+
+# Web Push (0121): called by the database (pg_net) with the Vault secret in
+# x-push-secret; GET returns only the public VAPID key.
+[functions.push-send]
+verify_jwt = false

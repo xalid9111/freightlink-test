@@ -17,6 +17,7 @@ on:
         options:
           - payments-checkout
           - payments-webhook
+          - push-send
         default: payments-checkout
 
 permissions:

@@ -2316,5 +2316,19 @@
   "sup_order_market_vip": "TIR Bazarı VIP",
   "sup_order_tir_park": "Park rezervasiyası",
   "sup_order_ad": "Reklam sifarişi",
-  "pf_delete_admin": "Admin hesabı bu yolla silinmir — əvvəlcə admin rolu götürülməlidir"
+  "pf_delete_admin": "Admin hesabı bu yolla silinmir — əvvəlcə admin rolu götürülməlidir",
+  "push_title": "Proqram bağlı olanda da bildiriş",
+  "push_state_on": "Bu cihazda aktivdir: yeni mesajlar və vacib bildirişlər proqram bağlı olanda da gələcək.",
+  "push_state_off": "Bu cihazda bağlıdır. Aktiv etsəniz, telefon icazə istəyəcək.",
+  "push_turn_on": "Bildirişləri aktiv et",
+  "push_turn_off": "Bu cihazda söndür",
+  "push_on_done": "Hazırdır! Bildirişlər bu cihaza gələcək.",
+  "push_denied": "Bildirişlərə icazə verilməyib. Telefonun / brauzerin ayarlarında TırLink üçün bildirişləri açın.",
+  "push_not_ready": "Bu funksiya hələ serverdə aktiv deyil",
+  "push_ios_install": "iPhone-da bildirişlər yalnız ana ekrandakı TırLink-də işləyir: Safari → Paylaş → \"Ana ekrana əlavə et\", sonra TırLink-i ana ekrandan açıb burada aktiv edin.",
+  "push_unsupported": "Bu brauzer proqram bağlı olanda bildirişləri dəstəkləmir. Chrome, Edge, Firefox və ya Safari-də açın.",
+  "push_failed": "Alınmadı, yenidən cəhd edin",
+  "push_pref_messages": "Yeni mesajlar",
+  "push_pref_important": "Vacib bildirişlər (rezervasiya, qəbz, işçi, İş Mərkəzi, admin)",
+  "push_pref_preview": "Mesajın ilk 80 simvolunu göstər"
 }

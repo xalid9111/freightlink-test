@@ -2316,5 +2316,19 @@
   "sup_order_market_vip": "TIR Bazarı VIP",
   "sup_order_tir_park": "停车场预订",
   "sup_order_ad": "广告订单",
-  "pf_delete_admin": "管理员账户不能这样删除——需先取消管理员角色"
+  "pf_delete_admin": "管理员账户不能这样删除——需先取消管理员角色",
+  "push_title": "应用关闭时也接收通知",
+  "push_state_on": "此设备已开启：即使应用关闭，也会收到新消息和重要通知。",
+  "push_state_off": "此设备已关闭。开启时手机会请求许可。",
+  "push_turn_on": "开启通知",
+  "push_turn_off": "在此设备上关闭",
+  "push_on_done": "完成！通知将发送到此设备。",
+  "push_denied": "通知已被阻止。请在手机 / 浏览器设置中允许 TırLink 的通知。",
+  "push_not_ready": "此功能尚未在服务器上启用",
+  "push_ios_install": "在 iPhone 上，通知仅在主屏幕上的 TırLink 中有效：Safari → 分享 → “添加到主屏幕”，然后从主屏幕打开 TırLink 并在此开启。",
+  "push_unsupported": "此浏览器不支持应用关闭时的通知。请在 Chrome、Edge、Firefox 或 Safari 中打开 TırLink。",
+  "push_failed": "未成功，请重试",
+  "push_pref_messages": "新消息",
+  "push_pref_important": "重要通知（预订、收据、员工、招聘中心、管理员）",
+  "push_pref_preview": "显示消息的前 80 个字符"
 }

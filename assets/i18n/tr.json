@@ -2316,5 +2316,19 @@
   "sup_order_market_vip": "TIR Pazarı VIP",
   "sup_order_tir_park": "Park rezervasyonu",
   "sup_order_ad": "Reklam siparişi",
-  "pf_delete_admin": "Yönetici hesabı bu şekilde silinmez — önce yönetici rolü kaldırılmalı"
+  "pf_delete_admin": "Yönetici hesabı bu şekilde silinmez — önce yönetici rolü kaldırılmalı",
+  "push_title": "Uygulama kapalıyken de bildirim",
+  "push_state_on": "Bu cihazda etkin: yeni mesajlar ve önemli bildirimler uygulama kapalıyken de gelecek.",
+  "push_state_off": "Bu cihazda kapalı. Etkinleştirirseniz telefon izin isteyecek.",
+  "push_turn_on": "Bildirimleri etkinleştir",
+  "push_turn_off": "Bu cihazda kapat",
+  "push_on_done": "Hazır! Bildirimler bu cihaza gelecek.",
+  "push_denied": "Bildirimlere izin verilmedi. Telefon / tarayıcı ayarlarından TırLink bildirimlerini açın.",
+  "push_not_ready": "Bu özellik henüz sunucuda etkin değil",
+  "push_ios_install": "iPhone'da bildirimler yalnızca ana ekrandaki TırLink'te çalışır: Safari → Paylaş → \"Ana Ekrana Ekle\", sonra TırLink'i ana ekrandan açıp burada etkinleştirin.",
+  "push_unsupported": "Bu tarayıcı uygulama kapalıyken bildirimleri desteklemiyor. Chrome, Edge, Firefox veya Safari'de açın.",
+  "push_failed": "Olmadı, tekrar deneyin",
+  "push_pref_messages": "Yeni mesajlar",
+  "push_pref_important": "Önemli bildirimler (rezervasyon, dekont, çalışan, İş Merkezi, yönetici)",
+  "push_pref_preview": "Mesajın ilk 80 karakterini göster"
 }

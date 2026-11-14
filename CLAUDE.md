@@ -798,6 +798,28 @@ files to the owner separately (they are run by hand in the SQL editor).
   kept on the device per account, the first time = now, cleared when the
   section is opened, counted on the server only (no rows), on open / resume
   and every minute (core/notify/new_items_badges.dart).
+- Web Push (owner, 14.11.2026, SQL 0121, docs/WEB_PUSH.md): notifications
+  while TırLink is closed. Standard text "Əli: Yeni mesajınız var"; the first
+  80 characters only if the user turns "Mesajın ilk 80 simvolunu göstər" on;
+  one notification per chat ("(+n)", tag + Topic); none for the chat being
+  read (push_active heartbeat every 30 s, 40 s window); a tap opens the chat.
+  Stage 1 events: private messages; admins: suggestions / payment / VIP
+  problems; the park's approved manager: new booking, receipt (one push, not
+  also the receipt's chat message), worker request (+ the park's admin
+  worker); İş Mərkəzi: the other side of a new application / offer. Only to
+  that user / authorised admin. Server: push_outbox triggers (never block the
+  write) → pg_net → Edge Function push-send (Vault secret checked by
+  push_hook_check, service role; VAPID keys only in function secrets) → only
+  Apple / Google / Mozilla / Microsoft endpoints; 404/410 devices removed.
+  Client: web/push.js (permission asked only inside the user's tap) +
+  web/push_sw.js (push + notificationclick only, no fetch, no cache);
+  pwa_guard.js still removes every other service worker and
+  flutter_service_worker.js stays the kill switch. Ayarlar → Bildirişlər →
+  "Proqram bağlı olanda da bildiriş" (Aktiv et / Söndür, Mesajlar, Vacib
+  bildirişlər, preview; iPhone Safari tab: "Ana ekrana əlavə et" guide).
+  Sign-out and a deleted / blocked account remove the device; a quiet
+  re-save 8 s after start / on resume (never asks). Measured: first screen
+  and page switch unchanged within noise (iPhone 13 emulation, CPU ×4).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

@@ -25,9 +25,16 @@
   //    Screen app (mixed versions → freezes). Remove them once, keep data.
   try {
     if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
-      navigator.serviceWorker.getRegistrations().then(function (regs) {
-        if (!regs || !regs.length) return;
-        var controlled = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.getRegistrations().then(function (all) {
+        // The Web Push worker (push_sw.js, 0121: no fetch, no cache) stays.
+        var isPush = function (url) { return /\/push_sw\.js(\?|$)/.test(url || ''); };
+        var regs = (all || []).filter(function (r) {
+          var w = r.active || r.waiting || r.installing;
+          return !(w && isPush(w.scriptURL));
+        });
+        if (!regs.length) return;
+        var ctl = navigator.serviceWorker.controller;
+        var controlled = !!ctl && !isPush(ctl.scriptURL);
         Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
           var clean = window.caches && caches.keys ? caches.keys().then(function (keys) {
             return Promise.all(keys.filter(function (k) { return /^flutter-/.test(k); })

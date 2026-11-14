@@ -8,6 +8,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../domain/app_user.dart';
 import '../domain/auth_repository.dart';
+import '../../../core/notify/web_push.dart';
 
 /// Data-layer implementation backed by Supabase Auth + the `public.users`
 /// table (role, full_name live in Postgres so RLS policies can read them
@@ -171,6 +172,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    // Web Push (0121): this device stops getting notifications for this
+    // account (best effort, at most 3 s; never blocks signing out).
+    await pushLeaveOnSignOut();
     await _client.auth.signOut();
     _cachedUser = null;
   }
