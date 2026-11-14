@@ -427,17 +427,13 @@ class _Hero extends ConsumerWidget {
                 // 27.10.2026 — the big headline over the map is gone).
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    Row(children: [
-                      Icon(Icons.show_chart, color: AppColors.accentFill, size: 20),
-                      const SizedBox(width: 4),
-                      // TırLink + www.tirlink.app (owner, 13.11.2026).
-                      const Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: TirLinkWordmark(size: 18),
-                        ),
-                      ),
-                    ]),
+                    // The TIR Link logo left of TırLink (owner, 14.11.2026; it
+                    // replaced the orange chart icon), www.tirlink.app under it.
+                    const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: TirLinkWordmark(size: 18, showLogo: true),
+                    ),
                     const SizedBox(height: 2),
                     Text.rich(
                       key: const ValueKey('home-slogan'),

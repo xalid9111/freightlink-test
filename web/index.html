@@ -29,13 +29,17 @@
        below, before the first paint). -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="TırLink">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <!-- TIR Link icons (owner, 14.11.2026): new file names so no browser or
+       iPhone keeps the old orange icon from its cache. -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v2.png">
 
   <!-- Android / general PWA install support -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-v2.png"/>
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/tirlink-favicon-v2-48.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/tirlink-icon-v2-192.png"/>
   <!-- Start downloading the app itself at once, in parallel with the
        start-up scripts (owner, 24.10.2026: "sayt gec yüklənir"). -->
   <link rel="preload" href="main.dart.js" as="script">
@@ -85,7 +89,7 @@
     #app-loading img {
       width: 72px;
       height: 72px;
-      border-radius: 16px;
+      object-fit: contain;
     }
     #app-loading .spinner {
       width: 28px;
@@ -114,7 +118,7 @@
 </head>
 <body>
   <div id="app-loading">
-    <img src="icons/Icon-192.png" alt="TırLink">
+    <picture><source srcset="icons/tirlink-logo-v2-144.webp" type="image/webp"><img src="icons/tirlink-logo-v2-144.png" alt="TırLink" width="72" height="72"></picture>
     <div class="spinner"></div>
   </div>
 
