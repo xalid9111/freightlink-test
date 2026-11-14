@@ -2316,5 +2316,19 @@
   "sup_order_market_vip": "TIR Bazarı VIP",
   "sup_order_tir_park": "Park booking",
   "sup_order_ad": "Ad order",
-  "pf_delete_admin": "An admin account is not deleted this way — the admin role must be taken off first"
+  "pf_delete_admin": "An admin account is not deleted this way — the admin role must be taken off first",
+  "push_title": "Notifications while the app is closed",
+  "push_state_on": "On for this device: new messages and important notices arrive even when the app is closed.",
+  "push_state_off": "Off for this device. Turning it on asks your phone for permission.",
+  "push_turn_on": "Turn on notifications",
+  "push_turn_off": "Turn off on this device",
+  "push_on_done": "Done! Notifications will come to this device.",
+  "push_denied": "Notifications are blocked. Allow them for TırLink in your phone / browser settings.",
+  "push_not_ready": "This is not active on the server yet",
+  "push_ios_install": "On iPhone notifications work only in TırLink on the Home Screen: Safari → Share → \"Add to Home Screen\", then open TırLink from the Home Screen and turn them on here.",
+  "push_unsupported": "This browser does not support notifications while the app is closed. Open TırLink in Chrome, Edge, Firefox or Safari.",
+  "push_failed": "That did not work, please try again",
+  "push_pref_messages": "New messages",
+  "push_pref_important": "Important notices (bookings, receipts, workers, Job Centre, admin)",
+  "push_pref_preview": "Show the first 80 characters of a message"
 }

@@ -22,6 +22,7 @@ import 'widgets/chat_input_bar.dart';
 import 'widgets/location_message.dart';
 import 'widgets/message_actions.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/notify/web_push.dart';
 
 /// ONE thread per person (WhatsApp-style).
 ///
@@ -73,8 +74,18 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
   /// Conversations currently being marked read (avoids repeated calls).
   final Set<String> _marking = {};
 
+  /// Web Push (0121): "I am reading this chat" — no push for it meanwhile.
+  late final ChatPresence _presence = ChatPresence(() => _target ?? widget.conversationId, PushRepository());
+
+  @override
+  void initState() {
+    super.initState();
+    _presence.start();
+  }
+
   @override
   void dispose() {
+    _presence.stop();
     _scrollCtrl.dispose();
     super.dispose();
   }

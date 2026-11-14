@@ -17,6 +17,7 @@ import '../../../core/layout/desktop_layout.dart';
 import '../../../core/layout/desktop_preview.dart';
 import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/notify/push_settings.dart';
 
 /// Each language in its own native name (deliberately not translated).
 String languageName(Locale l) => switch (l.languageCode) {
@@ -133,6 +134,8 @@ class SettingsScreen extends ConsumerWidget {
                     ..showSnackBar(SnackBar(duration: const Duration(seconds: 6), content: Text(s.t(key))));
                 },
               ),
+              // Web Push (owner, 14.11.2026, SQL 0121): also while the app is closed.
+              const PushSettingsCard(),
             ],
           ),
           const SizedBox(height: 14),

@@ -50,7 +50,7 @@ jobs:
           python3 scripts/validate_i18n.py && python3 scripts/validate_sql.py && python3 scripts/validate_dart.py &&
             python3 scripts/bundle_payment_functions.py --check &&
             python3 -m unittest discover -s scripts/osm_truck_parks -p 'test_*.py' &&
-            node --experimental-strip-types --test supabase/functions/_shared/payments_test.ts supabase/functions/_shared/wa_verify_test.ts
+            node --experimental-strip-types --test supabase/functions/_shared/payments_test.ts supabase/functions/_shared/wa_verify_test.ts supabase/functions/_shared/push_test.ts
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
       - name: SQL / RLS / data-preservation tests (throw-away Postgres)
