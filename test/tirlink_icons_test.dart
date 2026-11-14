@@ -5,6 +5,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,10 +59,10 @@ void main() {
     final manifest = jsonDecode(src('web/manifest.json')) as Map<String, dynamic>;
     final icons = [for (final i in manifest['icons'] as List) i as Map<String, dynamic>];
     expect(icons.map((i) => i['src']), [
-      'icons/tirlink-icon-v2-192.png',
-      'icons/tirlink-icon-v2-512.png',
-      'icons/tirlink-icon-v2-maskable-192.png',
-      'icons/tirlink-icon-v2-maskable-512.png',
+      'icons/tirlink-icon-v3-192.png',
+      'icons/tirlink-icon-v3-512.png',
+      'icons/tirlink-icon-v3-maskable-192.png',
+      'icons/tirlink-icon-v3-maskable-512.png',
     ]);
     for (final i in icons) {
       final (w, h, type) = png('web/${i['src']}');
@@ -69,10 +70,10 @@ void main() {
       expect(type, 2, reason: '${i['src']} has no transparency');
     }
     final html = src('web/index.html');
-    expect(html, contains('<link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v2.png">'));
-    expect(png('web/icons/tirlink-apple-touch-v2.png'), (180, 180, 2));
-    expect(html, contains('href="favicon-v2.png"'));
-    expect(png('web/favicon-v2.png'), (32, 32, 2));
+    expect(html, contains('<link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v3.png">'));
+    expect(png('web/icons/tirlink-apple-touch-v3.png'), (180, 180, 2));
+    expect(html, contains('href="favicon-v3.png"'));
+    expect(png('web/favicon-v3.png'), (32, 32, 2));
     expect(html, isNot(contains('href="icons/apple-touch-icon.png"')));
     expect(html, isNot(contains('href="favicon.png"')));
   });
@@ -87,5 +88,41 @@ void main() {
         reason: 'light, no slower start');
     // No service worker is turned back on.
     expect(html, isNot(contains('serviceWorker.register(')));
+  });
+
+  // Owner, 15.11.2026: "kənarlarında qara xətt olmasın" — the icon fills the
+  // square edge to edge; no dark ground on its sides or in the corners that
+  // iPhone / Android keep after their own rounding.
+  testWidgets('icons have no dark rim', (t) async {
+    await t.runAsync(() async {
+      for (final p in [
+        'web/icons/tirlink-apple-touch-v3.png',
+        'web/icons/tirlink-icon-v3-512.png',
+        'web/icons/tirlink-icon-v3-maskable-512.png'
+      ]) {
+        final codec = await ui.instantiateImageCodec(File(p).readAsBytesSync());
+        final img = (await codec.getNextFrame()).image;
+        final px = (await img.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+        final n = img.width;
+        int light(double fx, double fy) {
+          final i = ((fy * (n - 1)).round() * n + (fx * (n - 1)).round()) * 4;
+          return px.getUint8(i) + px.getUint8(i + 1) + px.getUint8(i + 2);
+        }
+
+        // Edge midpoints and points just inside the iOS corner curve.
+        for (final (x, y) in [
+          (0.0, 0.5),
+          (1.0, 0.5),
+          (0.5, 0.0),
+          (0.5, 1.0),
+          (0.08, 0.08),
+          (0.92, 0.08),
+          (0.08, 0.92),
+          (0.92, 0.92)
+        ]) {
+          expect(light(x, y), greaterThan(60), reason: '$p at ($x, $y) is not the dark ground');
+        }
+      }
+    });
   });
 }
