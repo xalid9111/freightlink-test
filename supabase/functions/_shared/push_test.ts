@@ -56,3 +56,23 @@ test('gone devices are 404 / 410 only', () => {
   assert.equal(isGone(429), false);
   assert.equal(isGone(undefined), false);
 });
+
+// web/push.js: the VAPID key (base64url, 87 characters) must become the
+// 65-byte P-256 point — a wrong padding made iPhone's subscribe fail and the
+// app said "not supported" (owner, 14.11.2026).
+import { readFileSync } from 'node:fs';
+
+test('web/push.js turns the VAPID public key into 65 bytes (padding)', () => {
+  const src = readFileSync(new URL('../../../web/push.js', import.meta.url), 'utf8');
+  const fn = src.match(/function key\(b64\) \{[\s\S]*?\n  \}/)![0];
+  const strictAtob = (s: string) => {
+    if (s.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(s)) throw new Error('InvalidCharacterError');
+    return Buffer.from(s, 'base64').toString('binary');
+  };
+  const key = new Function('atob', `${fn}; return key;`)(strictAtob) as (s: string) => Uint8Array;
+  const real = 'BNh5xPZ_Mh03JcUv0wcGDkXsT6XZgSOeJhsa1Cpbfrfze3SSfHAlDNw6tNNV1wPpXR_wydtrMwQm2PN78ZIchpo';
+  const k = key(real);
+  assert.equal(k.length, 65);
+  assert.equal(k[0], 4);
+  for (const n of [86, 87, 88]) assert.doesNotThrow(() => key('A'.repeat(n)), `length ${n}`);
+});

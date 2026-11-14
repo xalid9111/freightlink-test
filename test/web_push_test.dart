@@ -98,7 +98,7 @@ void main() {
       final html = src('web/index.html');
       expect(html.indexOf('pwa_guard.js') < html.indexOf('push.js'), isTrue);
       final js = src('web/push.js');
-      final sub = js.substring(js.indexOf('async function subscribe('), js.indexOf('function enable('));
+      final sub = js.substring(js.indexOf('async function prepare('), js.indexOf('function enable('));
       expect('serviceWorker.register('.allMatches(js).length, 1);
       expect(sub.contains('serviceWorker.register('), isTrue, reason: 'registered only after the user allowed it');
     });
@@ -106,12 +106,12 @@ void main() {
     test('the permission is asked only inside a real browser gesture (touchend / click), armed by the tap', () {
       final js = src('web/push.js');
       expect(RegExp(r'requestPermission').allMatches(js).length, 1, reason: 'only in ask()');
-      final ask = js.substring(js.indexOf('function ask()'), js.indexOf("['touchend', 'click']"));
-      expect(ask.contains('Notification.requestPermission()'), isTrue);
+      final enable0 = js.substring(js.indexOf('function enable('), js.indexOf("// This device's subscription"));
+      expect(enable0.contains('arm(function () {') && enable0.contains('Notification.requestPermission()'), isTrue,
+          reason: 'asked only inside the armed run, i.e. in the tap\'s touchend / click');
       expect(js.contains("['touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, ask, { capture: true, passive: true }); });"), isTrue);
-      final enable = js.substring(js.indexOf('function enable('), js.indexOf("// This device's subscription"));
-      expect(enable.contains('pending = {'), isTrue, reason: 'the tap only arms the request');
-      expect(enable.contains('requestPermission'), isFalse);
+      expect(js.contains('pending = {'), isTrue, reason: 'the tap only arms the request');
+      expect(js.contains("status: 'tap_again'"), isTrue, reason: 'iPhone may want the subscribe inside a tap too');
       final dart = src('lib/core/notify/web_push.dart');
       expect(dart.contains('Future<void> pushResync()') && !dart.substring(dart.indexOf('Future<void> pushResync()')).split('class ChatPresence')[0].contains('pushEnable'),
           isTrue, reason: 'the start-up re-check never asks');

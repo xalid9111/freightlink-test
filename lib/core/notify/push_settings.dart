@@ -34,7 +34,7 @@ class _PushSettingsCardState extends ConsumerState<PushSettingsCard> {
       if (!mounted) return;
       setState(() => _now = d);
       ref.invalidate(pushDeviceProvider);
-      _snack(s.t(switch (d) {
+      final text = s.t(switch (d) {
         PushDevice.on => 'push_on_done',
         PushDevice.denied => 'push_denied',
         PushDevice.notReady => 'push_not_ready',
@@ -42,7 +42,10 @@ class _PushSettingsCardState extends ConsumerState<PushSettingsCard> {
         PushDevice.iosInstall => 'push_ios_install',
         PushDevice.unsupported => 'push_unsupported',
         _ => 'push_failed',
-      }));
+      });
+      // The browser's own reason, so a failure can be told apart (owner, 14.11.2026).
+      final why = (d == PushDevice.failed || d == PushDevice.tapAgain) ? lastPushError : null;
+      _snack(why == null || why.isEmpty ? text : '$text ($why)');
     }).catchError((Object e) {
       if (mounted) _snack(s.t(e is PushNotReady ? 'push_not_ready' : 'push_failed'));
     }).whenComplete(() {
@@ -84,7 +87,7 @@ class _PushSettingsCardState extends ConsumerState<PushSettingsCard> {
       PushDevice.notReady => 'push_not_ready',
       _ => 'push_state_off',
     };
-    final canTurnOn = device == PushDevice.off || device == PushDevice.ask || device == PushDevice.notReady || device == PushDevice.tapAgain;
+    final canTurnOn = device == PushDevice.off || device == PushDevice.ask || device == PushDevice.notReady || device == PushDevice.tapAgain || device == PushDevice.failed;
     return Column(key: const ValueKey('push-card'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 10, 4, 4),
