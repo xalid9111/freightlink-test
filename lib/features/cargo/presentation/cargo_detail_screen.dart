@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/widgets/phone_hidden_note.dart';
 import '../../../core/autofix/autofix.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/localization/app_strings.dart';
@@ -756,7 +757,9 @@ class _OwnerContactSection extends ConsumerWidget {
                         label: Text(strings.t('contact_owner_btn')),
                       ),
                       const SizedBox(height: 6),
-                    ] else
+                    ] else if (contact['phone_hidden'] == '1')
+                      PhoneHiddenNote(strings: strings)
+                    else
                       Padding(
                         key: const ValueKey('detail-no-phone'),
                         padding: const EdgeInsets.symmetric(vertical: 6),

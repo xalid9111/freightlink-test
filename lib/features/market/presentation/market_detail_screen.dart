@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/phone_hidden_note.dart';
 import '../../../core/layout/desktop_layout.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -598,7 +599,10 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       ]);
     }
     final phone = (l.phone ?? '').trim();
+    // The seller hid his phone (0122): no call button, the note instead.
+    final hidden = !isSignedOut() && phone.isEmpty && (ref.watch(phoneHiddenProvider(l.ownerId)).valueOrNull ?? false);
     return bar([
+      if (!hidden) ...[
       Expanded(
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
@@ -613,6 +617,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         ),
       ),
       const SizedBox(width: 8),
+      ],
       Expanded(
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
@@ -631,7 +636,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           label: Text(s.t('mk_offer')),
         ),
       ),
-    ]);
+    ], below: hidden ? PhoneHiddenNote(strings: s) : null);
   }
 }
 

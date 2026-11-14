@@ -2331,5 +2331,18 @@
   "push_pref_messages": "New messages",
   "push_pref_important": "Important notices (bookings, receipts, workers, Job Centre, admin)",
   "push_pref_preview": "Show the first 80 characters of a message",
-  "push_tap_again": "The permission window did not open — tap the button once more"
+  "push_tap_again": "The permission window did not open — tap the button once more",
+  "profile_gender": "Gender",
+  "gender_male": "Male",
+  "gender_female": "Female",
+  "phone_hide_title": "Hide my phone number",
+  "phone_hide_off_sub": "Your number is shown on your ads",
+  "phone_hide_on_sub": "Hidden — people contact you only through Messages",
+  "phone_hide_confirm_title": "Hide your number?",
+  "phone_hide_confirm_body": "Your number will be hidden on all your ads (Loads, TIR Market, Empty trucks, Service / Shop). People will contact you only through Messages. You can turn it back on any time.",
+  "phone_hide_confirm_ok": "Hide",
+  "phone_hide_done": "Your number is hidden ✓",
+  "phone_show_done": "Your number is shown again ✓",
+  "phone_hide_not_ready": "This feature is not set up on the server yet (SQL 0122).",
+  "phone_hidden_note": "📵 Number hidden — send a message"
 }

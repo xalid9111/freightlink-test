@@ -822,6 +822,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   Sign-out and a deleted / blocked account remove the device; a quiet
   re-save 8 s after start / on resume (never asks). Measured: first screen
   and page switch unchanged within noise (iPhone 13 emulation, CPU ×4).
+- "Telefon nömrəmi gizlət" + Kişi / Qadın (owner, 14.11.2026, SQL 0122):
+  Profil → Şəxsi məlumatlarım has a switch; turning it on asks first
+  (hidden on every ad: Yüklər, TIR Bazarı, Boş maşın, Servis / Mağaza; only
+  Mesajlar; can be undone) and shows the green "Nömrəniz gizlədildi ✓".
+  Server-enforced: my_set_phone_hidden moves the ads' phone / WhatsApp into
+  the private hidden_ad_phones (no grants) and a trigger keeps new / edited
+  ads empty; get_cargo_contact / get_user_contact release no number to
+  others (owner and admins still see it); turning it off brings every
+  number back. TIR parks keep their business phone. Ads show "📵 Nömrə
+  gizlidir — Mesaj yazın" instead of the call buttons (PhoneHiddenNote,
+  view user_phone_privacy). Gender (users.gender male / female / empty,
+  my_set_gender) is optional and private (own row + admins), next to the
+  birth date; a second tap takes it off.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
