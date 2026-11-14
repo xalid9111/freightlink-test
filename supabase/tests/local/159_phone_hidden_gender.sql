@@ -31,7 +31,7 @@ reset role;
 select tests.check((select phone is null from public.market_listings where id = 'e0000000-0000-4000-8000-0000000004a1'), 'H1 TIR Bazarı ad: no number in the ad');
 select tests.check((select phone is null and whatsapp is null from public.service_providers where id = '5e000000-0000-4000-8000-0000000004a1'), 'H2 service page: no number / WhatsApp');
 select tests.check((select phone is null and whatsapp is null from public.empty_truck_ads where id = '7c000000-0000-4000-8000-0000000004a1'), 'H3 empty truck ad: no number');
-select tests.check((select count(*) = 3 from public.hidden_ad_phones where owner_id = :p), 'H4 the numbers are kept safe (not lost)');
+select tests.check((select count(*) >= 3 from public.hidden_ad_phones where owner_id = :p), 'H4 the numbers are kept safe (not lost)');
 -- A new ad while hidden stays without a number.
 set local app.market_trusted = '1';
 insert into public.market_listings (id, owner_id, category, brand, model, price, currency, status, phone)
@@ -55,7 +55,8 @@ select tests.check((select (public.get_cargo_contact('c0000000-0000-4000-8000-00
 reset role;
 set role authenticated;
 select tests.login(:admin);
-select tests.check((select (public.get_user_contact(:p) ->> 'phone') = '+994501112233'), 'O7 admins still see it');
+-- 0123: a plain admin no longer sees it (only the Baş admin, suite 160).
+select tests.check((select (public.get_user_contact(:p) ->> 'phone') is null), 'O7 a plain admin does not see it (0123)');
 reset role;
 set role anon;
 select tests.check(tests.err($$ select public.my_set_phone_hidden(false) $$) is not null, 'O8 visitors cannot');

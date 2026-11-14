@@ -171,7 +171,7 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       height: 150,
                     ),
                     const SizedBox(height: 14),
-                    _SellBanner(s: s, onTap: () => openNewMarketAd(context, ref, s)),
+                    MarketSellBanner(s: s, onTap: () => openNewMarketAd(context, ref, s)),
                     const SizedBox(height: 14),
                     SizedBox(
                       height: 44,
@@ -332,13 +332,22 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
   }
 }
 
-class _SellBanner extends StatelessWidget {
+class MarketSellBanner extends StatelessWidget {
   final AppStrings s;
   final VoidCallback onTap;
-  const _SellBanner({required this.s, required this.onTap});
+  const MarketSellBanner({super.key, required this.s, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final label = Text(s.t('mk_buy_sell'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500));
+    final button = FilledButton.icon(
+      key: const ValueKey('mk-new-ad'),
+      onPressed: onTap,
+      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
+      icon: const Icon(Icons.add_circle_outline, size: 20),
+      label: Text(s.t('mk_new_ad'), style: const TextStyle(fontWeight: FontWeight.w500)),
+    );
+    final truck = Icon(Icons.local_shipping_outlined, color: AppColors.accent);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
       decoration: BoxDecoration(
@@ -346,22 +355,51 @@ class _SellBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.line),
       ),
-      child: Row(
-        children: [
-          Expanded(child: Text(s.t('mk_buy_sell'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
-          FilledButton.icon(
-            key: const ValueKey('mk-new-ad'),
-            onPressed: onTap,
-            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
-            icon: const Icon(Icons.add_circle_outline, size: 20),
-            label: Text(s.t('mk_new_ad'), style: const TextStyle(fontWeight: FontWeight.w500)),
-          ),
-          const SizedBox(width: 6),
-          Icon(Icons.local_shipping_outlined, color: AppColors.accent),
-        ],
-      ),
+      // Owner, 14.11.2026: in a long language at a big text size the button
+      // left the title one letter wide (written downwards). When the title
+      // and the button do not fit side by side, the title goes on top and
+      // the button below it, across the card.
+      child: LayoutBuilder(builder: (context, c) {
+        if (sellBannerFitsInRow(context, s, c.maxWidth)) {
+          return Row(children: [Expanded(child: label), button, const SizedBox(width: 6), truck]);
+        }
+        return Column(
+          key: const ValueKey('mk-sell-stacked'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(children: [Expanded(child: label), truck]),
+            const SizedBox(height: 8),
+            button,
+          ],
+        );
+      }),
     );
   }
+}
+
+/// True when "Alış-satış" (never broken inside a word) and the "Elan
+/// yerləşdir" button fit side by side in [width] at the current text size.
+@visibleForTesting
+bool sellBannerFitsInRow(BuildContext context, AppStrings s, double width) {
+  final scaler = MediaQuery.textScalerOf(context);
+  double w(String text, double size) {
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(fontSize: size, fontWeight: FontWeight.w500)),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    return tp.width;
+  }
+
+  // The button: padding 2 × 14, icon 20, gap 8, text (14 pt) + a little room.
+  final buttonW = 28 + 20 + 8 + w(s.t('mk_new_ad'), 14) + 8;
+  const truckW = 6 + 24;
+  // The longest word of the title must fit whole; at most two lines.
+  final title = s.t('mk_buy_sell');
+  final longestWord = title.split(RegExp(r'\s+')).fold<double>(0, (m, x) => x.isEmpty ? m : (w(x, 15) > m ? w(x, 15) : m));
+  final room = width - buttonW - truckW - 8;
+  return room >= longestWord && room * 2 >= w(title, 15);
 }
 
 class _CategoryChip extends StatelessWidget {

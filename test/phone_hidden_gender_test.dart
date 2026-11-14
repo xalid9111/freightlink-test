@@ -89,4 +89,23 @@ void main() {
     expect(sql.toLowerCase(), isNot(contains('drop table')));
     expect(sql.toLowerCase(), isNot(contains('truncate')));
   });
+
+  test('0123: only the owner and the Baş admin see a hidden number', () {
+    final sql = src('supabase/migrations/0123_phone_hidden_chief_admin.sql');
+    for (final x in [
+      'hidden_user_phones',
+      'is_chief_admin()',
+      'my_phone',
+      'admin_hidden_phones',
+      "'phone.view_hidden'"
+    ]) {
+      expect(sql, contains(x), reason: x);
+    }
+    expect(kRpcMigration['my_phone'], '0123_phone_hidden_chief_admin.sql');
+    expect(kRpcMigration['admin_hidden_phones'], '0123_phone_hidden_chief_admin.sql');
+    final admin = src('lib/features/admin/presentation/admin_pages.dart');
+    expect(admin, contains("u['phone_hidden'] == true"));
+    expect(admin, contains('if (chief)'));
+    expect(src('lib/repositories/profile_repository.dart'), contains("rpc('my_phone')"));
+  });
 }

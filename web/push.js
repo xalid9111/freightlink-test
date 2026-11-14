@@ -184,5 +184,30 @@
     }
   } catch (e) {}
 
-  window.flPush = { supported: supported, state: state, enable: enable, current: current, disable: disable, isIos: isIos, standalone: standalone };
+  // Read messages leave the phone too (owner, 14.11.2026): Android counts the
+  // notifications still in the shade on the app icon ("1" stayed after the
+  // chat was read). clear('chat-<id>') closes one chat's notification,
+  // clear('chat-') every chat's; badge(n) sets / clears the icon number where
+  // the browser supports it. Never asks for anything, never throws.
+  async function clear(tag) {
+    try {
+      if (!('serviceWorker' in navigator)) return 0;
+      var reg = await registration();
+      if (!reg || !reg.getNotifications) return 0;
+      var list = await reg.getNotifications();
+      var n = 0;
+      for (var i = 0; i < list.length; i++) {
+        var t = list[i].tag || '';
+        if (t === tag || (tag.charAt(tag.length - 1) === '-' && t.indexOf(tag) === 0)) { list[i].close(); n++; }
+      }
+      return n;
+    } catch (e) { return 0; }
+  }
+  function badge(n) {
+    try {
+      if (n > 0 && navigator.setAppBadge) return navigator.setAppBadge(n).catch(function () {});
+      if (n <= 0 && navigator.clearAppBadge) return navigator.clearAppBadge().catch(function () {});
+    } catch (e) {}
+  }
+  window.flPush = { supported: supported, state: state, enable: enable, current: current, disable: disable, isIos: isIos, standalone: standalone, clear: clear, badge: badge };
 })();

@@ -27,6 +27,12 @@ class AdminRepository {
     return (rows as List).map((r) => Map<String, dynamic>.from(r as Map)).toList();
   }
 
+  /// A hidden phone (0123): the Baş admin only; every look is logged.
+  Future<Map<String, dynamic>> hiddenPhones(String userId) async {
+    final res = await _c.rpc('admin_hidden_phones', params: {'p_user': userId});
+    return res is Map ? Map<String, dynamic>.from(res) : const {};
+  }
+
   Future<Map<String, dynamic>> dashboardStats() async {
     final res = await _c.rpc('admin_dashboard_stats');
     return Map<String, dynamic>.from(res as Map);

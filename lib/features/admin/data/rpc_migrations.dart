@@ -233,6 +233,8 @@ const kRpcMigration = <String, String>{
   'push_active': '0121_web_push.sql',
   'my_set_phone_hidden': '0122_phone_hidden_gender.sql',
   'my_set_gender': '0122_phone_hidden_gender.sql',
+  'my_phone': '0123_phone_hidden_chief_admin.sql',
+  'admin_hidden_phones': '0123_phone_hidden_chief_admin.sql',
   'admin_osm_park_set_hidden': '0117_osm_truck_parks.sql',
   'admin_osm_parks_status': '0117_osm_truck_parks.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',
