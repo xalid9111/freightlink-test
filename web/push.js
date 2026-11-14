@@ -51,25 +51,55 @@
   }
   function result(o) { return JSON.stringify(o); }
 
-  // Must be called right inside the tap: the permission is asked first, at once.
-  function enable(publicKey, keyUrl) {
-    if (!supported()) return Promise.resolve(result({ status: state() }));
+  // iPhone asks for the permission only inside a REAL browser gesture
+  // (touchend / click), not inside Flutter's own tap callback. So "Aktiv et"
+  // arms a request and the same tap's touchend / click (or, elsewhere, the
+  // pointerup right after Flutter's handler) asks — like the sound unlock in
+  // msg_alert.js. Armed for 15 s: if the window did not open, a second tap
+  // opens it.
+  var pending = null;
+  function ask() {
+    if (!pending) return;
+    var p = pending;
+    pending = null;
+    clearTimeout(p.timer);
     var asked;
     try { asked = Notification.requestPermission(); } catch (e) { asked = Promise.resolve(Notification.permission); }
-    return Promise.resolve(asked).then(async function (perm) {
-      if (perm !== 'granted') return result({ status: perm });
-      var k = publicKey;
-      if (!k && keyUrl) {
-        var r = await fetch(keyUrl, { cache: 'no-store' });
-        k = (await r.json()).publicKey;
-      }
-      if (!k) return result({ status: 'not_ready' });
-      var reg = (await registration()) || (await navigator.serviceWorker.register(SW, { scope: '/' }));
-      reg = await activated(reg);
-      var sub = await reg.pushManager.getSubscription();
-      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(k) });
-      return result({ status: 'granted', sub: sub.toJSON(), platform: platform() });
-    }).catch(function (e) { return result({ status: 'error', error: String((e && e.message) || e) }); });
+    Promise.resolve(asked).then(p.go, function () { p.go(Notification.permission); });
+  }
+  ['touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, ask, { capture: true, passive: true }); });
+  window.addEventListener('pointerup', function () { if (!isIos()) ask(); }, { passive: true });
+
+  async function subscribe(perm, publicKey, keyUrl) {
+    if (perm !== 'granted') return result({ status: perm });
+    var k = publicKey;
+    if (!k && keyUrl) {
+      var r = await fetch(keyUrl, { cache: 'no-store' });
+      k = (await r.json()).publicKey;
+    }
+    if (!k) return result({ status: 'not_ready' });
+    var reg = (await registration()) || (await navigator.serviceWorker.register(SW, { scope: '/' }));
+    reg = await activated(reg);
+    var sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(k) });
+    return result({ status: 'granted', sub: sub.toJSON(), platform: platform() });
+  }
+
+  function enable(publicKey, keyUrl) {
+    if (!supported()) return Promise.resolve(result({ status: state() }));
+    var safe = function (perm) {
+      return subscribe(perm, publicKey, keyUrl).catch(function (e) { return result({ status: 'error', error: String((e && e.message) || e) }); });
+    };
+    // Already answered before: no window needed.
+    if (Notification.permission !== 'default') return safe(Notification.permission);
+    return new Promise(function (resolve) {
+      pending = {
+        go: function (perm) { safe(perm).then(resolve); },
+        timer: setTimeout(function () {
+          if (pending) { pending = null; resolve(result({ status: 'no_gesture' })); }
+        }, 15000)
+      };
+    });
   }
 
   // This device's subscription (no prompt, nothing registered).

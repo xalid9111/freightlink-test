@@ -15,7 +15,7 @@ import 'web_push_stub.dart' if (dart.library.js_interop) 'web_push_web.dart' as 
 /// on start-up except a quiet re-check a few seconds after the first frame.
 
 /// This device: on / off / why not.
-enum PushDevice { on, off, ask, denied, iosInstall, unsupported, notReady }
+enum PushDevice { on, off, ask, denied, iosInstall, unsupported, notReady, tapAgain }
 
 PushDevice pushDeviceOf(String state, {required bool subscribed}) => switch (state) {
       'granted' => subscribed ? PushDevice.on : PushDevice.off,
@@ -125,6 +125,7 @@ Future<PushDevice> pushTurnOn(PushRepository repo) async {
   }
   final status = '${o['status']}';
   if (status == 'not_ready') return PushDevice.notReady;
+  if (status == 'no_gesture') return PushDevice.tapAgain;
   if (status != 'granted') return pushDeviceOf(status, subscribed: false);
   final sub = PushSub.parse(raw);
   if (sub == null) return PushDevice.off;

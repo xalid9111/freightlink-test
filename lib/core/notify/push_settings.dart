@@ -38,6 +38,7 @@ class _PushSettingsCardState extends ConsumerState<PushSettingsCard> {
         PushDevice.on => 'push_on_done',
         PushDevice.denied => 'push_denied',
         PushDevice.notReady => 'push_not_ready',
+        PushDevice.tapAgain => 'push_tap_again',
         PushDevice.iosInstall => 'push_ios_install',
         PushDevice.unsupported => 'push_unsupported',
         _ => 'push_failed',
@@ -83,7 +84,7 @@ class _PushSettingsCardState extends ConsumerState<PushSettingsCard> {
       PushDevice.notReady => 'push_not_ready',
       _ => 'push_state_off',
     };
-    final canTurnOn = device == PushDevice.off || device == PushDevice.ask || device == PushDevice.notReady;
+    final canTurnOn = device == PushDevice.off || device == PushDevice.ask || device == PushDevice.notReady || device == PushDevice.tapAgain;
     return Column(key: const ValueKey('push-card'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 10, 4, 4),

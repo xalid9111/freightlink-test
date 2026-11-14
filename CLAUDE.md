@@ -811,7 +811,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   write) → pg_net → Edge Function push-send (Vault secret checked by
   push_hook_check, service role; VAPID keys only in function secrets) → only
   Apple / Google / Mozilla / Microsoft endpoints; 404/410 devices removed.
-  Client: web/push.js (permission asked only inside the user's tap) +
+  Client: web/push.js (the tap arms the request; iPhone asks only inside the
+  same tap's real touchend / click, like the sound unlock; armed 15 s, else
+  "düyməyə bir daha basın") +
   web/push_sw.js (push + notificationclick only, no fetch, no cache);
   pwa_guard.js still removes every other service worker and
   flutter_service_worker.js stays the kill switch. Ayarlar → Bildirişlər →
