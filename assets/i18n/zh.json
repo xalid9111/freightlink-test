@@ -2330,5 +2330,6 @@
   "push_failed": "未成功，请重试",
   "push_pref_messages": "新消息",
   "push_pref_important": "重要通知（预订、收据、员工、招聘中心、管理员）",
-  "push_pref_preview": "显示消息的前 80 个字符"
+  "push_pref_preview": "显示消息的前 80 个字符",
+  "push_tap_again": "权限窗口未打开——请再点一次按钮"
 }

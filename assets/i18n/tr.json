@@ -2330,5 +2330,6 @@
   "push_failed": "Olmadı, tekrar deneyin",
   "push_pref_messages": "Yeni mesajlar",
   "push_pref_important": "Önemli bildirimler (rezervasyon, dekont, çalışan, İş Merkezi, yönetici)",
-  "push_pref_preview": "Mesajın ilk 80 karakterini göster"
+  "push_pref_preview": "Mesajın ilk 80 karakterini göster",
+  "push_tap_again": "İzin penceresi açılmadı — düğmeye bir kez daha basın"
 }

@@ -2330,5 +2330,6 @@
   "push_failed": "That did not work, please try again",
   "push_pref_messages": "New messages",
   "push_pref_important": "Important notices (bookings, receipts, workers, Job Centre, admin)",
-  "push_pref_preview": "Show the first 80 characters of a message"
+  "push_pref_preview": "Show the first 80 characters of a message",
+  "push_tap_again": "The permission window did not open — tap the button once more"
 }
