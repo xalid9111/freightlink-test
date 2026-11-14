@@ -25,7 +25,8 @@
     return 'desktop';
   }
   function key(b64) {
-    var s = (b64 + '===='.slice((b64.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    var t = String(b64).replace(/-/g, '+').replace(/_/g, '/');
+    var s = t + '===='.slice(0, (4 - (t.length % 4)) % 4);
     var raw = atob(s), out = new Uint8Array(raw.length);
     for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
     return out;
@@ -58,47 +59,91 @@
   // msg_alert.js. Armed for 15 s: if the window did not open, a second tap
   // opens it.
   var pending = null;
+  var readyReg = null; // the push worker, active (kept for a subscribe inside a later tap)
+  var readyKey = null; // the VAPID public key as bytes
   function ask() {
     if (!pending) return;
     var p = pending;
     pending = null;
     clearTimeout(p.timer);
-    var asked;
-    try { asked = Notification.requestPermission(); } catch (e) { asked = Promise.resolve(Notification.permission); }
-    Promise.resolve(asked).then(p.go, function () { p.go(Notification.permission); });
+    p.run();
   }
   ['touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, ask, { capture: true, passive: true }); });
   window.addEventListener('pointerup', function () { if (!isIos()) ask(); }, { passive: true });
 
+  function errText(e) { return String((e && (e.name ? e.name + ': ' : '') + (e.message || '')) || e).slice(0, 160); }
+
+  // The worker + the key, ready before anything is asked.
+  async function prepare(publicKey, keyUrl) {
+    if (!readyKey) {
+      var k = publicKey;
+      if (!k && keyUrl) {
+        var r = await fetch(keyUrl, { cache: 'no-store' });
+        k = (await r.json()).publicKey;
+      }
+      if (!k) return false;
+      readyKey = key(k);
+    }
+    if (!readyReg) {
+      var reg = (await registration()) || (await navigator.serviceWorker.register(SW, { scope: '/' }));
+      readyReg = await activated(reg);
+    }
+    return true;
+  }
+  function done(sub) { return result({ status: 'granted', sub: sub.toJSON(), platform: platform() }); }
+
+  // After the permission: subscribe; if iPhone wants that inside a tap too,
+  // say "tap again" — the next tap subscribes right inside its touchend.
   async function subscribe(perm, publicKey, keyUrl) {
     if (perm !== 'granted') return result({ status: perm });
-    var k = publicKey;
-    if (!k && keyUrl) {
-      var r = await fetch(keyUrl, { cache: 'no-store' });
-      k = (await r.json()).publicKey;
+    if (!(await prepare(publicKey, keyUrl))) return result({ status: 'not_ready' });
+    var sub = await readyReg.pushManager.getSubscription();
+    if (sub) return done(sub);
+    try {
+      sub = await readyReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: readyKey });
+      return done(sub);
+    } catch (e) {
+      return result({ status: 'tap_again', error: errText(e) });
     }
-    if (!k) return result({ status: 'not_ready' });
-    var reg = (await registration()) || (await navigator.serviceWorker.register(SW, { scope: '/' }));
-    reg = await activated(reg);
-    var sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(k) });
-    return result({ status: 'granted', sub: sub.toJSON(), platform: platform() });
+  }
+
+  function arm(run, resolve) {
+    pending = {
+      run: run,
+      timer: setTimeout(function () {
+        if (pending) { pending = null; resolve(result({ status: 'no_gesture' })); }
+      }, 15000)
+    };
   }
 
   function enable(publicKey, keyUrl) {
     if (!supported()) return Promise.resolve(result({ status: state() }));
     var safe = function (perm) {
-      return subscribe(perm, publicKey, keyUrl).catch(function (e) { return result({ status: 'error', error: String((e && e.message) || e) }); });
+      return subscribe(perm, publicKey, keyUrl).catch(function (e) { return result({ status: 'error', error: errText(e) }); });
     };
-    // Already answered before: no window needed.
-    if (Notification.permission !== 'default') return safe(Notification.permission);
+    var perm = Notification.permission;
+    if (perm === 'denied') return Promise.resolve(result({ status: 'denied' }));
+    if (perm === 'granted') {
+      // Allowed already: with the worker ready, subscribe inside this tap.
+      if (readyReg && readyKey) {
+        return new Promise(function (resolve) {
+          arm(function () {
+            var s;
+            try { s = readyReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: readyKey }); } catch (e) { s = Promise.reject(e); }
+            Promise.resolve(s).then(function (sub) { resolve(done(sub)); },
+              function (e) { resolve(result({ status: 'error', error: errText(e) })); });
+          }, resolve);
+        });
+      }
+      return safe('granted');
+    }
+    // Not asked yet: the window opens inside this tap's touchend / click.
     return new Promise(function (resolve) {
-      pending = {
-        go: function (perm) { safe(perm).then(resolve); },
-        timer: setTimeout(function () {
-          if (pending) { pending = null; resolve(result({ status: 'no_gesture' })); }
-        }, 15000)
-      };
+      arm(function () {
+        var asked;
+        try { asked = Notification.requestPermission(); } catch (e) { asked = Promise.resolve(Notification.permission); }
+        Promise.resolve(asked).then(function (p) { safe(p).then(resolve); }, function () { safe(Notification.permission).then(resolve); });
+      }, resolve);
     });
   }
 

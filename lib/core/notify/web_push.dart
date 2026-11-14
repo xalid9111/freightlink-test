@@ -15,7 +15,10 @@ import 'web_push_stub.dart' if (dart.library.js_interop) 'web_push_web.dart' as 
 /// on start-up except a quiet re-check a few seconds after the first frame.
 
 /// This device: on / off / why not.
-enum PushDevice { on, off, ask, denied, iosInstall, unsupported, notReady, tapAgain }
+enum PushDevice { on, off, ask, denied, iosInstall, unsupported, notReady, tapAgain, failed }
+
+/// The browser's own words of the last failed try (shown with "Alınmadı").
+String? lastPushError;
 
 PushDevice pushDeviceOf(String state, {required bool subscribed}) => switch (state) {
       'granted' => subscribed ? PushDevice.on : PushDevice.off,
@@ -116,6 +119,7 @@ final pushDeviceProvider = FutureProvider.autoDispose<PushDevice>((ref) async {
 /// "Aktiv et" — call it straight from the tap (the permission is asked at
 /// once, before anything else). Returns the new state.
 Future<PushDevice> pushTurnOn(PushRepository repo) async {
+  lastPushError = null;
   final raw = await impl.pushEnable('', repo.keyUrl);
   Map<String, dynamic> o;
   try {
@@ -125,7 +129,14 @@ Future<PushDevice> pushTurnOn(PushRepository repo) async {
   }
   final status = '${o['status']}';
   if (status == 'not_ready') return PushDevice.notReady;
-  if (status == 'no_gesture') return PushDevice.tapAgain;
+  if (status == 'no_gesture' || status == 'tap_again') {
+    lastPushError = o['error'] as String?;
+    return PushDevice.tapAgain;
+  }
+  if (status == 'error') {
+    lastPushError = o['error'] as String?;
+    return PushDevice.failed;
+  }
   if (status != 'granted') return pushDeviceOf(status, subscribed: false);
   final sub = PushSub.parse(raw);
   if (sub == null) return PushDevice.off;
