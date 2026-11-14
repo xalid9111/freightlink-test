@@ -3,6 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../repositories/profile_repository.dart';
+import '../../../core/widgets/phone_hidden_note.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/service_models.dart';
@@ -263,16 +265,24 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
       );
     }
 
-    return Row(
+    // The owner hid his phone (0122): no call button; the page says why.
+    final owner = p.ownerId;
+    final hidden = !isSignedOut() &&
+        phone.isEmpty &&
+        owner != null &&
+        (ref.watch(phoneHiddenProvider(owner)).valueOrNull ?? false);
+    final row = Row(
       children: [
-        btn(
-          icon: Icons.call,
-          label: s.t('svc_call'),
-          primary: true,
-          // A visitor sees no number: the button opens sign-in (0107).
-          onTap: phone.isEmpty && !isSignedOut() ? null : () => askSignIn(context) ? null : showCallOptions(context, s, phone),
-        ),
-        const SizedBox(width: 6),
+        if (!hidden) ...[
+          btn(
+            icon: Icons.call,
+            label: s.t('svc_call'),
+            primary: true,
+            // A visitor sees no number: the button opens sign-in (0107).
+            onTap: phone.isEmpty && !isSignedOut() ? null : () => askSignIn(context) ? null : showCallOptions(context, s, phone),
+          ),
+          const SizedBox(width: 6),
+        ],
         btn(
           icon: Icons.chat_bubble_outline,
           label: s.t('svc_message'),
@@ -284,6 +294,8 @@ class _ServiceContactBarState extends ConsumerState<ServiceContactBar> {
         btn(icon: Icons.directions, label: s.t('svc_route'), onTap: hasRealCoords(widget.p.lat, widget.p.lng) ? _route : null),
       ],
     );
+    if (!hidden || widget.dense) return row;
+    return Column(mainAxisSize: MainAxisSize.min, children: [row, PhoneHiddenNote(strings: s)]);
   }
 }
 

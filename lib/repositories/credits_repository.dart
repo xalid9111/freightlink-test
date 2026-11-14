@@ -93,6 +93,8 @@ class CreditsRepository {
       'email': row?['email'] as String?,
       // The load's own contact number (0060); null = use 'phone'.
       'contact_phone': row?['contact_phone'] as String?,
+      // The owner hid his phone (0122): '1', else null.
+      'phone_hidden': row?['phone_hidden'] == true ? '1' : null,
     };
   }
 }

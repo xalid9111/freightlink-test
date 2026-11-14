@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../repositories/profile_repository.dart';
+import '../../../core/widgets/phone_hidden_note.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/guest_access.dart';
@@ -142,7 +144,10 @@ class _EmptyTruckDetailScreenState extends ConsumerState<EmptyTruckDetailScreen>
                         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48), backgroundColor: AppColors.accentFill),
                         icon: const Icon(Icons.phone),
                         label: Text(s.t('et_contact')),
-                      ),
+                      )
+                    // The owner hid his phone (0122).
+                    else if (ref.watch(phoneHiddenProvider(t.ownerId)).valueOrNull ?? false)
+                      PhoneHiddenNote(strings: s),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       key: const ValueKey('et-message'),

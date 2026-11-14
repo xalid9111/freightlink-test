@@ -2331,5 +2331,18 @@
   "push_pref_messages": "新消息",
   "push_pref_important": "重要通知（预订、收据、员工、招聘中心、管理员）",
   "push_pref_preview": "显示消息的前 80 个字符",
-  "push_tap_again": "权限窗口未打开——请再点一次按钮"
+  "push_tap_again": "权限窗口未打开——请再点一次按钮",
+  "profile_gender": "性别",
+  "gender_male": "男",
+  "gender_female": "女",
+  "phone_hide_title": "隐藏我的电话号码",
+  "phone_hide_off_sub": "您的号码在广告中可见",
+  "phone_hide_on_sub": "已隐藏 — 他人只能通过消息联系您",
+  "phone_hide_confirm_title": "隐藏号码？",
+  "phone_hide_confirm_body": "您的号码将在所有广告中隐藏（货物、TIR市场、空车、服务/商店）。他人只能通过消息联系您。您可以随时重新显示。",
+  "phone_hide_confirm_ok": "隐藏",
+  "phone_hide_done": "您的号码已隐藏 ✓",
+  "phone_show_done": "您的号码已重新显示 ✓",
+  "phone_hide_not_ready": "此功能尚未在服务器上设置（SQL 0122）。",
+  "phone_hidden_note": "📵 号码已隐藏 — 请发消息"
 }

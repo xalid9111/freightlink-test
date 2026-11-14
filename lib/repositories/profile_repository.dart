@@ -33,6 +33,11 @@ class PublicProfile {
   /// Own row only (0074); others never get it.
   final DateTime? birthDate;
 
+  /// Own row only (0122): "Telefon nömrəmi gizlət" and Kişi / Qadın
+  /// ('male' / 'female' / null = not given).
+  final bool phoneHidden;
+  final String? gender;
+
   const PublicProfile({
     required this.id,
     required this.fullName,
@@ -47,6 +52,8 @@ class PublicProfile {
     this.blockReason,
     this.isActive = true,
     this.birthDate,
+    this.phoneHidden = false,
+    this.gender,
   });
 
   /// True while the account may not post loads, offers or messages.
@@ -72,6 +79,8 @@ class PublicProfile {
       blockReason: j['block_reason'] as String?,
       isActive: j['is_active'] != false,
       birthDate: j['birth_date'] is String ? DateTime.tryParse(j['birth_date'] as String) : null,
+      phoneHidden: j['phone_hidden'] == true,
+      gender: j['gender'] is String ? j['gender'] as String : null,
     );
   }
 
@@ -221,6 +230,30 @@ class ProfileRepository {
     await _client.from('users').update({'birth_date': birthDateText(birthDate)}).eq('id', uid);
   }
 
+  /// "Telefon nömrəmi gizlət" (owner, 14.11.2026, SQL 0122): the server
+  /// moves the number out of every ad (TIR Bazarı, Servis / Mağaza, Boş
+  /// maşın) into a private store and stops releasing it; false brings it
+  /// back. Loads and the profile contact are filtered by the server too.
+  Future<void> setPhoneHidden(bool hidden) async {
+    await _client.rpc('my_set_phone_hidden', params: {'p_hidden': hidden}).timeout(const Duration(seconds: 20));
+  }
+
+  /// Kişi / Qadın ('male' / 'female'; null = taken off). Private (0122).
+  Future<void> setGender(String? gender) async {
+    await _client.rpc('my_set_gender', params: {'p_gender': gender}).timeout(const Duration(seconds: 20));
+  }
+
+  /// True when that user hid his phone (view user_phone_privacy, 0122).
+  /// False when unknown (older database) — the ad then shows what it has.
+  Future<bool> phoneHidden(String userId) async {
+    try {
+      final row = await _client.from('user_phone_privacy').select('phone_hidden').eq('id', userId).maybeSingle();
+      return row?['phone_hidden'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Saves the signed-in user's phone (E.164, e.g. +994501234567) on
   /// their own row (RLS users_update_self). Throws [PhoneTakenException]
   /// if another account already uses it (users.phone is unique).
@@ -275,6 +308,13 @@ final publicProfileProvider = FutureProvider.family<PublicProfile?, String>((ref
 final userContactProvider = FutureProvider.autoDispose.family<UserContact, String>((ref, userId) {
   ref.watch(currentUserIdProvider);
   return ref.watch(profileRepositoryProvider).contact(userId);
+});
+
+/// Whether a user hid his phone (0122) — for the "📵 Nömrə gizlidir" note
+/// on his ads.
+final phoneHiddenProvider = FutureProvider.autoDispose.family<bool, String>((ref, userId) {
+  ref.watch(currentUserIdProvider);
+  return ref.watch(profileRepositoryProvider).phoneHidden(userId);
 });
 
 /// Another user's age as a number ("48 yaş", owner 28.10.2026, 0075).

@@ -15,6 +15,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/age.dart';
 import '../../../core/utils/gif.dart';
 import '../../../core/widgets/framed_image.dart';
+import '../../../core/widgets/published_notice.dart';
 import '../../../core/widgets/image_frame_editor.dart';
 import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/user_avatar.dart';
@@ -845,6 +846,66 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     }
   }
 
+  bool _savingGender = false;
+  bool _savingPhoneHidden = false;
+
+  /// Kişi / Qadın / taken off (0122).
+  Future<void> _setGender(String? g) async {
+    final strings = widget.strings;
+    setState(() => _savingGender = true);
+    try {
+      await ref.read(profileRepositoryProvider).setGender(g);
+      ref.invalidate(publicProfileProvider(widget.userId));
+    } catch (e) {
+      final notReady = e is PostgrestException && (e.code == 'PGRST202' || e.code == '42883');
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(strings.t(notReady ? 'phone_hide_not_ready' : 'error_generic'))));
+      }
+    } finally {
+      if (mounted) setState(() => _savingGender = false);
+    }
+  }
+
+  /// "Telefon nömrəmi gizlət": asked first, then the server hides the number
+  /// on every ad; turning it off brings it back (0122).
+  Future<void> _setPhoneHidden(bool hide) async {
+    final strings = widget.strings;
+    if (hide) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: Text(strings.t('phone_hide_confirm_title')),
+          content: Text(strings.t('phone_hide_confirm_body')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(strings.t('common_cancel'))),
+            FilledButton(
+              key: const ValueKey('phone-hide-confirm'),
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(strings.t('phone_hide_confirm_ok')),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    setState(() => _savingPhoneHidden = true);
+    try {
+      await ref.read(profileRepositoryProvider).setPhoneHidden(hide);
+      ref.invalidate(publicProfileProvider(widget.userId));
+      ref.invalidate(phoneHiddenProvider(widget.userId));
+      if (mounted) showPublishedNotice(context, strings.t(hide ? 'phone_hide_done' : 'phone_show_done'));
+    } catch (e) {
+      final notReady = e is PostgrestException && (e.code == 'PGRST202' || e.code == '42883');
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(strings.t(notReady ? 'phone_hide_not_ready' : 'error_generic'))));
+      }
+    } finally {
+      if (mounted) setState(() => _savingPhoneHidden = false);
+    }
+  }
+
   /// Pick / change the birth date Gün · Ay · İl (owner, 28.10.2026; 0074).
   Future<void> _editBirth(DateTime? current, String lang) async {
     final strings = widget.strings;
@@ -1346,6 +1407,53 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                   label: Text(strings.t('profile_age_edit')),
                 ),
               ]),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Kişi / Qadın (owner, 14.11.2026, SQL 0122): optional, private;
+          // a second tap takes the choice off.
+          Container(
+            key: const ValueKey('profile-gender'),
+            padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(children: [
+              Icon(Icons.wc_outlined, size: 22, color: AppColors.text),
+              const SizedBox(width: 14),
+              Expanded(child: Text(strings.t('profile_gender'), style: TextStyle(fontSize: 15, color: AppColors.text))),
+              for (final g in const ['male', 'female']) ...[
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  key: ValueKey('profile-gender-$g'),
+                  label: Text(strings.t(g == 'male' ? 'gender_male' : 'gender_female')),
+                  selected: profile?.gender == g,
+                  onSelected: _savingGender ? null : (_) => _setGender(profile?.gender == g ? null : g),
+                ),
+              ],
+            ]),
+          ),
+          const SizedBox(height: 10),
+          // "Telefon nömrəmi gizlət" (owner, 14.11.2026, SQL 0122).
+          Container(
+            key: const ValueKey('profile-phone-hidden'),
+            padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: SwitchListTile(
+              key: const ValueKey('profile-phone-hidden-switch'),
+              contentPadding: EdgeInsets.zero,
+              secondary: Icon(Icons.phonelink_erase_outlined, size: 22, color: AppColors.text),
+              title: Text(strings.t('phone_hide_title'), style: TextStyle(fontSize: 15, color: AppColors.text)),
+              subtitle: Text(
+                strings.t((profile?.phoneHidden ?? false) ? 'phone_hide_on_sub' : 'phone_hide_off_sub'),
+                style: TextStyle(fontSize: 13, color: AppColors.textSoft),
+              ),
+              value: profile?.phoneHidden ?? false,
+              onChanged: _savingPhoneHidden || profile == null ? null : (v) => _setPhoneHidden(v),
             ),
           ),
           const SizedBox(height: 16),
