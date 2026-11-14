@@ -12,6 +12,26 @@ external JSPromise<JSString> _current();
 @JS('flPush.disable')
 external JSPromise<JSString> _disable();
 
+@JS('flPush.clear')
+external JSPromise<JSNumber> _clear(JSString tag);
+
+@JS('flPush.badge')
+external void _badge(JSNumber n);
+
+/// Closes the notifications of one chat ('chat-<id>') or of all chats ('chat-').
+Future<void> pushClear(String tag) async {
+  try {
+    await _clear(tag.toJS).toDart;
+  } catch (_) {}
+}
+
+/// The number on the app icon (0 = none), where supported.
+void pushBadge(int n) {
+  try {
+    _badge(n.toJS);
+  } catch (_) {}
+}
+
 String pushState() {
   try {
     return _state()?.toDart ?? 'unsupported';

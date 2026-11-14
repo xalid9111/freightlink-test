@@ -835,6 +835,21 @@ files to the owner separately (they are run by hand in the SQL editor).
   view user_phone_privacy). Gender (users.gender male / female / empty,
   my_set_gender) is optional and private (own row + admins), next to the
   birth date; a second tap takes it off.
+  Only the Baş admin (owner, 14.11.2026, SQL 0123): while hidden, the
+  account's own number (users.phone) also moves into hidden_user_phones
+  and the load / İş Mərkəzi numbers into hidden_ad_phones, so plain admins
+  see "🔒 Gizlidir" everywhere (lists, contact RPCs); the owner reads his own
+  number via my_phone(); the Baş admin (is_chief_admin) opens it with
+  "Gizli nömrəni göstər" (admin_hidden_phones, every look in the Audit Log);
+  a hidden number cannot be taken by another account.
+- TIR Bazarı "Alış-satış | Elan yerləşdir" (owner, 14.11.2026): when the
+  title and the button do not fit side by side (long language, big text
+  size) the title goes on top and the button under it; never one letter per
+  line — tested for 6 languages × 5 text sizes × 320 / 360 / 390 pt.
+- The app icon number (owner, 14.11.2026): read chats leave the phone's
+  notification shade (an open chat closes its own notification, no unread =
+  all chat notifications closed) and the icon number follows the unread
+  count where the browser allows (AppBadgeSync, web/push.js clear / badge).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

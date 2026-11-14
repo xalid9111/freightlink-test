@@ -50,6 +50,9 @@ class MainShell extends ConsumerWidget {
     // shell every time ANY user anywhere comes online or goes offline.
     ref.listen(onlineUsersProvider, (_, __) {});
     final unread = (ref.watch(unreadCountProvider).valueOrNull ?? 0) + ref.watch(groupUnreadTotalProvider);
+    // The app icon's number follows the unread count; read chats leave the
+    // phone's notification shade (owner, 14.11.2026).
+    if (ref.watch(unreadCountProvider).hasValue) AppBadgeSync.update(unread.toInt());
     // New message received → short sound; if the app is in the background
     // and notifications are allowed, also a browser notification.
     final uid = ref.watch(currentUserIdProvider);

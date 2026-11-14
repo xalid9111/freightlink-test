@@ -109,7 +109,16 @@ class ProfileRepository {
       if (row == null) return null;
       // The blue badge (0105): the Baş admin's grant OR a running paid
       // subscription — the public view decides, as for everybody else.
-      return PublicProfile.fromJson({...row, 'is_verified': row['is_verified'] == true || await _paidBadge(userId)});
+      // A hidden number (0123) is not on the row any more: the owner reads
+      // it through my_phone().
+      var phone = row['phone'];
+      if (row['phone_hidden'] == true && (phone == null || '$phone'.isEmpty)) {
+        try {
+          phone = await _client.rpc('my_phone');
+        } catch (_) {}
+      }
+      return PublicProfile.fromJson(
+          {...row, 'phone': phone, 'is_verified': row['is_verified'] == true || await _paidBadge(userId)});
     }
     // Anyone else: public fields only, from the user_profiles view. Phone
     // and e-mail are no longer part of a profile — see contact().

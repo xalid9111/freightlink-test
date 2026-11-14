@@ -172,6 +172,41 @@ Future<void> pushResync() async {
   } catch (_) {}
 }
 
+/// Read messages leave the phone (owner, 14.11.2026): Android counts the
+/// notifications still in the shade on the app icon, so "1" stayed after the
+/// chat was read in the app. An open chat closes its own notification; no
+/// unread message left = every chat notification closed and the icon number
+/// cleared; otherwise the icon shows the unread count (where supported).
+/// Never asks for a permission; does nothing where unsupported.
+class AppBadgeSync {
+  AppBadgeSync._();
+  static int? _last;
+  static AppLifecycleListener? _life;
+
+  /// The unread total changed (or the app came back): bring the phone in step.
+  static void update(int unread, {bool force = false}) {
+    _life ??= AppLifecycleListener(onResume: () => _apply(_last ?? 0), onShow: () => _apply(_last ?? 0));
+    if (!force && unread == _last) return;
+    _last = unread;
+    _apply(unread);
+  }
+
+  static void _apply(int unread) {
+    impl.pushBadge(unread);
+    if (unread <= 0) impl.pushClear(chatTagPrefix);
+  }
+
+  /// The tag of a chat's notification (0121: 'chat-' || conversation_id).
+  static const chatTagPrefix = 'chat-';
+  static String chatTag(String conversationId) => '$chatTagPrefix$conversationId';
+
+  /// The chat is on screen: its notification goes.
+  static void chatOpened(String conversationId) => impl.pushClear(chatTag(conversationId));
+
+  @visibleForTesting
+  static void reset() => _last = null;
+}
+
 /// The open chat tells the server "I am reading this one" every 30 s while
 /// the app is visible; nothing when hidden or closed.
 class ChatPresence {
@@ -209,6 +244,7 @@ class ChatPresence {
       final id = conversationId();
       if (id == null || SupabaseConfig.client.auth.currentSession == null) return;
       repo.active(id);
+      AppBadgeSync.chatOpened(id);
     } catch (_) {}
   }
 

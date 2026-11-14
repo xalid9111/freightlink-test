@@ -5,3 +5,7 @@ Future<String> pushEnable(String key, String keyUrl) async => '{"status":"unsupp
 Future<String> pushCurrent() async => '';
 
 Future<String> pushDisable() async => '';
+
+Future<void> pushClear(String tag) async {}
+
+void pushBadge(int n) {}

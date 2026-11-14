@@ -266,7 +266,7 @@ Widget _userRow(BuildContext context, JsonRow u) => AdminRow(
             : Icon(Icons.person_outline, size: 18, color: AppColors.textSoft),
       ),
       title: txt(u['full_name']),
-      subtitle: '${txt(u['email'])} · ${txt(u['phone'])} · Qeydiyyat ${fmtDate(u['created_at'])}',
+      subtitle: '${txt(u['email'])} · ${u['phone_hidden'] == true ? '🔒 Nömrə gizli' : txt(u['phone'])} · Qeydiyyat ${fmtDate(u['created_at'])}',
       chips: [
         AdminChip(roleLabel(u['role']), color: u['role'] == 'admin' ? AppColors.accent : AppColors.blue),
         if (u['is_verified'] == true) AdminChip('Təsdiqli ✓', color: AppColors.online),
@@ -662,7 +662,21 @@ Future<void> showUserDetail(BuildContext context, String id) {
           ]),
           const SizedBox(height: 8),
           KV('E-poçt', u['email']),
-          KV('Telefon', u['phone']),
+          if (u['phone_hidden'] == true) ...[
+            // 0123: a hidden number — only the Baş admin may look (logged).
+            const KV('Telefon', '🔒 Gizlidir (yalnız Baş admin görür)'),
+            if (chief)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const ValueKey('admin-hidden-phone'),
+                  onPressed: () => _showHiddenPhones(ctx, ref, u['id'] as String),
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('Gizli nömrəni göstər'),
+                ),
+              ),
+          ] else
+            KV('Telefon', u['phone']),
           KV('Dil', u['preferred_lang']),
           KV('Qeydiyyat', fmtDateTime(u['created_at'])),
           KV('Son aktivlik', fmtDateTime(u['last_seen_at'])),
@@ -1633,4 +1647,42 @@ class _SiteAccessCardState extends ConsumerState<SiteAccessCard> {
       ),
     );
   }
+}
+
+/// The Baş admin opens a hidden number (0123): the account's number and the
+/// ads' numbers; the server refuses everybody else and logs every look.
+Future<void> _showHiddenPhones(BuildContext context, WidgetRef ref, String userId) async {
+  const kinds = {
+    'market': 'TIR Bazarı',
+    'service': 'Servis / Mağaza',
+    'empty_truck': 'Boş maşın',
+    'cargo': 'Yük',
+    'job_seeker': 'İş Mərkəzi (sürücü)',
+    'job_vacancy': 'İş Mərkəzi (vakansiya)',
+  };
+  Map<String, dynamic> data;
+  try {
+    data = await ref.read(adminRepositoryProvider).hiddenPhones(userId);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Açılmadı: $e')));
+    }
+    return;
+  }
+  if (!context.mounted) return;
+  final ads = (data['ads'] as List?) ?? const [];
+  await showDialog<void>(
+    context: context,
+    builder: (c) => AlertDialog(
+      title: const Text('Gizli nömrə'),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        KV('Hesab', data['phone']),
+        for (final a in ads)
+          KV(kinds[(a as Map)['kind']] ?? '${a['kind']}', [a['phone'], a['whatsapp']].where((v) => v != null).join(' · ')),
+        const SizedBox(height: 8),
+        Text('Baxış Audit Log-a yazıldı.', style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+      ]),
+      actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('Bağla'))],
+    ),
+  );
 }
