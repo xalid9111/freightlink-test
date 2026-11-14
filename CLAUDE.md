@@ -856,11 +856,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   orange chart icon, never taller than the capital T; www.tirlink.app right
   under the word, the slogan on its own line ("dünya üzrə" accent). Home
   Screen / manifest / tab icons are square and not transparent on the dark
-  #02050C ground, under new names (tirlink-icon-v2-*, tirlink-apple-touch-
-  v2.png, favicon-v2.png) so no cache keeps the old icon; the old file names
+  #02050C ground, under new names (tirlink-icon-v3-*, tirlink-apple-touch-
+  v2.png, favicon-v3.png) so no cache keeps the old icon; the old file names
   hold the new picture too. The start-up screen shows the logo
   (tirlink-logo-v2-144.webp / .png, 72 px) on the same dark ground with the
   same spinner; no service worker added (tirlink_icons_test.dart).
+  No dark rim (owner, 15.11.2026: "kənarlarında qara xətt olmasın"): the
+  icons (v3 names) show the logo edge to edge — its own glossy rim cut off,
+  the corners the phones round off filled with the logo's own colours
+  (blurred), the maskable ones the logo in the safe centre on the same
+  colours; tested at the edges and inside the iOS corners.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
