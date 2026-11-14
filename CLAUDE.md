@@ -850,6 +850,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   notification shade (an open chat closes its own notification, no unread =
   all chat notifications closed) and the icon number follows the unread
   count where the browser allows (AppBadgeSync, web/push.js clear / badge).
+- TIR Link logo and app icons (owner's file, 14.11.2026): the logo
+  (assets/images/brand/tirlink_logo.png; TirLinkWordmark showLogo) stands
+  left of "TırLink" on Yüklər and the computer's sidebar instead of the old
+  orange chart icon, never taller than the capital T; www.tirlink.app right
+  under the word, the slogan on its own line ("dünya üzrə" accent). Home
+  Screen / manifest / tab icons are square and not transparent on the dark
+  #02050C ground, under new names (tirlink-icon-v2-*, tirlink-apple-touch-
+  v2.png, favicon-v2.png) so no cache keeps the old icon; the old file names
+  hold the new picture too. The start-up screen shows the logo
+  (tirlink-logo-v2-144.webp / .png, 72 px) on the same dark ground with the
+  same spinner; no service worker added (tirlink_icons_test.dart).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

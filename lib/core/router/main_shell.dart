@@ -260,17 +260,16 @@ class _SideNav extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 30, 16, 34),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 30, 16, 34),
               child: Row(
                 children: [
-                  Icon(Icons.show_chart, color: AppColors.accentFill, size: 30),
-                  const SizedBox(width: 4),
-                  const Flexible(
+                  // The TIR Link logo (owner, 14.11.2026) instead of the chart icon.
+                  Flexible(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: TirLinkWordmark(size: 26),
+                      child: TirLinkWordmark(size: 26, showLogo: true),
                     ),
                   ),
                 ],
