@@ -6,6 +6,51 @@
   //    Safari already animates it, so Flutter must not animate it again.
   var lastPop = 0;
   window.addEventListener('popstate', function () { lastPop = Date.now(); }, true);
+
+  // 1b) A swipe always goes ONE STEP BACK, never forward (owner, 15.11.2026:
+  //     "geri sürüşdürəndə arxadakı səhifəyə keçməlidir … ardıcıllıq bütün
+  //     səhifələrdə"). iPhone's Home Screen app treats a swipe the other way
+  //     as "forward" and reopened the page just left (Şifrəni dəyiş after
+  //     going back to Şəxsi məlumatlarım). Flutter numbers its history entries
+  //     (state.serialCount); a move to a HIGHER number than the page on screen
+  //     is a forward step: it is stopped before Flutter sees it and turned
+  //     into one step back from where the user was. Taps that open pages
+  //     (pushState) are untouched. Registered before Flutter's own listener,
+  //     so stopImmediatePropagation keeps Flutter on the current page.
+  function serialOf(st) {
+    return st && typeof st.serialCount === 'number' ? st.serialCount : null;
+  }
+  var current = serialOf(history.state);
+  var redirecting = false;
+  try {
+    ['pushState', 'replaceState'].forEach(function (name) {
+      var orig = history[name];
+      history[name] = function (state) {
+        var r = orig.apply(this, arguments);
+        var n = serialOf(state);
+        if (n !== null) current = n;
+        return r;
+      };
+    });
+  } catch (e) {}
+  window.addEventListener('popstate', function (ev) {
+    var next = serialOf(ev.state);
+    if (redirecting) {
+      redirecting = false;
+      if (next !== null) current = next;
+      return;
+    }
+    if (next !== null && current !== null && next > current) {
+      ev.stopImmediatePropagation();
+      var steps = next - current; // how far forward the browser went
+      redirecting = true;
+      // Back to where the user was, plus one more step back if there is one.
+      history.go(-(steps + (current > 0 ? 1 : 0)));
+      return;
+    }
+    if (next !== null) current = next;
+  }, true);
+  window.flNav_never_forward = true;
   window.flNav = {
     recentBrowserNav: function () { return Date.now() - lastPop < 700; }
   };
