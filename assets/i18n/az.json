@@ -2344,5 +2344,7 @@
   "phone_hide_done": "Nömrəniz gizlədildi ✓",
   "phone_show_done": "Nömrəniz yenidən görünür ✓",
   "phone_hide_not_ready": "Bu funksiya hələ serverdə qurulmayıb (SQL 0122).",
-  "phone_hidden_note": "📵 Nömrə gizlidir — Mesaj yazın"
+  "phone_hidden_note": "📵 Nömrə gizlidir — Mesaj yazın",
+  "auth_link_problem": "Bu link artıq işləmir: vaxtı keçib və ya başqa brauzerdə açılıb. Giriş səhifəsində \"Şifrəni unutdum\" ilə yeni link istəyin.",
+  "auth_link_login": "Giriş"
 }

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../auth/auth_link_problem.dart';
 import '../../features/cargo/presentation/providers/cargo_providers.dart';
 import '../../features/chat/presentation/providers/chat_providers.dart';
 import '../../features/chat/presentation/providers/group_providers.dart';
@@ -135,7 +136,13 @@ class AutoFix {
       // the current route, marked with "≈" (probable).
       final probable = loc == null ? screenFileForRoute(_route) : null;
       final file = loc?.file ?? (probable == null ? null : '≈ $probable');
-      final fixed = (forceKind == null && classified.transient) ? _recover(kind, provider) : false;
+      var fixed = (forceKind == null && classified.transient) ? _recover(kind, provider) : false;
+      // An expired / other-browser e-mail link: the user is told what to do
+      // (auth_link_problem.dart) — that is its whole fix (owner, 15.11.2026).
+      if (classified.code == 'auth_link') {
+        reportAuthLinkProblem();
+        fixed = true;
+      }
       breadcrumb('✖ $kind ${classified.code}${source == null ? '' : ' ($source)'}');
       final fp = fingerprintFor(kind, classified.code, classified.message, route: _route, file: loc?.file, line: loc?.line);
       final existing = _queue[fp];
@@ -177,7 +184,12 @@ class AutoFix {
         unawaited(_refreshSessionThenRetry(provider));
         return true;
       case AutoFixKind.messaging:
+        // Several chat streams fail together when the socket drops (owner,
+        // 15.11.2026: 4 reports in one second, only 1 counted as fixed): one
+        // reconnect is already on its way for all of them.
+        if (_chatReconnectPending) return true;
         if (!_reconnect.tryAcquire('chat')) return false;
+        _chatReconnectPending = true;
         Future<void>.delayed(backoffFor(_reconnect.attempts('chat')), _refreshChats);
         return true;
       case AutoFixKind.network:
@@ -219,7 +231,10 @@ class AutoFix {
       p.from == conversationByIdProvider;
 
   /// Same refresh the app does after coming back from the background.
+  bool _chatReconnectPending = false;
+
   void _refreshChats() {
+    _chatReconnectPending = false;
     final c = _container;
     if (c == null) return;
     try {

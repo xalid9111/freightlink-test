@@ -50,6 +50,16 @@ ErrorInfo classifyError(String typeName, String text, {bool messaging = false}) 
   final pg = RegExp(r'(?:code:\s*"?|AppException\()(PGRST\d{3}|[0-9A-Z]{5})\b').firstMatch(text);
   final pgCode = pg?.group(1);
 
+  // An expired / other-browser e-mail link (owner, 15.11.2026): not a code
+  // bug — the user gets a clear notice (auth_link_problem.dart).
+  if (t.contains('otp_expired') ||
+      t.contains('email link is invalid') ||
+      t.contains('code verifier') ||
+      t.contains('flow_state_not_found') ||
+      t.contains('flow_state_expired')) {
+    return ErrorInfo(kind: AutoFixKind.auth, code: 'auth_link', message: _short(text, 1000), transient: false);
+  }
+
   final isAuth = t.contains('jwt expired') ||
       t.contains('invalid jwt') ||
       t.contains('refresh token') ||
@@ -66,7 +76,21 @@ ErrorInfo classifyError(String typeName, String text, {bool messaging = false}) 
   // service", e.g. "AbortError: Aborted by failure" on an animated GIF): not
   // a code bug; its own code so Admin → AutoFix shows what it is.
   if (t.contains('image resource service')) {
-    return ErrorInfo(kind: AutoFixKind.runtime, code: 'image', message: _short(text, 1000), transient: false);
+    // A picture that did not ARRIVE (dropped connection, a new version being
+    // published, the browser aborting the download) is a network matter, not
+    // a code bug (owner, 15.11.2026); the app's pictures retry by themselves.
+    final arrived = !(t.contains('unable to load asset') ||
+        t.contains('aborterror') ||
+        t.contains('aborted') ||
+        t.contains('failed to fetch') ||
+        t.contains('network') ||
+        t.contains('http request failed') ||
+        t.contains('connection'));
+    return ErrorInfo(
+        kind: arrived ? AutoFixKind.runtime : AutoFixKind.network,
+        code: 'image',
+        message: _short(text, 1000),
+        transient: !arrived);
   }
 
   final isNetwork = t.contains('failed to fetch') ||

@@ -2344,5 +2344,7 @@
   "phone_hide_done": "您的号码已隐藏 ✓",
   "phone_show_done": "您的号码已重新显示 ✓",
   "phone_hide_not_ready": "此功能尚未在服务器上设置（SQL 0122）。",
-  "phone_hidden_note": "📵 号码已隐藏 — 请发消息"
+  "phone_hidden_note": "📵 号码已隐藏 — 请发消息",
+  "auth_link_problem": "此链接已失效：已过期或在其他浏览器中打开。请在登录页通过“忘记密码”获取新链接。",
+  "auth_link_login": "登录"
 }

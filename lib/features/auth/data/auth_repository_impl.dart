@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../core/auth/auth_link_problem.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -201,7 +203,15 @@ class AuthRepositoryImpl implements AuthRepository {
         // failure is visible (stuck on /login) instead of silent.
         return null;
       }
-    });
+    }).transform(StreamTransformer<AppUser?, AppUser?>.fromHandlers(handleError: (e, st, sink) {
+      // An expired / other-browser e-mail link (AutoFix, 15.11.2026): the
+      // user is told and simply stays signed out — the stream goes on.
+      if (isAuthLinkProblem(e)) {
+        reportAuthLinkProblem();
+        return;
+      }
+      sink.addError(e, st);
+    }));
   }
 
   @override
