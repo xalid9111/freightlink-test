@@ -89,7 +89,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(child: TirLinkWordmark(size: 30, align: CrossAxisAlignment.center)),
+                    // The logo left of the name, the same as on Yüklər (owner, 15.11.2026:
+                    // a new logo also changes the login page).
+                    const Center(child: TirLinkWordmark(size: 30, align: CrossAxisAlignment.center, showLogo: true)),
                     const SizedBox(height: 6),
                     Text(
                       strings.t('app_tagline'),

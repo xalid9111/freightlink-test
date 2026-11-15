@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/autofix/autofix.dart';
+import 'core/brand/site_logos.dart';
 import 'core/auth/auth_link_notice.dart';
 import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
@@ -95,6 +97,9 @@ Future<void> main() async {
   // right away, while the first screen is being drawn, not after it
   // (pageHeroProvider takes the answer).
   PageHeroPrefetch.start(PageHeroRepository(), Uri.base);
+  // The Baş admin's logos (Admin → Loqolar, SQL 0124): read once, in the
+  // background; until then (and offline) the built-in logo shows.
+  unawaited(SiteLogos.load());
   WidgetsBinding.instance.addPostFrameCallback((_) {
     // The logo of index.html goes away only now: the first screen is drawn.
     hideStartupSplash();

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../ads/presentation/ads_providers.dart';
 import '../../cargo/presentation/admin_cargo_pictures_page.dart';
+import 'admin_logos_page.dart';
 import 'admin_ads_page.dart';
 import 'admin_autofix_page.dart';
 import 'admin_design_page.dart';
@@ -48,6 +49,7 @@ const adminSections = <AdminSection>[
   AdminSection('market', 'TIR Bazarı (satış elanları)', Icons.storefront_outlined),
   AdminSection('purge', 'Test məlumatlarını sil', Icons.delete_forever_outlined),
   AdminSection('design', 'Dizayn və Rənglər', Icons.palette_outlined),
+  AdminSection('logos', 'Loqolar', Icons.image_outlined),
   AdminSection('autofix', 'AutoFix (xətalar)', Icons.auto_fix_high),
   AdminSection('audit', 'Audit Log', Icons.history),
   AdminSection('system', 'Sistem', Icons.monitor_heart_outlined),
@@ -156,6 +158,8 @@ class _AdminLayout extends ConsumerWidget {
         return const AdminPurgePage();
       case 'design':
         return const AdminDesignPage();
+      case 'logos':
+        return const AdminLogosPage();
       case 'autofix':
         return const AdminAutoFixPage();
       case 'audit':
