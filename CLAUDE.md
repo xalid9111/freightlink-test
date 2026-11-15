@@ -879,6 +879,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   e-mail link (otp_expired, code verifier) is "auth_link", the auth stream
   goes on, and the user sees "Bu link artıq işləmir … Şifrəni unutdum"
   with "Giriş" (AuthLinkNotice, appMessengerKey; 6 languages).
+- Back swipe order (owner, 15.11.2026, Home Screen app): a swipe always goes
+  ONE STEP BACK through the pages in the order they were opened (Şifrəni
+  dəyiş → Şəxsi məlumatlarım → Profil → …), never forward: web/pwa_guard.js
+  sees a browser move to a higher Flutter history number (forward), stops
+  it before Flutter and goes one step back instead (at the first page it
+  stays). Pages opened by a tap are unchanged (never_forward_nav_test.dart).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
