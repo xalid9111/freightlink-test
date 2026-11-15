@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../theme/theme_mode.dart';
 import '../layout/desktop_layout.dart';
 import '../../features/auth/presentation/settings_screen.dart' show showLanguagePicker;
+import '../notify/message_sound_rule.dart';
 import '../notify/message_alert.dart';
 import '../notify/notify_settings.dart';
 import '../../models/group_models.dart';
@@ -28,9 +29,11 @@ import '../notify/web_push.dart';
 /// go_router's StatefulShellRoute so each tab keeps its own navigation
 /// stack and scroll position when switching away and back, instead of
 /// a plain IndexedStack hand-rolled in application code.
-/// Unread message ids already announced, per account (a sound only for a
-/// message never seen before).
-final Map<String, Set<String>> _seenUnread = {};
+/// Per account: which messages already rang, and since when this visit runs
+/// (a sound only for a message that arrives while the site is open — owner,
+/// 15.11.2026; see message_sound_rule.dart).
+final Map<String, MessageSoundRule> _soundRules = {};
+final Map<String, MessageSoundRule> _groupSoundRules = {};
 
 final NavDebounce _tabGuard = NavDebounce(window: const Duration(milliseconds: 400));
 
@@ -69,17 +72,14 @@ class MainShell extends ConsumerWidget {
     ref.listen<AsyncValue<List<MessageModel>>>(receivedMessagesProvider, (prev, next) {
       final list = next.valueOrNull;
       if (list == null || uid == null) return;
-      final ids = {for (final m in list) if (m.readAt == null) m.id};
-      final seen = _seenUnread[uid];
-      _seenUnread[uid] = {...?seen, ...ids};
-      if (seen != null && ids.any((id) => !seen.contains(id))) alert();
+      final rule = _soundRules.putIfAbsent(uid, MessageSoundRule.new);
+      if (rule.shouldRing([for (final m in list) if (m.readAt == null) (m.id, m.createdAt)])) alert();
     });
     ref.listen<AsyncValue<List<GroupMessage>>>(myGroupMessagesProvider, (prev, next) {
-      final before = prev?.valueOrNull;
       final after = next.valueOrNull;
-      if (before == null || after == null) return;
-      final known = {for (final m in before) m.id};
-      if (after.any((m) => !known.contains(m.id) && m.senderId != uid)) alert();
+      if (after == null || uid == null) return;
+      final rule = _groupSoundRules.putIfAbsent(uid, MessageSoundRule.new);
+      if (rule.shouldRing([for (final m in after) if (m.senderId != uid) (m.id, m.createdAt)])) alert();
     });
     // Branch indices: Loads 0, Search 1, Shipments 2, Messages 3,
     // Profile 4, Services 5, TIR Bazarı 6. Search and Shipments are NOT in

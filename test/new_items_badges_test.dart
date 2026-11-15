@@ -71,7 +71,9 @@ void main() {
 
   test('sound: one per new unread message id, the list re-read from the server every 20 s', () {
     final shell = src('lib/core/router/main_shell.dart');
-    expect(shell.contains('ids.any((id) => !seen.contains(id))'), isTrue);
+    // 15.11.2026: one per new id AND only for messages written during this
+    // visit (message_sound_test.dart).
+    expect(shell.contains('rule.shouldRing([for (final m in list) if (m.readAt == null) (m.id, m.createdAt)])'), isTrue);
     final chat = src('lib/features/chat/presentation/providers/chat_providers.dart');
     expect(chat.contains('liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid)'), isTrue);
     final js = src('web/msg_alert.js');
