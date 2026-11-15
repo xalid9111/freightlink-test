@@ -885,6 +885,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   sees a browser move to a higher Flutter history number (forward), stops
   it before Flutter and goes one step back instead (at the first page it
   stays). Pages opened by a tap are unchanged (never_forward_nav_test.dart).
+- Message sound only for messages that arrive while the site is open (owner,
+  15.11.2026: "saytı açarkən bildiriş səsi gəlir"): MessageSoundRule — a
+  new id AND written after this visit started (2 min clock grace); old
+  unread messages (also when the first list comes empty) stay silent and
+  only show in the counters; private and group messages alike.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
