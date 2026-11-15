@@ -890,6 +890,20 @@ files to the owner separately (they are run by hand in the SQL editor).
   new id AND written after this visit started (2 min clock grace); old
   unread messages (also when the first list comes empty) stay silent and
   only show in the counters; private and group messages alike.
+- Admin → Loqolar (owner, 15.11.2026, SQL 0124): the Baş admin changes the
+  logo of three places — Telefon ikonu (Home Screen / tab icon, square, not
+  transparent on kAppIconGround), Ana səhifədəki loqo (left of "TırLink":
+  Yüklər, computer sidebar, login page) and Yüklənmə səhifəsi (start-up
+  screen): upload → frame (move / zoom, square; ImageFrameEditorScreen) →
+  preview → Yadda saxla (rendered PNG in market-photos, admin_site_logo_set:
+  chief admin only, Audit Log) or "Standarta qaytar" (null = built-in).
+  site_logos is read by everybody (also visitors) after start
+  (SiteLogos.load); the header follows at once (SiteLogos.homeLogo); the
+  device keeps a copy (localStorage fl_site_logos) that the inline
+  <script id="site-logos"> in index.html applies before the app loads: the
+  start-up logo and the apple-touch / tab icon links + an Android manifest
+  with the new icon. Nothing saved = the built-in files untouched. An
+  already installed iPhone icon changes only when added again.
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

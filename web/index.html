@@ -121,6 +121,76 @@
     <picture><source srcset="icons/tirlink-logo-v2-144.webp" type="image/webp"><img src="icons/tirlink-logo-v2-144.png" alt="TırLink" width="72" height="72"></picture>
     <div class="spinner"></div>
   </div>
+  <!-- The Baş admin's logos (Admin → Loqolar, SQL 0124), the device's last copy. -->
+  <script id="site-logos">
+// The site's logos chosen by the Baş admin (owner, 15.11.2026, SQL 0124).
+// Runs right after the start-up logo is on the page, before the app loads:
+// the device's last copy (localStorage "fl_site_logos", written by the app)
+// replaces the start-up logo and the Home Screen / tab icon links, so a new
+// "Ana ekrana əlavə et" takes the new icon. Nothing set = the built-in files
+// stay exactly as they are. Never throws; touches nothing else.
+(function () {
+  var KEY = 'fl_site_logos';
+  function read() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function links(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  // The built-in links, to go back to them when a logo is reset.
+  var builtIn = [];
+  links('link[rel="apple-touch-icon"], link[rel="icon"], link[rel="manifest"]').forEach(function (l) {
+    builtIn.push([l, l.getAttribute('href')]);
+  });
+  var manifestUrl = null;
+
+  function applyIcon(url) {
+    if (!url) {
+      builtIn.forEach(function (p) { p[0].setAttribute('href', p[1]); });
+      return;
+    }
+    links('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(function (l) { l.setAttribute('href', url); });
+    // Android reads the icon from the manifest: the same manifest with the new icon.
+    try {
+      fetch('manifest.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (m) {
+        m.icons = [
+          { src: url, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: url, sizes: '192x192', type: 'image/png', purpose: 'any' }
+        ];
+        m.start_url = location.origin + '/';
+        m.scope = location.origin + '/';
+        var blob = new Blob([JSON.stringify(m)], { type: 'application/manifest+json' });
+        if (manifestUrl) URL.revokeObjectURL(manifestUrl);
+        manifestUrl = URL.createObjectURL(blob);
+        links('link[rel="manifest"]').forEach(function (l) { l.setAttribute('href', manifestUrl); });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function applySplash(url) {
+    if (!url) return;
+    var box = document.getElementById('app-loading');
+    if (!box) return;
+    links('#app-loading picture source').forEach(function (s) { s.remove(); });
+    var img = box.querySelector('img');
+    if (img) img.setAttribute('src', url);
+  }
+
+  var saved = read();
+  applySplash(saved.splash);
+  applyIcon(saved.app_icon);
+
+  window.flLogos = {
+    // From the app: keep the logos on the device and update the icon links now
+    // (the start-up logo changes on the next start).
+    apply: function (json) {
+      try {
+        var o = JSON.parse(json) || {};
+        localStorage.setItem(KEY, JSON.stringify(o));
+        applyIcon(o.app_icon);
+      } catch (e) {}
+    }
+  };
+})();
+  </script>
 
   <script>
     // Visible boot diagnostics: if anything fails during engine/app

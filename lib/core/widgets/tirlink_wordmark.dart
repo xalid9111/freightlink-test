@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../brand/site_logos.dart';
 import '../theme/app_theme.dart';
 
 /// The site's address shown under the wordmark.
@@ -68,15 +69,19 @@ class TirLinkWordmark extends StatelessWidget {
         // square of that height).
         AspectRatio(
           aspectRatio: 1,
-          child: DecoratedBox(
-            key: const ValueKey('tirlink-logo'),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: const AssetImage(logoAsset),
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-                // A missing / undecodable file never breaks the header.
-                onError: (_, __) {},
+          // The Baş admin's logo (Admin → Loqolar, 0124) or the built-in one.
+          child: ValueListenableBuilder<String?>(
+            valueListenable: SiteLogos.homeLogo,
+            builder: (_, url, __) => DecoratedBox(
+              key: const ValueKey('tirlink-logo'),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: url == null ? const AssetImage(logoAsset) as ImageProvider : NetworkImage(url),
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                  // A missing / undecodable file never breaks the header.
+                  onError: (_, __) {},
+                ),
               ),
             ),
           ),
