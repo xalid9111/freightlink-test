@@ -24,7 +24,7 @@ String src(String p) => File(p).readAsStringSync();
 void main() {
   tearDown(() => AppColors.use(AppPalette.dark));
 
-  testWidgets('home header: logo left of TırLink, not taller than the T, site under the word', (t) async {
+  testWidgets('home header: logo left of TırLink, from its top to the bottom of the site line', (t) async {
     AppColors.use(AppPalette.dark);
     await t
         .pumpWidget(const MaterialApp(home: Scaffold(body: Center(child: TirLinkWordmark(size: 18, showLogo: true)))));
@@ -32,7 +32,9 @@ void main() {
     final word = t.getRect(find.byKey(const ValueKey('tirlink-wordmark')));
     final site = t.getRect(find.byKey(const ValueKey('tirlink-site')));
     expect(logo.right, lessThanOrEqualTo(word.left), reason: 'logo on the left');
-    expect(logo.height, lessThanOrEqualTo(TirLinkWordmark.capHeight(18) + 0.01), reason: 'not taller than T');
+    // Owner, 15.11.2026: as tall as TırLink + www.tirlink.app together.
+    expect(logo.top, closeTo(word.top, 0.5), reason: 'starts at the top of TırLink');
+    expect(logo.bottom, closeTo(site.bottom, 0.5), reason: 'ends at the bottom of the site line');
     expect(site.top, greaterThanOrEqualTo(word.bottom - 0.5), reason: 'site right under the word');
     expect(site.left, closeTo(word.left, 0.5), reason: 'aligned with the word');
     final siteText = t.widget<Text>(find.byKey(const ValueKey('tirlink-site')));

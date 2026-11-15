@@ -12,8 +12,8 @@ const String kTirLinkSite = 'www.tirlink.app';
 /// www.tirlink.app.
 ///
 /// The TIR Link logo (owner, 14.11.2026) replaces the old orange chart icon:
-/// with [showLogo] it stands left of "TırLink", never taller than the
-/// capital T, and www.tirlink.app stays right under the word.
+/// with [showLogo] it stands left of "TırLink" and www.tirlink.app, as
+/// tall as both lines together (owner, 15.11.2026).
 class TirLinkWordmark extends StatelessWidget {
   final double size;
   final bool showSite;
@@ -28,10 +28,6 @@ class TirLinkWordmark extends StatelessWidget {
 
   /// The logo picture (assets/images/brand, from the owner's file).
   static const logoAsset = 'assets/images/brand/tirlink_logo.png';
-
-  /// Height of the capital T of "TırLink" (Arial cap height ≈ 0.716 em):
-  /// the logo is never taller.
-  static double capHeight(double size) => size * 0.716;
 
   /// The colour of "Tır" and of the site line: white, dark only by day.
   static Color get baseColor => AppColors.isDay ? AppColors.text : Colors.white;
@@ -62,20 +58,36 @@ class TirLinkWordmark extends StatelessWidget {
       if (!showSite) return word;
       return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: align, children: [word, site]);
     }
-    final logoSide = capHeight(size);
-    final gap = size * 0.25;
-    final logo = Image.asset(
-      logoAsset,
-      key: const ValueKey('tirlink-logo'),
-      width: logoSide,
-      height: logoSide,
-      filterQuality: FilterQuality.medium,
-      // A missing / undecodable file never breaks the header.
-      errorBuilder: (_, __, ___) => SizedBox(width: logoSide, height: logoSide),
+    // The logo is as tall as "TırLink" and www.tirlink.app together (owner,
+    // 15.11.2026: from the top of TırLink to the bottom of the site line),
+    // left of both lines — measured from the real text, any text size.
+    return IntrinsicHeight(
+      child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Drawn as a background picture: it has no size of its own, so only
+        // the two text lines decide the height (the picture then fills a
+        // square of that height).
+        AspectRatio(
+          aspectRatio: 1,
+          child: DecoratedBox(
+            key: const ValueKey('tirlink-logo'),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: const AssetImage(logoAsset),
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                // A missing / undecodable file never breaks the header.
+                onError: (_, __) {},
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: size * 0.3),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [word, if (showSite) site],
+        ),
+      ]),
     );
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisSize: MainAxisSize.min, children: [logo, SizedBox(width: gap), word]),
-      if (showSite) Padding(padding: EdgeInsets.only(left: logoSide + gap), child: site),
-    ]);
   }
 }

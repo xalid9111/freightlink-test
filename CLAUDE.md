@@ -853,11 +853,14 @@ files to the owner separately (they are run by hand in the SQL editor).
 - TIR Link logo and app icons (owner's file, 14.11.2026): the logo
   (assets/images/brand/tirlink_logo.png; TirLinkWordmark showLogo) stands
   left of "TırLink" on Yüklər and the computer's sidebar instead of the old
-  orange chart icon, never taller than the capital T; www.tirlink.app right
-  under the word, the slogan on its own line ("dünya üzrə" accent). Home
+  orange chart icon; www.tirlink.app right under the word, the slogan on its
+  own line ("dünya üzrə" accent). Size (owner, 15.11.2026): the logo is as
+  tall as "TırLink" + www.tirlink.app together (top of the word to the
+  bottom of the site line, left of both; drawn as a background picture in
+  an IntrinsicHeight row so only the text decides the height). Home
   Screen / manifest / tab icons are square and not transparent on the dark
   #02050C ground, under new names (tirlink-icon-v3-*, tirlink-apple-touch-
-  v2.png, favicon-v3.png) so no cache keeps the old icon; the old file names
+  v3.png, favicon-v3.png) so no cache keeps the old icon; the old file names
   hold the new picture too. The start-up screen shows the logo
   (tirlink-logo-v2-144.webp / .png, 72 px) on the same dark ground with the
   same spinner; no service worker added (tirlink_icons_test.dart).
