@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/autofix/autofix.dart';
+import 'core/auth/auth_link_notice.dart';
 import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -149,8 +150,11 @@ class FreightLinkApp extends ConsumerWidget {
       routerConfig: router,
       // Site closed (0068): only admins see the app, others the notice.
       // An admin's try-out of night colours shows a "Bitir" pill (0076).
-      builder: (context, child) => NightPreviewBadge(
-          child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)))),
+      scaffoldMessengerKey: appMessengerKey,
+      builder: (context, child) => AuthLinkNotice(
+          router: router,
+          child: NightPreviewBadge(
+              child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child))))),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

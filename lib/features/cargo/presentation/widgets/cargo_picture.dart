@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/retry_asset_image.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -43,9 +44,9 @@ class CargoPicture extends ConsumerWidget {
               widthFactor: 0.6,
               // An icon that cannot load (e.g. during a site update) shows
               // the plain box icon instead of an error per card.
-              child: Image.asset(categoryIconAsset(cat, night: !AppColors.isDay),
+              child: RetryAssetImage(categoryIconAsset(cat, night: !AppColors.isDay),
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textSoft)),
+                  fallback: Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textSoft)),
             ),
     );
     var url = imageUrl;

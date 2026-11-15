@@ -869,6 +869,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   the corners the phones round off filled with the logo's own colours
   (blurred), the maskable ones the logo in the safe centre on the same
   colours; tested at the edges and inside the iOS corners.
+- AutoFix self-healing (owner, 15.11.2026: "bunları həll et və avtomatik
+  həll yolunu tap"): a realtime / socket drop fails several chat streams at
+  once — ONE reconnect covers them all and each is counted as recovered
+  (_chatReconnectPending); a picture that did not arrive (Unable to load
+  asset, AbortError, network) is "network / image", recoverable, and the
+  app's load-type pictures retry by themselves (RetryAssetImage: 2 s, 6 s,
+  then the fallback icon; no report per card); an expired / other-browser
+  e-mail link (otp_expired, code verifier) is "auth_link", the auth stream
+  goes on, and the user sees "Bu link artıq işləmir … Şifrəni unutdum"
+  with "Giriş" (AuthLinkNotice, appMessengerKey; 6 languages).
 - Messages tab lists only chats the user is part of (even for admins).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no

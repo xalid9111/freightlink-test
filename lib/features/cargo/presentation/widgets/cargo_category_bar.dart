@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/retry_asset_image.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/mouse_drag_scroll.dart';
@@ -115,7 +116,7 @@ class CargoTypeChoice extends StatelessWidget {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           SizedBox(
             height: 27,
-            child: Image.asset(categoryIconAsset(code, night: !AppColors.isDay),
+            child: RetryAssetImage(categoryIconAsset(code, night: !AppColors.isDay),
                 fit: BoxFit.contain, color: color, colorBlendMode: BlendMode.srcIn),
           ),
           const SizedBox(height: 6),
@@ -166,7 +167,7 @@ class CargoTypeTile extends StatelessWidget {
                 : null,
           ),
           child: Column(children: [
-            Expanded(child: Image.asset(categoryIconAsset(code, night: !AppColors.isDay), fit: BoxFit.contain)),
+            Expanded(child: RetryAssetImage(categoryIconAsset(code, night: !AppColors.isDay), fit: BoxFit.contain)),
             const SizedBox(height: 5),
             FittedBox(
               fit: BoxFit.scaleDown,

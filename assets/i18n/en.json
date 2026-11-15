@@ -2344,5 +2344,7 @@
   "phone_hide_done": "Your number is hidden ✓",
   "phone_show_done": "Your number is shown again ✓",
   "phone_hide_not_ready": "This feature is not set up on the server yet (SQL 0122).",
-  "phone_hidden_note": "📵 Number hidden — send a message"
+  "phone_hidden_note": "📵 Number hidden — send a message",
+  "auth_link_problem": "This link no longer works: it expired or was opened in another browser. Ask for a new one with \"Forgot password\" on the login page.",
+  "auth_link_login": "Log in"
 }
