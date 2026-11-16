@@ -16,6 +16,7 @@ import '../../domain/cargo_pictures.dart';
 import '../providers/cargo_media_providers.dart';
 import '../../../../core/utils/image_decode.dart';
 import '../../../../core/utils/light_image.dart';
+import '../../../../core/perf/scroll_perf.dart';
 import '../../../../core/router/guest_access.dart';
 
 /// A load's card picture (0058). A load without its own picture shows an
@@ -56,6 +57,8 @@ class CargoPicture extends ConsumerWidget {
       url = templateFor([for (final t in templates) t.imageUrl], seed!);
     }
     if (url == null || url.isEmpty) return placeholder;
+    // Admin test switch (Ayarlar → Sürətölçən): no pictures, to compare.
+    if (PerfFlags.noImages.value) return placeholder;
     final src = url;
     // Decoded at the size it is shown (list tile or full page), not more.
     return LayoutBuilder(builder: (context, c) {

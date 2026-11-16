@@ -28,6 +28,7 @@ import 'core/widgets/page_hero.dart';
 import 'features/cargo/data/cargo_feed_prefetch.dart';
 import 'features/cargo/data/cargo_repository_impl.dart';
 import 'core/startup/startup_steps.dart';
+import 'core/perf/scroll_perf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -161,10 +162,12 @@ class FreightLinkApp extends ConsumerWidget {
       // Site closed (0068): only admins see the app, others the notice.
       // An admin's try-out of night colours shows a "Bitir" pill (0076).
       scaffoldMessengerKey: appMessengerKey,
-      builder: (context, child) => AuthLinkNotice(
+      // Scroll smoothness meter + poor-scroll reports (owner, 16.11.2026).
+      builder: (context, child) => ScrollPerfScope(
+          child: AuthLinkNotice(
           router: router,
           child: NightPreviewBadge(
-              child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child))))),
+              child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)))))),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

@@ -42,6 +42,9 @@ class AutoFix {
   ProviderContainer? _container;
   GoRouter? _router;
   String _route = '';
+
+  /// The page shown now (for the scroll meter's reports, scroll_perf.dart).
+  String get currentRoute => _route;
   final List<String> _crumbs = [];
   final Map<String, Map<String, dynamic>> _queue = {};
   final RetryLimiter _retry = RetryLimiter(max: 2, window: const Duration(minutes: 2));
