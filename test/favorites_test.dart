@@ -105,4 +105,18 @@ void main() {
       }
     }
   });
+
+  test('load / ad hearts insert with ON CONFLICT DO NOTHING (only the INSERT right; owner, 17.11.2026)', () {
+    // A plain upsert = ON CONFLICT DO UPDATE needs the UPDATE right, which
+    // users do not have on cargo_favorites (0058) / market_favorites (0040):
+    // the heart said "try again later".
+    final cargo = File('lib/features/cargo/data/cargo_media_repository.dart').readAsStringSync();
+    expect(cargo, contains("upsert({'user_id': me, 'cargo_id': cargoId}, ignoreDuplicates: true)"));
+    final market = File('lib/features/market/data/market_repository.dart').readAsStringSync();
+    expect(market, contains("upsert({'user_id': me, 'listing_id': id}, ignoreDuplicates: true)"));
+    for (final m in ['0058_cargo_pictures_favorites.sql', '0040_market.sql']) {
+      final sql = File('supabase/migrations/$m').readAsStringSync();
+      expect(RegExp(r'grant select, insert, delete on public\.(cargo|market)_favorites to authenticated').hasMatch(sql), isTrue, reason: m);
+    }
+  });
 }

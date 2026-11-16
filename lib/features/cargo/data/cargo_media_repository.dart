@@ -256,7 +256,11 @@ class CargoMediaRepository {
     final me = _me;
     if (me == null) return;
     if (on) {
-      await _c.from('cargo_favorites').upsert({'user_id': me, 'cargo_id': cargoId}).timeout(_timeout);
+      // ignoreDuplicates = INSERT … ON CONFLICT DO NOTHING: needs only the
+      // INSERT right users have (0058). A plain upsert (DO UPDATE) needs the
+      // UPDATE right and was refused — the heart said "try again later"
+      // (owner, 17.11.2026).
+      await _c.from('cargo_favorites').upsert({'user_id': me, 'cargo_id': cargoId}, ignoreDuplicates: true).timeout(_timeout);
     } else {
       await _c.from('cargo_favorites').delete().eq('user_id', me).eq('cargo_id', cargoId).timeout(_timeout);
     }
