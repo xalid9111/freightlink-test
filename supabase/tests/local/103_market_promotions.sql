@@ -53,8 +53,9 @@ set local app.market_trusted = '';
 
 set role authenticated;
 select tests.login(:buyer);
-select tests.check(tests.err(format($$ select public.market_promo_order_create(%L, 'bump', 1) $$, :p1)) like '%listing_not_found%',
-  'O1 only for my own ad');
+-- 0125 (owner, 16.11.2026): anybody may promote an active ad (162 tests it).
+select tests.check(tests.err(format($$ select public.market_promo_order_create(%L, 'bump', 1) $$, :p1)) is null,
+  'O1 a friend may order for another person''s active ad (0125)');
 select tests.login(:seller);
 select tests.check(tests.err(format($$ select public.market_promo_order_create(%L, 'bump', 1) $$, :p3)) like '%listing_not_active%',
   'O2 only for an active ad');

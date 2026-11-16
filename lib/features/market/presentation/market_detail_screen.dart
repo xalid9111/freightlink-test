@@ -266,7 +266,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         : [place.cityLabel(lang), if ((l.country ?? '').isNotEmpty) place.countryLabel(lang)].join(', ');
     final (agoKey, agoN) = marketAgo(l.publishedAt ?? l.createdAt);
     final head = _head(context, s, l, isOwner, placeText, agoKey, agoN);
-    final rest = _rest(context, s, l, isOwner, placeText);
+    final rest = _rest(context, s, l, isOwner, placeText, signedIn: me != null);
     if (isDesktopLayout(context)) return _desktopBody(s, l, me, head, rest);
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
@@ -439,7 +439,21 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       ];
 
   /// Description, location and report.
-  List<Widget> _rest(BuildContext context, AppStrings s, MarketListing l, bool isOwner, String placeText) => [
+  List<Widget> _rest(BuildContext context, AppStrings s, MarketListing l, bool isOwner, String placeText,
+          {bool signedIn = false}) =>
+      [
+            // Owner, 16.11.2026 (0125): on every active ad, anybody signed in
+            // may promote it — e.g. a friend pays for the seller.
+            if (signedIn && l.status == MarketStatus.active) ...[
+              const SizedBox(height: 16),
+              if (!isOwner) ...[
+                Text(s.t('mk_promo_friend_hint'),
+                    key: const ValueKey('mk-promo-friend-hint'),
+                    style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+                const SizedBox(height: 8),
+              ],
+              MarketPromoOptions(key: const ValueKey('mk-promo-on-page'), s: s, target: MarketPromoTarget(l)),
+            ],
             if ((l.description ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(children: [
