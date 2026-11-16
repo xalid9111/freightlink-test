@@ -7,6 +7,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../models/group_models.dart';
 import '../../../models/message_model.dart';
 import '../../../repositories/profile_repository.dart' show isMissingRelation;
+import '../domain/message_repository.dart' show kChatPageSize;
 
 const _netTimeout = Duration(seconds: 20);
 
@@ -103,12 +104,15 @@ class GroupRepository {
       .limit(500)
       .map((rows) => rows.map(GroupMessage.fromJson).toList());
 
-  Stream<List<GroupMessage>> watchGroupMessages(String groupId) => _c
+  /// The newest [limit] messages of a group (owner, 16.11.2026: older ones
+  /// stay in the archive and come in steps while scrolling up), oldest first.
+  Stream<List<GroupMessage>> watchGroupMessages(String groupId, {int limit = kChatPageSize}) => _c
       .from('group_messages')
       .stream(primaryKey: ['id'])
       .eq('group_id', groupId)
-      .order('created_at')
-      .map((rows) => rows.map(GroupMessage.fromJson).toList());
+      .order('created_at', ascending: false)
+      .limit(limit)
+      .map((rows) => rows.map(GroupMessage.fromJson).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt)));
 
   Future<ChatGroup> createGroup(String name, List<String> memberIds) async {
     final row = await _c.rpc('create_chat_group', params: {'p_name': name, 'p_members': memberIds}).timeout(_netTimeout);

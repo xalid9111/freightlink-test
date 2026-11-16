@@ -17,6 +17,7 @@ import '../data/chat_delete_repository.dart';
 import '../domain/message_repository.dart';
 import 'providers/chat_providers.dart';
 import 'widgets/attachment_view.dart';
+import 'widgets/chat_scroll.dart';
 import 'widgets/call_options.dart';
 import 'widgets/chat_input_bar.dart';
 import 'widgets/location_message.dart';
@@ -55,6 +56,14 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
   String? _picked;
   /// How many of the newest messages of each topic are shown.
   int _pageLimit = kChatPageSize;
+  bool _loadingOlder = false;
+
+  /// Owner, 16.11.2026: the next older part comes by itself when the top of
+  /// the loaded messages nears the screen (no "Köhnə mesajlar" tap).
+  void _loadOlder() {
+    if (_loadingOlder || !mounted) return;
+    setState(() => _pageLimit += kChatPageSize);
+  }
   final _lastMessages = <String, List<MessageModel>>{};
 
   /// The topic's messages; the last ones known while a bigger page loads.
@@ -207,9 +216,12 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
     // Messages of all topics, merged into one timeline.
     // The newest [_pageLimit] of each topic; while a bigger page loads the
     // messages already shown stay (no flash of the spinner).
-    final perTopic = [
-      for (final t in topics) _keep(t.conversation.id, ref.watch(conversationMessagesProvider((t.conversation.id, _pageLimit)))),
+    final rawPerTopic = [
+      for (final t in topics) ref.watch(conversationMessagesProvider((t.conversation.id, _pageLimit))),
     ];
+    // A bigger page is on its way: no second request meanwhile.
+    _loadingOlder = rawPerTopic.any((a) => a.isLoading);
+    final perTopic = [for (var i = 0; i < topics.length; i++) _keep(topics[i].conversation.id, rawPerTopic[i])];
     final anyData = perTopic.any((a) => a.hasValue);
     final anyError = perTopic.any((a) => a.hasError);
     // A topic that filled its page may have older messages: offer them, and
@@ -383,7 +395,11 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                           // WhatsApp-style: oldest at the top, newest at the
                           // bottom; `reverse: true` keeps the view anchored to
                           // the bottom, so index 0 = newest row.
-                          : ListView.builder(
+                          : ChatJumpToLatest(
+                              controller: _scrollCtrl,
+                              tooltip: strings.t('chat_jump_latest'),
+                              incoming: [for (final m in merged) if (m.senderId != me) m.id],
+                              child: ListView.builder(
                               controller: _scrollCtrl,
                               reverse: true,
                               padding: const EdgeInsets.all(14),
@@ -400,14 +416,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                 }
                                 if (row is DateTime) return ChatDateChip(day: row, strings: strings);
                                 if (row is _LoadOlder) {
-                                  return Center(
-                                    child: TextButton.icon(
-                                      key: const ValueKey('chat-load-older'),
-                                      onPressed: () => setState(() => _pageLimit += kChatPageSize),
-                                      icon: const Icon(Icons.history),
-                                      label: Text(strings.t('chat_load_older')),
-                                    ),
-                                  );
+                                  return ChatOlderLoader(key: const ValueKey('chat-load-older'), onLoad: _loadOlder);
                                 }
                                 final m = row as MessageModel;
                                 final mine = me != null && m.senderId == me;
@@ -429,6 +438,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                   ),
                                 );
                               },
+                            ),
                             ),
               ),
             ),
@@ -552,7 +562,7 @@ class _MessageBubble extends StatelessWidget {
             // card; any other text (incl. pasted links with a caption)
             // is still shown.
             if (!deleted && (message.message ?? '').isNotEmpty && !_isBareLocation(message.message!))
-              Text(
+              LinkifiedText(
                 message.message!,
                 style: TextStyle(color: ChatColors.text, fontSize: 14.5),
               ),
