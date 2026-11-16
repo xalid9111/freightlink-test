@@ -938,6 +938,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   card (AppColors.card, grey edge), the white title with the icon on its
   line, "3 AZN-dən" in AppColors.blue under it (no ".00" on whole amounts,
   promoFromPrice); tested for 6 languages × 320–390 pt × text size.
+- Promote anybody's ad (owner, 16.11.2026, SQL 0125: "dostuma deyə bilərəm
+  ki, gir elanı aktiv elə"): every ACTIVE TIR Bazarı ad page shows the three
+  "Önə çıxar" cards to every signed-in user (non-owners with the hint
+  "Bu elanı siz də önə çıxara bilərsiniz — satıcıya kömək edin"); the owner
+  also keeps his button under his actions. market_vip_order_create /
+  market_promo_order_create no longer require the owner — any signed-in
+  user, active ads only; the order is the payer's and only he pays it; the
+  server sets the price; the ad changes only after a verified payment.
+  Visitors see no cards. Loads keep no advertising (0102). The sheet's texts
+  say "the ad", not "your ad". No message to the seller (not asked yet).
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

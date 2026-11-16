@@ -68,8 +68,9 @@ select tests.check((select vip_since is null from public.market_listings where i
 
 -- ---- VIP order + payment ----------------------------------------------------
 select tests.login(:buyer);
-select tests.check(tests.err(format($$ select public.market_vip_order_create(%L, 7) $$, :l2)) like '%listing_not_found%',
-  'O1 nobody can order VIP for someone else''s ad');
+-- 0125 (owner, 16.11.2026): anybody may promote an active ad (162 tests it).
+select tests.check(tests.err(format($$ select public.market_vip_order_create(%L, 7) $$, :l2)) is null,
+  'O1 a friend may order VIP for another person''s active ad (0125)');
 select tests.login(:seller);
 select tests.check(tests.err(format($$ select public.market_vip_order_create(%L, 7) $$, :l3)) like '%listing_not_active%',
   'O2 only an active ad');
