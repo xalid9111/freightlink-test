@@ -83,13 +83,14 @@ void main() {
     await t.pumpWidget(host(CargoListRow(cargo: load('c1'), strings: s, onTap: () {}), s));
     await t.pump();
     expect(find.textContaining('Bakı →'), findsOneWidget);
-    expect(find.textContaining('22 t', findRichText: true), findsOneWidget);
+    expect(find.textContaining('22 T', findRichText: true), findsOneWidget, reason: 'capital T (owner, 17.11.2026)');
     expect(find.textContaining('Refrijerator', findRichText: true), findsOneWidget);
     expect(find.textContaining('30 noy', findRichText: true), findsOneWidget);
     expect(find.text('5 100'), findsOneWidget);
     expect(find.text('USD'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
     expect(find.byKey(const ValueKey('cargo-heart-c1')), findsOneWidget, reason: 'the heart stays on the picture');
+    expect(t.getSize(find.byIcon(Icons.favorite_border)).width, greaterThanOrEqualTo(18), reason: 'bigger heart (owner, 17.11.2026)');
     final price = t.widget<Text>(find.text('5 100'));
     expect(price.style!.color, AppColors.accent, reason: 'the price in the accent colour');
   });

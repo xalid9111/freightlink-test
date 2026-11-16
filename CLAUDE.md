@@ -212,7 +212,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   few minutes so each VIP comes to the front; same logic on the computer.
   One load per row on the phone (owner's picture, 17.11.2026 — replaces the
   two tiles there; the computer keeps its tiles): CargoListRow — a 64 pt
-  picture with the heart on its corner, the route with flags, "22 t |
+  picture with the heart on its corner (18 pt, owner 17.11.2026: "çox
+  balacadır"), the route with flags, "22 T | (capital T, owner 17.11.2026)
   Refrijerator | 30 noy" as one line with small icons (ends in "…", never
   overflows), the price in AppColors.accent with the currency under it,
   Premium / VIP marks over the price, ›; kPhoneLoadColumns = 1, so the

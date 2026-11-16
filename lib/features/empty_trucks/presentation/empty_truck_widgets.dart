@@ -202,7 +202,7 @@ class EmptyTruckRow extends ConsumerWidget {
                     ),
                   ),
                   if (ref.watch(currentUserIdProvider) != t.ownerId)
-                    Positioned(top: 2, right: 2, child: LikeHeart(kind: FavKind.user, id: t.ownerId, size: 13, onPhoto: true)),
+                    Positioned(top: 2, right: 2, child: LikeHeart(kind: FavKind.user, id: t.ownerId, size: 18, onPhoto: true)),
                 ]),
               ),
             ),

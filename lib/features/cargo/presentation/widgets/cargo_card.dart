@@ -490,6 +490,9 @@ class CargoListRow extends ConsumerWidget {
   /// The picture's side (logical px): small, so a scroll opens few pixels.
   static const picture = 64.0;
 
+  /// The heart on the picture (owner, 17.11.2026: bigger than 13).
+  static const kRowHeartSize = 18.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final localeCode = ref.watch(currentLocaleProvider).languageCode;
@@ -498,7 +501,8 @@ class CargoListRow extends ConsumerWidget {
     final dateFmt = DateFormat('d MMM', localeCode);
     final tons = cargo.weightKg / 1000;
     final tonsText = tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1);
-    final weight = cargo.weightKg < 1000 ? '${_num(cargo.weightKg)} kg' : '$tonsText t';
+    // Capital T (owner, 17.11.2026: "15 T — t hərfini böyük et").
+    final weight = cargo.weightKg < 1000 ? '${_num(cargo.weightKg)} kg' : '$tonsText T';
     final truck = (cargo.truckType ?? '').trim();
     final type = cargo.groupage
         ? strings.t('cargo_groupage_label')
@@ -532,7 +536,8 @@ class CargoListRow extends ConsumerWidget {
                 height: picture,
                 child: Stack(fit: StackFit.expand, children: [
                   CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
-                  Positioned(top: 2, right: 2, child: CargoFavoriteHeart(cargoId: cargo.id, size: 13, onPhoto: true)),
+                  // Bigger heart (owner, 17.11.2026: "çox balacadır").
+                  Positioned(top: 2, right: 2, child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize, onPhoto: true)),
                 ]),
               ),
             ),
