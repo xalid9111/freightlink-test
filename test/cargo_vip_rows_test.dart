@@ -88,7 +88,9 @@ void main() {
     test('phone + computer: VIP rows, no old wide ad banner, 3 mm gaps, cards as in the owner\'s picture', () {
       final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
       final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
-      expect(m.contains('buildLoadRows(list, columns: 2)'), isTrue);
+      // One load per row on the phone since 17.11.2026 (owner's picture).
+      expect(m.contains('buildLoadRows(list, columns: kPhoneLoadColumns)'), isTrue);
+      expect(m.contains('const kPhoneLoadColumns = 1;'), isTrue);
       expect(d.contains('buildLoadRows(list, columns: columns)'), isTrue);
       for (final f in [m, d]) {
         expect(f.contains('SponsoredBanner('), isFalse);

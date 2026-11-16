@@ -111,26 +111,28 @@ class CargoMarketplaceScreen extends ConsumerWidget {
       // ground shows between them.
       // Room under the last row: never under the floating bar.
       SliverPadding(
-        padding: EdgeInsets.fromLTRB(12, kTileGap, 12, more ? 0 : math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
+        padding: EdgeInsets.fromLTRB(12, kRowGap, 12, more ? 0 : math.max(96, MediaQuery.paddingOf(context).bottom + 16)),
         sliver: SliverList.builder(
           itemCount: rows.length,
           itemBuilder: (context, i) {
             final row = rows[i];
+            // One load per row (owner's picture, 17.11.2026); the rows are
+            // as wide as the Premium places card above them.
             return WheelItem(
               index: i,
               isAd: false,
               child: Padding(
-                padding: const EdgeInsets.only(bottom: kTileGap),
-                child: _TileRow(
-                  children: [
+                padding: const EdgeInsets.only(bottom: kRowGap),
+                child: TileRowWidth(
+                  child: Column(children: [
                     for (final cell in row)
-                      CargoTile(
+                      CargoListRow(
                         cargo: list[cell.index],
                         strings: strings,
                         vip: cell.vip,
                         onTap: () => context.pushOnce('/cargo/${list[cell.index].id}'),
                       ),
-                  ],
+                  ]),
                 ),
               ),
             );
@@ -167,7 +169,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
         ];
       }
       if (feed.loads.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-      return tiles(feed.loads, pagedRows(feed.loads, complete: feed.complete, columns: 2),
+      return tiles(feed.loads, pagedRows(feed.loads, complete: feed.complete, columns: kPhoneLoadColumns),
           more: !feed.complete, onMore: () => ref.read(cargoFeedPagerProvider.notifier).loadMore());
     }
 
@@ -246,7 +248,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
               loading: () => [
                 if (firstPart != null && firstPart.loads.isNotEmpty) ...[
                   // The first rows at once; the rest of the feed follows.
-                  ...tiles(firstPart.loads, stableFirstRows(firstPart, columns: 2), more: !firstPart.complete),
+                  ...tiles(firstPart.loads, stableFirstRows(firstPart, columns: kPhoneLoadColumns), more: !firstPart.complete),
                 ] else
                   const SliverToBoxAdapter(
                     child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
@@ -285,10 +287,10 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   ];
                 }
                 if (list.isEmpty) return [SliverToBoxAdapter(child: _EmptyMarketplace(strings: strings))];
-                // Two tiles in a row (owner, 22–24.10.2026), chessboard:
-                // load–VIP, VIP–load …; the VIP order moves on every few
-                // minutes. Scrolling brings the next rows.
-                return tiles(list, buildLoadRows(list, columns: 2));
+                // One load per row (owner's picture, 17.11.2026; was two
+                // tiles, 22–24.10.2026): load, VIP, load, VIP …; the VIP
+                // order moves on every few minutes.
+                return tiles(list, buildLoadRows(list, columns: kPhoneLoadColumns));
               },
             ),
           ],
@@ -367,14 +369,14 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
         if (mineRow != null) mineRow,
         SliverPadding(
           padding: EdgeInsets.fromLTRB(12, 0, 12, bottom),
+          // One truck per row, like the loads (owner's picture, 17.11.2026).
           sliver: SliverList.builder(
-            itemCount: (list.length + 1) ~/ 2,
+            itemCount: list.length,
             itemBuilder: (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: kTileGap),
-              child: _TileRow(children: [
-                for (final t in list.skip(i * 2).take(2))
-                  EmptyTruckTile(truck: t, strings: strings, onTap: () => context.pushOnce('/trucks/${t.id}')),
-              ]),
+              padding: const EdgeInsets.only(bottom: kRowGap),
+              child: TileRowWidth(
+                child: EmptyTruckRow(truck: list[i], strings: strings, onTap: () => context.pushOnce('/trucks/${list[i].id}')),
+              ),
             ),
           ),
         ),
@@ -984,6 +986,12 @@ class _RouteSearch extends ConsumerWidget {
 /// 23.10.2026; about 19 points on a phone).
 const kTileGap = 19.0;
 
+/// The phone's Loads page: one load per row (owner's picture, 17.11.2026).
+const kPhoneLoadColumns = 1;
+
+/// Space between two rows of the phone's Loads / Daşıyıcılar list.
+const kRowGap = 10.0;
+
 /// Width of a load card on a phone (owner, 24.10.2026: 15 % bigger than
 /// the 147-point picture): 169 points on a 390-point phone; smaller phones
 /// shrink it to fit.
@@ -1002,34 +1010,6 @@ class TileRowWidth extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, c) => Center(child: SizedBox(width: tileRowWidth(c.maxWidth), child: child)),
       );
-}
-
-/// Two tiles side by side with space on both sides (owner's drawing):
-/// 2 cm wide each, 3 mm apart; a last single tile keeps its place on the
-/// left. Same height per row.
-class _TileRow extends StatelessWidget {
-  final List<Widget> children;
-  const _TileRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      const gap = kTileGap;
-      final w = ((c.maxWidth - gap) / 2).clamp(0.0, kTileWidth);
-      return Center(
-        child: SizedBox(
-          width: tileRowWidth(c.maxWidth),
-          child: IntrinsicHeight(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              SizedBox(width: w, child: children.isNotEmpty ? children[0] : null),
-              const SizedBox(width: gap),
-              SizedBox(width: w, child: children.length > 1 ? children[1] : null),
-            ]),
-          ),
-        ),
-      );
-    });
-  }
 }
 
 /// The spinner at the end of the list; when it comes into view (near the

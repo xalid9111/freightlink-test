@@ -199,7 +199,7 @@ void main() {
     final pager = src('lib/features/cargo/presentation/providers/cargo_feed_pager.dart');
     expect(pager, contains('isMissingFeedFunction(e)'), reason: 'until the owner runs 0109 the old feed is used');
     final screen = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    expect(screen, contains('pagedRows(feed.loads, complete: feed.complete, columns: 2)'));
+    expect(screen, contains('pagedRows(feed.loads, complete: feed.complete, columns: kPhoneLoadColumns)'));
     expect(screen, contains('ref.read(cargoFeedPagerProvider.notifier).loadMore()'));
     expect(screen, contains('final usePages = !anyFilter && !feed.legacy;'));
   });
