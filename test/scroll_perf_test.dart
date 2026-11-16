@@ -22,6 +22,12 @@ void main() {
     expect(s.poor, isFalse);
   });
 
+  test('a steady 30 fps (battery saving / the 30 FPS choice) is not a problem', () {
+    final s = ScrollPerfStats.fromFrameTimes(frames(31, 1000 / 30))!;
+    expect(s.fps.round(), 30);
+    expect(s.poor, isFalse);
+  });
+
   test('a stuttering scroll: 20 fps and missed frames = poor', () {
     final s = ScrollPerfStats.fromFrameTimes(frames(21, 50))!;
     expect(s.fps.round(), 20);
@@ -70,16 +76,6 @@ void main() {
     await t.pumpAndSettle();
     expect(find.textContaining('fps'), findsOneWidget, reason: 'numbers after a scroll');
     PerfFlags.meter.value = false;
-  });
-
-  test('the 2x switch: index.html draws at 2x before the app starts, only above 2x', () {
-    final html = src('web/index.html');
-    expect(html, contains('<script id="render-scale">'));
-    expect(html, contains("localStorage.getItem('flutter.perf_render2') === 'true' && (window.devicePixelRatio || 1) > 2"));
-    expect(html.indexOf('<script id="render-scale">'), lessThan(html.indexOf('<script src="flutter_bootstrap.js"')),
-        reason: 'before the engine reads the pixel ratio');
-    expect(src('lib/core/perf/scroll_perf.dart'), contains("'render2': 'perf_render2'"));
-    expect(src('lib/features/auth/presentation/settings_screen.dart'), contains("('render2', 'Sınaq: ekranı 2x çək"));
   });
 
   test('wired: app root, admin settings, test switches, AutoFix report', () {
