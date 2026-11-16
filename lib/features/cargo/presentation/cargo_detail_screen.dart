@@ -41,6 +41,7 @@ import 'widgets/cargo_route_map.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/router/guest_access.dart';
 import '../../../core/widgets/guest_sign_in.dart';
+import '../../../core/utils/light_image.dart';
 import 'providers/cargo_feed_pager.dart';
 
 class CargoDetailScreen extends ConsumerWidget {
@@ -184,12 +185,16 @@ class _GalleryState extends State<_Gallery> {
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (_, i) => GestureDetector(
               onTap: _full,
-              child: Image.network(p[i], fit: BoxFit.cover, cacheWidth: 1200,
-                  errorBuilder: (_, __, ___) => Container(
+              child: LightImage(
+                  url: p[i],
+                  px: 1200,
+                  onError: (_, __, ___) => Container(
                         color: AppColors.tileBg,
                         alignment: Alignment.center,
                         child: Icon(Icons.broken_image_outlined, color: AppColors.textSoft, size: 36),
-                      )),
+                      ),
+                  builder: (_, s, headers, onError) =>
+                      Image.network(s, headers: headers, fit: BoxFit.cover, cacheWidth: 1200, errorBuilder: onError)),
             ),
           ),
           if (p.length > 1)
@@ -254,7 +259,13 @@ class _FullScreenPicturesState extends State<_FullScreenPictures> {
           onPageChanged: (i) => setState(() => _page = i),
           itemBuilder: (_, i) => InteractiveViewer(
             maxScale: 4,
-            child: Center(child: Image.network(p[i], fit: BoxFit.contain)),
+            child: Center(
+                child: LightImage(
+                    url: p[i],
+                    px: 1920,
+                    onError: (_, __, ___) => const SizedBox.shrink(),
+                    builder: (_, s, headers, onError) =>
+                        Image.network(s, headers: headers, fit: BoxFit.contain, errorBuilder: onError))),
           ),
         ),
         SafeArea(

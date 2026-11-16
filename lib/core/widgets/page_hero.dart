@@ -13,6 +13,7 @@ import '../config/supabase_config.dart';
 import '../constants/app_constants.dart';
 import '../localization/app_strings.dart';
 import '../theme/app_theme.dart';
+import '../utils/light_image.dart';
 import '../utils/gif.dart';
 
 /// Banner at the top of a page (owner, 21.10.2026): TIR Bazarı ('market',
@@ -137,8 +138,14 @@ class PageHeroImage extends StatelessWidget {
   Widget _whole(BuildContext context) => ClipRect(
         child: LayoutBuilder(builder: (context, c) {
           final w = heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), 1);
-          return Image.network(url,
-              key: ValueKey('whole-$url'),
+          // The admin's banner comes light (WebP at the shown size, light_image.dart).
+          return LightImage(
+            url: url,
+            px: w ?? kLightWidths.last,
+            onError: (c, __, ___) => Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!]),
+            builder: (context, src, headers, onError) => Image.network(src,
+              headers: headers,
+              key: ValueKey('whole-$src'),
               fit: BoxFit.contain,
               alignment: wholeAlign,
               gaplessPlayback: true,
@@ -152,7 +159,7 @@ class PageHeroImage extends StatelessWidget {
                     ImageFiltered(
                       key: const ValueKey('page-hero-backdrop'),
                       imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.clamp),
-                      child: Image.network(url, fit: BoxFit.cover, cacheWidth: w, gaplessPlayback: true),
+                      child: Image.network(src, headers: headers, fit: BoxFit.cover, cacheWidth: w, gaplessPlayback: true),
                     ),
                     const ColoredBox(color: Color(0x59000000)),
                   ],
@@ -160,8 +167,8 @@ class PageHeroImage extends StatelessWidget {
                   if (ready && overlay != null) overlay!,
                 ]);
               },
-              errorBuilder: (c, __, ___) =>
-                  Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!]));
+              errorBuilder: onError),
+          );
         }),
       );
 
@@ -169,13 +176,19 @@ class PageHeroImage extends StatelessWidget {
         // Decoded at the size it is shown (zoom included), not the full
         // upload: a small picture in memory stays in the image cache while
         // scrolling, so it never has to be read and opened again.
-        child: LayoutBuilder(
-          builder: (context, c) => Image.network(url,
-              key: ValueKey(url),
+        child: LayoutBuilder(builder: (context, c) {
+          final w = heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom);
+          return LightImage(
+            url: url,
+            px: w ?? kLightWidths.last,
+            onError: (c, __, ___) => Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!]),
+            builder: (context, src, headers, onError) => Image.network(src,
+              headers: headers,
+              key: ValueKey(src),
               fit: BoxFit.cover,
               alignment: align,
               gaplessPlayback: true,
-              cacheWidth: heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom),
+              cacheWidth: w,
               frameBuilder: (c, child, frame, sync) {
                 final ready = sync || frame != null;
                 return Stack(fit: StackFit.expand, children: [
@@ -184,9 +197,9 @@ class PageHeroImage extends StatelessWidget {
                   if (ready && overlay != null) overlay!,
                 ]);
               },
-              errorBuilder: (c, __, ___) =>
-                  Stack(fit: StackFit.expand, children: [fallback(c), if (overlay != null) overlay!])),
-        ),
+              errorBuilder: onError),
+          );
+        }),
       );
 }
 

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/mouse_drag_scroll.dart';
 import '../../../../models/cargo_model.dart';
 import '../../data/cargo_media_repository.dart';
+import '../../../../core/utils/light_image.dart';
 import '../providers/cargo_media_providers.dart';
 
 /// "Şəkillər" on the load form (owner, 22–23.10.2026): up to 6 pictures,
@@ -151,8 +152,12 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
               Stack(children: [
                 frame(
                   selected: i == 0,
-                  child: Image.network(value[i], fit: BoxFit.cover, cacheWidth: 300,
-                      errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft)),
+                  child: LightImage(
+                      url: value[i],
+                      px: 300,
+                      onError: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft),
+                      builder: (_, s, headers, onError) =>
+                          Image.network(s, headers: headers, fit: BoxFit.cover, cacheWidth: 300, errorBuilder: onError)),
                 ),
                 if (i == 0)
                   Positioned(
@@ -192,8 +197,12 @@ class _CargoPictureFieldState extends ConsumerState<CargoPictureField> {
                 key: ValueKey('cargo-pic-${t.id}'),
                 selected: value.contains(t.imageUrl),
                 onTap: () => _toggleTemplate(t.imageUrl),
-                child: Image.network(t.imageUrl, fit: BoxFit.cover, cacheWidth: 300,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                child: LightImage(
+                      url: t.imageUrl,
+                      px: 300,
+                      onError: (_, __, ___) => const SizedBox.shrink(),
+                      builder: (_, s, headers, onError) =>
+                          Image.network(s, headers: headers, fit: BoxFit.cover, cacheWidth: 300, errorBuilder: onError)),
               ),
               const SizedBox(width: 10),
             ],

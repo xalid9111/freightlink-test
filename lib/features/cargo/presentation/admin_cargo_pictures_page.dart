@@ -8,6 +8,7 @@ import '../../admin/presentation/admin_widgets.dart';
 import '../data/cargo_media_repository.dart';
 import '../domain/cargo_categories.dart';
 import '../domain/cargo_pictures.dart';
+import '../../../core/utils/light_image.dart';
 import 'providers/cargo_media_providers.dart';
 
 /// Admin → "Yük şəkilləri" (owner, 22.10.2026, 0058): up to 10 pictures
@@ -140,8 +141,12 @@ class _AdminCargoPicturesPageState extends ConsumerState<AdminCargoPicturesPage>
                 SizedBox(
                   width: 120,
                   height: 80,
-                  child: Image.network(list[i].imageUrl, fit: BoxFit.cover, cacheWidth: 300,
-                      errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft)),
+                  child: LightImage(
+                      url: list[i].imageUrl,
+                      px: 300,
+                      onError: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSoft),
+                      builder: (_, s, headers, onError) =>
+                          Image.network(s, headers: headers, fit: BoxFit.cover, cacheWidth: 300, errorBuilder: onError)),
                 ),
                 const SizedBox(width: 12),
                 Text('${i + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
