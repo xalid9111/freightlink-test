@@ -964,7 +964,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   visit; no personal data). Admins: Ayarlar → "Sürətölçən (admin)" — a live
   box (fps · ən uzun · buraxılan; green / red) and test switches kept on the
   device only: toxunuşu hamarla (Flutter pointer resampling), xəritəni
-  dayandır, kart şəkillərini gizlət. A switch that helps becomes the default
+  dayandır, kart şəkillərini gizlət, ekranı 2x çək (web/index.html
+  <script id="render-scale"> makes devicePixelRatio 2 instead of 3 before the
+  app starts: 2.25× fewer pixels a frame, same size; measured on an emulated
+  iPhone 11 Pro 21 → 29 fps; 1.5x gave no more). A switch that helps becomes the default
   for everyone only after the owner's measurement and decision.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a

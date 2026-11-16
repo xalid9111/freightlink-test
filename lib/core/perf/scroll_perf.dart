@@ -64,10 +64,14 @@ class PerfFlags {
   static final mapStill = ValueNotifier<bool>(false);
   static final noImages = ValueNotifier<bool>(false);
 
-  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample', 'map': 'perf_map_still', 'img': 'perf_no_img'};
+  /// Draw at 2x instead of 3x (web/index.html reads it before the app
+  /// starts, so it counts from the next opening).
+  static final render2 = ValueNotifier<bool>(false);
+
+  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample', 'map': 'perf_map_still', 'img': 'perf_no_img', 'render2': 'perf_render2'};
 
   static Map<String, ValueNotifier<bool>> get all =>
-      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages};
+      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages, 'render2': render2};
 
   static Future<void> load() async {
     try {
@@ -98,6 +102,7 @@ class PerfFlags {
         if (resample.value) 'resample',
         if (mapStill.value) 'map_still',
         if (noImages.value) 'no_images',
+        if (render2.value) 'render2x',
       ].join(',');
 }
 
