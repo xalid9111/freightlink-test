@@ -54,7 +54,9 @@ void main() {
     expect(heroDecodeWidth(const BoxConstraints(maxWidth: 1100, maxHeight: 320), 2, 1), 2400, reason: 'at most 2400 px');
     expect(heroDecodeWidth(const BoxConstraints(maxWidth: 100, maxHeight: 50), 1, 1), 480, reason: 'at least 480 px');
     expect(heroDecodeWidth(const BoxConstraints(maxHeight: 150), 3, 1), isNull, reason: 'unknown width: full size');
-    expect(src('lib/core/widgets/page_hero.dart'), contains('cacheWidth: heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom),'));
+    // 16.11.2026: the same width now also picks the light picture (LightImage).
+    expect(src('lib/core/widgets/page_hero.dart'), contains('final w = heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom);'));
+    expect(src('lib/core/widgets/page_hero.dart'), contains('cacheWidth: w,'));
   });
 
   test('the Loads counters ask for the number only (same exact count, one row sent)', () {

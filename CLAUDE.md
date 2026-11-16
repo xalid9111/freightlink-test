@@ -904,6 +904,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   start-up logo and the apple-touch / tab icon links + an Android manifest
   with the new icon. Nothing saved = the built-in files untouched. An
   already installed iPhone icon changes only when added again.
+- Faster site, stage 1 (owner, 16.11.2026): the admins' heavy PNGs — the
+  load-type templates (cargo-photos/templates/…, 2.5 MB) and page banners
+  (…/hero_…, 2.7 MB) — are asked for through Supabase's image service as
+  WebP at the shown size (lightImageUrl / LightImage, core/utils/
+  light_image.dart: widths 480 · 640 · 960 · 1280 · 1920 · 2400, quality
+  80; ~40 KB a card, ~180 KB a banner; measured Yüklər + TIR Bazarı 17 MB →
+  1.2 MB); never a GIF or a user's own photo; the original file is the
+  fallback; stored files and addresses unchanged.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

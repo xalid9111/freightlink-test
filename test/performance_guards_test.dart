@@ -17,9 +17,12 @@ void main() {
     expect(decodeWidthFor(const BoxConstraints(maxWidth: 40, maxHeight: 40), 2), 240, reason: 'never below 240');
     expect(decodeWidthFor(const BoxConstraints(maxWidth: 1600, maxHeight: 900), 2), 1200, reason: 'never above 1200');
     expect(decodeWidthFor(const BoxConstraints(), 3), 800, reason: 'unbounded → the old fixed size');
-    for (final f in ['lib/features/cargo/presentation/widgets/cargo_picture.dart', 'lib/features/market/presentation/market_card.dart']) {
-      expect(src(f), contains('cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),'), reason: f);
-    }
+    expect(src('lib/features/market/presentation/market_card.dart'),
+        contains('cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),'));
+    // 16.11.2026: the same width also picks the light template picture (LightImage).
+    final pic = src('lib/features/cargo/presentation/widgets/cargo_picture.dart');
+    expect(pic, contains('final w = decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context));'));
+    expect(pic, contains('cacheWidth: w,'));
     expect(src('lib/features/chat/presentation/widgets/attachment_view.dart'), contains('cacheWidth: 660,'));
   });
 

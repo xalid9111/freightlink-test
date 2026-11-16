@@ -15,6 +15,7 @@ import '../../data/cargo_media_repository.dart';
 import '../../domain/cargo_pictures.dart';
 import '../providers/cargo_media_providers.dart';
 import '../../../../core/utils/image_decode.dart';
+import '../../../../core/utils/light_image.dart';
 import '../../../../core/router/guest_access.dart';
 
 /// A load's card picture (0058). A load without its own picture shows an
@@ -57,15 +58,23 @@ class CargoPicture extends ConsumerWidget {
     if (url == null || url.isEmpty) return placeholder;
     final src = url;
     // Decoded at the size it is shown (list tile or full page), not more.
-    return LayoutBuilder(
-      builder: (context, c) => Image.network(
-        src,
-        fit: fit,
-        cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),
-        errorBuilder: (_, __, ___) => placeholder,
-        loadingBuilder: (c, child, p) => p == null ? child : placeholder,
-      ),
-    );
+    return LayoutBuilder(builder: (context, c) {
+      final w = decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context));
+      // An admin template comes light (WebP at the shown size, light_image.dart).
+      return LightImage(
+        url: src,
+        px: w,
+        onError: (_, __, ___) => placeholder,
+        builder: (context, s, headers, onError) => Image.network(
+          s,
+          headers: headers,
+          fit: fit,
+          cacheWidth: w,
+          errorBuilder: onError,
+          loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+        ),
+      );
+    });
   }
 }
 
