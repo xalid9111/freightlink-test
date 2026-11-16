@@ -14,9 +14,11 @@ import '../../../repositories/profile_repository.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/chat_delete_repository.dart';
 import '../data/group_repository.dart';
+import '../domain/message_repository.dart' show kChatPageSize;
 import 'providers/group_providers.dart';
 import 'widgets/attachment_view.dart';
 import 'widgets/chat_input_bar.dart';
+import 'widgets/chat_scroll.dart';
 import 'widgets/location_message.dart';
 import 'widgets/message_actions.dart';
 import 'widgets/people_picker.dart';
@@ -34,6 +36,23 @@ class GroupThreadScreen extends ConsumerStatefulWidget {
 
 class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
   int _lastMarkedCount = -1;
+  final _scrollCtrl = ScrollController();
+
+  /// How many of the newest messages are shown; grows while scrolling up.
+  int _pageLimit = kChatPageSize;
+  bool _loadingOlder = false;
+  List<GroupMessage>? _last;
+
+  void _loadOlder() {
+    if (_loadingOlder || !mounted) return;
+    setState(() => _pageLimit += kChatPageSize);
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _sendText(String text) => ref.read(groupRepositoryProvider).sendText(widget.groupId, text);
 
@@ -59,10 +78,14 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
     final me = ref.watch(currentUserIdProvider);
     final group = ref.watch(groupByIdProvider(widget.groupId)).valueOrNull;
     final members = ref.watch(groupMembersProvider(widget.groupId)).valueOrNull ?? const <GroupMember>[];
-    final messagesAsync = ref.watch(groupMessagesProvider(widget.groupId));
+    final raw = ref.watch(groupMessagesProvider((widget.groupId, _pageLimit)));
+    _loadingOlder = raw.isLoading;
+    // While a bigger page loads the messages already shown stay.
+    if (raw.valueOrNull != null) _last = raw.valueOrNull;
+    final messagesAsync = raw.isLoading && _last != null ? AsyncData(_last!) : raw;
 
     // Mark the group read whenever new messages are on screen.
-    ref.listen<AsyncValue<List<GroupMessage>>>(groupMessagesProvider(widget.groupId), (_, next) {
+    ref.listen<AsyncValue<List<GroupMessage>>>(groupMessagesProvider((widget.groupId, _pageLimit)), (_, next) {
       final n = next.valueOrNull?.length;
       if (n != null && n != _lastMarkedCount) {
         _lastMarkedCount = n;
@@ -128,11 +151,21 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
                   ];
                   if (messages.isEmpty) return Center(child: Text(strings.t('messages_empty_title')));
                   final sorted = [...messages]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-                  return ListView.builder(
+                  // A full page = older messages may be in the archive.
+                  final hasOlder = all.length >= _pageLimit;
+                  return ChatJumpToLatest(
+                    controller: _scrollCtrl,
+                    tooltip: strings.t('chat_jump_latest'),
+                    incoming: [for (final m in sorted) if (m.senderId != me) m.id],
+                    child: ListView.builder(
+                    controller: _scrollCtrl,
                     reverse: true,
                     padding: const EdgeInsets.all(14),
-                    itemCount: sorted.length,
+                    itemCount: sorted.length + (hasOlder ? 1 : 0),
                     itemBuilder: (context, i) {
+                      if (i == sorted.length) {
+                        return ChatOlderLoader(key: const ValueKey('chat-load-older'), onLoad: _loadOlder);
+                      }
                       final idx = sorted.length - 1 - i;
                       final m = sorted[idx];
                       final prev = idx > 0 ? sorted[idx - 1] : null;
@@ -160,6 +193,7 @@ class _GroupThreadScreenState extends ConsumerState<GroupThreadScreen> {
                       }
                       return bubble;
                     },
+                  ),
                   );
                 },
               ),
@@ -256,7 +290,7 @@ class _GroupBubble extends StatelessWidget {
                 child: LocationCard(location: loc, isMine: isMine, strings: strings),
               ),
             if (!deleted && (text ?? '').isNotEmpty && !_isBareLocation(text!))
-              Text(text!, style: TextStyle(color: ChatColors.text, fontSize: 14.5)),
+              LinkifiedText(text!, style: TextStyle(color: ChatColors.text, fontSize: 14.5)),
             const SizedBox(height: 2),
             Text(_hhmm(message.createdAt), style: TextStyle(fontSize: 11, color: ChatColors.meta)),
           ],

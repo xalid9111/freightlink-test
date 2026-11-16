@@ -905,6 +905,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   with the new icon. Nothing saved = the built-in files untouched. An
   already installed iPhone icon changes only when added again.
 - Messages tab lists only chats the user is part of (even for admins).
+- Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
+  message (direct and group) are underlined and open with a tap in a new
+  tab (LinkifiedText; only http / https). Older messages stay in the
+  archive: the newest 300 load first and the next 300 come by themselves
+  when the top nears the screen (ChatOlderLoader, groups too); a round ⌄
+  at the lower right shows once the user reads further up, with the count
+  of new messages that came in meanwhile, and brings the chat back to the
+  newest message (ChatJumpToLatest, widgets/chat_scroll.dart).
 - Loads page header is compact (owner, 27.10.2026): the logo with the
   slogan "Yüklər dünya üzrə hərəkətdədir" in one small line under it; no
   big headline / "CANLI XƏRİTƏ" label over the map on the phone (the

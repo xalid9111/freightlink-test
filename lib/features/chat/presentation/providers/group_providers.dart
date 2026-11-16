@@ -69,9 +69,10 @@ final groupMembersProvider = StreamProvider.autoDispose.family<List<GroupMember>
   return ref.watch(groupRepositoryProvider).watchMembers(id);
 });
 
-final groupMessagesProvider = StreamProvider.autoDispose.family<List<GroupMessage>, String>((ref, id) {
+/// Keyed by (group id, how many of the newest messages).
+final groupMessagesProvider = StreamProvider.autoDispose.family<List<GroupMessage>, (String, int)>((ref, key) {
   ref.watch(currentUserIdProvider);
-  return ref.watch(groupRepositoryProvider).watchGroupMessages(id);
+  return ref.watch(groupRepositoryProvider).watchGroupMessages(key.$1, limit: key.$2);
 });
 
 /// People search by name (empty query → empty list).
