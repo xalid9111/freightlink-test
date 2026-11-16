@@ -862,6 +862,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   number via my_phone(); the Baş admin (is_chief_admin) opens it with
   "Gizli nömrəni göstər" (admin_hidden_phones, every look in the Audit Log);
   a hidden number cannot be taken by another account.
+  The e-mail too (owner, 17.11.2026, SQL 0127: "həm telefonu, həm də e-mail
+  ünvanı gizlədilsin, sadəcə mesaj"): while hidden, get_cargo_contact /
+  get_user_contact give no e-mail to others (plain admins included); the
+  owner and the Baş admin still see it; users.email (sign-in) never changes.
+  Hearts on loads / ads insert with ON CONFLICT DO NOTHING (ignoreDuplicates)
+  — users have no UPDATE right on cargo_favorites / market_favorites, so a
+  plain upsert was refused (owner, 17.11.2026: "bəyənmə işləmir").
 - TIR Bazarı "Alış-satış | Elan yerləşdir" (owner, 14.11.2026): when the
   title and the button do not fit side by side (long language, big text
   size) the title goes on top and the button under it; never one letter per

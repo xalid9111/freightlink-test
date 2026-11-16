@@ -108,4 +108,16 @@ void main() {
     expect(admin, contains('if (chief)'));
     expect(src('lib/repositories/profile_repository.dart'), contains("rpc('my_phone')"));
   });
+
+  test('0127: a hidden number hides the e-mail too (load page, profile); owner + Baş admin still see it', () {
+    final sql = File('supabase/migrations/0127_hidden_phone_hides_email.sql').readAsStringSync();
+    expect(sql, contains("'email',         case when v_show then v_u.email end"));
+    expect(sql, contains('or p_user = v_me or public.is_chief_admin()) then v_u.email end'));
+    expect(sql.toLowerCase(), isNot(contains('update public.users')), reason: 'the sign-in address is never changed');
+    // The pages show no e-mail row when the server gives none.
+    expect(File('lib/features/cargo/presentation/cargo_detail_screen.dart').readAsStringSync(),
+        contains('if (email != null && email.isNotEmpty)'));
+    expect(File('lib/features/ads/presentation/public_profile_screen.dart').readAsStringSync(),
+        contains('if (hasEmail) _InfoRow(icon: Icons.mail_outline'));
+  });
 }

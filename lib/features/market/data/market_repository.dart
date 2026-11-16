@@ -156,7 +156,9 @@ class MarketRepository {
     final me = _me;
     if (me == null) return;
     if (on) {
-      await _c.from('market_favorites').upsert({'user_id': me, 'listing_id': id}).timeout(_timeout);
+      // ignoreDuplicates: INSERT … ON CONFLICT DO NOTHING (only the INSERT
+      // right, 0040); a plain upsert needs UPDATE and was refused.
+      await _c.from('market_favorites').upsert({'user_id': me, 'listing_id': id}, ignoreDuplicates: true).timeout(_timeout);
     } else {
       await _c.from('market_favorites').delete().eq('user_id', me).eq('listing_id', id).timeout(_timeout);
     }
