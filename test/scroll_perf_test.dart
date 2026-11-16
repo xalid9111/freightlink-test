@@ -72,6 +72,16 @@ void main() {
     PerfFlags.meter.value = false;
   });
 
+  test('the 2x switch: index.html draws at 2x before the app starts, only above 2x', () {
+    final html = src('web/index.html');
+    expect(html, contains('<script id="render-scale">'));
+    expect(html, contains("localStorage.getItem('flutter.perf_render2') === 'true' && (window.devicePixelRatio || 1) > 2"));
+    expect(html.indexOf('<script id="render-scale">'), lessThan(html.indexOf('<script src="flutter_bootstrap.js"')),
+        reason: 'before the engine reads the pixel ratio');
+    expect(src('lib/core/perf/scroll_perf.dart'), contains("'render2': 'perf_render2'"));
+    expect(src('lib/features/auth/presentation/settings_screen.dart'), contains("('render2', 'Sınaq: ekranı 2x çək"));
+  });
+
   test('wired: app root, admin settings, test switches, AutoFix report', () {
     expect(src('lib/main.dart'), contains('builder: (context, child) => ScrollPerfScope('));
     final settings = src('lib/features/auth/presentation/settings_screen.dart');

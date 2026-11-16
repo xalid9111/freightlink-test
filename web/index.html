@@ -277,6 +277,18 @@
       };
     })();
   </script>
+  <!-- Render scale (owner, 16.11.2026: scrolling stutters on iPhone 11 Pro,
+       19–30 fps). Admin test switch "Sınaq: ekranı 2x çək" (Ayarlar →
+       Sürətölçən, stored as flutter.perf_render2): the app draws at 2x
+       instead of 3x — 2.25 times fewer pixels a frame, same size on screen.
+       Read before the app starts; nothing else changes. -->
+  <script id="render-scale">
+    try {
+      if (localStorage.getItem('flutter.perf_render2') === 'true' && (window.devicePixelRatio || 1) > 2) {
+        Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true });
+      }
+    } catch (e) {}
+  </script>
   <script src="pwa_guard.js"></script>
   <script src="msg_alert.js"></script>
   <script src="push.js"></script>
