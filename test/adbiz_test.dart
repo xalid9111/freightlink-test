@@ -335,6 +335,19 @@ void main() {
       expect(repo.cards.single, isNull, reason: 'no p_card before 0113');
     });
 
+    testWidgets('the newest job stands on top and keeps its number (owner, 16.11.2026)', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day()], company: _c113, entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Birinci', amount: 20),
+        AdbizEntry(id: 'e2', dayId: 'd1', title: 'Ikinci', amount: 25),
+        AdbizEntry(id: 'e3', dayId: 'd1', title: 'Ucuncu', amount: 30),
+      ]);
+      double y(String id) => t.getTopLeft(find.byKey(ValueKey('adb-job-$id'))).dy;
+      expect(y('e3'), lessThan(y('e2')));
+      expect(y('e2'), lessThan(y('e1')));
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-job-e3')), matching: find.text('3')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-job-e1')), matching: find.text('1')), findsOneWidget);
+    });
+
     testWidgets('a tick = paid by card; a second tap takes it off; the tick at the end of a saved job', (t) async {
       final repo = _Repo();
       await _pumpNotebook(t, repo, days: [_day()], company: _c113, entries: const [
