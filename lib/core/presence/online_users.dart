@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../config/supabase_config.dart';
+import '../startup/startup_steps.dart';
 import '../../repositories/profile_repository.dart';
 
 /// Who is online right now — Supabase Realtime **Presence** (in-memory on
@@ -22,8 +23,21 @@ class OnlineUsersNotifier extends Notifier<Set<String>> {
   @override
   Set<String> build() {
     final uid = ref.watch(currentUserIdProvider);
-    ref.onDispose(_leave);
-    if (uid != null) _join(uid);
+    var alive = true;
+    ref.onDispose(() {
+      alive = false;
+      _leave();
+    });
+    // Opened on Yüklər: joins 3 s after the first screen (StartupSteps).
+    if (uid != null) {
+      if (StartupSteps.isFree(2)) {
+        _join(uid);
+      } else {
+        StartupSteps.reached(2).then((_) {
+          if (alive) _join(uid);
+        });
+      }
+    }
     return <String>{};
   }
 

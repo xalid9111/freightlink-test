@@ -7,6 +7,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../config/supabase_config.dart';
 import '../constants/app_constants.dart';
 import '../localization/locale_controller.dart';
+import '../startup/startup_steps.dart';
 import 'message_alert.dart';
 
 /// Settings → Notifications. Saved on this device.
@@ -117,7 +118,16 @@ final newCargoWatcherProvider = Provider<void>((ref) {
     }
   }
 
-  tick();
-  final timer = Timer.periodic(const Duration(seconds: 45), (_) => tick());
-  ref.onDispose(timer.cancel);
+  // Opened on Yüklər: starts 5 s after the first screen (StartupSteps).
+  Timer? timer;
+  var alive = true;
+  ref.onDispose(() {
+    alive = false;
+    timer?.cancel();
+  });
+  StartupSteps.reached(3).then((_) {
+    if (!alive) return;
+    tick();
+    timer = Timer.periodic(const Duration(seconds: 45), (_) => tick());
+  });
 });

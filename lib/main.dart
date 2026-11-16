@@ -27,6 +27,7 @@ import 'core/startup/splash.dart';
 import 'core/widgets/page_hero.dart';
 import 'features/cargo/data/cargo_feed_prefetch.dart';
 import 'features/cargo/data/cargo_repository_impl.dart';
+import 'core/startup/startup_steps.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -85,6 +86,10 @@ Future<void> main() async {
   final catalog = LocaleCatalog(await texts);
   await dates;
   await local;
+
+  // Stage 2 (owner, 16.11.2026): opened on Yüklər, the rest starts after the
+  // first screen, one group at a time (core/startup/startup_steps.dart).
+  StartupSteps.start(stagger: CargoFeedPrefetch.opensOnLoads(Uri.base));
 
   runApp(
     ProviderScope(

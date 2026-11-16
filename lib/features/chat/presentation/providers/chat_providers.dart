@@ -5,6 +5,7 @@ import '../../../../models/cargo_model.dart';
 import '../../../../models/message_model.dart';
 import '../../data/message_repository_impl.dart';
 import '../../domain/message_repository.dart';
+import '../../../../core/startup/startup_steps.dart';
 import '../../../../core/realtime/live_resync.dart';
 
 final messageRepositoryProvider = Provider<MessageRepository>((ref) => MessageRepositoryImpl());
@@ -75,7 +76,9 @@ final receivedMessagesProvider = StreamProvider<List<MessageModel>>((ref) {
   // Realtime + a server read every 20 s (owner, 13.11.2026: no sound on a
   // new message when the realtime message was late / lost) — the badge and
   // the sound follow the unread count, which no longer waits for realtime.
-  return liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid), every: const Duration(seconds: 20));
+  // Opened on Yüklər: starts 1.5 s after the first screen (StartupSteps).
+  return StartupSteps.after(
+      1, () => liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid), every: const Duration(seconds: 20)));
 });
 
 /// Keeps the last value while the stream re-subscribes (no badge flicker
