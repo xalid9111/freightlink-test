@@ -14,7 +14,7 @@ import '../theme/app_theme.dart';
 //
 //  * Every vertical scroll is measured on every device (the frames drawn
 //    while it moves): frames a second, the longest gap, missed frames.
-//  * A poor scroll (under 45 frames a second, or a frame gap over 100 ms) is
+//  * A poor scroll (under 25 frames a second, or a frame gap over 100 ms) is
 //    recorded in AutoFix (kind "freeze", source "perf") with the page, the
 //    screen, the browser and the test switches — at most once per page every
 //    10 minutes and 6 times per visit. No personal data, nothing changed.
