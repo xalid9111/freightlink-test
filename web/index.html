@@ -277,17 +277,59 @@
       };
     })();
   </script>
-  <!-- Render scale (owner, 16.11.2026: scrolling stutters on iPhone 11 Pro,
-       19–30 fps). Admin test switch "Sınaq: ekranı 2x çək" (Ayarlar →
-       Sürətölçən, stored as flutter.perf_render2): the app draws at 2x
-       instead of 3x — 2.25 times fewer pixels a frame, same size on screen.
-       Read before the app starts; nothing else changes. -->
+  <!-- Display speed (owner, 16.11.2026: "FPS artırıcı — 1x 2x 3x, 30 / 40 /
+       50–60 fps"). Ayarlar → Görünüş, kept on this device, read here BEFORE
+       the app starts:
+         * flutter.render_scale 1 / 2 / 3: the app draws at that pixel ratio
+           when it is below the screen's own (fewer pixels a frame, same size);
+           flutter.perf_render2 = the admin's older 2x test switch;
+         * flutter.fps_cap 30 / 40: frames are drawn at most that often (an
+           even, battery-saving pace; it never makes anything faster);
+         * flutter.native_dpr / flutter.refresh_hz: what the screen really is,
+           for the choices shown in Ayarlar. -->
   <script id="render-scale">
-    try {
-      if (localStorage.getItem('flutter.perf_render2') === 'true' && (window.devicePixelRatio || 1) > 2) {
-        Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true });
-      }
-    } catch (e) {}
+    (function () {
+      try {
+        var ls = window.localStorage;
+        var native = window.devicePixelRatio || 1;
+        ls.setItem('flutter.native_dpr', JSON.stringify(native));
+        var scale = parseFloat(ls.getItem('flutter.render_scale') || '0');
+        if (!(scale >= 1) && ls.getItem('flutter.perf_render2') === 'true') scale = 2;
+        if (scale >= 1 && scale < native) {
+          Object.defineProperty(window, 'devicePixelRatio', { get: function () { return scale; }, configurable: true });
+        }
+        // The screen's refresh rate (60 / 120 Hz), measured on a few frames.
+        var raf = window.requestAnimationFrame.bind(window);
+        var caf = window.cancelAnimationFrame.bind(window);
+        var marks = [];
+        raf(function tick(t) {
+          marks.push(t);
+          if (marks.length < 12) return raf(tick);
+          var gaps = [];
+          for (var i = 2; i < marks.length; i++) gaps.push(marks[i] - marks[i - 1]);
+          gaps.sort(function (a, b) { return a - b; });
+          var hz = Math.round(1000 / gaps[Math.floor(gaps.length / 2)]);
+          try { ls.setItem('flutter.refresh_hz', JSON.stringify(hz)); } catch (e) {}
+        });
+        var cap = parseInt(ls.getItem('flutter.fps_cap') || '0', 10);
+        if (cap === 30 || cap === 40) {
+          var min = 1000 / cap - 4, last = 0, next = 1, live = {};
+          window.requestAnimationFrame = function (cb) {
+            var id = next++;
+            var run = function (t) {
+              if (!(id in live)) return;
+              if (t - last >= min) { delete live[id]; last = t; cb(t); }
+              else live[id] = raf(run);
+            };
+            live[id] = raf(run);
+            return id;
+          };
+          window.cancelAnimationFrame = function (id) {
+            if (id in live) { caf(live[id]); delete live[id]; } else { caf(id); }
+          };
+        }
+      } catch (e) {}
+    })();
   </script>
   <script src="pwa_guard.js"></script>
   <script src="msg_alert.js"></script>

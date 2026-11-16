@@ -964,11 +964,21 @@ files to the owner separately (they are run by hand in the SQL editor).
   visit; no personal data). Admins: Ayarlar → "Sürətölçən (admin)" — a live
   box (fps · ən uzun · buraxılan; green / red) and test switches kept on the
   device only: toxunuşu hamarla (Flutter pointer resampling), xəritəni
-  dayandır, kart şəkillərini gizlət, ekranı 2x çək (web/index.html
-  <script id="render-scale"> makes devicePixelRatio 2 instead of 3 before the
-  app starts: 2.25× fewer pixels a frame, same size; measured on an emulated
-  iPhone 11 Pro 21 → 29 fps; 1.5x gave no more). A switch that helps becomes the default
-  for everyone only after the owner's measurement and decision.
+  dayandır, kart şəkillərini gizlət. A poor scroll = under 25 fps or a gap
+  over 100 ms (a steady 30 — battery saving / the 30 FPS choice — is not).
+- "FPS artırıcı" (owner, 16.11.2026: "1x 2x 3x və 30 / 40 / 50–60 fps"; the
+  owner's iPhone measured a steady 30 = Low Power Mode, 2x 21 → 29 fps in
+  emulation): Ayarlar → Görünüş for everyone (DisplaySpeedSettings,
+  core/perf/display_prefs.dart), kept on the device: "Görüntü dəqiqliyi"
+  1x · 2x · 3x (up to the screen's own; none on a 1x screen; 1x says the
+  text gets blurry) and "Kadr sürəti" 30 FPS · (40 FPS only on 90 Hz+
+  screens) · Maks (50–60) (default); after a change "İndi yenidən aç".
+  web/index.html <script id="render-scale"> applies both before the app
+  starts (devicePixelRatio = the chosen sharpness when below the screen's;
+  requestAnimationFrame limited to the cap — it never makes anything
+  faster) and writes native_dpr / refresh_hz. The admin's old 2x switch
+  counts as 2x until a choice is made. The Profil cover opens at its shown
+  size (ResizeImage; a big upload stopped Profil ~0.27 s).
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

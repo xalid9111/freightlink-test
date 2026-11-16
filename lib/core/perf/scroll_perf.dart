@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../autofix/autofix.dart';
 import '../autofix/autofix_logic.dart';
+import 'display_prefs.dart';
 import '../theme/app_theme.dart';
 
 // Scroll smoothness (owner, 16.11.2026: "sürüşdürəndə xırda tutmalarla
@@ -13,7 +14,7 @@ import '../theme/app_theme.dart';
 //
 //  * Every vertical scroll is measured on every device (the frames drawn
 //    while it moves): frames a second, the longest gap, missed frames.
-//  * A poor scroll (under 45 frames a second, or a frame gap over 100 ms) is
+//  * A poor scroll (under 25 frames a second, or a frame gap over 100 ms) is
 //    recorded in AutoFix (kind "freeze", source "perf") with the page, the
 //    screen, the browser and the test switches — at most once per page every
 //    10 minutes and 6 times per visit. No personal data, nothing changed.
@@ -28,8 +29,10 @@ class ScrollPerfStats {
   final int missed;
   const ScrollPerfStats({required this.frames, required this.fps, required this.worstMs, required this.missed});
 
-  /// Under 45 frames a second or a gap over 100 ms: the user sees it.
-  bool get poor => fps < 45 || worstMs > 100;
+  /// A real stutter: under 25 frames a second or a gap over 100 ms. A steady
+  /// 30 (the phone's battery saving, or the user's own 30 FPS choice) is not
+  /// one (owner, 16.11.2026: AutoFix showed 30 fps · 41–59 ms everywhere).
+  bool get poor => fps < 25 || worstMs > 100;
 
   /// From the frame times of a scroll (ms); null when too short to judge.
   static ScrollPerfStats? fromFrameTimes(List<double> ms) {
@@ -64,14 +67,11 @@ class PerfFlags {
   static final mapStill = ValueNotifier<bool>(false);
   static final noImages = ValueNotifier<bool>(false);
 
-  /// Draw at 2x instead of 3x (web/index.html reads it before the app
-  /// starts, so it counts from the next opening).
-  static final render2 = ValueNotifier<bool>(false);
 
-  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample', 'map': 'perf_map_still', 'img': 'perf_no_img', 'render2': 'perf_render2'};
+  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample', 'map': 'perf_map_still', 'img': 'perf_no_img'};
 
   static Map<String, ValueNotifier<bool>> get all =>
-      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages, 'render2': render2};
+      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages};
 
   static Future<void> load() async {
     try {
@@ -102,7 +102,6 @@ class PerfFlags {
         if (resample.value) 'resample',
         if (mapStill.value) 'map_still',
         if (noImages.value) 'no_images',
-        if (render2.value) 'render2x',
       ].join(',');
 }
 
@@ -137,6 +136,7 @@ class _ScrollPerfScopeState extends State<ScrollPerfScope> {
       SchedulerBinding.instance.addPersistentFrameCallback((ts) => _current?._onFrame(ts));
     }
     PerfFlags.load();
+    DisplayPrefs.load();
   }
 
   @override
@@ -195,7 +195,7 @@ class _ScrollPerfScopeState extends State<ScrollPerfScope> {
         source: 'perf',
         forceKind: AutoFixKind.freeze,
         detail: 'fps=${s.fps.toStringAsFixed(1)} worst=${s.worstMs.round()}ms missed=${s.missed} frames=${s.frames} '
-            'screen=$size switches=${PerfFlags.summary.isEmpty ? '-' : PerfFlags.summary}');
+            'screen=$size ${DisplayPrefs.current.summary} switches=${PerfFlags.summary.isEmpty ? '-' : PerfFlags.summary}');
   }
 
   @override

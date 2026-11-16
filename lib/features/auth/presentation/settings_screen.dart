@@ -18,6 +18,7 @@ import '../../../core/layout/desktop_preview.dart';
 import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/perf/scroll_perf.dart';
+import '../../../core/perf/display_prefs.dart';
 import '../../../core/notify/push_settings.dart';
 
 /// Each language in its own native name (deliberately not translated).
@@ -185,6 +186,9 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // "FPS artırıcı" (owner, 16.11.2026): sharpness 1x · 2x · 3x and
+                // frame rate 30 · (40) · Maks, kept on this device.
+                DisplaySpeedSettings(s: s),
               ],
             ),
           ],
@@ -202,7 +206,6 @@ class SettingsScreen extends ConsumerWidget {
                   ('resample', 'Sınaq: toxunuşu hamarla (titrəməyə qarşı)'),
                   ('map', 'Sınaq: xəritəni dayandır'),
                   ('img', 'Sınaq: kart şəkillərini gizlət'),
-                  ('render2', 'Sınaq: ekranı 2x çək (daha sürətli; saytı bağlayıb açın)'),
                 ])
                   ValueListenableBuilder<bool>(
                     valueListenable: PerfFlags.all[key]!,

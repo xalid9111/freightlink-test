@@ -1066,7 +1066,14 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
                 (cover ?? '').isNotEmpty
                     ? FramedImage(
                         key: const ValueKey('profile-tab-cover'),
-                        image: NetworkImage(cover!),
+                        // Opened at the size it is shown (zoom included), not
+                        // the whole upload: a big photo opened in one go made
+                        // Profil stop for ~0.27 s (owner's meter, 16.11.2026).
+                        image: ResizeImage(NetworkImage(cover!),
+                            width: (c.maxWidth * MediaQuery.devicePixelRatioOf(context) * ImageFraming.of(cover).z)
+                                .round()
+                                .clamp(320, 2400),
+                            policy: ResizeImagePolicy.fit),
                         framing: ImageFraming.of(cover),
                         errorBuilder: (_, __, ___) => const ProfileCoverPlaceholder(),
                       )
