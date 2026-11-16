@@ -33,7 +33,7 @@ String adbizClientKey([Random? r]) {
 }
 
 const kAdbizReasons = [
-  'day_closed', 'not_allowed', 'not_member', 'chief_admin_only', 'invalid_argument', 'not_found', 'other_company',
+  'day_closed', 'not_allowed', 'not_member', 'chief_admin_only', 'invalid_argument', 'not_found', 'other_company', 'company_deleted',
 ];
 
 /// UTEP Reklam (0110). Reads go through RLS (a member sees only his own
@@ -172,7 +172,8 @@ class AdbizRepository {
   // ---- company: reports, expenses -----------------------------------------------
   Future<List<AdbizCompany>> companies() => _run(() async {
         final r = await _c.from('adbiz_companies').select().order('name');
-        return [for (final x in r) AdbizCompany.fromJson(x)];
+        // A deleted company (0126) is off the list; its data stays.
+        return [for (final x in r) if (x['deleted_at'] == null) AdbizCompany.fromJson(x)];
       });
 
   Future<AdbizReport> report(String companyId, DateTime from, DateTime to) => _run(() async {
@@ -237,6 +238,10 @@ class AdbizRepository {
             'p_daily_target': dailyTarget,
             'p_owner_manages_staff': ownerManagesStaff,
           })) as String);
+
+  /// The Baş admin deletes a company (0126): off the list, its people lose
+  /// the module, its days / jobs / money stay in the database.
+  Future<void> companyDelete(String id) => _run(() => _c.rpc('adbiz_admin_company_delete', params: {'p_id': id}));
 
   Future<void> companySetActive(String id, bool on) =>
       _run(() => _c.rpc('adbiz_admin_company_set_active', params: {'p_id': id, 'p_on': on}));

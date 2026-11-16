@@ -41,6 +41,25 @@ class _AdbizAdminScreenState extends ConsumerState<AdbizAdminScreen> {
     }
   }
 
+  /// Long press on a company (owner, 16.11.2026): asked first, then the
+  /// server takes it off the list (0126); nothing of its data is deleted.
+  Future<void> _delete(AppStrings s, AdbizCompany c) async {
+    if (_busy) return;
+    final ok = await adbizConfirm(context, s, s.t('adb_company_delete_title'),
+        s.t('adb_company_delete_body').replaceAll('{name}', c.name), ok: s.t('adb_company_delete'));
+    if (!ok || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(adbizRepositoryProvider).companyDelete(c.id);
+      ref.invalidate(adbizCompaniesProvider);
+      if (mounted) adbizSnack(context, s.t('adb_company_deleted'));
+    } catch (e) {
+      if (mounted) adbizSnack(context, adbizError(s, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
@@ -78,6 +97,7 @@ class _AdbizAdminScreenState extends ConsumerState<AdbizAdminScreen> {
                             '${c.isActive ? '' : ' · ${s.t('adb_company_off')}'}'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.pushOnce('/profile/adbiz/company/${c.id}'),
+                        onLongPress: () => _delete(s, c),
                       ),
                     ),
                 ]),
