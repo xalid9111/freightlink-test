@@ -742,7 +742,7 @@ class _VipPlace extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              MarketPhoto(url: l.cover),
+              MarketPhoto(url: l.cover, light: true),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

@@ -240,6 +240,7 @@ const kRpcMigration = <String, String>{
   'admin_osm_parks_status': '0117_osm_truck_parks.sql',
   'adbiz_admin_company_save': '0110_ad_business.sql',
   'adbiz_admin_company_set_active': '0110_ad_business.sql',
+  'adbiz_admin_company_delete': '0126_ad_business_company_delete.sql',
   'adbiz_admin_member_set': '0110_ad_business.sql',
   'adbiz_admin_member_target': '0110_ad_business.sql',
   'adbiz_admin_search_users': '0110_ad_business.sql',

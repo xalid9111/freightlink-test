@@ -11,6 +11,7 @@ import 'package:freightlink/core/localization/locale_controller.dart';
 import 'package:freightlink/features/adbiz/data/adbiz_repository.dart';
 import 'package:freightlink/features/adbiz/domain/adbiz_models.dart';
 import 'package:freightlink/core/theme/app_theme.dart';
+import 'package:freightlink/features/adbiz/presentation/adbiz_admin_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_company_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_notebook_screen.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_providers.dart';
@@ -62,6 +63,9 @@ class _Repo implements AdbizRepository {
   final deleted = <String>[];
   @override
   Future<void> deleteDay(String dayId) async => deleted.add(dayId);
+  final companiesDeleted = <String>[];
+  @override
+  Future<void> companyDelete(String id) async => companiesDeleted.add(id);
   @override
   Future<List<AdbizDay>> daysOn(String companyId, DateTime date) async =>
       [AdbizDay(id: 'dX', companyId: companyId, userId: 'u1', workDate: date, status: 'closed', target: 235)];
@@ -333,6 +337,19 @@ void main() {
       await t.tap(find.byKey(const ValueKey('adb-add-job')));
       await t.pump();
       expect(repo.cards.single, isNull, reason: 'no p_card before 0113');
+    });
+
+    testWidgets('the newest job stands on top and keeps its number (owner, 16.11.2026)', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day()], company: _c113, entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Birinci', amount: 20),
+        AdbizEntry(id: 'e2', dayId: 'd1', title: 'Ikinci', amount: 25),
+        AdbizEntry(id: 'e3', dayId: 'd1', title: 'Ucuncu', amount: 30),
+      ]);
+      double y(String id) => t.getTopLeft(find.byKey(ValueKey('adb-job-$id'))).dy;
+      expect(y('e3'), lessThan(y('e2')));
+      expect(y('e2'), lessThan(y('e1')));
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-job-e3')), matching: find.text('3')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-job-e1')), matching: find.text('1')), findsOneWidget);
     });
 
     testWidgets('a tick = paid by card; a second tap takes it off; the tick at the end of a saved job', (t) async {
@@ -853,6 +870,45 @@ void main() {
         final i = pr.indexOf('final $name');
         expect(pr.substring(i, i + 300).contains('adbizLive('), isTrue, reason: name);
       }
+    });
+  });
+
+  group('the Baş admin deletes a company by a long press (0126, owner 16.11.2026)', () {
+    testWidgets('a long press asks first; Sil takes it off; a tap still opens it', (t) async {
+      final repo = _Repo();
+      await t.pumpWidget(ProviderScope(
+        overrides: [
+          stringsProvider.overrideWithValue(_s),
+          adbizRepositoryProvider.overrideWithValue(repo),
+          adbizCompaniesProvider.overrideWith((ref) async => const [
+                AdbizCompany(id: 'c1', name: 'UTEP Reklam', dailyTarget: 236),
+                AdbizCompany(id: 'c2', name: 'Neuro Reklam', dailyTarget: 235),
+              ]),
+        ],
+        child: const MaterialApp(home: AdbizAdminScreen()),
+      ));
+      await t.pump();
+      await t.longPress(find.byKey(const ValueKey('adb-company-c2')));
+      await t.pumpAndSettle();
+      expect(find.text('adb_company_delete_title'), findsOneWidget, reason: 'asked first');
+      await t.tap(find.text('common_cancel'));
+      await t.pumpAndSettle();
+      expect(repo.companiesDeleted, isEmpty, reason: 'cancel deletes nothing');
+      await t.longPress(find.byKey(const ValueKey('adb-company-c2')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pumpAndSettle();
+      expect(repo.companiesDeleted, ['c2']);
+    });
+
+    test('the server keeps the data; a deleted company is off the list', () {
+      final sql = src('supabase/migrations/0126_ad_business_company_delete.sql');
+      expect(sql, contains('perform public._adbiz_require_chief();'));
+      expect(sql, contains("'company.delete'"));
+      expect(sql.toLowerCase(), isNot(contains('delete from')));
+      final repo = src('lib/features/adbiz/data/adbiz_repository.dart');
+      expect(repo, contains("if (x['deleted_at'] == null) AdbizCompany.fromJson(x)"));
+      expect(repo, contains("'adbiz_admin_company_delete'"));
     });
   });
 }

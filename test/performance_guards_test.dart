@@ -18,12 +18,18 @@ void main() {
     expect(decodeWidthFor(const BoxConstraints(maxWidth: 1600, maxHeight: 900), 2), 1200, reason: 'never above 1200');
     expect(decodeWidthFor(const BoxConstraints(), 3), 800, reason: 'unbounded → the old fixed size');
     expect(src('lib/features/market/presentation/market_card.dart'),
-        contains('cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),'));
+        contains('final w = decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context));'));
     // 16.11.2026: the same width also picks the light template picture (LightImage).
     final pic = src('lib/features/cargo/presentation/widgets/cargo_picture.dart');
     expect(pic, contains('final w = decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context));'));
-    expect(pic, contains('cacheWidth: w,'));
+    expect(pic, contains('cacheWidth: headers == null ? w : null,'));
     expect(src('lib/features/chat/presentation/widgets/attachment_view.dart'), contains('cacheWidth: 660,'));
+  });
+
+  test('Profil keeps every card built while scrolling (owner, 16.11.2026: rows jumped on the way up)', () {
+    final p = src('lib/features/auth/presentation/profile_screen.dart');
+    expect(p, contains('const kProfileCacheExtent = 4000.0;'));
+    expect(p, contains('cacheExtent: kProfileCacheExtent,'));
   });
 
   test('long chats load the newest messages in steps ("Köhnə mesajlar")', () {

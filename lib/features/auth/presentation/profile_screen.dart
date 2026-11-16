@@ -68,6 +68,10 @@ int tirParkWaitingCount(WidgetRef ref) {
   return pay + wk + adm;
 }
 
+/// How far beyond the screen Profil keeps its cards built (logical px):
+/// more than the whole page, so nothing is rebuilt while scrolling.
+const kProfileCacheExtent = 4000.0;
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -88,6 +92,11 @@ class ProfileScreen extends ConsumerWidget {
           return SafeArea(
             bottom: false,
             child: ListView(
+              // Profil is a short page: every card stays built while scrolling
+              // (owner, 16.11.2026: "aşağı tam edib yuxarı qaldıranda sətirlər
+              // atdanır" — a card scrolled out was taken down and built again
+              // on the way back, its rows settling a frame later).
+              cacheExtent: kProfileCacheExtent,
               // Room under the last card so the bottom bar never covers it.
               padding: EdgeInsets.fromLTRB(16, 12, 16, 32 + MediaQuery.paddingOf(context).bottom),
               children: [

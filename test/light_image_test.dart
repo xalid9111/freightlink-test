@@ -40,6 +40,36 @@ void main() {
     }
   });
 
+  test('TIR Bazarı list cards: the ad photo comes light too (owner, 16.11.2026)', () {
+    const photo = '$host//storage/v1/object/public/market-photos/5d67/1792567636370000.jpg';
+    expect(lightImageUrl(photo, 338, photo: true),
+        '$host/storage/v1/render/image/public/market-photos/5d67/1792567636370000.jpg?width=480&resize=contain&quality=80');
+    expect(lightImageUrl(photo, 338), photo, reason: 'the ad page and full screen keep the original');
+    for (final u in [
+      '$host/storage/v1/object/public/market-photos/u1/17.gif',
+      '$host/storage/v1/object/public/cargo-photos/u1/17.jpg',
+      '$host/storage/v1/object/public/chat-files/u1/17.jpg',
+    ]) {
+      expect(lightImageUrl(u, 338, photo: true), u, reason: u);
+    }
+  });
+
+  test('a light picture is never shrunk again on the phone (Safari stops the scroll)', () {
+    for (final f in [
+      'lib/features/cargo/presentation/widgets/cargo_picture.dart',
+      'lib/features/market/presentation/market_card.dart',
+      'lib/core/widgets/page_hero.dart',
+    ]) {
+      expect(src(f), contains('cacheWidth: headers == null ? w : null'), reason: f);
+    }
+    final card = src('lib/features/market/presentation/market_card.dart');
+    expect('MarketPhoto(url: l.cover, light: true)'.allMatches(card).length, 2);
+    expect(src('lib/features/market/presentation/market_lists_screens.dart'), contains('MarketPhoto(url: l.cover, light: true)'));
+    expect(src('lib/features/market/presentation/market_home_desktop.dart'), contains('MarketPhoto(url: l.cover, light: true)'));
+    expect(src('lib/features/market/presentation/market_detail_screen.dart'), isNot(contains('light: true')),
+        reason: 'the ad page keeps the original quality');
+  });
+
   test('widths come in shared steps', () {
     expect(lightWidthStep(100), 480);
     expect(lightWidthStep(480), 480);

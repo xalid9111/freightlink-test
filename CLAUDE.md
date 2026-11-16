@@ -369,6 +369,8 @@ files to the owner separately (they are run by hand in the SQL editor).
   parks he added, ads, chats and messages also with real people,
   comments, bookings, test payments); never oneself, the founder or
   another admin; every deletion in the Audit Log.
+- Profil keeps every card built while scrolling (kProfileCacheExtent,
+  owner 16.11.2026: rows "jumped" on the way back up).
 - Profil (owner's two-screen design, 04.11.2026): the card on the Profil tab
   itself has the cover on top (the existing profile_details.cover_url and its
   editor) with the photo half over its edge, name, roles, country, badges; then one
@@ -768,6 +770,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   the program's days; months and years then simply go on from the
   program. The chosen month's "Köhnə hesab" row on the Ay view with ✏️
   (owner / Baş admin; both empty = taken off; audited); no direct writes.
+  Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
+  number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
+  view of it alike. A company is deleted by a long press in "Reklam
+  idarəetməsi" (Baş admin only, asked first; SQL 0126,
+  adbiz_admin_company_delete): off the list (deleted_at), switched off so
+  its people lose the module, never switched on or given people again; its
+  days, jobs, rasxod and history stay in the database (adbiz_audit
+  'company.delete').
   The worker's bar (owner's picture, 10.11.2026, "daha canlı"): a thin
   outlined capsule, a neon green line of light filling it (glow + a core
   whitening to the tip), a twinkling four-ray spark at the tip and a green
@@ -910,8 +920,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   WebP at the shown size (lightImageUrl / LightImage, core/utils/
   light_image.dart: widths 480 · 640 · 960 · 1280 · 1920 · 2400, quality
   80; ~40 KB a card, ~180 KB a banner; measured Yüklər + TIR Bazarı 17 MB →
-  1.2 MB); never a GIF or a user's own photo; the original file is the
-  fallback; stored files and addresses unchanged. Always with
+  1.2 MB); never a GIF; the original file is the fallback; stored files and
+  addresses unchanged. Since 16.11.2026 (owner's meter: 300–480 ms stops on
+  iPhone) also the TIR Bazarı ad photo on LIST cards (MarketPhoto light:
+  true; the ad page and full screen keep the original), and a light picture
+  is never shrunk again on the phone (cacheWidth only for the original
+  fallback) — Safari shrinks on the main thread. Uploads are already
+  shrunk on the device (≤ 1600 px, quality ~80); stored photos are not
+  rewritten. Always with
   resize=contain (owner, 16.11.2026: the cards looked "zoomed in" — with
   only a width the service kept the original height and cut a narrow strip;
   now the WHOLE picture comes, lighter, the card size unchanged).

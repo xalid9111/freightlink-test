@@ -579,7 +579,9 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
         const SizedBox(height: 10),
         if (entries.isEmpty)
           Padding(padding: const EdgeInsets.all(8), child: Text(s.t('adb_no_jobs'), style: TextStyle(color: AppColors.textSoft))),
-        for (var i = 0; i < entries.length; i++)
+        // The newest job on top (owner, 16.11.2026: "sonuncu iş ən başda"),
+        // each job keeps its own number (12, 11, 10 … 1).
+        for (var i = entries.length - 1; i >= 0; i--)
           _Row(
             key: ValueKey('adb-job-${entries[i].id}'),
             n: i + 1,

@@ -72,7 +72,8 @@ class CargoPicture extends ConsumerWidget {
           s,
           headers: headers,
           fit: fit,
-          cacheWidth: w,
+          // Light = already about this size; shrinking again would stop the scroll.
+          cacheWidth: headers == null ? w : null,
           errorBuilder: onError,
           loadingBuilder: (c, child, p) => p == null ? child : placeholder,
         ),
