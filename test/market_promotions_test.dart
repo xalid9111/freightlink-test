@@ -56,7 +56,12 @@ void main() {
       expect(f.existsSync(), isTrue, reason: k.asset);
       final b = f.readAsBytesSync();
       expect(b.sublist(1, 4), Uint8List.fromList('PNG'.codeUnits));
-      expect(b[25], 6, reason: 'RGBA (colour type 6) = transparent background');
+      // Transparent background: RGBA (colour type 6), or a palette (type 3)
+      // with its transparency chunk — the light 256-colour files of the
+      // faster site, stage 3 (owner, 16.11.2026).
+      final palette = b[25] == 3 && String.fromCharCodes(b).contains('tRNS');
+      expect(b[25] == 6 || palette, isTrue, reason: '${k.asset}: transparent background');
+      expect(b.length, lessThan(30 * 1024), reason: '${k.asset}: light (was ~100 KB)');
     }
     expect(_read('pubspec.yaml'), contains('- assets/images/promo/'));
   });

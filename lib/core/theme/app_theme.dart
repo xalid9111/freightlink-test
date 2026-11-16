@@ -284,8 +284,10 @@ class AppFonts {
 
   static const family = 'Arial';
 
-  /// Characters Arial does not have: country flags (see flag_font.dart).
-  static const fallback = [kFlagFontFamily];
+  /// Characters Arial does not have: country flags (see flag_font.dart),
+  /// the ₺ ₼ ₽ ₾ and ✓ signs (assets/fonts/signs, stage 3 — no 195 KB font
+  /// from Google for them any more).
+  static const fallback = [kFlagFontFamily, 'TirLinkSigns', 'TirLinkCheck'];
 
   static TextStyle display({double size = 22, Color? color, FontWeight weight = FontWeight.w600, double? height}) =>
       TextStyle(fontFamily: family, fontFamilyFallback: fallback, fontSize: size, color: color, fontWeight: weight, height: height, letterSpacing: 0.2);

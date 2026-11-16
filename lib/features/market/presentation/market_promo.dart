@@ -155,17 +155,12 @@ class MarketPromoOptions extends ConsumerWidget {
     return Column(key: const ValueKey('mk-promo-options'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Text(s.t('mk_promo_title'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
       const SizedBox(height: 8),
-      LayoutBuilder(builder: (context, c) {
-        // Wide: three side by side; phone: one under the other.
-        if (c.maxWidth >= 640) {
-          return Row(children: [
-            for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(width: 10), Expanded(child: cards[i])],
-          ]);
-        }
-        return Column(children: [
-          for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(height: 8), cards[i]],
-        ]);
-      }),
+      // Owner's picture (16.11.2026): three cards side by side, the phone too.
+      IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(width: 8), Expanded(child: cards[i])],
+        ]),
+      ),
     ]);
   }
 }
@@ -179,39 +174,45 @@ class _PromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = marketPromoColor(kind);
+    // Owner's picture (16.11.2026): a plain dark card with a grey edge, the
+    // title in white, "3 AZN-dən" in blue, the flat icon on the right.
     return Material(
-      color: c.withValues(alpha: AppColors.isDay ? 0.08 : 0.12),
+      color: AppColors.card,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16), side: BorderSide(color: c.withValues(alpha: 0.7))),
+          borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.textSoft.withValues(alpha: 0.35))),
       child: InkWell(
         key: ValueKey('mk-promo-${kind.name}'),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(s.t('mk_promo_${kind.name}'),
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
-                const SizedBox(height: 2),
-                if (from != null)
-                  // "3 AZN-dən": the price in colour inside the sentence.
-                  Text.rich(TextSpan(style: TextStyle(color: AppColors.textSoft), children: [
-                    for (final (i, part) in s.t('mk_promo_from').split('{price}').indexed) ...[
-                      if (i > 0)
-                        TextSpan(
-                            text: money(from!.price, from!.currency),
-                            style: TextStyle(color: c, fontWeight: FontWeight.w600)),
-                      TextSpan(text: part),
-                    ],
-                  ]))
-                else
-                  Text(s.t('mk_promo_soon'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
-              ]),
-            ),
-            MarketPromoIcon(kind, size: 46),
+          padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
+          // Narrow phone cards: the title with the icon on one line, the
+          // price under them across the whole card (never broken).
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Row(children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(s.t('mk_promo_${kind.name}'),
+                      maxLines: 1, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+                ),
+              ),
+              const SizedBox(width: 4),
+              MarketPromoIcon(kind, size: 26),
+            ]),
+            const SizedBox(height: 6),
+            if (from != null)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(s.t('mk_promo_from', {'price': promoFromPrice(from!)}),
+                    key: ValueKey('mk-promo-from-${kind.name}'),
+                    maxLines: 1,
+                    style: TextStyle(color: AppColors.blue, fontSize: 14, fontWeight: FontWeight.w500)),
+              )
+            else
+              Text(s.t('mk_promo_soon'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
           ]),
         ),
       ),
@@ -602,4 +603,11 @@ class PromoPlacesSummary extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// "3 AZN" (whole) / "2.50 AZN" — the lowest price on a promotion card
+/// (owner's picture, 16.11.2026: no ".00" on whole amounts).
+String promoFromPrice(MarketPromoPlan p) {
+  final m = money(p.price, p.currency);
+  return p.price == p.price.roundToDouble() ? m.replaceFirst(RegExp(r'[.,]00(?=\D|$)'), '') : m;
 }

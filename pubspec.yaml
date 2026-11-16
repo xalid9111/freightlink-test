@@ -145,3 +145,14 @@ flutter:
           weight: 700
         - asset: assets/fonts/FreightLinkSans-Italic.ttf
           style: italic
+    # Signs FreightLink Sans lacks (₺ ₼ ₽ ₾, ✓), ~2–6 KB each: without them the
+    # browser downloaded a 195 KB font from Google (owner, 16.11.2026, stage
+    # 3). Noto Sans / Noto Sans Symbols 2 subsets, OFL — assets/fonts/signs.
+    - family: TirLinkSigns
+      fonts:
+        - asset: assets/fonts/signs/TirLinkSigns-Regular.ttf
+        - asset: assets/fonts/signs/TirLinkSigns-Bold.ttf
+          weight: 700
+    - family: TirLinkCheck
+      fonts:
+        - asset: assets/fonts/signs/TirLinkCheck-Regular.ttf
