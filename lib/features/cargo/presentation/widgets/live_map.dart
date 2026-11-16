@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show FrameTiming;
 
@@ -32,6 +33,7 @@ import 'wheel_feed.dart';
 class LiveMap extends StatefulWidget {
   /// Text of the blinking badge in the map's top-right corner.
   final String liveLabel;
+
   /// Distance of the "CANLI" badge from the map's top (phone: lower, so
   /// the live counters fit above it — owner, 28.10.2026).
   final double badgeTop;
@@ -106,66 +108,306 @@ const Set<int> _bigHubs = {8, 10, 11, 16, 24};
 
 /// City lights that twinkle (bright points of the cropped map image).
 const List<Offset> _sparks = [
-  Offset(1108, 221), Offset(451, 129), Offset(575, 148), Offset(482, 322), Offset(621, 490),
-  Offset(522, 161), Offset(524, 131), Offset(628, 228), Offset(559, 135), Offset(867, 236),
-  Offset(517, 101), Offset(132, 191), Offset(447, 335), Offset(517, 200), Offset(615, 496),
-  Offset(182, 314), Offset(494, 160), Offset(1075, 239), Offset(152, 180), Offset(851, 277),
-  Offset(1045, 203), Offset(621, 179), Offset(862, 257), Offset(609, 174), Offset(636, 206),
-  Offset(571, 137), Offset(649, 220), Offset(535, 142), Offset(856, 237), Offset(254, 455),
-  Offset(482, 339), Offset(1055, 212), Offset(630, 182), Offset(676, 270), Offset(1053, 205),
-  Offset(1059, 226), Offset(448, 342), Offset(122, 217), Offset(844, 252), Offset(476, 318),
-  Offset(610, 189), Offset(869, 249), Offset(502, 162), Offset(543, 133), Offset(517, 130),
-  Offset(673, 164), Offset(465, 192), Offset(550, 112), Offset(1071, 192), Offset(1065, 217),
-  Offset(604, 498), Offset(1044, 196), Offset(122, 181), Offset(1065, 194), Offset(874, 334),
-  Offset(501, 153), Offset(543, 116), Offset(535, 172), Offset(1064, 233), Offset(522, 138),
-  Offset(1024, 326), Offset(145, 197), Offset(1058, 201), Offset(502, 133), Offset(125, 233),
-  Offset(1070, 228), Offset(851, 245), Offset(144, 182), Offset(163, 184), Offset(760, 258),
-  Offset(561, 103), Offset(612, 491), Offset(260, 444), Offset(159, 190), Offset(652, 203),
-  Offset(621, 466), Offset(545, 321), Offset(879, 325), Offset(480, 330), Offset(858, 247),
-  Offset(475, 335), Offset(502, 146), Offset(479, 137), Offset(618, 383), Offset(200, 491),
-  Offset(171, 307), Offset(998, 370), Offset(1040, 410), Offset(848, 267), Offset(509, 167),
-  Offset(514, 159), Offset(509, 139), Offset(64, 272), Offset(140, 204), Offset(604, 163),
-  Offset(509, 130), Offset(1003, 360), Offset(876, 251), Offset(1080, 249), Offset(620, 499),
-  Offset(472, 146), Offset(132, 207), Offset(965, 274), Offset(871, 316), Offset(565, 145),
-  Offset(561, 141), Offset(890, 299), Offset(501, 201), Offset(887, 259), Offset(1052, 268),
-  Offset(535, 100), Offset(1050, 222), Offset(243, 454), Offset(868, 279), Offset(536, 149),
-  Offset(848, 228), Offset(901, 273), Offset(586, 128), Offset(1008, 369), Offset(1009, 204),
-  Offset(655, 198), Offset(605, 180), Offset(597, 96), Offset(454, 183), Offset(566, 100),
-  Offset(245, 440), Offset(175, 312), Offset(1007, 298), Offset(644, 227), Offset(823, 254),
-  Offset(490, 144), Offset(559, 125), Offset(612, 501), Offset(577, 132), Offset(855, 224),
-  Offset(223, 461), Offset(553, 165), Offset(993, 303), Offset(710, 294), Offset(533, 313),
-  Offset(624, 185), Offset(477, 325), Offset(153, 202), Offset(673, 386), Offset(880, 316),
-  Offset(995, 312), Offset(468, 130), Offset(535, 157), Offset(861, 232), Offset(488, 200),
-  Offset(493, 348), Offset(910, 278), Offset(159, 179), Offset(841, 271), Offset(496, 148),
-  Offset(698, 217), Offset(553, 139), Offset(152, 192), Offset(247, 450), Offset(126, 331),
-  Offset(583, 194), Offset(275, 408), Offset(863, 240), Offset(1026, 202), Offset(620, 479),
-  Offset(252, 445), Offset(629, 458), Offset(450, 192), Offset(471, 136), Offset(832, 213),
-  Offset(844, 223), Offset(876, 242), Offset(586, 494), Offset(126, 196), Offset(548, 176),
-  Offset(520, 205), Offset(652, 211), Offset(1072, 266), Offset(707, 489), Offset(139, 193),
-  Offset(486, 168), Offset(1040, 248), Offset(139, 185), Offset(582, 122), Offset(466, 335),
-  Offset(481, 126), Offset(530, 124), Offset(507, 150), Offset(618, 226), Offset(610, 158),
-  Offset(539, 138), Offset(293, 389), Offset(532, 135), Offset(624, 503), Offset(1140, 230),
-  Offset(1101, 222), Offset(1013, 197), Offset(930, 265), Offset(528, 145), Offset(475, 174),
-  Offset(572, 504), Offset(587, 94), Offset(264, 449), Offset(116, 215), Offset(472, 115),
-  Offset(634, 188), Offset(865, 295), Offset(637, 228), Offset(464, 138), Offset(168, 178),
-  Offset(1148, 221), Offset(693, 293), Offset(563, 171), Offset(130, 324), Offset(1057, 275),
-  Offset(519, 146), Offset(1077, 260), Offset(819, 201), Offset(129, 237), Offset(1091, 213),
-  Offset(1148, 230), Offset(990, 291), Offset(156, 270), Offset(226, 481), Offset(1107, 441),
-  Offset(432, 187), Offset(622, 237), Offset(912, 259), Offset(258, 451), Offset(465, 171),
-  Offset(658, 207), Offset(523, 150), Offset(124, 339), Offset(1042, 223), Offset(568, 516),
-  Offset(1000, 307), Offset(1069, 271), Offset(540, 145), Offset(878, 294), Offset(757, 247),
-  Offset(133, 330), Offset(638, 199), Offset(616, 487), Offset(967, 281), Offset(1048, 413),
-  Offset(542, 126), Offset(894, 278), Offset(1072, 249), Offset(157, 196), Offset(467, 149),
-  Offset(1042, 214), Offset(527, 117), Offset(515, 141), Offset(990, 309), Offset(545, 108),
-  Offset(437, 177), Offset(913, 270), Offset(464, 319), Offset(236, 478), Offset(462, 340),
-  Offset(881, 257), Offset(632, 249), Offset(1034, 408), Offset(473, 123), Offset(564, 128),
-  Offset(664, 401), Offset(238, 464), Offset(528, 159), Offset(545, 160), Offset(611, 182),
-  Offset(515, 184), Offset(131, 182), Offset(133, 200), Offset(1052, 278), Offset(269, 443),
-  Offset(218, 478), Offset(469, 324), Offset(1007, 311), Offset(542, 174), Offset(250, 154),
-  Offset(486, 150), Offset(540, 97), Offset(654, 385), Offset(887, 247), Offset(1098, 214),
-  Offset(1035, 291), Offset(606, 169), Offset(1075, 186), Offset(172, 183), Offset(599, 173),
-  Offset(476, 155), Offset(872, 309), Offset(887, 322), Offset(844, 276), Offset(180, 177),
-  Offset(529, 169), Offset(483, 133), Offset(1150, 213), Offset(580, 490), Offset(480, 146),
+  Offset(1108, 221),
+  Offset(451, 129),
+  Offset(575, 148),
+  Offset(482, 322),
+  Offset(621, 490),
+  Offset(522, 161),
+  Offset(524, 131),
+  Offset(628, 228),
+  Offset(559, 135),
+  Offset(867, 236),
+  Offset(517, 101),
+  Offset(132, 191),
+  Offset(447, 335),
+  Offset(517, 200),
+  Offset(615, 496),
+  Offset(182, 314),
+  Offset(494, 160),
+  Offset(1075, 239),
+  Offset(152, 180),
+  Offset(851, 277),
+  Offset(1045, 203),
+  Offset(621, 179),
+  Offset(862, 257),
+  Offset(609, 174),
+  Offset(636, 206),
+  Offset(571, 137),
+  Offset(649, 220),
+  Offset(535, 142),
+  Offset(856, 237),
+  Offset(254, 455),
+  Offset(482, 339),
+  Offset(1055, 212),
+  Offset(630, 182),
+  Offset(676, 270),
+  Offset(1053, 205),
+  Offset(1059, 226),
+  Offset(448, 342),
+  Offset(122, 217),
+  Offset(844, 252),
+  Offset(476, 318),
+  Offset(610, 189),
+  Offset(869, 249),
+  Offset(502, 162),
+  Offset(543, 133),
+  Offset(517, 130),
+  Offset(673, 164),
+  Offset(465, 192),
+  Offset(550, 112),
+  Offset(1071, 192),
+  Offset(1065, 217),
+  Offset(604, 498),
+  Offset(1044, 196),
+  Offset(122, 181),
+  Offset(1065, 194),
+  Offset(874, 334),
+  Offset(501, 153),
+  Offset(543, 116),
+  Offset(535, 172),
+  Offset(1064, 233),
+  Offset(522, 138),
+  Offset(1024, 326),
+  Offset(145, 197),
+  Offset(1058, 201),
+  Offset(502, 133),
+  Offset(125, 233),
+  Offset(1070, 228),
+  Offset(851, 245),
+  Offset(144, 182),
+  Offset(163, 184),
+  Offset(760, 258),
+  Offset(561, 103),
+  Offset(612, 491),
+  Offset(260, 444),
+  Offset(159, 190),
+  Offset(652, 203),
+  Offset(621, 466),
+  Offset(545, 321),
+  Offset(879, 325),
+  Offset(480, 330),
+  Offset(858, 247),
+  Offset(475, 335),
+  Offset(502, 146),
+  Offset(479, 137),
+  Offset(618, 383),
+  Offset(200, 491),
+  Offset(171, 307),
+  Offset(998, 370),
+  Offset(1040, 410),
+  Offset(848, 267),
+  Offset(509, 167),
+  Offset(514, 159),
+  Offset(509, 139),
+  Offset(64, 272),
+  Offset(140, 204),
+  Offset(604, 163),
+  Offset(509, 130),
+  Offset(1003, 360),
+  Offset(876, 251),
+  Offset(1080, 249),
+  Offset(620, 499),
+  Offset(472, 146),
+  Offset(132, 207),
+  Offset(965, 274),
+  Offset(871, 316),
+  Offset(565, 145),
+  Offset(561, 141),
+  Offset(890, 299),
+  Offset(501, 201),
+  Offset(887, 259),
+  Offset(1052, 268),
+  Offset(535, 100),
+  Offset(1050, 222),
+  Offset(243, 454),
+  Offset(868, 279),
+  Offset(536, 149),
+  Offset(848, 228),
+  Offset(901, 273),
+  Offset(586, 128),
+  Offset(1008, 369),
+  Offset(1009, 204),
+  Offset(655, 198),
+  Offset(605, 180),
+  Offset(597, 96),
+  Offset(454, 183),
+  Offset(566, 100),
+  Offset(245, 440),
+  Offset(175, 312),
+  Offset(1007, 298),
+  Offset(644, 227),
+  Offset(823, 254),
+  Offset(490, 144),
+  Offset(559, 125),
+  Offset(612, 501),
+  Offset(577, 132),
+  Offset(855, 224),
+  Offset(223, 461),
+  Offset(553, 165),
+  Offset(993, 303),
+  Offset(710, 294),
+  Offset(533, 313),
+  Offset(624, 185),
+  Offset(477, 325),
+  Offset(153, 202),
+  Offset(673, 386),
+  Offset(880, 316),
+  Offset(995, 312),
+  Offset(468, 130),
+  Offset(535, 157),
+  Offset(861, 232),
+  Offset(488, 200),
+  Offset(493, 348),
+  Offset(910, 278),
+  Offset(159, 179),
+  Offset(841, 271),
+  Offset(496, 148),
+  Offset(698, 217),
+  Offset(553, 139),
+  Offset(152, 192),
+  Offset(247, 450),
+  Offset(126, 331),
+  Offset(583, 194),
+  Offset(275, 408),
+  Offset(863, 240),
+  Offset(1026, 202),
+  Offset(620, 479),
+  Offset(252, 445),
+  Offset(629, 458),
+  Offset(450, 192),
+  Offset(471, 136),
+  Offset(832, 213),
+  Offset(844, 223),
+  Offset(876, 242),
+  Offset(586, 494),
+  Offset(126, 196),
+  Offset(548, 176),
+  Offset(520, 205),
+  Offset(652, 211),
+  Offset(1072, 266),
+  Offset(707, 489),
+  Offset(139, 193),
+  Offset(486, 168),
+  Offset(1040, 248),
+  Offset(139, 185),
+  Offset(582, 122),
+  Offset(466, 335),
+  Offset(481, 126),
+  Offset(530, 124),
+  Offset(507, 150),
+  Offset(618, 226),
+  Offset(610, 158),
+  Offset(539, 138),
+  Offset(293, 389),
+  Offset(532, 135),
+  Offset(624, 503),
+  Offset(1140, 230),
+  Offset(1101, 222),
+  Offset(1013, 197),
+  Offset(930, 265),
+  Offset(528, 145),
+  Offset(475, 174),
+  Offset(572, 504),
+  Offset(587, 94),
+  Offset(264, 449),
+  Offset(116, 215),
+  Offset(472, 115),
+  Offset(634, 188),
+  Offset(865, 295),
+  Offset(637, 228),
+  Offset(464, 138),
+  Offset(168, 178),
+  Offset(1148, 221),
+  Offset(693, 293),
+  Offset(563, 171),
+  Offset(130, 324),
+  Offset(1057, 275),
+  Offset(519, 146),
+  Offset(1077, 260),
+  Offset(819, 201),
+  Offset(129, 237),
+  Offset(1091, 213),
+  Offset(1148, 230),
+  Offset(990, 291),
+  Offset(156, 270),
+  Offset(226, 481),
+  Offset(1107, 441),
+  Offset(432, 187),
+  Offset(622, 237),
+  Offset(912, 259),
+  Offset(258, 451),
+  Offset(465, 171),
+  Offset(658, 207),
+  Offset(523, 150),
+  Offset(124, 339),
+  Offset(1042, 223),
+  Offset(568, 516),
+  Offset(1000, 307),
+  Offset(1069, 271),
+  Offset(540, 145),
+  Offset(878, 294),
+  Offset(757, 247),
+  Offset(133, 330),
+  Offset(638, 199),
+  Offset(616, 487),
+  Offset(967, 281),
+  Offset(1048, 413),
+  Offset(542, 126),
+  Offset(894, 278),
+  Offset(1072, 249),
+  Offset(157, 196),
+  Offset(467, 149),
+  Offset(1042, 214),
+  Offset(527, 117),
+  Offset(515, 141),
+  Offset(990, 309),
+  Offset(545, 108),
+  Offset(437, 177),
+  Offset(913, 270),
+  Offset(464, 319),
+  Offset(236, 478),
+  Offset(462, 340),
+  Offset(881, 257),
+  Offset(632, 249),
+  Offset(1034, 408),
+  Offset(473, 123),
+  Offset(564, 128),
+  Offset(664, 401),
+  Offset(238, 464),
+  Offset(528, 159),
+  Offset(545, 160),
+  Offset(611, 182),
+  Offset(515, 184),
+  Offset(131, 182),
+  Offset(133, 200),
+  Offset(1052, 278),
+  Offset(269, 443),
+  Offset(218, 478),
+  Offset(469, 324),
+  Offset(1007, 311),
+  Offset(542, 174),
+  Offset(250, 154),
+  Offset(486, 150),
+  Offset(540, 97),
+  Offset(654, 385),
+  Offset(887, 247),
+  Offset(1098, 214),
+  Offset(1035, 291),
+  Offset(606, 169),
+  Offset(1075, 186),
+  Offset(172, 183),
+  Offset(599, 173),
+  Offset(476, 155),
+  Offset(872, 309),
+  Offset(887, 322),
+  Offset(844, 276),
+  Offset(180, 177),
+  Offset(529, 169),
+  Offset(483, 133),
+  Offset(1150, 213),
+  Offset(580, 490),
+  Offset(480, 146),
 ];
 
 /// Mixed truck colours.
@@ -240,8 +482,14 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   final List<_Flash> _flashes = List.generate(16, (_) => _Flash());
   late final List<double> _sparkPhase = List.generate(_geo.sparks.length, (_) => _rng.nextDouble() * 6.28);
   late final List<double> _sparkSpeed = List.generate(_geo.sparks.length, (_) => 0.6 + _rng.nextDouble() * 1.2);
+  // Lit at once; it breathes only while the map moves (stage 2).
   late final AnimationController _badge =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100), value: 1);
+
+  /// Smart map (owner, 16.11.2026, choice 1): this device's speed, measured
+  /// once per visit on the first moving seconds.
+  static final LiveMapSpeed _speed = LiveMapSpeed();
+  Timer? _still;
   int _colorTurn = 0;
   int _flashTurn = 0;
   double _nextPing = 0.5;
@@ -259,13 +507,10 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
     // Opened on Yüklər: the map moves from 3 s after the first screen
     // (StartupSteps) — the cards and the first answers come first.
     if (StartupSteps.isFree(2)) {
-      _ticker.start();
+      _move();
     } else {
       StartupSteps.reached(2).then((_) {
-        if (mounted && !_ticker.isActive && !WheelSignals.scrolling.value && WheelSignals.offset < 420) {
-          _last = Duration.zero;
-          _ticker.start();
-        }
+        if (mounted && !WheelSignals.scrolling.value && WheelSignals.offset < 420) _move();
       });
     }
     WheelSignals.scrolling.addListener(_onScrolling);
@@ -276,20 +521,51 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   void dispose() {
     SchedulerBinding.instance.removeTimingsCallback(_onTimings);
     WheelSignals.scrolling.removeListener(_onScrolling);
+    _still?.cancel();
     _ticker.dispose();
     _badge.dispose();
     _time.dispose();
     super.dispose();
   }
 
-  /// Pause while the feed scrolls; resume only if the map is in view.
+  /// The map moves (trucks + the breathing "CANLI" light). On a slow
+  /// device (LiveMapSpeed) it stops again after a short show.
+  void _move() {
+    if (!mounted) return;
+    if (!_ticker.isActive) {
+      _last = Duration.zero;
+      _ticker.start();
+    }
+    if (!_badge.isAnimating) _badge.repeat(reverse: true);
+    if (_speed.slow == true) _stillIn(LiveMapSpeed.showFor);
+  }
+
+  /// Stands still after [d]: the picture, routes and trucks stay where they
+  /// are, "CANLI" stays lit; nothing is redrawn until the map moves again.
+  void _stillIn(Duration d) {
+    _still?.cancel();
+    _still = Timer(d, _stand);
+  }
+
+  void _stand() {
+    _still?.cancel();
+    if (!mounted) return;
+    if (_ticker.isActive) _ticker.stop();
+    _badge
+      ..stop()
+      ..value = 1;
+  }
+
+  /// Pause while the feed scrolls and while the map is out of view; back at
+  /// the top it moves again (a slow device: another short show).
   void _onScrolling() {
     if (!mounted) return;
     if (WheelSignals.scrolling.value) {
       if (_ticker.isActive) _ticker.stop();
-    } else if (WheelSignals.offset < 420 && !_ticker.isActive && StartupSteps.isFree(2)) {
-      _last = Duration.zero;
-      _ticker.start();
+    } else if (WheelSignals.offset < 420) {
+      if (StartupSteps.isFree(2)) _move();
+    } else {
+      _stand();
     }
   }
 
@@ -334,8 +610,14 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
 
   void _onTick(Duration elapsed) {
     // Ticker restarts from zero after a pause: keep our own clock.
-    final dt = _last == Duration.zero ? 0.016 : (elapsed - _last).inMicroseconds / 1e6;
+    final measured = _last != Duration.zero;
+    final dt = measured ? (elapsed - _last).inMicroseconds / 1e6 : 0.016;
     _last = elapsed;
+    // The first moving seconds tell how fast this device draws; a slow one
+    // shows the movement a little longer, then the map stands still.
+    if (measured && _speed.add(dt) && _speed.slow == true) {
+      _stillIn(LiveMapSpeed.showFor - LiveMapSpeed.measureFor);
+    }
     if (_lite) {
       _skipOdd = !_skipOdd;
       if (_skipOdd) return; // ~30 fps on slow devices
@@ -407,7 +689,8 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FadeTransition(
-                    opacity: CurvedAnimation(parent: _badge, curve: Curves.easeInOut).drive(Tween(begin: 0.25, end: 1.0)),
+                    opacity:
+                        CurvedAnimation(parent: _badge, curve: Curves.easeInOut).drive(Tween(begin: 0.25, end: 1.0)),
                     child: Container(
                       width: 8,
                       height: 8,
@@ -420,7 +703,8 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
                   ),
                   const SizedBox(width: 6),
                   Text(widget.liveLabel,
-                      style: const TextStyle(color: _green, fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 1.2)),
+                      style: const TextStyle(
+                          color: _green, fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 1.2)),
                 ],
               ),
             ),
@@ -624,4 +908,32 @@ class _MapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MapPainter old) => false;
+}
+
+/// How fast this device draws the live map (owner, 16.11.2026, "ağıllı
+/// xəritə"): the gaps between its first frames over [measureFor]; slower
+/// than [slowFrame] a frame on average = a slow device, where the map moves
+/// for [showFor] and then stands still (a fast one keeps moving as before).
+class LiveMapSpeed {
+  static const measureFor = Duration(seconds: 2);
+  static const showFor = Duration(seconds: 5);
+
+  /// 25 frames a second or fewer.
+  static const slowFrame = 0.040;
+
+  double _span = 0;
+  int _frames = 0;
+
+  /// null until measured.
+  bool? slow;
+
+  /// One frame gap in seconds; true when the verdict was made just now.
+  bool add(double dt) {
+    if (slow != null || dt <= 0) return false;
+    _span += dt;
+    _frames++;
+    if (_span < measureFor.inMicroseconds / 1e6) return false;
+    slow = _span / _frames > slowFrame;
+    return true;
+  }
 }

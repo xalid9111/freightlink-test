@@ -912,6 +912,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   80; ~40 KB a card, ~180 KB a banner; measured Yüklər + TIR Bazarı 17 MB →
   1.2 MB); never a GIF or a user's own photo; the original file is the
   fallback; stored files and addresses unchanged.
+- Faster site, stage 2 (owner, 16.11.2026): opened on Yüklər, what the
+  first screen does not need starts after it (StartupSteps, core/startup/
+  startup_steps.dart): +1.5 s messages received (badge, sound), +3 s the
+  live map's movement, who is online, group chats, +5 s the new-load
+  watcher and the TIRPark / TIR Bazarı new counts; opened on any other page
+  everything at once; a 15 s safety net; nothing turned off.
+  Smart live map (owner's choice 1, same day): a fast phone keeps the moving
+  map as before; a slow one (first moving 2 s slower than 25 frames a
+  second, LiveMapSpeed) shows the movement 5 s and then the map stands still
+  (picture, routes, trucks stay; "CANLI" lit, not breathing); back at the
+  top another 5 s show; out of view or while scrolling it never moves.
+  Measured (iPhone 13 emulation, CPU ×4): 10–20 s after opening the main
+  thread blocked 9.6 s → 0, scroll 7.5 → 4.1 s, back to Yüklər 8.0 → 0.4 s.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new
