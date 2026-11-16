@@ -14,10 +14,16 @@ const host = 'https://jqdqtfmxnqezlsetelpi.supabase.co';
 void main() {
   test('templates and banners get the light address', () {
     expect(lightImageUrl('$host/storage/v1/object/public/cargo-photos/templates/container/1.png', 507),
-        '$host/storage/v1/render/image/public/cargo-photos/templates/container/1.png?width=640&quality=80');
+        '$host/storage/v1/render/image/public/cargo-photos/templates/container/1.png?width=640&resize=contain&quality=80');
     // A banner saved with a doubled "/" still gives one clean address.
     expect(lightImageUrl('$host//storage/v1/object/public/market-photos/u1/hero_17.png', 1170),
-        '$host/storage/v1/render/image/public/market-photos/u1/hero_17.png?width=1280&quality=80');
+        '$host/storage/v1/render/image/public/market-photos/u1/hero_17.png?width=1280&resize=contain&quality=80');
+  });
+
+  test('the whole picture, never a cut strip (owner, 16.11.2026)', () {
+    // Supabase keeps the original height when only a width is given and cuts
+    // a narrow strip out of the picture; "contain" keeps the whole picture.
+    expect(lightImageUrl('$host/storage/v1/object/public/cargo-photos/templates/ref/1.png', 300), contains('&resize=contain'));
   });
 
   test('everything else stays exactly as it was', () {

@@ -40,12 +40,26 @@ void main() {
     expect(slow.slow, isTrue);
   });
 
-  test('wired: still after the show, lit badge, moves again at the top', () {
+  test('a slow phone keeps a calm pace: about a third of its time, 1.25–8 moves a second', () {
+    final slow = LiveMapSpeed();
+    while (!slow.add(0.19)) {}
+    expect(slow.calmEvery.inMilliseconds, inInclusiveRange(560, 580), reason: '3 × 0.19 s');
+    final weak = LiveMapSpeed();
+    while (!weak.add(0.045)) {}
+    expect(weak.calmEvery.inMilliseconds, 135);
+    final verySlow = LiveMapSpeed();
+    while (!verySlow.add(0.5)) {}
+    expect(verySlow.calmEvery.inMilliseconds, 800, reason: 'never slower than 1.25 a second');
+  });
+
+  test('wired: a slow phone moves calmly (never still while watched); out of view it rests', () {
     final m = src('lib/features/cargo/presentation/widgets/live_map.dart');
-    expect(m, contains('_stillIn(LiveMapSpeed.showFor - LiveMapSpeed.measureFor);'));
-    expect(m, contains('if (_speed.slow == true) _stillIn(LiveMapSpeed.showFor);'));
-    expect(m, contains("duration: const Duration(milliseconds: 1100), value: 1);"), reason: 'lit, not breathing, until it moves');
-    expect(m, contains('..value = 1;'), reason: 'still = lit');
+    expect(m, contains('if (_speed.slow == true) return _startCalm();'));
+    expect(m, contains('_calm = Timer.periodic(every, (_) {'));
+    expect(m, contains('_advance(step, trucks: _liteTrucks);'));
+    expect(m, isNot(contains('_stillIn(')), reason: 'no more standing still after a show');
+    expect(m, contains("duration: const Duration(milliseconds: 1100), value: 1);"), reason: 'lit until it moves');
+    expect(m, contains('..value = 1;'), reason: 'resting = lit');
     expect(m, contains('if (StartupSteps.isFree(2)) _move();'));
   });
 }
