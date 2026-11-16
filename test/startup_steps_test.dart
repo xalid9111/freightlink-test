@@ -25,26 +25,29 @@ void main() {
     StartupSteps.resetForTest();
     final frame = Completer<void>();
     const ms = Duration(milliseconds: 1);
-    StartupSteps.start(stagger: true, firstFrame: frame.future, delays: [ms * 40, ms * 120, ms * 200]);
+    StartupSteps.start(stagger: true, firstFrame: frame.future, delays: [ms * 30, ms * 700, ms * 1400]);
     var opened = 0;
     final sub = StartupSteps.after(1, () {
       opened++;
       return Stream.value(1);
     }).listen((_) {});
-    List<bool> free() => [
-          for (final n in [1, 2, 3]) StartupSteps.isFree(n)
-        ];
-    await Future<void>.delayed(ms * 300);
+    List<bool> free() => [for (final n in [1, 2, 3]) StartupSteps.isFree(n)];
+    await Future<void>.delayed(ms * 200);
     expect(free(), [false, false, false], reason: 'nothing before the first frame');
     expect(opened, 0, reason: 'the subscription waits');
+    final clock = Stopwatch()..start();
     frame.complete();
-    await Future<void>.delayed(ms * 80);
+    // The order is checked, not exact milliseconds (the suite may be busy).
+    await StartupSteps.reached(1);
     expect(free(), [true, false, false]);
+    await Future<void>.delayed(Duration.zero);
     expect(opened, 1);
-    await Future<void>.delayed(ms * 80);
+    await StartupSteps.reached(2);
     expect(free(), [true, true, false]);
-    await Future<void>.delayed(ms * 120);
+    expect(clock.elapsed, greaterThanOrEqualTo(ms * 690));
+    await StartupSteps.reached(3);
     expect(free(), [true, true, true]);
+    expect(clock.elapsed, greaterThanOrEqualTo(ms * 1390));
     await sub.cancel();
     StartupSteps.releaseAll();
   });

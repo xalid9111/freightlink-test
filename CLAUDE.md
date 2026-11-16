@@ -925,6 +925,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   top another 5 s show; out of view or while scrolling it never moves.
   Measured (iPhone 13 emulation, CPU ×4): 10–20 s after opening the main
   thread blocked 9.6 s → 0, scroll 7.5 → 4.1 s, back to Yüklər 8.0 → 0.4 s.
+- Faster site, stage 3 (owner, 16.11.2026, choice 1): the signs FreightLink
+  Sans lacks — ₺ ₼ ₽ ₾ (TirLinkSigns, Regular + Bold) and ✓ (TirLinkCheck),
+  tiny Noto subsets under OFL in assets/fonts/signs — stand in
+  AppFonts.fallback after the flags, so the browser no longer downloads a
+  195 KB Google font on TIR Bazarı; the İrəli çək / VIP / Premium icons are
+  256-colour transparent PNGs (~100 KB → 13–21 KB each, same 256 px, same
+  look at their ≤ 46 pt size).
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new
