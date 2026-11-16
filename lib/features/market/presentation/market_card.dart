@@ -11,6 +11,7 @@ import '../domain/market_models.dart';
 import 'market_promo.dart';
 import 'market_providers.dart';
 import '../../../core/utils/image_decode.dart';
+import '../../../core/utils/light_image.dart';
 import '../../../core/perf/scroll_perf.dart';
 import '../../../core/router/guest_access.dart';
 
@@ -39,7 +40,12 @@ class VipBadge extends StatelessWidget {
 class MarketPhoto extends StatelessWidget {
   final String? url;
   final BoxFit fit;
-  const MarketPhoto({super.key, required this.url, this.fit = BoxFit.cover});
+
+  /// A list card: the photo comes light from the server at the card's size
+  /// and is not shrunk again on the phone (owner, 16.11.2026). The ad page
+  /// and the full screen keep the original.
+  final bool light;
+  const MarketPhoto({super.key, required this.url, this.fit = BoxFit.cover, this.light = false});
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +59,33 @@ class MarketPhoto extends StatelessWidget {
     if (PerfFlags.noImages.value) return placeholder;
     final src = url!;
     // Decoded at the size it is shown (list tile or full page), not more.
-    return LayoutBuilder(
-      builder: (context, c) => Image.network(
-        src,
-        fit: fit,
-        cacheWidth: decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context)),
-        errorBuilder: (_, __, ___) => placeholder,
-        loadingBuilder: (c, child, p) => p == null ? child : placeholder,
-      ),
-    );
+    return LayoutBuilder(builder: (context, c) {
+      final w = decodeWidthFor(c, MediaQuery.devicePixelRatioOf(context));
+      if (!light) {
+        return Image.network(
+          src,
+          fit: fit,
+          cacheWidth: w,
+          errorBuilder: (_, __, ___) => placeholder,
+          loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+        );
+      }
+      return LightImage(
+        url: src,
+        px: w,
+        photo: true,
+        onError: (_, __, ___) => placeholder,
+        builder: (context, s, headers, onError) => Image.network(
+          s,
+          headers: headers,
+          fit: fit,
+          // Light = already about this size; shrinking again would stop the scroll.
+          cacheWidth: headers == null ? w : null,
+          errorBuilder: onError,
+          loadingBuilder: (c, child, p) => p == null ? child : placeholder,
+        ),
+      );
+    });
   }
 }
 
@@ -125,7 +149,7 @@ class MarketCard extends ConsumerWidget {
                   children: [
                     // No frame on the picture: Premium / VIP marks sit by
                     // the price (owner, 25.10.2026, 0066).
-                    MarketPhoto(url: l.cover),
+                    MarketPhoto(url: l.cover, light: true),
                     Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                     if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                     if (l.photos.length > 1 && !compact)
@@ -266,7 +290,7 @@ class MarketFeedCard extends ConsumerWidget {
                 children: [
                   // No frame or seal on the picture: Premium / VIP marks sit
                   // at the end of the city line (owner, 25.10.2026, 0066).
-                  MarketPhoto(url: l.cover),
+                  MarketPhoto(url: l.cover, light: true),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
                   if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                   if (l.status == MarketStatus.sold)

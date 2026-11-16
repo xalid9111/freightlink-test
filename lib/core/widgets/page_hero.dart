@@ -149,7 +149,7 @@ class PageHeroImage extends StatelessWidget {
               fit: BoxFit.contain,
               alignment: wholeAlign,
               gaplessPlayback: true,
-              cacheWidth: w,
+              cacheWidth: headers == null ? w : null, // light = already this size
               frameBuilder: (c, child, frame, sync) {
                 final ready = sync || frame != null;
                 return Stack(fit: StackFit.expand, children: [
@@ -159,7 +159,7 @@ class PageHeroImage extends StatelessWidget {
                     ImageFiltered(
                       key: const ValueKey('page-hero-backdrop'),
                       imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.clamp),
-                      child: Image.network(src, headers: headers, fit: BoxFit.cover, cacheWidth: w, gaplessPlayback: true),
+                      child: Image.network(src, headers: headers, fit: BoxFit.cover, cacheWidth: headers == null ? w : null, gaplessPlayback: true),
                     ),
                     const ColoredBox(color: Color(0x59000000)),
                   ],
@@ -188,7 +188,7 @@ class PageHeroImage extends StatelessWidget {
               fit: BoxFit.cover,
               alignment: align,
               gaplessPlayback: true,
-              cacheWidth: w,
+              cacheWidth: headers == null ? w : null, // light = already this size
               frameBuilder: (c, child, frame, sync) {
                 final ready = sync || frame != null;
                 return Stack(fit: StackFit.expand, children: [

@@ -23,14 +23,18 @@ const kLightImageHeaders = {'Accept': 'image/webp,image/*'};
 
 const _object = '/storage/v1/object/public/';
 
-/// Whether [url] is one of the admins' pictures handled here: a load-type
-/// template (cargo-photos/templates/…) or a page banner (…/hero_….);
-/// never a GIF (it would stop moving) and never a user's own photo.
-bool isLightImage(String url) {
+/// Whether [url] is one of the pictures handled here: a load-type template
+/// (cargo-photos/templates/…) or a page banner (…/hero_….); with [photo]
+/// also a TIR Bazarı ad photo (market-photos/<user>/<file>) on a list card
+/// (owner, 16.11.2026: the phone shrank the 1600 px photo in the middle of a
+/// scroll). Never a GIF (it would stop moving); the stored file is never
+/// changed.
+bool isLightImage(String url, {bool photo = false}) {
   final i = url.indexOf(_object);
   if (i < 0 || url.contains('?')) return false;
   final path = url.substring(i + _object.length).toLowerCase();
   if (path.endsWith('.gif')) return false;
+  if (photo && RegExp(r'^market-photos/[^/]+/[^/]+\.(jpe?g|png|webp)$').hasMatch(path)) return true;
   return path.startsWith('cargo-photos/templates/') || RegExp(r'/hero_[^/]+$').hasMatch(path);
 }
 
@@ -38,8 +42,8 @@ bool isLightImage(String url) {
 /// other address comes back unchanged. `resize=contain` keeps the WHOLE
 /// picture in its own proportions (owner, 16.11.2026: with only a width the
 /// service kept the original height and cut a narrow strip out of it).
-String lightImageUrl(String url, int px) {
-  if (!isLightImage(url)) return url;
+String lightImageUrl(String url, int px, {bool photo = false}) {
+  if (!isLightImage(url, photo: photo)) return url;
   final i = url.indexOf(_object);
   final host = url.substring(0, i).replaceAll(RegExp(r'/+$'), '');
   final path = url.substring(i + _object.length);
@@ -49,13 +53,22 @@ String lightImageUrl(String url, int px) {
 /// Draws [url] through [builder] with its light address (and the headers it
 /// needs); if that fails, once more with the original address. [onError] is
 /// shown only when the original fails too.
+///
+/// A light picture already comes at about its shown size: [builder] gets
+/// headers only then, and must NOT shrink it again (no cacheWidth). On
+/// iPhone Safari Flutter shrinks a picture on the main thread (a canvas
+/// drawImage) — 300–480 ms stops while scrolling (owner's meter, 16.11.2026).
 class LightImage extends StatefulWidget {
   final String url;
   final int px;
   final Widget Function(BuildContext context, String src, Map<String, String>? headers, ImageErrorWidgetBuilder onError)
       builder;
   final ImageErrorWidgetBuilder onError;
-  const LightImage({super.key, required this.url, required this.px, required this.builder, required this.onError});
+
+  /// Also a TIR Bazarı ad photo (list cards only), see [isLightImage].
+  final bool photo;
+  const LightImage(
+      {super.key, required this.url, required this.px, required this.builder, required this.onError, this.photo = false});
 
   @override
   State<LightImage> createState() => _LightImageState();
@@ -72,7 +85,7 @@ class _LightImageState extends State<LightImage> {
 
   @override
   Widget build(BuildContext context) {
-    final light = _original ? widget.url : lightImageUrl(widget.url, widget.px);
+    final light = _original ? widget.url : lightImageUrl(widget.url, widget.px, photo: widget.photo);
     if (light == widget.url) return widget.builder(context, widget.url, null, widget.onError);
     return widget.builder(context, light, kLightImageHeaders, (c, e, s) {
       scheduleMicrotask(() {

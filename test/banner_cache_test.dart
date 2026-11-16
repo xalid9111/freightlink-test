@@ -56,7 +56,9 @@ void main() {
     expect(heroDecodeWidth(const BoxConstraints(maxHeight: 150), 3, 1), isNull, reason: 'unknown width: full size');
     // 16.11.2026: the same width now also picks the light picture (LightImage).
     expect(src('lib/core/widgets/page_hero.dart'), contains('final w = heroDecodeWidth(c, MediaQuery.devicePixelRatioOf(context), zoom);'));
-    expect(src('lib/core/widgets/page_hero.dart'), contains('cacheWidth: w,'));
+    // The original (fallback) is decoded at its shown size; the light copy
+    // already comes at that size and is not shrunk again (16.11.2026).
+    expect(src('lib/core/widgets/page_hero.dart'), contains('cacheWidth: headers == null ? w : null,'));
   });
 
   test('the Loads counters ask for the number only (same exact count, one row sent)', () {

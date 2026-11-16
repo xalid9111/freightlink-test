@@ -54,7 +54,7 @@ class MyMarketListingsScreen extends ConsumerWidget {
                           child: Row(children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: SizedBox(width: 92, height: 68, child: MarketPhoto(url: l.cover)),
+                              child: SizedBox(width: 92, height: 68, child: MarketPhoto(url: l.cover, light: true)),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
