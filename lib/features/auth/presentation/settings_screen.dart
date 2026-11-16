@@ -17,6 +17,7 @@ import '../../../core/layout/desktop_layout.dart';
 import '../../../core/layout/desktop_preview.dart';
 import 'providers/auth_providers.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../../core/perf/scroll_perf.dart';
 import '../../../core/notify/push_settings.dart';
 
 /// Each language in its own native name (deliberately not translated).
@@ -183,6 +184,40 @@ class SettingsScreen extends ConsumerWidget {
                       const TextSizePicker(),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ],
+          // Scroll meter + test switches — admins only, this device only
+          // (owner, 16.11.2026). Admin texts in Azerbaijani.
+          if (ref.watch(currentUserProvider)?.role == AppConstants.roleAdmin) ...[
+            const SizedBox(height: 14),
+            _Section(
+              icon: Icons.speed,
+              iconColor: AppColors.accent,
+              title: 'Sürətölçən (admin)',
+              children: [
+                for (final (key, label) in const [
+                  ('meter', 'Sürətölçəni göstər (kadr / saniyə)'),
+                  ('resample', 'Sınaq: toxunuşu hamarla (titrəməyə qarşı)'),
+                  ('map', 'Sınaq: xəritəni dayandır'),
+                  ('img', 'Sınaq: kart şəkillərini gizlət'),
+                ])
+                  ValueListenableBuilder<bool>(
+                    valueListenable: PerfFlags.all[key]!,
+                    builder: (context, on, _) => SwitchListTile(
+                      key: ValueKey('perf-$key'),
+                      value: on,
+                      onChanged: (v) => PerfFlags.set(key, v),
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: AppColors.accentFill,
+                      title: Text(label, style: TextStyle(color: AppColors.text, fontSize: 14)),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: Text('Yalnız bu cihazda. Zəif sürüşmələr hamıda avtomatik Admin → AutoFix-ə yazılır.',
+                      style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
                 ),
               ],
             ),

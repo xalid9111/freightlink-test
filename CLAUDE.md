@@ -953,6 +953,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   server sets the price; the ad changes only after a verified payment.
   Visitors see no cards. Loads keep no advertising (0102). The sheet's texts
   say "the ad", not "your ad". No message to the seller (not asked yet).
+- Scroll smoothness meter (owner, 16.11.2026: "sürüşdürəndə xırda tutmalar,
+  yazılar titrəyir … sürətölçən qoy və mexanizm düzəlt ki, axıcılıqda problem
+  yarananda rahat məlumat götürəsən"; owner's phone: iPhone 11 Pro):
+  ScrollPerfScope (core/perf/scroll_perf.dart, at the app root) measures every
+  vertical scroll on every device (frames a second, the longest gap, missed
+  frames; 3 frames / 100 ms are enough to judge). A poor scroll (< 45 fps or a
+  gap > 100 ms) goes to Admin → AutoFix (kind freeze, source perf: page,
+  screen, browser, test switches; at most once per page per 10 min and 6 per
+  visit; no personal data). Admins: Ayarlar → "Sürətölçən (admin)" — a live
+  box (fps · ən uzun · buraxılan; green / red) and test switches kept on the
+  device only: toxunuşu hamarla (Flutter pointer resampling), xəritəni
+  dayandır, kart şəkillərini gizlət. A switch that helps becomes the default
+  for everyone only after the owner's measurement and decision.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

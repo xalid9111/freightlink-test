@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import 'live_map_day_geo.dart';
 import 'live_map_night_geo.dart';
 import '../../../../core/startup/startup_steps.dart';
+import '../../../../core/perf/scroll_perf.dart';
 import 'wheel_feed.dart';
 
 /// Home "live world map".
@@ -536,6 +537,8 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   /// while the user looks at it.
   void _move() {
     if (!mounted) return;
+    // Admin test switch (Ayarlar → Sürətölçən): the map stands, to compare.
+    if (PerfFlags.mapStill.value) return _stand();
     if (_speed.slow == true) return _startCalm();
     if (!_ticker.isActive) {
       _last = Duration.zero;
