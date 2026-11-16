@@ -475,6 +475,130 @@ class CargoTile extends ConsumerWidget {
   }
 }
 
+/// Loads page row (owner's picture, 17.11.2026 — replaces the two tiles in a
+/// row on the phone): a small square picture with the heart on its corner,
+/// the route with flags, "22 t | Refrijerator | 30 noy" with small icons, the
+/// price in the accent colour with the currency under it (Premium / VIP marks
+/// over it) and a ›. One load per row; every value a real CargoModel field.
+class CargoListRow extends ConsumerWidget {
+  final CargoModel cargo;
+  final AppStrings strings;
+  final VoidCallback onTap;
+  final bool vip;
+  const CargoListRow({super.key, required this.cargo, required this.strings, required this.onTap, this.vip = false});
+
+  /// The picture's side (logical px): small, so a scroll opens few pixels.
+  static const picture = 64.0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeCode = ref.watch(currentLocaleProvider).languageCode;
+    final from = Countries.find(cargo.pickupCountry);
+    final to = Countries.find(cargo.destinationCountry);
+    final dateFmt = DateFormat('d MMM', localeCode);
+    final tons = cargo.weightKg / 1000;
+    final tonsText = tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1);
+    final weight = cargo.weightKg < 1000 ? '${_num(cargo.weightKg)} kg' : '$tonsText t';
+    final truck = (cargo.truckType ?? '').trim();
+    final type = cargo.groupage
+        ? strings.t('cargo_groupage_label')
+        : (truck.isEmpty ? null : truckTypeLabel(strings, truck));
+    final now = DateTime.now();
+    final meta = TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2);
+    final metaLine = rowMetaLine([
+      (Icons.scale_outlined, weight),
+      if (type != null) (Icons.local_shipping_outlined, type),
+      (Icons.calendar_today_outlined, dateFmt.format(cargo.pickupDate)),
+    ], meta);
+
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: ValueKey('cargo-row-${cargo.id}'),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.tileLine, width: 1),
+          ),
+          padding: const EdgeInsets.fromLTRB(8, 8, 2, 8),
+          child: Row(children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: picture,
+                height: picture,
+                child: Stack(fit: StackFit.expand, children: [
+                  CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
+                  Positioned(top: 2, right: 2, child: CargoFavoriteHeart(cargoId: cargo.id, size: 13, onPhoto: true)),
+                ]),
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(
+                  '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
+                      .trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.2),
+                ),
+                const SizedBox(height: 6),
+                // One line; on a narrow phone / big text it ends in "…".
+                metaLine,
+              ]),
+            ),
+            const SizedBox(width: 6),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+              PromoMarks(
+                key: const ValueKey('row-marks'),
+                premium: cargo.isPremiumAt(now),
+                vip: vip || cargo.isVipAt(now),
+                size: 16,
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 96),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 21, color: AppColors.accent, height: 1.1)),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(cargo.currency, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            ]),
+            Icon(Icons.chevron_right, size: 20, color: AppColors.textSoft),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// "⚖ 22 t | 🚚 Refrijerator | 📅 30 noy" as ONE text line with small icons
+/// (the Loads / Daşıyıcılar rows): it never overflows, it ends in "…".
+Widget rowMetaLine(List<(IconData, String)> parts, TextStyle style) => Text.rich(
+      TextSpan(children: [
+        for (var i = 0; i < parts.length; i++) ...[
+          if (i > 0) TextSpan(text: ' | ', style: TextStyle(color: AppColors.line)),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 3),
+              child: Icon(parts[i].$1, size: 13, color: AppColors.textSoft),
+            ),
+          ),
+          TextSpan(text: parts[i].$2),
+        ],
+      ]),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+
 /// Gold VIP medal (owner's design, 23.10.2026): a toothed gold disc with
 /// "VIP" and two ribbons under it. Drawn in code, same in day and night.
 class VipMedal extends StatelessWidget {

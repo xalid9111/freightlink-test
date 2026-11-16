@@ -210,6 +210,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   in pairs (only the last card may stand alone). Chessboard order: load–VIP,
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
   few minutes so each VIP comes to the front; same logic on the computer.
+  One load per row on the phone (owner's picture, 17.11.2026 — replaces the
+  two tiles there; the computer keeps its tiles): CargoListRow — a 64 pt
+  picture with the heart on its corner, the route with flags, "22 t |
+  Refrijerator | 30 noy" as one line with small icons (ends in "…", never
+  overflows), the price in AppColors.accent with the currency under it,
+  Premium / VIP marks over the price, ›; kPhoneLoadColumns = 1, so the
+  order is load, VIP, load, VIP …; Daşıyıcılar the same (EmptyTruckRow:
+  picture + BOŞ + heart, route, "📍 place | 20 t boş | truck", "İndi" /
+  date). Tested for 6 languages × 320–390 pt × text size 125 %.
 - Promotions "Önə çıxar" (owner, 25.10.2026, Turbo.az-like; TIR Bazarı
   0066, Loads 0067): İrəli çək (1/3/5/10 lifts = 3/6/9/15 AZN, first at
   once then every 24 h), VIP (1/5/15/30 days = 5/15/25/40 AZN, daily

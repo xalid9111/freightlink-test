@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../favorites/favorites.dart';
 import '../../cargo/domain/truck_types.dart';
+import '../../cargo/presentation/widgets/cargo_card.dart' show rowMetaLine;
 import '../../cargo/presentation/widgets/cargo_picture.dart';
 import '../data/empty_truck_repository.dart';
 import '../domain/empty_truck.dart';
@@ -147,6 +148,95 @@ class EmptyTruckTile extends ConsumerWidget {
                 line(Icons.schedule, emptyTruckFreeLabel(strings, t, lang)),
               ]),
             ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// One empty truck as a row (owner's picture, 17.11.2026 — like the loads):
+/// a small truck picture with the heart, the route, "📍 Bakı | 20 t boş |
+/// Tent", and when it is free ("İndi" / date) on the right with a ›.
+class EmptyTruckRow extends ConsumerWidget {
+  final EmptyTruck truck;
+  final AppStrings strings;
+  final VoidCallback onTap;
+  const EmptyTruckRow({super.key, required this.truck, required this.strings, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(currentLocaleProvider).languageCode;
+    final t = truck;
+    final meta = TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2);
+
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: ValueKey('empty-truck-tile-${t.id}'),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.tileLine, width: 1),
+          ),
+          padding: const EdgeInsets.fromLTRB(8, 8, 2, 8),
+          child: Row(children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: Stack(fit: StackFit.expand, children: [
+                  CargoPicture(truckType: t.truckType, seed: t.id),
+                  Positioned(
+                    left: 3,
+                    bottom: 3,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(6)),
+                      child: Text(strings.t('et_badge_empty'),
+                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500, color: Colors.white)),
+                    ),
+                  ),
+                  if (ref.watch(currentUserIdProvider) != t.ownerId)
+                    Positioned(top: 2, right: 2, child: LikeHeart(kind: FavKind.user, id: t.ownerId, size: 13, onPhoto: true)),
+                ]),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(
+                  t.routeLabel(lang, anyLabel: strings.t('et_any_direction_short')),
+                  key: const ValueKey('empty-truck-route'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.2),
+                ),
+                const SizedBox(height: 6),
+                KeyedSubtree(
+                  key: const ValueKey('empty-truck-place'),
+                  child: rowMetaLine([
+                    (Icons.place_outlined, t.placeLabel(lang)),
+                    (Icons.scale_outlined, emptyTruckTonsLabel(strings, t.freeTons)),
+                    (Icons.local_shipping_outlined, truckTypeLabel(strings, t.truckType)),
+                  ], meta),
+                ),
+              ]),
+            ),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 80),
+              child: Text(emptyTruckFreeLabel(strings, t, lang),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.accent, height: 1.2)),
+            ),
+            Icon(Icons.chevron_right, size: 20, color: AppColors.textSoft),
           ]),
         ),
       ),
