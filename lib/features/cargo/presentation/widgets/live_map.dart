@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'live_map_day_geo.dart';
 import 'live_map_night_geo.dart';
+import '../../../../core/startup/startup_steps.dart';
 import 'wheel_feed.dart';
 
 /// Home "live world map".
@@ -254,7 +255,19 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker(_onTick)..start();
+    _ticker = createTicker(_onTick);
+    // Opened on Yüklər: the map moves from 3 s after the first screen
+    // (StartupSteps) — the cards and the first answers come first.
+    if (StartupSteps.isFree(2)) {
+      _ticker.start();
+    } else {
+      StartupSteps.reached(2).then((_) {
+        if (mounted && !_ticker.isActive && !WheelSignals.scrolling.value && WheelSignals.offset < 420) {
+          _last = Duration.zero;
+          _ticker.start();
+        }
+      });
+    }
     WheelSignals.scrolling.addListener(_onScrolling);
     SchedulerBinding.instance.addTimingsCallback(_onTimings);
   }
@@ -274,7 +287,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
     if (!mounted) return;
     if (WheelSignals.scrolling.value) {
       if (_ticker.isActive) _ticker.stop();
-    } else if (WheelSignals.offset < 420 && !_ticker.isActive) {
+    } else if (WheelSignals.offset < 420 && !_ticker.isActive && StartupSteps.isFree(2)) {
       _last = Duration.zero;
       _ticker.start();
     }

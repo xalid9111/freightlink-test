@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../startup/startup_steps.dart';
 import '../config/supabase_config.dart';
 
 /// "New since you last looked" counts next to the TIRPark and TIR Bazarı
@@ -32,10 +33,14 @@ class NewItemsController extends StateNotifier<Map<NewItemsSection, int>> {
   bool _busy = false;
 
   NewItemsController({required this.uid, required this.count, bool start = true}) : super(const {}) {
-    if (start) {
-      refresh();
-      _timer = Timer.periodic(kNewItemsEvery, (_) => refresh());
-    }
+    if (start) begin();
+  }
+
+  /// First count now, then every [kNewItemsEvery].
+  void begin() {
+    if (_timer != null) return;
+    refresh();
+    _timer = Timer.periodic(kNewItemsEvery, (_) => refresh());
   }
 
   Future<DateTime> _since(NewItemsSection s) async {
@@ -126,5 +131,11 @@ Future<int> countNewItems(NewItemsSection section, DateTime since, String? uid) 
   }
 }
 
-final newItemsProvider = StateNotifierProvider<NewItemsController, Map<NewItemsSection, int>>(
-    (ref) => NewItemsController(uid: ref.watch(currentUserIdProvider), count: countNewItems));
+final newItemsProvider = StateNotifierProvider<NewItemsController, Map<NewItemsSection, int>>((ref) {
+  final c = NewItemsController(uid: ref.watch(currentUserIdProvider), count: countNewItems, start: false);
+  // Opened on Yüklər: counts from 5 s after the first screen (StartupSteps).
+  StartupSteps.reached(3).then((_) {
+    if (c.mounted) c.begin();
+  });
+  return c;
+});

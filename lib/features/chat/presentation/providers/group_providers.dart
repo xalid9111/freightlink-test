@@ -2,13 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/group_models.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/startup/startup_steps.dart';
 import '../../data/group_repository.dart';
 
 /// My group memberships, live (joins / leaves / read markers).
 final myMembershipsProvider = StreamProvider<List<GroupMember>>((ref) {
   final uid = ref.watch(currentUserIdProvider);
   if (uid == null) return Stream.value(const <GroupMember>[]);
-  return ref.watch(groupRepositoryProvider).watchMyMemberships(uid);
+  final repo = ref.watch(groupRepositoryProvider);
+  // Opened on Yüklər: starts 3 s after the first screen (StartupSteps).
+  return StartupSteps.after(2, () => repo.watchMyMemberships(uid));
 });
 
 /// The groups I belong to (re-fetched whenever my memberships change).
@@ -24,7 +27,8 @@ final myGroupMessagesProvider = StreamProvider<List<GroupMessage>>((ref) {
   if (uid == null) return Stream.value(const <GroupMessage>[]);
   // re-subscribe when I join / leave a group so RLS-visible rows refresh
   ref.watch(myMembershipsProvider.select((v) => v.valueOrNull?.length));
-  return ref.watch(groupRepositoryProvider).watchMyGroupMessages();
+  final repo = ref.watch(groupRepositoryProvider);
+  return StartupSteps.after(2, repo.watchMyGroupMessages);
 });
 
 /// Unread messages per group id (from others, after my last read).
