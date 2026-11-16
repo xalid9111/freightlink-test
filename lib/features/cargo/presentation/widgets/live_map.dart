@@ -489,7 +489,10 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   /// Smart map (owner, 16.11.2026, choice 1): this device's speed, measured
   /// once per visit on the first moving seconds.
   static final LiveMapSpeed _speed = LiveMapSpeed();
-  Timer? _still;
+
+  /// A slow device's calm movement (owner, 16.11.2026: "animasiya azalsın
+  /// amma davam etsin, dayanmasın"): a few frames a second instead of 60.
+  Timer? _calm;
   int _colorTurn = 0;
   int _flashTurn = 0;
   double _nextPing = 0.5;
@@ -521,34 +524,46 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   void dispose() {
     SchedulerBinding.instance.removeTimingsCallback(_onTimings);
     WheelSignals.scrolling.removeListener(_onScrolling);
-    _still?.cancel();
+    _calm?.cancel();
     _ticker.dispose();
     _badge.dispose();
     _time.dispose();
     super.dispose();
   }
 
-  /// The map moves (trucks + the breathing "CANLI" light). On a slow
-  /// device (LiveMapSpeed) it stops again after a short show.
+  /// The map moves (trucks + the breathing "CANLI" light): every frame on a
+  /// fast device, calmly (a few frames a second) on a slow one — never still
+  /// while the user looks at it.
   void _move() {
     if (!mounted) return;
+    if (_speed.slow == true) return _startCalm();
     if (!_ticker.isActive) {
       _last = Duration.zero;
       _ticker.start();
     }
     if (!_badge.isAnimating) _badge.repeat(reverse: true);
-    if (_speed.slow == true) _stillIn(LiveMapSpeed.showFor);
   }
 
-  /// Stands still after [d]: the picture, routes and trucks stay where they
-  /// are, "CANLI" stays lit; nothing is redrawn until the map moves again.
-  void _stillIn(Duration d) {
-    _still?.cancel();
-    _still = Timer(d, _stand);
+  /// Calm movement: the same trucks and lights, fewer of them, moved by a
+  /// timer every [LiveMapSpeed.calmEvery] (the device's own pace) instead of
+  /// every screen frame; "CANLI" breathes to the same beat.
+  void _startCalm() {
+    if (_ticker.isActive) _ticker.stop();
+    _badge.stop();
+    if (_calm != null) return;
+    final every = _speed.calmEvery;
+    final step = every.inMicroseconds / 1e6;
+    _calm = Timer.periodic(every, (_) {
+      if (!mounted) return;
+      _advance(step, trucks: _liteTrucks);
+      _badge.value = 0.5 + 0.5 * math.sin(_time.value * math.pi / 1.1);
+    });
   }
 
+  /// Stands still (out of view / scrolling): nothing is redrawn; "CANLI" lit.
   void _stand() {
-    _still?.cancel();
+    _calm?.cancel();
+    _calm = null;
     if (!mounted) return;
     if (_ticker.isActive) _ticker.stop();
     _badge
@@ -561,7 +576,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
   void _onScrolling() {
     if (!mounted) return;
     if (WheelSignals.scrolling.value) {
-      if (_ticker.isActive) _ticker.stop();
+      _stand();
     } else if (WheelSignals.offset < 420) {
       if (StartupSteps.isFree(2)) _move();
     } else {
@@ -614,20 +629,24 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
     final dt = measured ? (elapsed - _last).inMicroseconds / 1e6 : 0.016;
     _last = elapsed;
     // The first moving seconds tell how fast this device draws; a slow one
-    // shows the movement a little longer, then the map stands still.
+    // goes on calmly (a few frames a second), never standing still.
     if (measured && _speed.add(dt) && _speed.slow == true) {
-      _stillIn(LiveMapSpeed.showFor - LiveMapSpeed.measureFor);
+      _startCalm();
+      return;
     }
     if (_lite) {
       _skipOdd = !_skipOdd;
       if (_skipOdd) return; // ~30 fps on slow devices
     }
-    final step = dt.clamp(0.0, 0.1).toDouble();
+    _advance(dt.clamp(0.0, 0.1).toDouble() * (_lite ? 2 : 1), trucks: _lite ? _liteTrucks : _maxTrucks);
+  }
+
+  /// Moves the trucks, flashes and pings on by [step] seconds.
+  void _advance(double step, {required int trucks}) {
     final now = _time.value + step;
-    final active = _lite ? _liteTrucks : _maxTrucks;
-    for (var k = 0; k < active; k++) {
+    for (var k = 0; k < trucks; k++) {
       final tr = _trucks[k];
-      tr.t += tr.speed * step * (_lite ? 2 : 1); // lite skips every other frame
+      tr.t += tr.speed * step;
       if (tr.t >= 1) {
         final f = _flashes[_flashTurn++ % _flashes.length];
         f
@@ -912,11 +931,10 @@ class _MapPainter extends CustomPainter {
 
 /// How fast this device draws the live map (owner, 16.11.2026, "ağıllı
 /// xəritə"): the gaps between its first frames over [measureFor]; slower
-/// than [slowFrame] a frame on average = a slow device, where the map moves
-/// for [showFor] and then stands still (a fast one keeps moving as before).
+/// than [slowFrame] a frame on average = a slow device, where the map keeps
+/// moving calmly every [calmEvery] (a fast one moves every frame, as before).
 class LiveMapSpeed {
   static const measureFor = Duration(seconds: 2);
-  static const showFor = Duration(seconds: 5);
 
   /// 25 frames a second or fewer.
   static const slowFrame = 0.040;
@@ -936,4 +954,13 @@ class LiveMapSpeed {
     slow = _span / _frames > slowFrame;
     return true;
   }
+
+  /// The average frame gap measured (seconds); 0 before.
+  double get avgGap => _frames == 0 ? 0 : _span / _frames;
+
+  /// How often the calm map moves on a slow device: three of its frame gaps
+  /// (so the map takes at most about a third of its time), between 8 and
+  /// 1.25 times a second.
+  Duration get calmEvery =>
+      Duration(microseconds: ((3 * avgGap).clamp(0.12, 0.8) * 1e6).round());
 }

@@ -35,13 +35,15 @@ bool isLightImage(String url) {
 }
 
 /// The light address of [url] for a picture shown [px] pixels wide; any
-/// other address comes back unchanged.
+/// other address comes back unchanged. `resize=contain` keeps the WHOLE
+/// picture in its own proportions (owner, 16.11.2026: with only a width the
+/// service kept the original height and cut a narrow strip out of it).
 String lightImageUrl(String url, int px) {
   if (!isLightImage(url)) return url;
   final i = url.indexOf(_object);
   final host = url.substring(0, i).replaceAll(RegExp(r'/+$'), '');
   final path = url.substring(i + _object.length);
-  return '$host/storage/v1/render/image/public/$path?width=${lightWidthStep(px)}&quality=80';
+  return '$host/storage/v1/render/image/public/$path?width=${lightWidthStep(px)}&resize=contain&quality=80';
 }
 
 /// Draws [url] through [builder] with its light address (and the headers it
