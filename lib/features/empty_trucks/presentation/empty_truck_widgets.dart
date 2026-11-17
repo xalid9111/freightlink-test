@@ -276,6 +276,7 @@ class _EmptyTruckCarrierCardState extends ConsumerState<EmptyTruckCarrierCard> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 Row(children: [
                   Flexible(
+                    flex: 3,
                     child: Text(name.isEmpty ? '—' : name,
                         key: const ValueKey('carrier-name'),
                         maxLines: 1,
@@ -283,6 +284,14 @@ class _EmptyTruckCarrierCardState extends ConsumerState<EmptyTruckCarrierCard> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
                   ),
                   if (profile?.isVerified == true) ...[const SizedBox(width: 6), const VerifiedPhotoBadge(size: 18)],
+                  // "Boşdur" right after the name / badge (owner's mark,
+                  // 17.11.2026): the truck is empty at a glance.
+                  const SizedBox(width: 8),
+                  // Shrinks (never overflows) on a narrow phone with a long language.
+                  Flexible(
+                    flex: 2,
+                    child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: _FreeBadge(label: s.t('et_badge_free'))),
+                  ),
                 ]),
                 if (widget.rating != null)
                   Padding(
@@ -393,6 +402,28 @@ class _EmptyTruckCarrierCardState extends ConsumerState<EmptyTruckCarrierCard> {
       ),
     );
   }
+}
+
+/// The green "● Boşdur" pill on a carrier card.
+class _FreeBadge extends StatelessWidget {
+  final String label;
+  const _FreeBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('carrier-free-badge'),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.online.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.online.withValues(alpha: 0.6)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.online, shape: BoxShape.circle)),
+          const SizedBox(width: 5),
+          Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.online)),
+        ]),
+      );
 }
 
 /// Aktiv / Dayandırılıb / Maşın doldu — for the owner's own ads.

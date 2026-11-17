@@ -89,6 +89,10 @@ void main() {
     expect(find.byKey(const ValueKey('carrier-kind-tent')), findsOneWidget, reason: 'the chosen kind\'s own icon');
     expect(find.text('Zəng et'), findsOneWidget);
     expect(find.text('Mesaj'), findsOneWidget);
+    // "Boşdur" right after the name and the badge (owner's mark, 17.11.2026).
+    expect(find.text('Boşdur'), findsOneWidget);
+    expect(t.getTopLeft(find.byKey(const ValueKey('carrier-free-badge'))).dx,
+        greaterThan(t.getTopLeft(find.byIcon(Icons.verified)).dx));
     await t.tap(find.text('Caspian Trans'));
     expect(opened, 1, reason: 'the information opens the ad');
   });
@@ -116,6 +120,7 @@ void main() {
     await t.pumpWidget(host(EmptyTruckCarrierCard(truck: truck(owner: 'u2'), strings: s, onTap: () {}), s));
     await t.pump();
     expect(find.byKey(const ValueKey('carrier-edit')), findsOneWidget);
+    expect(find.byKey(const ValueKey('carrier-free-badge')), findsOneWidget, reason: 'also on one\'s own ad');
     expect(find.text('Zəng et'), findsNothing);
   });
 

@@ -2200,6 +2200,7 @@
   "et_list_title": "活跃承运人",
   "et_add_button": "发布空车",
   "et_badge_empty": "空车",
+  "et_badge_free": "空车",
   "et_empty": "暂无空车信息。",
   "et_not_ready": "承运人板块尚未就绪 (SQL 0118)。",
   "et_mine_count": "我的信息 ({n})",

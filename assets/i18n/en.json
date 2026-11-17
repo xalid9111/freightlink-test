@@ -2200,6 +2200,7 @@
   "et_list_title": "Active carriers",
   "et_add_button": "Add an empty truck",
   "et_badge_empty": "EMPTY",
+  "et_badge_free": "Empty",
   "et_empty": "No empty truck ads yet.",
   "et_not_ready": "Carriers is not ready yet (SQL 0118).",
   "et_mine_count": "My ads ({n})",

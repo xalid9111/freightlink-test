@@ -242,19 +242,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            // "+ Yük əlavə et" right above the loads (owner's design,
-            // 17.11.2026); Daşıyıcılar has its own "+ Boş maşın əlavə et".
-            if (!carriers)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                  child: _OutlinedAddButton(
-                    key: const ValueKey('add-cargo-top'),
-                    label: strings.t('home_add_load'),
-                    onTap: () => context.pushOnce('/cargo/create'),
-                  ),
-                ),
-              ),
             if (carriers)
               ..._carrierSlivers(context, ref, strings, trucks, anyFilter: anyFilter, onReset: resetFilters)
             else if (usePages) ...pagedSlivers() else ...marketplaceAsync.when<List<Widget>>(
@@ -544,7 +531,9 @@ class _Hero extends ConsumerWidget {
                             key: const ValueKey('add-empty-truck'),
                             label: strings.t('et_add_button'),
                             onTap: () => context.pushOnce('/trucks/new'))
-                        : _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                        : // "Yük əlavə et" (owner, 17.11.2026: was "Yük hovuzu"; the second
+                        // button over the list is gone).
+                        _AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create')),
                   ),
                 ),
               ],
