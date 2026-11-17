@@ -210,16 +210,39 @@ files to the owner separately (they are run by hand in the SQL editor).
   in pairs (only the last card may stand alone). Chessboard order: load–VIP,
   VIP–load, load–VIP … (owner, 24.10.2026); the VIP order moves on every
   few minutes so each VIP comes to the front; same logic on the computer.
-  One load per row on the phone (owner's picture, 17.11.2026 — replaces the
-  two tiles there; the computer keeps its tiles): CargoListRow — a 64 pt
-  picture with the heart on its corner (18 pt, owner 17.11.2026: "çox
-  balacadır"), the route with flags, "22 T | (capital T, owner 17.11.2026)
-  Refrijerator | 30 noy" as one line with small icons (ends in "…", never
-  overflows), the price in AppColors.accent with the currency under it,
-  Premium / VIP marks over the price, ›; kPhoneLoadColumns = 1, so the
-  order is load, VIP, load, VIP …; Daşıyıcılar the same (EmptyTruckRow:
-  picture + BOŞ + heart, route, "📍 place | 20 t boş | truck", "İndi" /
-  date). Tested for 6 languages × 320–390 pt × text size 125 %.
+  One load per row on the phone (owner's design approved 17.11.2026 —
+  replaces the two tiles there; the computer keeps its tiles):
+  CargoListRow — NO load picture; on the left the heart in a round button
+  and under it the poster's own profile picture (else the initials) in an
+  accent ring; the route with flags in bold (w600); a thin line; "22 T |
+  <the load type's own truck icon> Ref | 📅 3 noy" (capital T, no icon
+  before it; the tile's short type name rowKindLabel; tonnes and date
+  whole, the line scales down only on a very narrow phone); the price in
+  AppColors.accent with the currency under it behind a thin upright line,
+  Premium / VIP marks over it, ›; kPhoneLoadColumns = 1, so the order is
+  load, VIP, load, VIP …. Tested for 6 languages × 320–390 pt × 125 %.
+  The phone's Loads page top (same design): a compact header — TIR Link
+  logo + TırLink + www.tirlink.app, the heart and the profile picture
+  (HeaderCircles) — and a thin STILL world-map strip (no live map, no
+  counters, no slogan); route search; Yüklər | Daşıyıcılar; the title with
+  "n nəticə" and a filter button that opens the load types (the same
+  tiles, in a sheet; a dot while one is chosen); "+ Yük əlavə et" /
+  "+ Boş maşın əlavə et" over the list. İş Mərkəzi stays in Profil (and
+  on the computer). The computer's page is unchanged.
+  Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
+  there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
+  own picture (profile photo / company logo via UserAvatar, else the
+  initials) in an accent ring, name + the real blue badge, a rating ONLY
+  when a real one exists (none yet — nothing made up), heart on another
+  carrier's card, divider, the route with flags + ›, the chosen kind's own
+  icon (categoryIconAsset) + "Tent • 20 T" | 📅 "Bu gün hazırdır" / "25
+  noyabrdan", then "Zəng et" (accent) + "Mesaj" (a visitor signs in first;
+  no / hidden number = only Mesaj; one's own ad = Redaktə et). The
+  information opens the ad page; the buttons work on their own. "Aktiv
+  daşıyıcılar · n nəticə", "+ Boş maşın əlavə et" right above the cards
+  (the orange + under the map stays) with "Mənim elanlarım (n)". Tonnes
+  always with a capital T (et_free_tons "20 T boş"). Profile photos are
+  shrunk at upload (1024 px, quality 85).
 - Promotions "Önə çıxar" (owner, 25.10.2026, Turbo.az-like; TIR Bazarı
   0066, Loads 0067): İrəli çək (1/3/5/10 lifts = 3/6/9/15 AZN, first at
   once then every 24 h), VIP (1/5/15/30 days = 5/15/25/40 AZN, daily

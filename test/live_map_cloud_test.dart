@@ -34,7 +34,8 @@ void main() {
       expect(File('assets/images/$old').existsSync(), isFalse, reason: old);
     }
     final home = File('lib/features/cargo/presentation/cargo_marketplace_screen.dart').readAsStringSync();
-    expect(home.contains("final scene = day ? 'assets/images/world_map_day_v3' : 'assets/images/world_map_night_v4';"), isTrue);
+    // The phone's still strip uses the same pictures (owner's design, 17.11.2026).
+    expect(home.contains("final map = day ? 'assets/images/world_map_day_v3.jpg' : 'assets/images/world_map_night_v4.jpg';"), isTrue);
     expect(File('scripts/make_cloud_map.py').existsSync(), isTrue);
   });
 

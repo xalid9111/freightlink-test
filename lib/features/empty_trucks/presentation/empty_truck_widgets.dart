@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../../core/router/guest_access.dart';
+import '../../../core/router/safe_navigation.dart';
+import '../../../core/widgets/user_avatar.dart';
+import '../../../repositories/profile_repository.dart';
+import '../../cargo/domain/cargo_categories.dart' show categoryIconAsset;
+import '../../cargo/domain/cargo_pictures.dart' show cargoPictureCategory;
+import '../../chat/data/group_repository.dart';
+import '../../chat/presentation/providers/chat_providers.dart';
+import '../../chat/presentation/widgets/call_options.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../favorites/favorites.dart';
 import '../../cargo/domain/truck_types.dart';
-import '../../cargo/presentation/widgets/cargo_card.dart' show rowMetaLine;
 import '../../cargo/presentation/widgets/cargo_picture.dart';
 import '../data/empty_truck_repository.dart';
 import '../domain/empty_truck.dart';
@@ -155,90 +164,232 @@ class EmptyTruckTile extends ConsumerWidget {
   }
 }
 
-/// One empty truck as a row (owner's picture, 17.11.2026 — like the loads):
-/// a small truck picture with the heart, the route, "📍 Bakı | 20 t boş |
-/// Tent", and when it is free ("İndi" / date) on the right with a ›.
-class EmptyTruckRow extends ConsumerWidget {
+/// When the truck is ready, as on the owner's picture (17.11.2026): "Bu gün
+/// hazırdır" (free now or later today), otherwise the day it is free from —
+/// "25 noyabrdan" (Azerbaijani suffix by the month), "from 25 November" …
+String emptyTruckReadyLabel(AppStrings s, EmptyTruck t, String lang, {DateTime? now}) {
+  final n = now ?? DateTime.now();
+  final at = t.availableFrom?.toLocal();
+  final endOfToday = DateTime(n.year, n.month, n.day).add(const Duration(days: 1));
+  if (at == null || at.isBefore(endOfToday)) return s.t('et_ready_today');
+  final date = DateFormat('d MMMM', lang).format(at);
+  if (lang == 'az') return '$date${at.month == 4 ? 'dən' : 'dan'}';
+  return s.t('et_free_from', {'date': date});
+}
+
+/// "Caspian Trans" → "CT"; empty → "?".
+String carrierInitials(String? name) {
+  final parts = (name ?? '').trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  final first = String.fromCharCode(parts.first.runes.first);
+  final second = parts.length > 1 ? String.fromCharCode(parts[1].runes.first) : '';
+  return (first + second).toUpperCase();
+}
+
+/// "20 T" (capital T, owner 17.11.2026).
+String carrierTonsLabel(double tons) {
+  final v = tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1);
+  return '$v T';
+}
+
+/// Daşıyıcılar card (owner's picture 1, 17.11.2026): the carrier's own
+/// picture (profile photo / company logo, else the initials) in an accent
+/// ring, name + blue badge (a rating only when one exists — none is made
+/// up), the route with flags and a ›, the truck kind's own icon + "Tent •
+/// 20 T" | 📅 "Bu gün hazırdır" / "25 noyabrdan", then "Zəng et" and "Mesaj".
+/// A tap on the information opens the ad; the buttons work on their own.
+class EmptyTruckCarrierCard extends ConsumerStatefulWidget {
   final EmptyTruck truck;
   final AppStrings strings;
   final VoidCallback onTap;
-  const EmptyTruckRow({super.key, required this.truck, required this.strings, required this.onTap});
+
+  /// The carrier's rating — shown only when a real one exists (null = none).
+  final double? rating;
+  const EmptyTruckCarrierCard({super.key, required this.truck, required this.strings, required this.onTap, this.rating});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lang = ref.watch(currentLocaleProvider).languageCode;
-    final t = truck;
-    final meta = TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2);
+  ConsumerState<EmptyTruckCarrierCard> createState() => _EmptyTruckCarrierCardState();
+}
 
-    return Material(
-      color: AppColors.card,
-      borderRadius: BorderRadius.circular(14),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: ValueKey('empty-truck-tile-${t.id}'),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.tileLine, width: 1),
-          ),
-          padding: const EdgeInsets.fromLTRB(8, 8, 2, 8),
-          child: Row(children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                width: 64,
-                height: 64,
-                child: Stack(fit: StackFit.expand, children: [
-                  CargoPicture(truckType: t.truckType, seed: t.id),
-                  Positioned(
-                    left: 3,
-                    bottom: 3,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(6)),
-                      child: Text(strings.t('et_badge_empty'),
-                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500, color: Colors.white)),
-                    ),
-                  ),
-                  if (ref.watch(currentUserIdProvider) != t.ownerId)
-                    Positioned(top: 2, right: 2, child: LikeHeart(kind: FavKind.user, id: t.ownerId, size: 18, onPhoto: true)),
-                ]),
+class _EmptyTruckCarrierCardState extends ConsumerState<EmptyTruckCarrierCard> {
+  bool _busy = false;
+
+  Future<void> _message() async {
+    if (askSignIn(context)) return;
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final conv = await ref.read(groupRepositoryProvider).openDirect(widget.truck.ownerId);
+      ref.invalidate(conversationByIdProvider(conv.id));
+      if (mounted) context.pushOnce('/chat/${conv.id}');
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.strings.t('chat_open_failed'))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.strings;
+    final t = widget.truck;
+    final lang = ref.watch(currentLocaleProvider).languageCode;
+    final me = ref.watch(currentUserIdProvider);
+    final own = me != null && me == t.ownerId;
+    final profile = ref.watch(publicProfileProvider(t.ownerId)).valueOrNull;
+    final name = (profile?.fullName ?? '').trim();
+    final night = Theme.of(context).brightness == Brightness.dark;
+    final kind = cargoPictureCategory(truckType: t.truckType);
+    final phone = (t.phone ?? '').trim().isNotEmpty ? t.phone!.trim() : (t.whatsapp ?? '').trim();
+    final meta = TextStyle(fontSize: 14, color: AppColors.text, height: 1.2);
+    final divider = Container(height: 1, color: AppColors.line);
+
+    Widget kindIcon() => kind == null
+        ? Icon(Icons.local_shipping_outlined, size: 20, color: AppColors.textSoft)
+        : Image.asset(categoryIconAsset(kind, night: night),
+            key: ValueKey('carrier-kind-$kind'),
+            width: 28,
+            height: 18,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(Icons.local_shipping_outlined, size: 20, color: AppColors.textSoft));
+
+    final info = InkWell(
+      key: ValueKey('empty-truck-tile-${t.id}'),
+      onTap: widget.onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 6, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.accent, width: 2)),
+              child: UserAvatar(
+                key: const ValueKey('carrier-avatar'),
+                imageUrl: profile?.avatarUrl,
+                initials: carrierInitials(name),
+                radius: 22,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Row(children: [
+                  Flexible(
+                    child: Text(name.isEmpty ? '—' : name,
+                        key: const ValueKey('carrier-name'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+                  ),
+                  if (profile?.isVerified == true) ...[const SizedBox(width: 6), const VerifiedPhotoBadge(size: 18)],
+                ]),
+                if (widget.rating != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(key: const ValueKey('carrier-rating'), children: [
+                      Icon(Icons.star_rounded, size: 17, color: AppColors.accent),
+                      const SizedBox(width: 3),
+                      Text(widget.rating!.toStringAsFixed(1), style: meta),
+                    ]),
+                  ),
+              ]),
+            ),
+            if (!own) LikeHeart(kind: FavKind.user, id: t.ownerId, size: 20),
+          ]),
+          const SizedBox(height: 10),
+          divider,
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
-                  t.routeLabel(lang, anyLabel: strings.t('et_any_direction_short')),
+                  t.routeLabel(lang, anyLabel: s.t('et_any_direction_short')),
                   key: const ValueKey('empty-truck-route'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.2),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.2),
                 ),
-                const SizedBox(height: 6),
-                KeyedSubtree(
-                  key: const ValueKey('empty-truck-place'),
-                  child: rowMetaLine([
-                    (Icons.place_outlined, t.placeLabel(lang)),
-                    (Icons.scale_outlined, emptyTruckTonsLabel(strings, t.freeTons)),
-                    (Icons.local_shipping_outlined, truckTypeLabel(strings, t.truckType)),
-                  ], meta),
-                ),
+                const SizedBox(height: 8),
+                Row(children: [
+                  kindIcon(),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text('${truckTypeLabel(s, t.truckType)} • ${carrierTonsLabel(t.freeTons)}',
+                        key: const ValueKey('carrier-kind-tons'), maxLines: 1, overflow: TextOverflow.ellipsis, style: meta),
+                  ),
+                  Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 10), color: AppColors.line),
+                  Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSoft),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(emptyTruckReadyLabel(s, t, lang),
+                        key: const ValueKey('carrier-ready'), maxLines: 1, overflow: TextOverflow.ellipsis, style: meta),
+                  ),
+                ]),
               ]),
             ),
-            const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 80),
-              child: Text(emptyTruckFreeLabel(strings, t, lang),
-                  textAlign: TextAlign.end,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.accent, height: 1.2)),
-            ),
-            Icon(Icons.chevron_right, size: 20, color: AppColors.textSoft),
+            Icon(Icons.chevron_right, color: AppColors.textSoft),
           ]),
+        ]),
+      ),
+    );
+
+    // The buttons: "Zəng et" (accent) + "Mesaj"; a visitor signs in first;
+    // a hidden / missing number leaves only "Mesaj"; one's own ad: Redaktə et.
+    Widget buttons() {
+      const h = 44.0;
+      final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+      if (own) {
+        return OutlinedButton.icon(
+          key: const ValueKey('carrier-edit'),
+          onPressed: () => context.pushOnce('/trucks/${t.id}/edit'),
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(h), shape: shape),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: Text(s.t('et_edit')),
+        );
+      }
+      final guest = isSignedOut();
+      final canCall = guest || phone.isNotEmpty;
+      final message = OutlinedButton.icon(
+        key: const ValueKey('carrier-message'),
+        onPressed: _busy ? null : _message,
+        style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(h), shape: shape, backgroundColor: AppColors.cardAlt, foregroundColor: AppColors.text),
+        icon: const Icon(Icons.chat_bubble_outline, size: 19),
+        label: Text(s.t('et_card_message'), style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
+      );
+      if (!canCall) return message;
+      return Row(children: [
+        Expanded(
+          child: FilledButton.icon(
+            key: const ValueKey('carrier-call'),
+            onPressed: () {
+              if (askSignIn(context)) return;
+              showCallOptions(context, s, phone);
+            },
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(h), shape: shape, backgroundColor: AppColors.accentFill),
+            icon: const Icon(Icons.phone, size: 19),
+            label: Text(s.t('et_call'), style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
+          ),
         ),
+        const SizedBox(width: 10),
+        Expanded(child: message),
+      ]);
+    }
+
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.tileLine, width: 1),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          info,
+          Padding(padding: const EdgeInsets.fromLTRB(12, 2, 12, 12), child: buttons()),
+        ]),
       ),
     );
   }
