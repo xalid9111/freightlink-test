@@ -409,14 +409,8 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
   );
 }
 
-/// The phone's compact header (owner's design, 17.11.2026): the TIR Link
-/// logo + TırLink + www.tirlink.app, the heart and the profile picture
-/// (HeaderCircles), and under them the world map again (owner, later the
-/// same day: "xəritəni yerinə qoy") — with "CANLI" and the three real
-/// counters, but only the city lights blink (LiveMap routes: false: no
-/// moving roads or trucks, a calm timer). İş Mərkəzi stays in Profil; the
-/// load types open from the filter button; "+ … əlavə et" stands over the
-/// list.
+/// Dark hero: brand row, live-map title, the animated map and REAL stats
+/// computed from the open marketplace (no invented numbers).
 class _Hero extends ConsumerWidget {
   final AppStrings strings;
   // Open loads (the counter; page by page it comes from the server, 0109).
@@ -427,59 +421,244 @@ class _Hero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     String stat(int n) => loaded ? '$n' : '—';
-    final topPad = MediaQuery.of(context).padding.top + 8;
-    return Column(
-      key: const ValueKey('home-compact-header'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(16, topPad, 16, 6),
-          child: Row(children: [
-            const Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: TirLinkWordmark(size: 22, showLogo: true),
-              ),
+
+    // Title, map and counters stand in one cloud scene (the clouds above /
+    // below the map are separate pictures that continue it): the owner's
+    // day / night cloud pictures (19.10.2026).
+    final day = AppColors.isDay;
+    final scene = day ? 'assets/images/world_map_day_v3' : 'assets/images/world_map_night_v4';
+    final topPad = MediaQuery.of(context).padding.top + 10;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.hero,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
+      ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _CloudScene(
+            asset: '${scene}_top.jpg',
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+            padding: EdgeInsets.only(top: topPad),
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                // Logo with the slogan under it in one small line (owner,
+                // 27.10.2026 — the big headline over the map is gone).
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                    // The TIR Link logo left of TırLink (owner, 14.11.2026; it
+                    // replaced the orange chart icon), www.tirlink.app under it.
+                    const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: TirLinkWordmark(size: 18, showLogo: true),
+                    ),
+                    const SizedBox(height: 2),
+                    Text.rich(
+                      key: const ValueKey('home-slogan'),
+                      TextSpan(children: [
+                        TextSpan(text: '${strings.t('home_hero_1')} '),
+                        TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
+                        TextSpan(text: ' ${strings.t('home_hero_3')}'),
+                      ]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2).copyWith(shadows: _readableOnMap()),
+                    ),
+                  ]),
+                ),
+                HeaderCircles(strings: strings),
+              ],
             ),
-            HeaderCircles(strings: strings),
+          ),
+          const SizedBox(height: 14),
+            ]),
+            ),
+          ),
+          // Full width, edge to edge; edges fade into the page colour.
+          Stack(children: [
+            // Only the city lights blink (owner, 17.11.2026: "animasiyanı azalt,
+            // sadəcə şəhərlərdə işıqlar yanıb sönsün, hərəkət edən marşrutları sil").
+            LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),
+            // Three live counters (all real numbers from the database),
+            // top-right above "CANLI" (owner, 28.10.2026).
+            Positioned(
+              top: 6,
+              right: 14,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  _StatCard(
+                    icon: Icons.local_shipping,
+                    color: AppColors.accent,
+                    value: stat(count),
+                    label: strings.t('home_stat_active'),
+                    onTap: () => _scrollToFeed(),
+                  ),
+                  const SizedBox(width: 4),
+                  _StatCard(
+                    icon: Icons.groups_2,
+                    color: AppColors.blue,
+                    value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                    label: strings.t('home_stat_carriers'),
+                  ),
+                  const SizedBox(width: 4),
+                  _StatCard(
+                    icon: Icons.bar_chart_rounded,
+                    color: AppColors.online,
+                    value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                    label: strings.t('home_stat_24h'),
+                    onTap: () => _scrollToFeed(),
+                  ),
+              ]),
+            ),
           ]),
-        ),
-        // The map, edge to edge: only the city lights blink.
-        Stack(key: const ValueKey('home-live-map'), children: [
-          LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),
-          // Three live counters (all real numbers from the database),
-          // top-right above "CANLI" (owner, 28.10.2026).
-          Positioned(
-            top: 6,
-            right: 14,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              _StatCard(
-                icon: Icons.local_shipping,
-                color: AppColors.accent,
-                value: stat(count),
-                label: strings.t('home_stat_active'),
-                onTap: () => _scrollToFeed(),
-              ),
-              const SizedBox(width: 4),
-              _StatCard(
-                icon: Icons.groups_2,
-                color: AppColors.blue,
-                value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                label: strings.t('home_stat_carriers'),
-              ),
-              const SizedBox(width: 4),
-              _StatCard(
-                icon: Icons.bar_chart_rounded,
-                color: AppColors.online,
-                value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                label: strings.t('home_stat_24h'),
-                onTap: () => _scrollToFeed(),
-              ),
+          _CloudScene(
+            asset: '${scene}_bottom.jpg',
+            alignment: Alignment.topCenter,
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+          const SizedBox(height: 14),
+          // İş Mərkəzi where the counters were (owner, 28.10.2026) and
+          // "Yük hovuzu" (+), the add-load button (/cargo/create),
+          // right-aligned (owner, 21.10.2026).
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                JobCenterMapButton(strings: strings),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    // Same place; the name and the form follow Yüklər |
+                    // Daşıyıcılar (owner, 13.11.2026).
+                    child: ref.watch(loadsSectionProvider) == LoadsSection.carriers
+                        ? _AddLoadButton(
+                            key: const ValueKey('add-empty-truck'),
+                            label: strings.t('et_add_button'),
+                            onTap: () => context.pushOnce('/trucks/new'))
+                        : _AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create')),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // "Populyar marşrutlar" removed (owner, 21.10.2026): the load-type
+          // tiles and the big / small cards come under the hero instead.
             ]),
           ),
-        ]),
+        ],
+      ),
+    );
+  }
+}
+
+/// [child] drawn on a cloud picture shown at the screen width ([alignment]
+/// = the edge that touches the map, so the clouds continue the map's own).
+class _CloudScene extends StatelessWidget {
+  final String asset;
+  final Alignment alignment;
+  final Widget child;
+
+  const _CloudScene({required this.asset, required this.alignment, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    // The outer edge (top of the title area, bottom of the counters area)
+    // also fades softly into the page colour behind [child], so the clouds
+    // never end in a line, whatever the screen width or text size.
+    final outerTop = alignment == Alignment.bottomCenter;
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(image: AssetImage(asset), fit: BoxFit.fitWidth, alignment: alignment),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: outerTop ? 0 : null,
+          bottom: outerTop ? null : 0,
+          height: 36,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: outerTop ? Alignment.topCenter : Alignment.bottomCenter,
+                end: outerTop ? Alignment.bottomCenter : Alignment.topCenter,
+                colors: [AppColors.hero, AppColors.hero.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ),
+        child,
       ],
+    );
+  }
+}
+
+/// "Yük hovuzu" on a dark rounded plate with a shadow + big orange round
+/// "+" over its right end (under the live map).
+class _AddLoadButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _AddLoadButton({super.key, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: onTap,
+        // 30 % smaller than before, then 10 % up again (owner, 21.10.2026), so it fits the
+        // counters' row; the plate runs under the "+" circle.
+        child: Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 8, 26, 8),
+                decoration: BoxDecoration(
+                  color: AppColors.card.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(23),
+                  border: Border.all(color: AppColors.line),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
+                ),
+                // One line ("Yük hovuzu" side by side); shrinks instead of wrapping.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(fontSize: 13.2, color: AppColors.text, fontWeight: FontWeight.w400)),
+                ),
+              ),
+            ),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.accentFill,
+                shape: BoxShape.circle,
+                boxShadow: const [BoxShadow(color: Color(0x66D4420E), blurRadius: 10, offset: Offset(0, 3))],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 24),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

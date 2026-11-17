@@ -49,11 +49,10 @@ void main() {
       expect(src(p), isNot(contains('Icons.show_chart')), reason: p);
       expect(src(p), contains('showLogo: true'), reason: p);
     }
-    // The phone's compact header (owner's design, 17.11.2026): logo +
-    // TırLink + www.tirlink.app, no slogan line.
+    // Slogan on its own line: "dünya üzrə" in the accent colour.
     final home = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    expect(home, contains("ValueKey('home-compact-header')"));
-    expect(home, contains('TirLinkWordmark(size: 22, showLogo: true)'));
+    expect(home, contains("ValueKey('home-slogan')"));
+    expect(home, contains("TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent))"));
     expect(File(TirLinkWordmark.logoAsset).existsSync(), isTrue);
     expect(src('pubspec.yaml'), contains('- assets/images/brand/'));
   });

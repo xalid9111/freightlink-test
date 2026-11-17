@@ -147,9 +147,13 @@ void main() {
     }
   });
 
-  test('wired: compact header, the live map (lights only), the load types open, + Yük əlavə et over the list', () {
+  test('wired: the old map section (lights only), the load types open, + Yük əlavə et over the list', () {
     final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    expect(m, contains("ValueKey('home-compact-header')"));
+    // The old map section back (owner, 17.11.2026, later): clouds above /
+    // below, İş Mərkəzi and "Yük hovuzu +" under the map.
+    expect(m, contains('_CloudScene('));
+    expect(m, contains('JobCenterMapButton(strings: strings)'));
+    expect(m, contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"));
     // The map back (owner, 17.11.2026, later): only the city lights blink.
     expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false)"));
     expect(RegExp(r'_StatCard\(\s+icon:').allMatches(m).length, 3, reason: 'the three real counters');
