@@ -204,7 +204,7 @@ void main() {
     await t.pump();
     expect(find.text('🇦🇿 Bakı → 🇹🇷 İstanbul'), findsOneWidget);
     expect(find.text('Bakı, Azərbaycan'), findsOneWidget);
-    expect(find.text('20 t boş'), findsOneWidget);
+    expect(find.text('20 T boş'), findsOneWidget, reason: 'capital T (owner, 17.11.2026)');
     expect(find.text('İndi'), findsOneWidget);
     expect(find.text('BOŞ'), findsOneWidget);
   });

@@ -309,29 +309,48 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
     {required bool anyFilter, required VoidCallback onReset}) {
   final bottom = math.max(96.0, MediaQuery.paddingOf(context).bottom + 16);
   final mine = ref.watch(myEmptyTrucksProvider).valueOrNull ?? const <EmptyTruck>[];
-  final mineRow = mine.isEmpty
-      ? null
-      : SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const ValueKey('empty-truck-mine'),
-                onPressed: () => context.pushOnce('/trucks/mine'),
-                icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                label: Text(strings.t('et_mine_count', {'n': '${mine.length}'})),
-              ),
+  // Boş maşın əlavə et right above the cards, easy to find (owner,
+  // 17.11.2026), with "Mənim elanlarım (n)" beside it when there are any.
+  // The orange + under the map keeps its place too.
+  final mineRow = SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: Row(children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            key: const ValueKey('empty-truck-add-top'),
+            onPressed: () => context.pushOnce('/trucks/new'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.accent),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.add, size: 20),
+            label: Text(strings.t('et_add_button'), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ),
+        if (mine.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Flexible(
+            child: TextButton.icon(
+              key: const ValueKey('empty-truck-mine'),
+              onPressed: () => context.pushOnce('/trucks/mine'),
+              icon: const Icon(Icons.local_shipping_outlined, size: 18),
+              label: Text(strings.t('et_mine_count', {'n': '${mine.length}'}), maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ),
-        );
+        ],
+      ]),
+    ),
+  );
   return trucks.when<List<Widget>>(
     loading: () => [
-      if (mineRow != null) mineRow,
+      mineRow,
       const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))),
     ],
     error: (e, _) => [
-      if (mineRow != null) mineRow,
+      mineRow,
       SliverToBoxAdapter(
         child: e is EmptyTruckNotReady
             ? Padding(
@@ -348,7 +367,7 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
     data: (list) {
       if (list.isEmpty) {
         return [
-          if (mineRow != null) mineRow,
+          mineRow,
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(24, 24, 24, bottom),
@@ -366,17 +385,16 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
         ];
       }
       return [
-        if (mineRow != null) mineRow,
+        mineRow,
         SliverPadding(
           padding: EdgeInsets.fromLTRB(12, 0, 12, bottom),
-          // One truck per row, like the loads (owner's picture, 17.11.2026).
+          // The carrier cards of the owner's picture 1 (17.11.2026).
           sliver: SliverList.builder(
             itemCount: list.length,
             itemBuilder: (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: kRowGap),
-              child: TileRowWidth(
-                child: EmptyTruckRow(truck: list[i], strings: strings, onTap: () => context.pushOnce('/trucks/${list[i].id}')),
-              ),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: EmptyTruckCarrierCard(
+                  truck: list[i], strings: strings, onTap: () => context.pushOnce('/trucks/${list[i].id}')),
             ),
           ),
         ),

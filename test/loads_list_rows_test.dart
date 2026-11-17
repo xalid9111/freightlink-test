@@ -18,8 +18,6 @@ import 'package:freightlink/features/cargo/domain/vip_rows.dart';
 import 'package:freightlink/features/cargo/presentation/providers/cargo_media_providers.dart';
 import 'package:freightlink/features/cargo/presentation/widgets/cargo_card.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
-import 'package:freightlink/features/empty_trucks/domain/empty_truck.dart';
-import 'package:freightlink/features/empty_trucks/presentation/empty_truck_widgets.dart';
 import 'package:freightlink/models/cargo_model.dart';
 
 String src(String p) => File(p).readAsStringSync();
@@ -110,22 +108,6 @@ void main() {
           await t.pumpWidget(host(
               Column(mainAxisSize: MainAxisSize.min, children: [
                 CargoListRow(cargo: load('c1', price: 1250000, type: 'container'), strings: s, vip: true, onTap: () {}),
-                EmptyTruckRow(
-                    truck: EmptyTruck.fromJson({
-                      'id': 't1',
-                      'owner_id': 'o1',
-                      'from_city': 'Baku',
-                      'from_country': 'Azerbaijan',
-                      'from_code': 'AZ',
-                      'to_city': 'Istanbul',
-                      'to_country': 'Turkey',
-                      'to_code': 'TR',
-                      'truck_type': 'tent',
-                      'free_tons': 20,
-                      'status': 'active',
-                    }),
-                    strings: s,
-                    onTap: () {}),
               ]),
               s,
               width: w,
@@ -140,7 +122,7 @@ void main() {
   test('wired: the phone page uses the rows; the computer keeps its tiles', () {
     final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
     expect(m, contains('CargoListRow('));
-    expect(m, contains('EmptyTruckRow('));
+    expect(m, contains('EmptyTruckCarrierCard('));
     expect(m.contains('CargoTile('), isFalse);
     final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
     expect(d, contains('CargoTile('));

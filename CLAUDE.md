@@ -217,9 +217,22 @@ files to the owner separately (they are run by hand in the SQL editor).
   Refrijerator | 30 noy" as one line with small icons (ends in "…", never
   overflows), the price in AppColors.accent with the currency under it,
   Premium / VIP marks over the price, ›; kPhoneLoadColumns = 1, so the
-  order is load, VIP, load, VIP …; Daşıyıcılar the same (EmptyTruckRow:
-  picture + BOŞ + heart, route, "📍 place | 20 t boş | truck", "İndi" /
-  date). Tested for 6 languages × 320–390 pt × text size 125 %.
+  order is load, VIP, load, VIP …. Tested for 6 languages × 320–390 pt ×
+  text size 125 %.
+  Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
+  there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
+  own picture (profile photo / company logo via UserAvatar, else the
+  initials) in an accent ring, name + the real blue badge, a rating ONLY
+  when a real one exists (none yet — nothing made up), heart on another
+  carrier's card, divider, the route with flags + ›, the chosen kind's own
+  icon (categoryIconAsset) + "Tent • 20 T" | 📅 "Bu gün hazırdır" / "25
+  noyabrdan", then "Zəng et" (accent) + "Mesaj" (a visitor signs in first;
+  no / hidden number = only Mesaj; one's own ad = Redaktə et). The
+  information opens the ad page; the buttons work on their own. "Aktiv
+  daşıyıcılar · n nəticə", "+ Boş maşın əlavə et" right above the cards
+  (the orange + under the map stays) with "Mənim elanlarım (n)". Tonnes
+  always with a capital T (et_free_tons "20 T boş"). Profile photos are
+  shrunk at upload (1024 px, quality 85).
 - Promotions "Önə çıxar" (owner, 25.10.2026, Turbo.az-like; TIR Bazarı
   0066, Loads 0067): İrəli çək (1/3/5/10 lifts = 3/6/9/15 AZN, first at
   once then every 24 h), VIP (1/5/15/30 days = 5/15/25/40 AZN, daily
