@@ -1,4 +1,5 @@
 import '../../favorites/favorites.dart' show openFavorites, FavTab;
+import '../../notices/notices.dart' show NoticeBell;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -33,8 +34,6 @@ import '../../../core/router/safe_navigation.dart';
 import '../../../core/layout/desktop_layout.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../repositories/profile_repository.dart';
-import '../../chat/presentation/providers/chat_providers.dart';
-import '../../chat/presentation/providers/group_providers.dart';
 import '../../jobs/presentation/job_widgets.dart';
 import '../../empty_trucks/data/empty_truck_repository.dart';
 import '../../empty_trucks/domain/empty_truck.dart';

@@ -2368,5 +2368,14 @@
   "phone_hide_not_ready": "此功能尚未在服务器上设置（SQL 0122）。",
   "phone_hidden_note": "📵 号码已隐藏 — 请发消息",
   "auth_link_problem": "此链接已失效：已过期或在其他浏览器中打开。请在登录页通过“忘记密码”获取新链接。",
-  "auth_link_login": "登录"
+  "auth_link_login": "登录",
+  "ntf_title": "通知",
+  "ntf_read_all": "全部已读",
+  "ntf_empty": "暂无通知。您货物的报价、预订和其他消息会显示在这里。",
+  "ntf_offer_new": "您的货物有新报价：{amount}",
+  "ntf_offer_accepted": "您的报价已被接受：{amount}",
+  "ntf_offer_rejected": "您的报价被拒绝：{amount}",
+  "ntf_tp_booking": "您的停车场有新预订",
+  "ntf_tp_payment": "新付款——请核对",
+  "ntf_tp_worker": "员工等待批准"
 }

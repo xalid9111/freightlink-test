@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/chat/presentation/providers/chat_providers.dart';
-import '../../features/chat/presentation/providers/group_providers.dart';
+import '../../features/cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
+import '../../features/favorites/favorites.dart' show openFavorites, FavTab;
+import '../../features/notices/notices.dart' show NoticeBell;
 import '../../repositories/profile_repository.dart';
 import '../localization/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/user_avatar.dart';
 
 /// Computer view, top right of a page: a search field (optional), the
-/// bell (unread messages → Mesajlar) and my account (→ Profil). Same look
+/// bell (Bildirişlər), the heart (Bəyəndiklərim) and my account (→ Profil). Same look
 /// as on the desktop Yüklər page.
 class DeskHeaderActions extends ConsumerWidget {
   final AppStrings strings;
@@ -28,7 +29,6 @@ class DeskHeaderActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = strings;
-    final unread = (ref.watch(unreadCountProvider).valueOrNull ?? 0) + ref.watch(groupUnreadTotalProvider);
     final uid = ref.watch(currentUserIdProvider);
     final me = ref.watch(currentUserProvider);
     final profile = uid == null ? null : ref.watch(publicProfileProvider(uid)).valueOrNull;
@@ -42,25 +42,28 @@ class DeskHeaderActions extends ConsumerWidget {
       children: [
         if (search != null) Flexible(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: search!)),
         const SizedBox(width: 14),
-        Tooltip(
-          message: s.t('nav_messages'),
-          child: InkWell(
-            key: const ValueKey('desk-bell'),
-            customBorder: const CircleBorder(),
-            onTap: () => context.go('/messages'),
-            child: Container(
-              width: 54,
-              height: 54,
-              decoration: pill(),
-              alignment: Alignment.center,
-              child: Badge(
-                isLabelVisible: unread > 0,
-                label: Text(unread > 99 ? '99+' : '$unread'),
-                backgroundColor: AppColors.danger,
-                child: Icon(Icons.notifications_none, color: AppColors.text, size: 26),
-              ),
+        // "Bildirişlər" (owner, 17.11.2026): every notice except chat
+        // messages (Mesajlar keeps its count in the sidebar).
+        NoticeBell(
+          strings: s,
+          size: 26,
+          frame: (icon, onTap, tip) => Tooltip(
+            message: tip,
+            child: InkWell(
+              key: const ValueKey('desk-bell'),
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Container(width: 54, height: 54, decoration: pill(), alignment: Alignment.center, child: icon),
             ),
           ),
+        ),
+        const SizedBox(width: 12),
+        HeaderCircle(
+          key: const ValueKey('desk-favorites'),
+          tooltip: s.t('fav_title'),
+          size: 54,
+          onTap: () => openFavorites(context, FavTab.loads),
+          child: Icon(Icons.favorite_border, color: AppColors.accent, size: 26),
         ),
         const SizedBox(width: 12),
         InkWell(

@@ -1,4 +1,5 @@
 import '../../adbiz/presentation/adbiz_providers.dart';
+import '../../notices/notices.dart' show NoticeBell;
 import '../../adbiz/presentation/adbiz_widgets.dart';
 import '../../favorites/favorites.dart';
 import 'package:flutter/material.dart';
@@ -107,6 +108,19 @@ class ProfileScreen extends ConsumerWidget {
                       child: Text(strings.t('profile_title'),
                           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
+                    // "Bildirişlər" left of the heart (owner, 17.11.2026).
+                    NoticeBell(
+                      strings: strings,
+                      frame: (icon, onTap, tip) => Material(
+                        color: AppColors.card,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: AppColors.line),
+                        ),
+                        child: IconButton(key: const ValueKey('notice-bell'), tooltip: tip, icon: icon, onPressed: onTap),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     // "Bəyəndiklərim" → Profillər (owner, 07.11.2026).
                     Material(
                       color: AppColors.card,

@@ -2368,5 +2368,14 @@
   "phone_hide_not_ready": "Bu özellik henüz sunucuda kurulmadı (SQL 0122).",
   "phone_hidden_note": "📵 Numara gizli — Mesaj yazın",
   "auth_link_problem": "Bu bağlantı artık çalışmıyor: süresi dolmuş veya başka bir tarayıcıda açılmış. Giriş sayfasında \"Şifremi unuttum\" ile yeni bağlantı isteyin.",
-  "auth_link_login": "Giriş"
+  "auth_link_login": "Giriş",
+  "ntf_title": "Bildirimler",
+  "ntf_read_all": "Tümünü okundu yap",
+  "ntf_empty": "Henüz bildirim yok. Yükünüze teklifler, rezervasyonlar ve diğer haberler burada görünecek.",
+  "ntf_offer_new": "Yükünüze yeni teklif: {amount}",
+  "ntf_offer_accepted": "Teklifiniz kabul edildi: {amount}",
+  "ntf_offer_rejected": "Teklifiniz reddedildi: {amount}",
+  "ntf_tp_booking": "Parkınıza yeni rezervasyon",
+  "ntf_tp_payment": "Yeni ödeme — kontrol edin",
+  "ntf_tp_worker": "Çalışan onay bekliyor"
 }

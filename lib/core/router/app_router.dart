@@ -1,5 +1,6 @@
 import '../../features/empty_trucks/presentation/empty_truck_detail_screen.dart';
 import '../../features/empty_trucks/presentation/empty_truck_form_screen.dart';
+import '../../features/notices/notices.dart' show NoticesScreen;
 import '../../features/favorites/favorites.dart' show FavoritesScreen, favTabOf;
 import 'package:flutter/widgets.dart' show GlobalKey, Listenable, NavigatorState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -313,6 +314,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/favorites',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => FavoritesScreen(initial: favTabOf(state.uri.queryParameters['tab'])),
+      ),
+      // "Bildirişlər" (owner, 17.11.2026): every notice except chat messages.
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NoticesScreen(),
       ),
       GoRoute(
         path: '/user/:id',
