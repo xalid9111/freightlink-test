@@ -1,4 +1,5 @@
 import '../../favorites/favorites.dart';
+import '../../notices/notices.dart' show NoticeBell;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -199,6 +200,8 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       appBar: AppBar(
         title: Text(strings.t('messages_placeholder_title')),
         actions: [
+          // "Bildirişlər" left of the heart (owner, 17.11.2026).
+          NoticeBell(strings: strings, frame: NoticeBell.plain, size: 24),
           // "Bəyəndiklərim" on the Mesajlar tab (owner, 07.11.2026).
           IconButton(
             key: const ValueKey('msg-favorites'),

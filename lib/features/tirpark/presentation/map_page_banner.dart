@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
+import '../../favorites/favorites.dart' show openFavorites, FavTab;
+import '../../notices/notices.dart' show NoticeBell;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
@@ -106,10 +109,30 @@ class MapPageBanner extends ConsumerWidget {
               Text(hero?.subtitle ?? defaultSubtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
             ]),
           ),
+        // "Bildirişlər" + the heart, fixed like on the other pages (owner,
+        // 17.11.2026: "ürək və bildirişlər hər səhifədə sabitlənsin").
+        Positioned(
+          right: 10,
+          top: 10,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            NoticeBell(
+              strings: s,
+              size: 21,
+              frame: (icon, onTap, tip) => HeaderCircle(key: const ValueKey('notice-bell'), tooltip: tip, onTap: onTap, child: icon),
+            ),
+            const SizedBox(width: 10),
+            HeaderCircle(
+              key: ValueKey('map-favorites-$page'),
+              tooltip: s.t('fav_title'),
+              onTap: () => openFavorites(context, FavTab.profiles),
+              child: Icon(Icons.favorite_border, size: 21, color: AppColors.accent),
+            ),
+          ]),
+        ),
         if (admin)
           Positioned(
             right: 10,
-            top: 10,
+            bottom: 10,
             child: Material(
               color: Colors.black.withValues(alpha: 0.55),
               shape: const CircleBorder(),

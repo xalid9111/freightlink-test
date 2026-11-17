@@ -1043,6 +1043,21 @@ files to the owner separately (they are run by hand in the SQL editor).
   faster) and writes native_dpr / refresh_hz. The admin's old 2x switch
   counts as 2x until a choice is made. The Profil cover opens at its shown
   size (ResizeImage; a big upload stopped Profil ~0.27 s).
+- Bildirişlər (owner, 17.11.2026, SQL 0128: "mesajdan başqa gələn bütün
+  bildirişlər ora gəlsin, neçə bildiriş varsa kənarına yazılsın"; "ürək və
+  bildirişlər hər səhifədə sabitlənsin"): a bell LEFT of the heart on every
+  page — Yüklər, TIR Bazarı, Mesajlar, Profil, the map banners of TIRPark /
+  Servislər / Mağazalar (bell + heart top right there; the admin's banner
+  pencil moved to the lower right) and the computer's header (its bell now
+  opens Bildirişlər; Mesajlar keeps its count in the sidebar). The red
+  number = my unread notices (notifications table; realtime + a read every
+  20 s), never chat messages. /notifications lists them newest first (unread
+  bold, "Hamısını oxunmuş et"); a tap marks it read and opens its place: a
+  new offer on my load (0128) → the load, my offer accepted / rejected
+  (0128) → the load, TIR Park booking (0128) / receipt (0085) / worker
+  request (0088) → the park panel, İş Mərkəzi (0069) → as before. The
+  offer's "Daxil olan təkliflər" on the load page and the İş Mərkəzi bell
+  are unchanged. A visitor's tap opens sign-in.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

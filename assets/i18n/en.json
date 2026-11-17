@@ -2368,5 +2368,14 @@
   "phone_hide_not_ready": "This feature is not set up on the server yet (SQL 0122).",
   "phone_hidden_note": "📵 Number hidden — send a message",
   "auth_link_problem": "This link no longer works: it expired or was opened in another browser. Ask for a new one with \"Forgot password\" on the login page.",
-  "auth_link_login": "Log in"
+  "auth_link_login": "Log in",
+  "ntf_title": "Notifications",
+  "ntf_read_all": "Mark all read",
+  "ntf_empty": "No notifications yet. Offers on your loads, bookings and other news will show here.",
+  "ntf_offer_new": "New offer on your load: {amount}",
+  "ntf_offer_accepted": "Your offer was accepted: {amount}",
+  "ntf_offer_rejected": "Your offer was declined: {amount}",
+  "ntf_tp_booking": "New booking at your park",
+  "ntf_tp_payment": "New payment — please check",
+  "ntf_tp_worker": "A worker is waiting for approval"
 }

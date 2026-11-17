@@ -1,4 +1,5 @@
 import '../../favorites/favorites.dart' show openFavorites, FavTab;
+import '../../notices/notices.dart' show NoticeBell;
 import 'package:flutter/material.dart';
 import '../../promo/promo_cross.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -150,6 +151,8 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                           child: Text(s.t('nav_market'),
                               style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
+                        // "Bildirişlər" left of the heart (owner, 17.11.2026).
+                        NoticeBell(strings: s, size: 28, frame: NoticeBell.plain),
                         IconButton(
                           tooltip: s.t('mk_favorites'),
                           onPressed: () => openFavorites(context, FavTab.market),

@@ -2368,5 +2368,14 @@
   "phone_hide_not_ready": "Bu funksiya hələ serverdə qurulmayıb (SQL 0122).",
   "phone_hidden_note": "📵 Nömrə gizlidir — Mesaj yazın",
   "auth_link_problem": "Bu link artıq işləmir: vaxtı keçib və ya başqa brauzerdə açılıb. Giriş səhifəsində \"Şifrəni unutdum\" ilə yeni link istəyin.",
-  "auth_link_login": "Giriş"
+  "auth_link_login": "Giriş",
+  "ntf_title": "Bildirişlər",
+  "ntf_read_all": "Hamısını oxunmuş et",
+  "ntf_empty": "Hələ bildiriş yoxdur. Yükünüzə təklif, rezervasiya və digər xəbərlər burada görünəcək.",
+  "ntf_offer_new": "Yükünüzə yeni təklif: {amount}",
+  "ntf_offer_accepted": "Təklifiniz qəbul edildi: {amount}",
+  "ntf_offer_rejected": "Təklifiniz rədd edildi: {amount}",
+  "ntf_tp_booking": "Parkınıza yeni rezervasiya",
+  "ntf_tp_payment": "Yeni ödəniş — yoxlayın",
+  "ntf_tp_worker": "İşçi təsdiq gözləyir"
 }

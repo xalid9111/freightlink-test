@@ -501,7 +501,7 @@ class _DeskStat extends StatelessWidget {
 }
 
 /// Top bar of a desktop page: search field (filters this page), the bell
-/// (unread messages → Mesajlar) and the account chip (→ Profil).
+/// (Bildirişlər) and the account chip (→ Profil).
 class _DeskTopBar extends ConsumerStatefulWidget {
   final AppStrings strings;
   final String hint;
@@ -535,7 +535,6 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
       if (next != _text.text) _text.text = next;
     });
     final glass = AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.82);
-    final unread = (ref.watch(unreadCountProvider).valueOrNull ?? 0) + ref.watch(groupUnreadTotalProvider);
     final favCount = ref.watch(cargoFavoriteIdsProvider).length;
     final uid = ref.watch(currentUserIdProvider);
     final me = ref.watch(currentUserProvider);
@@ -610,7 +609,23 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
           ),
         ),
         const SizedBox(width: 12),
-        // "Seçilmiş yüklər" (owner, 22.10.2026): heart next to the bell.
+        // "Bildirişlər" (owner, 17.11.2026): left of the heart; every notice
+        // except chat messages (Mesajlar keeps its count in the sidebar).
+        NoticeBell(
+          strings: s,
+          size: 26,
+          frame: (icon, onTap, tip) => Tooltip(
+            message: tip,
+            child: InkWell(
+              key: const ValueKey('desk-bell'),
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Container(width: 54, height: 54, decoration: pill(), alignment: Alignment.center, child: icon),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // "Seçilmiş yüklər" (owner, 22.10.2026): the heart right of the bell.
         HeaderCircle(
           key: const ValueKey('desk-favorites'),
           tooltip: s.t('fav_cargo_title'),
@@ -621,27 +636,6 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
             label: Text(favCount > 99 ? '99+' : '$favCount'),
             backgroundColor: AppColors.accentFill,
             child: Icon(favCount > 0 ? Icons.favorite : Icons.favorite_border, color: AppColors.accent, size: 26),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Tooltip(
-          message: s.t('nav_messages'),
-          child: InkWell(
-            key: const ValueKey('desk-bell'),
-            customBorder: const CircleBorder(),
-            onTap: () => context.go('/messages'),
-            child: Container(
-              width: 54,
-              height: 54,
-              decoration: pill(),
-              alignment: Alignment.center,
-              child: Badge(
-                isLabelVisible: unread > 0,
-                label: Text(unread > 99 ? '99+' : '$unread'),
-                backgroundColor: AppColors.danger,
-                child: Icon(Icons.notifications_none, color: AppColors.text, size: 26),
-              ),
-            ),
           ),
         ),
         const SizedBox(width: 12),

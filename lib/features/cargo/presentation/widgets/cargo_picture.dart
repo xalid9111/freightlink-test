@@ -1,4 +1,5 @@
 import '../../../favorites/favorites.dart';
+import '../../../notices/notices.dart' show NoticeBell;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -147,6 +148,13 @@ class HeaderCircles extends ConsumerWidget {
         : name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).take(2).map((p) => p.characters.first.toUpperCase()).join();
     final favCount = ref.watch(cargoFavoriteIdsProvider).length;
     return Row(mainAxisSize: MainAxisSize.min, children: [
+      // "Bildirişlər" left of the heart (owner, 17.11.2026).
+      NoticeBell(
+        strings: strings,
+        size: 21,
+        frame: (icon, onTap, tip) => HeaderCircle(key: const ValueKey('notice-bell'), tooltip: tip, onTap: onTap, child: icon),
+      ),
+      const SizedBox(width: 10),
       HeaderCircle(
         key: const ValueKey('hdr-favorites'),
         tooltip: strings.t('fav_cargo_title'),
