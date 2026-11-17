@@ -164,10 +164,12 @@ void main() {
     });
     test('map: "Yük hovuzu" button opens the form; texts over the map have a shadow', () {
       final m = read('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-      // Phone (owner's design, 17.11.2026): "+ Yük əlavə et" over the list;
-      // no map texts any more. Computer: label + headline keep their shadow.
-      expect(m.contains("key: const ValueKey('add-cargo-top'),") && m.contains("onTap: () => context.pushOnce('/cargo/create'),"), isTrue);
-      expect(RegExp(r'shadows: _readableOnMap\(\)').allMatches(read('lib/features/cargo/presentation/cargo_marketplace_desktop.dart')).length, 2);
+      // Phone (owner, 17.11.2026): the map button reads "Yük əlavə et" (was
+      // "Yük hovuzu"); no second button over the list.
+      expect(m.contains("_AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue);
+      expect(m.contains("ValueKey('add-cargo-top')"), isFalse);
+      // Phone: the slogan under the logo; computer: label + headline.
+      expect(RegExp(r'shadows: _readableOnMap\(\)').allMatches(m + read('lib/features/cargo/presentation/cargo_marketplace_desktop.dart')).length, 3);
       for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
         expect(read('assets/i18n/$l.json').contains('"nav_home"'), isTrue);
       }

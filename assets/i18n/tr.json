@@ -2200,6 +2200,7 @@
   "et_list_title": "Aktif taşıyıcılar",
   "et_add_button": "Boş araç ekle",
   "et_badge_empty": "BOŞ",
+  "et_badge_free": "Boş",
   "et_empty": "Henüz boş araç ilanı yok.",
   "et_not_ready": "Taşıyıcılar bölümü henüz hazır değil (SQL 0118).",
   "et_mine_count": "İlanlarım ({n})",

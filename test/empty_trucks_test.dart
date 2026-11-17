@@ -270,7 +270,7 @@ void main() {
       expect(route, greaterThan(0));
       expect(sw, greaterThan(route));
       expect(m.contains("label: strings.t('et_add_button'),") && m.contains("onTap: () => context.pushOnce('/trucks/new'),"), isTrue);
-      expect(m.contains("onTap: () => context.pushOnce('/cargo/create'),"), isTrue, reason: '+ Yük əlavə et over the loads');
+      expect(m.contains("_AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue, reason: 'the loads button under the map');
       final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
       expect(d.contains('LoadsSectionSwitch(') && d.contains('_deskCarrierSlivers('), isTrue);
     });

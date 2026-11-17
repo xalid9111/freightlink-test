@@ -230,13 +230,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   roads / bursts, a calm timer every 66 ms; the computer keeps its moving
   map); the load-type tiles open on the page ("yük növü bölməsini geri
   qaytar, açıqda dursun"); route search; Yüklər | Daşıyıcılar; the title
-  with "n nəticə";
-  "+ Yük əlavə et" /
-  "+ Boş maşın əlavə et" over the list. The computer's page is unchanged.
+  with "n nəticə"; "+ Boş maşın əlavə et" over the Daşıyıcılar list. The
+  map's add button reads "Yük əlavə et +" (home_add_load; owner,
+  17.11.2026: "Yük hovuzu yerinə Yük əlavə et yazılsın") and the second
+  "+ Yük əlavə et" over the loads list is gone. The computer's page is
+  unchanged.
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the
-  initials) in an accent ring, name + the real blue badge, a rating ONLY
+  initials) in an accent ring, name + the real blue badge + a green
+  "● Boşdur" pill right after them (owner's mark, 17.11.2026; on every
+  active ad, one's own too), a rating ONLY
   when a real one exists (none yet — nothing made up), heart on another
   carrier's card, divider, the route with flags + ›, the chosen kind's own
   icon (categoryIconAsset) + "Tent • 20 T" | 📅 "Bu gün hazırdır" / "25

@@ -153,7 +153,7 @@ void main() {
     // below, İş Mərkəzi and "Yük hovuzu +" under the map.
     expect(m, contains('_CloudScene('));
     expect(m, contains('JobCenterMapButton(strings: strings)'));
-    expect(m, contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"));
+    expect(m, contains("_AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create'))"), reason: '"Yük əlavə et" under the map (was "Yük hovuzu")');
     // The map back (owner, 17.11.2026, later): only the city lights blink.
     expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false)"));
     expect(RegExp(r'_StatCard\(\s+icon:').allMatches(m).length, 3, reason: 'the three real counters');
@@ -166,7 +166,7 @@ void main() {
     // The load types open on the page again (owner, 17.11.2026); no filter button.
     expect(m, contains('CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed)'));
     expect(m.contains('_TypeFilterButton'), isFalse);
-    expect(m, contains("key: const ValueKey('add-cargo-top'),"));
+    expect(m.contains("ValueKey('add-cargo-top')"), isFalse, reason: 'no second add button over the list (owner, 17.11.2026)');
     expect(m, contains('HeaderCircles(strings: strings)'), reason: 'heart + profile picture');
   });
 
