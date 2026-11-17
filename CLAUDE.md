@@ -221,14 +221,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   AppColors.accent with the currency under it behind a thin upright line,
   Premium / VIP marks over it, ›; kPhoneLoadColumns = 1, so the order is
   load, VIP, load, VIP …. Tested for 6 languages × 320–390 pt × 125 %.
-  The phone's Loads page top (same design): a compact header — TIR Link
-  logo + TırLink + www.tirlink.app, the heart and the profile picture
-  (HeaderCircles) — and a thin STILL world-map strip (no live map, no
-  counters, no slogan); route search; Yüklər | Daşıyıcılar; the title with
-  "n nəticə" and a filter button that opens the load types (the same
-  tiles, in a sheet; a dot while one is chosen); "+ Yük əlavə et" /
-  "+ Boş maşın əlavə et" over the list. İş Mərkəzi stays in Profil (and
-  on the computer). The computer's page is unchanged.
+  The phone's Loads page top (owner, later 17.11.2026: "xəritənin sonu
+  kəskindir … iş mərkəzi və digərlərini qaytar yerinə"): the old map
+  section as before — the logo, slogan, heart and profile picture over the
+  cloud scene, the map with "CANLI" and the three counters, the clouds
+  below with İş Mərkəzi and "Yük hovuzu +" — only the map's animation is
+  lighter: LiveMap routes: false (only the city lights blink, no trucks /
+  roads / bursts, a calm timer every 66 ms; the computer keeps its moving
+  map); the load-type tiles open on the page ("yük növü bölməsini geri
+  qaytar, açıqda dursun"); route search; Yüklər | Daşıyıcılar; the title
+  with "n nəticə";
+  "+ Yük əlavə et" /
+  "+ Boş maşın əlavə et" over the list. The computer's page is unchanged.
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the

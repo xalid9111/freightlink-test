@@ -147,12 +147,25 @@ void main() {
     }
   });
 
-  test('wired: compact header, filter button with the load types, + Yük əlavə et over the list', () {
+  test('wired: the old map section (lights only), the load types open, + Yük əlavə et over the list', () {
     final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    expect(m, contains("ValueKey('home-compact-header')"));
-    expect(m, contains("ValueKey('home-map-strip')"));
-    expect(m.contains('LiveMap('), isFalse, reason: 'the phone has the still strip; the computer keeps its live map');
-    expect(m, contains('_TypeFilterButton(strings: strings, active: cat.isActive)'));
+    // The old map section back (owner, 17.11.2026, later): clouds above /
+    // below, İş Mərkəzi and "Yük hovuzu +" under the map.
+    expect(m, contains('_CloudScene('));
+    expect(m, contains('JobCenterMapButton(strings: strings)'));
+    expect(m, contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"));
+    // The map back (owner, 17.11.2026, later): only the city lights blink.
+    expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false)"));
+    expect(RegExp(r'_StatCard\(\s+icon:').allMatches(m).length, 3, reason: 'the three real counters');
+    final lm = src('lib/features/cargo/presentation/widgets/live_map.dart');
+    expect(lm, contains('if (!routes) return;'), reason: 'no trucks / roads / bursts');
+    expect(lm, contains('if (!widget.routes || _speed.slow == true) return _startCalm();'), reason: 'a calm timer, not every frame');
+    expect(lm, contains('static const kLightsEvery = Duration(milliseconds: 66);'));
+    expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("LiveMap(liveLabel: strings.t('map_live_badge'))"),
+        reason: 'the computer keeps its moving map');
+    // The load types open on the page again (owner, 17.11.2026); no filter button.
+    expect(m, contains('CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed)'));
+    expect(m.contains('_TypeFilterButton'), isFalse);
     expect(m, contains("key: const ValueKey('add-cargo-top'),"));
     expect(m, contains('HeaderCircles(strings: strings)'), reason: 'heart + profile picture');
   });

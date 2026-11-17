@@ -206,13 +206,17 @@ void main() {
 
   test('wired: Loads header, computer header, Profil, routes; existing chat reused', () {
     final loads = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-    // Owner's design, 17.11.2026: the phone's Loads page has a compact
-    // header without the live map; İş Mərkəzi stays in Profil and on the
-    // computer's header.
-    expect(loads.contains('JobCenterMapButton('), isFalse);
-    expect(loads, contains("ValueKey('home-compact-header')"));
+    // Owner, 28.10.2026: İş Mərkəzi under the map where the counters were
+    // (left of "Yük hovuzu"), the counters top-right above "CANLI".
+    expect(loads, contains('JobCenterMapButton(strings: strings),\n                const SizedBox(width: 8),'));
+    expect(loads, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),"));
+    final hero = loads.substring(loads.indexOf('LiveMap(liveLabel'), loads.indexOf('_CloudScene(', loads.indexOf('LiveMap(liveLabel')));
+    expect(RegExp('_StatCard\\(').allMatches(hero).length, 3, reason: 'all three counters on the map');
+    expect(hero.contains('JobCenterMapButton'), isFalse);
+    expect(src('lib/features/cargo/presentation/widgets/live_map.dart'), contains('top: widget.badgeTop,'));
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("LiveMap(liveLabel: strings.t('map_live_badge'))),"),
         reason: 'computer unchanged');
+    expect(loads, contains("key: const ValueKey('home-slogan'),"));
     expect(loads.contains("strings.t('home_live_map')"), isFalse);
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("ValueKey('desk-job-center')"));
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains("onTap: () => context.pushOnce('/jobs'),"));
