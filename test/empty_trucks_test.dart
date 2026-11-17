@@ -269,9 +269,8 @@ void main() {
       final sw = m.indexOf('LoadsSectionSwitch(strings: strings');
       expect(route, greaterThan(0));
       expect(sw, greaterThan(route));
-      expect(m.contains("label: strings.t('et_add_button'),") && m.contains("onTap: () => context.pushOnce('/trucks/new'))"), isTrue);
-      expect(m.contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue,
-          reason: 'the loads button is unchanged');
+      expect(m.contains("label: strings.t('et_add_button'),") && m.contains("onTap: () => context.pushOnce('/trucks/new'),"), isTrue);
+      expect(m.contains("onTap: () => context.pushOnce('/cargo/create'),"), isTrue, reason: '+ Yük əlavə et over the loads');
       final d = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
       expect(d.contains('LoadsSectionSwitch(') && d.contains('_deskCarrierSlivers('), isTrue);
     });

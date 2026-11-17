@@ -15,6 +15,8 @@ import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
 import '../../../market/presentation/market_promo.dart';
 import '../../domain/truck_types.dart';
+import '../../domain/cargo_categories.dart' show categoryIconAsset;
+import '../../domain/cargo_pictures.dart' show cargoPictureCategory;
 import 'cargo_picture.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
@@ -475,11 +477,13 @@ class CargoTile extends ConsumerWidget {
   }
 }
 
-/// Loads page row (owner's picture, 17.11.2026 — replaces the two tiles in a
-/// row on the phone): a small square picture with the heart on its corner,
-/// the route with flags, "22 t | Refrijerator | 30 noy" with small icons, the
-/// price in the accent colour with the currency under it (Premium / VIP marks
-/// over it) and a ›. One load per row; every value a real CargoModel field.
+/// Loads page row (owner's design, 17.11.2026 — no load picture): on the
+/// left the heart in a round button and, under it, the poster's own profile
+/// picture (else the initials); the route with flags in bold; a thin line;
+/// "22 T | <the load type's own truck icon> Ref | 📅 3 noy" as one line (it
+/// ends in "…", never overflows); the price in the accent colour with the
+/// currency under it behind a thin upright line (Premium / VIP marks over
+/// it) and a ›. One load per row; every value a real CargoModel field.
 class CargoListRow extends ConsumerWidget {
   final CargoModel cargo;
   final AppStrings strings;
@@ -487,11 +491,8 @@ class CargoListRow extends ConsumerWidget {
   final bool vip;
   const CargoListRow({super.key, required this.cargo, required this.strings, required this.onTap, this.vip = false});
 
-  /// The picture's side (logical px): small, so a scroll opens few pixels.
-  static const picture = 64.0;
-
-  /// The heart on the picture (owner, 17.11.2026: bigger than 13).
-  static const kRowHeartSize = 18.0;
+  /// The round heart button and the poster's picture under it (logical px).
+  static const sideSize = 38.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -501,108 +502,166 @@ class CargoListRow extends ConsumerWidget {
     final dateFmt = DateFormat('d MMM', localeCode);
     final tons = cargo.weightKg / 1000;
     final tonsText = tons == tons.roundToDouble() ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1);
-    // Capital T (owner, 17.11.2026: "15 T — t hərfini böyük et").
+    // Capital T (owner, 17.11.2026); no icon before it (owner's mark-up).
     final weight = cargo.weightKg < 1000 ? '${_num(cargo.weightKg)} kg' : '$tonsText T';
     final truck = (cargo.truckType ?? '').trim();
-    final type = cargo.groupage
-        ? strings.t('cargo_groupage_label')
+    final kind = cargoPictureCategory(truckType: cargo.truckType, groupage: cargo.groupage);
+    // The short name of the load-type tile ("Ref", "Konteyner" — owner's
+    // design); a type outside the tiles keeps its own name.
+    final type = kind != null
+        ? rowKindLabel(strings, kind, localeCode)
         : (truck.isEmpty ? null : truckTypeLabel(strings, truck));
+    final night = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final meta = TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2);
-    final metaLine = rowMetaLine([
-      (Icons.scale_outlined, weight),
-      if (type != null) (Icons.local_shipping_outlined, type),
-      (Icons.calendar_today_outlined, dateFmt.format(cargo.pickupDate)),
-    ], meta);
+    final poster = ref.watch(publicProfileProvider(cargo.ownerId)).valueOrNull;
+    final posterName = (poster?.fullName ?? '').trim();
+    final meta = TextStyle(fontSize: 13.5, color: AppColors.text, height: 1.25);
+    Widget sep() => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Container(width: 1, height: 15, color: AppColors.line),
+        );
+    Widget kindIcon() => kind == null
+        ? Icon(Icons.local_shipping_outlined, size: 16, color: AppColors.textSoft)
+        : Image.asset(categoryIconAsset(kind, night: night),
+            key: ValueKey('row-kind-$kind'),
+            width: 24,
+            height: 14,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(Icons.local_shipping_outlined, size: 16, color: AppColors.textSoft));
+
+    // "22 T | <icon> Ref | 📅 3 noy": everything fits on a normal phone; on
+    // a very narrow one the type name shortens first ("…"), never overflows.
+    // The tonnes and the date stay whole; a long type name shortens ("…");
+    // only when even that does not fit (a very narrow phone / big text) the
+    // line scales down a little instead of running out.
+    final metaLine = FittedBox(
+      key: const ValueKey('row-meta'),
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(weight, maxLines: 1, style: meta),
+        if (type != null) ...[
+          sep(),
+          kindIcon(),
+          const SizedBox(width: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 110),
+            child: Text(type, maxLines: 1, overflow: TextOverflow.ellipsis, style: meta),
+          ),
+        ],
+        sep(),
+        Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.textSoft),
+        const SizedBox(width: 5),
+        Text(dateFmt.format(cargo.pickupDate), maxLines: 1, style: meta),
+      ]),
+    );
 
     return Material(
       color: AppColors.card,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: ValueKey('cargo-row-${cargo.id}'),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.tileLine, width: 1),
           ),
-          padding: const EdgeInsets.fromLTRB(8, 8, 2, 8),
-          child: Row(children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                width: picture,
-                height: picture,
-                child: Stack(fit: StackFit.expand, children: [
-                  CargoPicture(imageUrl: cargo.imageUrl, truckType: cargo.truckType, groupage: cargo.groupage, seed: cargo.id),
-                  // Bigger heart (owner, 17.11.2026: "çox balacadır").
-                  Positioned(top: 2, right: 2, child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize, onPhoto: true)),
+          padding: const EdgeInsets.fromLTRB(10, 12, 4, 12),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Column(children: [
+                Container(
+                  width: sideSize,
+                  height: sideSize,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardAlt,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  alignment: Alignment.center,
+                  child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize),
+                ),
+                const SizedBox(height: 8),
+                // The poster's own profile picture (owner, 17.11.2026).
+                Container(
+                  key: const ValueKey('row-poster'),
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.accent, width: 2)),
+                  child: UserAvatar(
+                    imageUrl: poster?.avatarUrl,
+                    initials: _initialsOf(posterName),
+                    radius: (sideSize - 7) / 2,
+                  ),
+                ),
+              ]),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(
+                    '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
+                        .trim(),
+                    key: const ValueKey('row-route'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.25),
+                  ),
+                  const SizedBox(height: 9),
+                  Container(height: 1, color: AppColors.line),
+                  const SizedBox(height: 9),
+                  metaLine,
                 ]),
               ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                Text(
-                  '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
-                      .trim(),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.text, height: 1.2),
+              const SizedBox(width: 8),
+              // The price behind a thin upright line (owner's design).
+              Container(
+                padding: const EdgeInsets.fromLTRB(8, 10, 0, 10),
+                decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.line))),
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                PromoMarks(
+                  key: const ValueKey('row-marks'),
+                  premium: cargo.isPremiumAt(now),
+                  vip: vip || cargo.isVipAt(now),
+                  size: 16,
                 ),
-                const SizedBox(height: 6),
-                // One line; on a narrow phone / big text it ends in "…".
-                metaLine,
-              ]),
-            ),
-            const SizedBox(width: 6),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-              PromoMarks(
-                key: const ValueKey('row-marks'),
-                premium: cargo.isPremiumAt(now),
-                vip: vip || cargo.isVipAt(now),
-                size: 16,
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 96),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 21, color: AppColors.accent, height: 1.1)),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 92),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 22, color: AppColors.accent, height: 1.1)),
+                  ),
                 ),
+                const SizedBox(height: 3),
+                Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                ]),
               ),
-              const SizedBox(height: 2),
-              Text(cargo.currency, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              Icon(Icons.chevron_right, size: 22, color: AppColors.textSoft),
             ]),
-            Icon(Icons.chevron_right, size: 20, color: AppColors.textSoft),
-          ]),
         ),
       ),
     );
   }
+
+  /// The heart (owner, 17.11.2026: bigger than 13).
+  static const kRowHeartSize = 19.0;
 }
 
-/// "⚖ 22 t | 🚚 Refrijerator | 📅 30 noy" as ONE text line with small icons
-/// (the Loads / Daşıyıcılar rows): it never overflows, it ends in "…".
-Widget rowMetaLine(List<(IconData, String)> parts, TextStyle style) => Text.rich(
-      TextSpan(children: [
-        for (var i = 0; i < parts.length; i++) ...[
-          if (i > 0) TextSpan(text: ' | ', style: TextStyle(color: AppColors.line)),
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 3),
-              child: Icon(parts[i].$1, size: 13, color: AppColors.textSoft),
-            ),
-          ),
-          TextSpan(text: parts[i].$2),
-        ],
-      ]),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: style,
-    );
+/// "REF" → "Ref", "MANİPULYATOR" → "Manipulyator" (the tile's short name,
+/// written as in the owner's design).
+String rowKindLabel(AppStrings s, String code, String lang) {
+  final raw = s.t('cat_$code');
+  if (raw.isEmpty || raw == 'cat_$code') return raw;
+  final first = String.fromCharCode(raw.runes.first);
+  var rest = raw.substring(first.length);
+  if (lang == 'az' || lang == 'tr') rest = rest.replaceAll('İ', 'i').replaceAll('I', 'ı');
+  return first + rest.toLowerCase();
+}
+
+String _initialsOf(String name) {
+  final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  return parts.take(2).map((p) => String.fromCharCode(p.runes.first).toUpperCase()).join();
+}
 
 /// Gold VIP medal (owner's design, 23.10.2026): a toothed gold disc with
 /// "VIP" and two ribbons under it. Drawn in code, same in day and night.

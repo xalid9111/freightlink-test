@@ -19,6 +19,7 @@ import 'package:freightlink/features/cargo/presentation/providers/cargo_media_pr
 import 'package:freightlink/features/cargo/presentation/widgets/cargo_card.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
 import 'package:freightlink/models/cargo_model.dart';
+import 'package:freightlink/repositories/profile_repository.dart';
 
 String src(String p) => File(p).readAsStringSync();
 AppStrings lang(String l) => AppStrings(Map<String, String>.from(jsonDecode(src('assets/i18n/$l.json')) as Map));
@@ -52,6 +53,7 @@ Widget host(Widget child, AppStrings s, {double width = 390, double scale = 1}) 
         stringsProvider.overrideWithValue(s),
         allCargoTemplatesProvider.overrideWith((ref) async => const []),
         cargoFavoriteIdsProvider.overrideWith((ref) => CargoFavoritesController(_Media())),
+        publicProfileProvider.overrideWith((ref, id) async => PublicProfile(id: id, fullName: 'Aysel Muradova')),
         authStateProvider.overrideWith(
             (ref) => Stream.value(const AppUser(id: 'u2', email: 'a@b.az', fullName: 'A', role: 'carrier', isVerified: false))),
       ],
@@ -65,6 +67,15 @@ Widget host(Widget child, AppStrings s, {double width = 390, double scale = 1}) 
 
 void main() {
   setUpAll(() => initializeDateFormatting());
+
+  test('short type names as in the design', () {
+    final az = lang('az');
+    expect(rowKindLabel(az, 'ref', 'az'), 'Ref');
+    expect(rowKindLabel(az, 'container', 'az'), 'Konteyner');
+    expect(rowKindLabel(az, 'manipulator', 'az'), 'Manipulyator');
+    expect(rowKindLabel(az, 'open', 'az'), 'Açıq');
+    expect(rowKindLabel(lang('ru'), 'ref', 'ru'), 'Реф');
+  });
 
   test('one load per row: load, VIP, load, VIP … (the chessboard in one column)', () {
     final l = [
@@ -81,9 +92,9 @@ void main() {
     await t.pumpWidget(host(CargoListRow(cargo: load('c1'), strings: s, onTap: () {}), s));
     await t.pump();
     expect(find.textContaining('Bakı →'), findsOneWidget);
-    expect(find.textContaining('22 T', findRichText: true), findsOneWidget, reason: 'capital T (owner, 17.11.2026)');
-    expect(find.textContaining('Refrijerator', findRichText: true), findsOneWidget);
-    expect(find.textContaining('30 noy', findRichText: true), findsOneWidget);
+    expect(find.text('22 T'), findsOneWidget, reason: 'capital T (owner, 17.11.2026)');
+    expect(find.text('Ref'), findsOneWidget, reason: 'the tile\'s short name (owner\'s design)');
+    expect(find.text('30 noy'), findsOneWidget);
     expect(find.text('5 100'), findsOneWidget);
     expect(find.text('USD'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
@@ -91,6 +102,23 @@ void main() {
     expect(t.getSize(find.byIcon(Icons.favorite_border)).width, greaterThanOrEqualTo(18), reason: 'bigger heart (owner, 17.11.2026)');
     final price = t.widget<Text>(find.text('5 100'));
     expect(price.style!.color, AppColors.accent, reason: 'the price in the accent colour');
+  });
+
+  testWidgets("owner's design: no load picture; heart, then the poster's picture (else initials); the type's own icon; no icon before T",
+      (t) async {
+    final s = lang('az');
+    await t.pumpWidget(host(CargoListRow(cargo: load('c1'), strings: s, onTap: () {}), s));
+    await t.pump();
+    await t.pump();
+    expect(find.byKey(const ValueKey('row-poster')), findsOneWidget);
+    expect(find.text('AM'), findsOneWidget, reason: 'no profile picture → initials');
+    expect(find.byKey(const ValueKey('row-kind-ref')), findsOneWidget, reason: 'the load type\'s own truck icon');
+    expect(find.byIcon(Icons.scale_outlined), findsNothing, reason: 'no icon before the tonnes');
+    expect(find.byType(Image).evaluate().length, 1, reason: 'only the small type icon — no load picture');
+    expect(
+        t.getTopLeft(find.byKey(const ValueKey('row-poster'))).dy,
+        greaterThan(t.getTopLeft(find.byKey(const ValueKey('cargo-heart-c1'))).dy),
+        reason: 'the picture under the heart');
   });
 
   testWidgets('VIP / Premium marks stay by the price', (t) async {
@@ -117,6 +145,16 @@ void main() {
         }
       }
     }
+  });
+
+  test('wired: compact header, filter button with the load types, + Yük əlavə et over the list', () {
+    final m = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
+    expect(m, contains("ValueKey('home-compact-header')"));
+    expect(m, contains("ValueKey('home-map-strip')"));
+    expect(m.contains('LiveMap('), isFalse, reason: 'the phone has the still strip; the computer keeps its live map');
+    expect(m, contains('_TypeFilterButton(strings: strings, active: cat.isActive)'));
+    expect(m, contains("key: const ValueKey('add-cargo-top'),"));
+    expect(m, contains('HeaderCircles(strings: strings)'), reason: 'heart + profile picture');
   });
 
   test('wired: the phone page uses the rows; the computer keeps its tiles', () {

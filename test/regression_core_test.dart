@@ -59,9 +59,10 @@ void main() {
       expect(shell.contains('_NavItem(1,'), isFalse);
       expect(shell.contains('_NavItem(2,'), isFalse);
     });
-    test('"Yük əlavə et" (+) on the Loads page under the map opens "add load"', () {
+    test('"+ Yük əlavə et" on the Loads page (over the list, owner 17.11.2026) opens "add load"', () {
       final loads = _read('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
-      expect(loads.contains("_AddLoadButton(label: strings.t('nav_add_cargo'), onTap: () => context.pushOnce('/cargo/create'))"), isTrue);
+      expect(loads.contains("key: const ValueKey('add-cargo-top'),"), isTrue);
+      expect(loads.contains("onTap: () => context.pushOnce('/cargo/create'),"), isTrue);
     });
     test('TIR Bazarı is a separate part, loaded only when opened', () {
       final router = _read('lib/core/router/app_router.dart');
