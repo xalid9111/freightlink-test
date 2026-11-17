@@ -192,9 +192,19 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           // iOS-style momentum everywhere: long, soft glide and no hard stop.
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
-            SliverToBoxAdapter(child: _Hero(strings: strings)),
-            // The load types open from the filter button next to the list's
-            // title (owner's design, 17.11.2026).
+            SliverToBoxAdapter(
+                child: _Hero(
+                    strings: strings,
+                    count: usePages ? (feed.count ?? 0) : cargoList.length,
+                    loaded: usePages ? feed.count != null : marketplaceAsync.hasValue)),
+            // The load types stand open on the page again (owner, 17.11.2026:
+            // "yük növü bölməsini geri qaytar, açıqda dursun").
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
+              ),
+            ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
             // Yüklər | Daşıyıcılar (owner's picture, 13.11.2026).
             SliverToBoxAdapter(
@@ -228,10 +238,6 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                             'count': '${carriers ? trucks.value!.length : (usePages ? feed.count : shown.length)}',
                           }),
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
-                    const SizedBox(width: 10),
-                    // The load types (TENT … QRUPAJ) open from here (owner's
-                    // design, 17.11.2026); a dot while one is chosen.
-                    _TypeFilterButton(strings: strings, active: cat.isActive),
                   ],
                 ),
               ),
@@ -403,31 +409,31 @@ List<Widget> _carrierSlivers(BuildContext context, WidgetRef ref, AppStrings str
   );
 }
 
-/// The phone's compact header (owner's design, 17.11.2026 — replaces the
-/// big live map with its counters, İş Mərkəzi and the + on the map): the
-/// TIR Link logo + TırLink + www.tirlink.app, the heart and the profile
-/// picture (HeaderCircles), and under them a thin, still strip of the world
-/// map (no animation — lighter while scrolling). İş Mərkəzi stays in
-/// Profil; the load types open from the filter button; "+ … əlavə et"
-/// stands over the list.
+/// The phone's compact header (owner's design, 17.11.2026): the TIR Link
+/// logo + TırLink + www.tirlink.app, the heart and the profile picture
+/// (HeaderCircles), and under them the world map again (owner, later the
+/// same day: "xəritəni yerinə qoy") — with "CANLI" and the three real
+/// counters, but only the city lights blink (LiveMap routes: false: no
+/// moving roads or trucks, a calm timer). İş Mərkəzi stays in Profil; the
+/// load types open from the filter button; "+ … əlavə et" stands over the
+/// list.
 class _Hero extends ConsumerWidget {
   final AppStrings strings;
-  const _Hero({required this.strings});
-
-  /// Height of the still world-map strip under the header.
-  static const stripHeight = 64.0;
+  // Open loads (the counter; page by page it comes from the server, 0109).
+  final int count;
+  final bool loaded;
+  const _Hero({required this.strings, required this.count, required this.loaded});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final day = AppColors.isDay;
-    final map = day ? 'assets/images/world_map_day_v3.jpg' : 'assets/images/world_map_night_v4.jpg';
+    String stat(int n) => loaded ? '$n' : '—';
     final topPad = MediaQuery.of(context).padding.top + 8;
     return Column(
       key: const ValueKey('home-compact-header'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(16, topPad, 16, 0),
+          padding: EdgeInsets.fromLTRB(16, topPad, 16, 6),
           child: Row(children: [
             const Expanded(
               child: FittedBox(
@@ -439,31 +445,91 @@ class _Hero extends ConsumerWidget {
             HeaderCircles(strings: strings),
           ]),
         ),
-        // The still map strip, fading into the page at the top and bottom.
-        SizedBox(
-          key: const ValueKey('home-map-strip'),
-          height: stripHeight,
-          child: ShaderMask(
-            blendMode: BlendMode.dstIn,
-            shaderCallback: (r) => const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000), Color(0x00000000)],
-              stops: [0, 0.3, 0.7, 1],
-            ).createShader(r),
-            child: Image.asset(
-              map,
-              fit: BoxFit.cover,
-              alignment: const Alignment(0, -0.1),
-              filterQuality: FilterQuality.medium,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
+        // The map, edge to edge: only the city lights blink.
+        Stack(key: const ValueKey('home-live-map'), children: [
+          LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),
+          // Three live counters (all real numbers from the database),
+          // top-right above "CANLI" (owner, 28.10.2026).
+          Positioned(
+            top: 6,
+            right: 14,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              _StatCard(
+                icon: Icons.local_shipping,
+                color: AppColors.accent,
+                value: stat(count),
+                label: strings.t('home_stat_active'),
+                onTap: () => _scrollToFeed(),
+              ),
+              const SizedBox(width: 4),
+              _StatCard(
+                icon: Icons.groups_2,
+                color: AppColors.blue,
+                value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                label: strings.t('home_stat_carriers'),
+              ),
+              const SizedBox(width: 4),
+              _StatCard(
+                icon: Icons.bar_chart_rounded,
+                color: AppColors.online,
+                value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
+                label: strings.t('home_stat_24h'),
+                onTap: () => _scrollToFeed(),
+              ),
+            ]),
           ),
-        ),
+        ]),
       ],
     );
   }
 }
+
+/// Tiny counter pill (~4 mm tall, ~1 cm wide): coloured icon + number.
+/// The label is kept as a tooltip / screen-reader text.
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String value;
+  final String label;
+  final VoidCallback? onTap;
+  const _StatCard({required this.icon, required this.color, required this.value, required this.label, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: '$label: $value',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            // Half the earlier size (owner, 21.10.2026); the number stays readable.
+            height: 18,
+            constraints: const BoxConstraints(minWidth: 30),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 10, color: color),
+                const SizedBox(width: 3),
+                Text(value,
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: AppColors.text, height: 1)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 /// "Yolüstü yük" entry, shown while "Kiçik yüklər" is chosen.
 class _EnRouteButton extends StatelessWidget {
@@ -816,65 +882,6 @@ class _OutlinedAddButton extends StatelessWidget {
         icon: const Icon(Icons.add, size: 22),
         label: Text(label,
             maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-      );
-}
-
-/// The filter button next to the list's title: opens the load types (the
-/// same tiles as before) in a sheet; a second tap on the chosen tile takes
-/// it off, as always. A small dot while a type is chosen.
-class _TypeFilterButton extends StatelessWidget {
-  final AppStrings strings;
-  final bool active;
-  const _TypeFilterButton({required this.strings, required this.active});
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppColors.line)),
-        child: InkWell(
-          key: const ValueKey('type-filter'),
-          customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onTap: () => showModalBottomSheet<void>(
-            context: context,
-            showDragHandle: true,
-            builder: (ctx) => SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(strings.t('home_filter_types'),
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
-                  const SizedBox(height: 12),
-                  CargoTypeTiles(
-                    strings: strings,
-                    tileHeight: 64,
-                    onChanged: () {
-                      Navigator.of(ctx).pop();
-                      _scrollToFeed();
-                    },
-                  ),
-                ]),
-              ),
-            ),
-          ),
-          child: SizedBox(
-            width: 42,
-            height: 42,
-            child: Stack(alignment: Alignment.center, children: [
-              Icon(Icons.tune_rounded, size: 22, color: AppColors.accent),
-              if (active)
-                Positioned(
-                  top: 7,
-                  right: 7,
-                  child: Container(
-                    key: const ValueKey('type-filter-on'),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                  ),
-                ),
-            ]),
-          ),
-        ),
       );
 }
 

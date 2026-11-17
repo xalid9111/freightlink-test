@@ -38,7 +38,16 @@ class LiveMap extends StatefulWidget {
   /// Distance of the "CANLI" badge from the map's top (phone: lower, so
   /// the live counters fit above it — owner, 28.10.2026).
   final double badgeTop;
-  const LiveMap({super.key, this.liveLabel = 'CANLI', this.badgeTop = 6});
+
+  /// false = only the city lights blink (owner, 17.11.2026, the phone's Loads
+  /// page: "animasiyanı azalt, sadəcə şəhərlərdə işıqlar yanıb sönsün,
+  /// hərəkət edən marşrutları sil"): no trucks, roads or arrival bursts, and
+  /// the lights move on a calm timer (kLightsEvery) instead of every frame.
+  final bool routes;
+  const LiveMap({super.key, this.liveLabel = 'CANLI', this.badgeTop = 6, this.routes = true});
+
+  /// How often the lights-only map moves on (about 15 a second).
+  static const kLightsEvery = Duration(milliseconds: 66);
 
   @override
   State<LiveMap> createState() => _LiveMapState();
@@ -539,7 +548,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
     if (!mounted) return;
     // Admin test switch (Ayarlar → Sürətölçən): the map stands, to compare.
     if (PerfFlags.mapStill.value) return _stand();
-    if (_speed.slow == true) return _startCalm();
+    if (!widget.routes || _speed.slow == true) return _startCalm();
     if (!_ticker.isActive) {
       _last = Duration.zero;
       _ticker.start();
@@ -554,11 +563,11 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
     if (_ticker.isActive) _ticker.stop();
     _badge.stop();
     if (_calm != null) return;
-    final every = _speed.calmEvery;
+    final every = widget.routes ? _speed.calmEvery : LiveMap.kLightsEvery;
     final step = every.inMicroseconds / 1e6;
     _calm = Timer.periodic(every, (_) {
       if (!mounted) return;
-      _advance(step, trucks: _liteTrucks);
+      _advance(step, trucks: widget.routes ? _liteTrucks : 0);
       _badge.value = 0.5 + 0.5 * math.sin(_time.value * math.pi / 1.1);
     });
   }
@@ -659,8 +668,9 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
         _place(tr, _colorTurn++, 0);
       }
     }
-    // "New load" pings: a coloured burst at a random city every 0.25–0.7 s.
-    if (now >= _nextPing) {
+    // "New load" pings: a coloured burst at a random city every 0.25–0.7 s
+    // (not on the lights-only map).
+    if (widget.routes && now >= _nextPing) {
       _nextPing = now + 0.25 + _rng.nextDouble() * 0.45;
       final f = _flashes[_flashTurn++ % _flashes.length];
       f
@@ -692,7 +702,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
           RepaintBoundary(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: _MapPainter(_time, _trucks, _flashes, _sparkPhase, _sparkSpeed, () => _lite),
+                painter: _MapPainter(_time, _trucks, _flashes, _sparkPhase, _sparkSpeed, () => _lite, routes: widget.routes),
               ),
             ),
           ),
@@ -744,7 +754,11 @@ class _MapPainter extends CustomPainter {
   final List<double> sparkPhase;
   final List<double> sparkSpeed;
   final bool Function() lite;
-  _MapPainter(this.time, this.trucks, this.flashes, this.sparkPhase, this.sparkSpeed, this.lite) : super(repaint: time);
+
+  /// false = only the city lights (no trucks, roads or bursts).
+  final bool routes;
+  _MapPainter(this.time, this.trucks, this.flashes, this.sparkPhase, this.sparkSpeed, this.lite, {this.routes = true})
+      : super(repaint: time);
 
   static const int _trail = 10;
 
@@ -798,6 +812,9 @@ class _MapPainter extends CustomPainter {
       fill.color = const Color(0xFFFFF6EA);
       canvas.drawCircle(p, r0 * 0.45, fill);
     }
+
+    // Lights only (the phone's Loads page): the blinking cities above are all.
+    if (!routes) return;
 
     // 3) Trucks: dashed road ahead, glowing trail behind, chevrons, icon.
     final active = isLite ? _LiveMapState._liteTrucks : _LiveMapState._maxTrucks;

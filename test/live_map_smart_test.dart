@@ -54,9 +54,9 @@ void main() {
 
   test('wired: a slow phone moves calmly (never still while watched); out of view it rests', () {
     final m = src('lib/features/cargo/presentation/widgets/live_map.dart');
-    expect(m, contains('if (_speed.slow == true) return _startCalm();'));
+    expect(m, contains('if (!widget.routes || _speed.slow == true) return _startCalm();'));
     expect(m, contains('_calm = Timer.periodic(every, (_) {'));
-    expect(m, contains('_advance(step, trucks: _liteTrucks);'));
+    expect(m, contains('_advance(step, trucks: widget.routes ? _liteTrucks : 0);'));
     expect(m, isNot(contains('_stillIn(')), reason: 'no more standing still after a show');
     expect(m, contains("duration: const Duration(milliseconds: 1100), value: 1);"), reason: 'lit until it moves');
     expect(m, contains('..value = 1;'), reason: 'resting = lit');
