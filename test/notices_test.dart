@@ -65,6 +65,30 @@ void main() {
       expect(u.text(az), 'Salam');
       expect(u.route, isNull);
     });
+    test('a settled worker request / receipt leaves the list and the count (owner, 18.11.2026)', () {
+      final w = _n('tirpark_worker_request', data: {'park_id': 'p', 'worker_id': 'u'});
+      final j = _n('job_application');
+      expect(w.isAction, isTrue);
+      expect(_n('tirpark_payment_review').isAction, isTrue);
+      expect(j.isAction, isFalse);
+      expect(visibleNotices([w, j], {'tirpark_worker_request'}), [j]);
+      expect(unreadNoticeCount(visibleNotices([w, j], {'tirpark_worker_request'})), 1);
+      expect(visibleNotices([w, j], const {}), [w, j]);
+      final src = _read('lib/features/notices/notices.dart');
+      expect(src, contains("if (st != null && st != 'pending') out.add(n.id);"), reason: 'only a definite answer hides it');
+      expect(src, contains("if (st != null && st != 'payment_review') out.add(n.id);"));
+      expect(src, contains('ref.watch(shownNoticesProvider)'));
+    });
+    test('a TIRPark notice opens its tab with go (pushed it stayed black, owner 18.11.2026)', () {
+      expect(_n('tirpark_worker_request').opensInTab, isTrue);
+      expect(_n('cargo_offer_new', data: {'cargo_id': 'c'}).opensInTab, isFalse);
+      expect(_n('job_application').opensInTab, isFalse);
+      final src = _read('lib/features/notices/notices.dart');
+      expect(src, contains('if (n.opensInTab) {\n                    context.go(r);'));
+      // /tirpark/manage lives inside the TIRPark tab; /load and /jobs are full-screen pages.
+      final router = _read('lib/core/router/app_router.dart');
+      expect(router.indexOf("path: 'manage'"), greaterThan(router.indexOf("path: '/tirpark'")));
+    });
     test('count = unread only; "99+" over 99', () {
       expect(unreadNoticeCount([_n('a'), _n('b', read: true), _n('c')]), 2);
       expect(noticeBadgeLabel(7), '7');
