@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
@@ -105,7 +106,22 @@ class AppNotice {
     if (isJob) return _job.route;
     return null;
   }
+
+  /// The route lives inside a bottom-bar tab (TIRPark): it is opened with
+  /// go — pushed over the full-screen /notifications page it stayed black
+  /// (owner, 18.11.2026).
+  bool get opensInTab => route?.startsWith('/tirpark') ?? false;
+
+  /// An "act on it" notice whose matter may be settled later.
+  bool get isAction => type == 'tirpark_worker_request' || type == 'tirpark_payment_review';
 }
+
+/// The notices without the settled ones (owner, 18.11.2026: "işçi təsdiqi
+/// təsdiqlənib, amma yenə də görünür"): a worker request already approved /
+/// rejected, a receipt already confirmed / rejected leave the list and the
+/// count. Stored rows are never changed.
+List<AppNotice> visibleNotices(List<AppNotice> list, Set<String> settled) =>
+    settled.isEmpty ? list : [for (final n in list) if (!settled.contains(n.id)) n];
 
 /// The newest stand on top; the unread ones are counted on the bell.
 int unreadNoticeCount(List<AppNotice> list) => list.where((n) => !n.isRead).length;
@@ -137,6 +153,49 @@ class NoticesRepository {
     return [for (final r in rows as List) AppNotice.fromJson(Map<String, dynamic>.from(r as Map))];
   }
 
+  /// Which action notices are settled: the worker is no longer 'pending',
+  /// the booking no longer 'payment_review'. Only a definite answer hides a
+  /// notice (no answer / no access = it stays).
+  Future<Set<String>> settled(List<AppNotice> list) async {
+    final out = <String>{};
+    final workers = [
+      for (final n in list)
+        if (n.type == 'tirpark_worker_request' && n.data['park_id'] != null && n.data['worker_id'] != null) n
+    ];
+    for (final park in {for (final n in workers) '${n.data['park_id']}'}) {
+      try {
+        final res = await _c.rpc('tir_park_workers_list', params: {'p_park': park}).timeout(const Duration(seconds: 15));
+        final status = <String, String>{
+          for (final w in ((res as Map)['workers'] as List? ?? const []))
+            '${(w as Map)['user_id']}': '${w['status'] ?? ''}',
+        };
+        for (final n in workers.where((n) => '${n.data['park_id']}' == park)) {
+          final st = status['${n.data['worker_id']}'];
+          if (st != null && st != 'pending') out.add(n.id);
+        }
+      } catch (_) {}
+    }
+    final pays = [
+      for (final n in list)
+        if (n.type == 'tirpark_payment_review' && n.data['booking_id'] != null) n
+    ];
+    if (pays.isNotEmpty) {
+      try {
+        final rows = await _c
+            .from('tir_park_bookings')
+            .select('id,status')
+            .inFilter('id', [for (final n in pays) '${n.data['booking_id']}'])
+            .timeout(const Duration(seconds: 15));
+        final status = {for (final r in rows as List) '${(r as Map)['id']}': '${r['status'] ?? ''}'};
+        for (final n in pays) {
+          final st = status['${n.data['booking_id']}'];
+          if (st != null && st != 'payment_review') out.add(n.id);
+        }
+      } catch (_) {}
+    }
+    return out;
+  }
+
   Future<void> markRead(List<String> ids) async {
     if (ids.isEmpty) return;
     await _c.from('notifications').update({'is_read': true}).inFilter('id', ids).timeout(const Duration(seconds: 15));
@@ -154,7 +213,25 @@ final myNoticesProvider = StreamProvider<List<AppNotice>>((ref) {
   return StartupSteps.after(1, () => liveWithResync(ref, () => repo.watch(uid), () => repo.fetch(uid), every: const Duration(seconds: 20)));
 });
 
-final unreadNoticesProvider = Provider<int>((ref) => unreadNoticeCount(ref.watch(myNoticesProvider).valueOrNull ?? const []));
+/// The settled action notices; asked again only when the set of action
+/// notices changes or the Bildirişlər page opens.
+final _actionKeyProvider = Provider<String>(
+    (ref) => [for (final n in ref.watch(myNoticesProvider).valueOrNull ?? const <AppNotice>[]) if (n.isAction) n.id].join(','));
+
+final settledNoticesProvider = FutureProvider<Set<String>>((ref) async {
+  final key = ref.watch(_actionKeyProvider);
+  if (key.isEmpty) return const {};
+  final list = ref.read(myNoticesProvider).valueOrNull ?? const <AppNotice>[];
+  return ref.read(noticesRepositoryProvider).settled([for (final n in list) if (n.isAction) n]);
+});
+
+/// What the bell and the page show.
+final shownNoticesProvider = Provider<AsyncValue<List<AppNotice>>>((ref) {
+  final settled = ref.watch(settledNoticesProvider).valueOrNull ?? const <String>{};
+  return ref.watch(myNoticesProvider).whenData((l) => visibleNotices(l, settled));
+});
+
+final unreadNoticesProvider = Provider<int>((ref) => unreadNoticeCount(ref.watch(shownNoticesProvider).valueOrNull ?? const []));
 
 /// The bell: left of the heart on every page.
 class NoticeBell extends ConsumerWidget {
@@ -200,6 +277,13 @@ class NoticesScreen extends ConsumerStatefulWidget {
 class _NoticesScreenState extends ConsumerState<NoticesScreen> {
   final _marked = <String>{};
 
+  @override
+  void initState() {
+    super.initState();
+    // A worker may have been approved since the last look.
+    Future.microtask(() => ref.invalidate(settledNoticesProvider));
+  }
+
   Future<void> _read(List<String> ids) async {
     final todo = ids.where(_marked.add).toList();
     if (todo.isEmpty) return;
@@ -215,7 +299,7 @@ class _NoticesScreenState extends ConsumerState<NoticesScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     final lang = ref.watch(currentLocaleProvider).languageCode;
-    final notices = ref.watch(myNoticesProvider);
+    final notices = ref.watch(shownNoticesProvider);
     final list = notices.valueOrNull ?? const <AppNotice>[];
     final unread = [for (final n in list) if (!n.isRead && !_marked.contains(n.id)) n.id];
     return Scaffold(
@@ -272,7 +356,12 @@ class _NoticesScreenState extends ConsumerState<NoticesScreen> {
                 onTap: () {
                   _read([n.id]);
                   final r = n.route;
-                  if (r != null) context.pushOnce(r);
+                  if (r == null) return;
+                  if (n.opensInTab) {
+                    context.go(r);
+                  } else {
+                    context.pushOnce(r);
+                  }
                 },
               );
             },

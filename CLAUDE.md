@@ -1058,6 +1058,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   request (0088) → the park panel, İş Mərkəzi (0069) → as before. The
   offer's "Daxil olan təkliflər" on the load page and the İş Mərkəzi bell
   are unchanged. A visitor's tap opens sign-in.
+  Settled ones leave (owner, 18.11.2026: "işçi təsdiqlənib, amma yenə də
+  görünür … basdıqda qara səhifə"): a worker request no longer 'pending' /
+  a receipt no longer 'payment_review' is hidden from the list and the count
+  (asked from tir_park_workers_list / the booking; only a definite answer
+  hides; stored rows unchanged); a TIRPark notice opens /tirpark/manage with
+  go (it lives inside the TIRPark tab — pushed over /notifications it was a
+  black page).
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new
