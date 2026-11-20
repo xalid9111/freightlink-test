@@ -1084,6 +1084,30 @@ files to the owner separately (they are run by hand in the SQL editor).
   false: no "TIR Parkı" / "Park rezervasiyalarım" on Profil, no booking on
   the park card / page, no TIR Park notices); the server, parks, bookings,
   workers and their history are untouched — the flag brings them back.
+- "Maşınlarım" (owner's pictures and answers, 20.11.2026, SQL 0130 —
+  stage 2 of the Xəritə tab; lib/features/fleet): "Xəritə | Maşınlarım"
+  under the header on Parklar / Servislər / Mağazalar and on /fleet
+  (inside the Xəritə tab; a visitor signs in first). A carrier adds his own
+  trucks by hand: name ("Volvo FH 2022"), plate, the driver's name. The
+  page: "n maşın · n boş · n işdə" + "Maşın əlavə et", "Ümumi" (income ·
+  expenses · profit per currency), Maşınlar | İş cədvəli, today's date +
+  Hamısı / Boş / İşdə, truck cards (Boşdur green / İşdədir orange; a busy
+  truck shows its job "14:30 • Bakı → Gəncə ›", a free one "İş əlavə et" and
+  "Boş maşın elanı ver" → /trucks/new), "Yaxın işlər", the driver's own
+  trucks apart, "Sürücü kodu ilə qoşul". Truck page /fleet/t/:id: profit
+  ("Qazanc" / "Mənfi qazanc") = the jobs' agreed prices − the APPROVED
+  expenses, per truck and per currency (AZN · USD · EUR · RUB · TRY, never
+  converted), "Danışılan qiymət", İşlər (planned → active → done /
+  cancelled), Rasxodlar (a tap: name, amount, currency, Yadda saxla, Sil).
+  The driver joins with the owner's one-time code (7 days) using his own
+  account; he sees his truck and its jobs WITHOUT prices
+  (fleet_driver_jobs) and writes expenses that wait ("Təsdiq gözləyir"):
+  the owner gets a bell notice (fleet_expense → the truck page) and presses
+  Təsdiqlə / Rədd et (or edits = approves); only then it counts; the notice
+  leaves once decided. "Bugünkü plan" (today's next job + "Cədvələ bax")
+  stands over the nearby parks on the map. Server: own rows only (RLS), every
+  write through fleet_* functions, a double tap never adds twice
+  (client_key), "Sil" = deleted_at (history kept), nothing deleted.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

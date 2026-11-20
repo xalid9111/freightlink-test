@@ -21,6 +21,7 @@ import '../domain/osm_truck_park.dart';
 import '../domain/tir_park.dart';
 import '../../../core/router/guest_access.dart';
 import 'map_page_header.dart';
+import '../../fleet/presentation/fleet_screen.dart' show FleetTodayCard;
 import 'tir_park_add_sheet.dart';
 import 'osm_parks.dart';
 import 'tir_park_booking.dart';
@@ -288,6 +289,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
         child: Column(children: [
           // No banner any more (owner, 20.11.2026): TırLink · Xəritə · 🔔 · ❤️.
           MapPageHeader(s: s),
+          MapFleetSwitch(s: s, fleet: false, onMap: () {}, onFleet: () => context.go('/fleet')),
           Expanded(
             child: Stack(children: [
               Positioned.fill(
@@ -538,7 +540,13 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                       padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
                       itemCount: list.length + 1,
                       itemBuilder: (context, i) {
-                        if (i == 0) return _ListHead(s: s, count: list.length, async: async);
+                        // "Bugünkü plan" (Maşınlarım, 0130) over the nearby parks.
+                        if (i == 0) {
+                          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                            FleetTodayCard(s: s),
+                            _ListHead(s: s, count: list.length, async: async),
+                          ]);
+                        }
                         final (p, km) = list[i - 1];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
