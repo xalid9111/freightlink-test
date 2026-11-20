@@ -89,6 +89,10 @@ void main() {
     expect(find.byKey(const ValueKey('notice-bell')), findsOneWidget);
     expect(find.byKey(const ValueKey('map-favorites')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
+    // The list rests closed at the bottom (owner, 20.11.2026); a tap on its title opens it.
+    expect(find.byKey(const ValueKey('tp-card-p2')), findsNothing, reason: 'closed: only the title and the count');
+    await tester.tap(find.byKey(const ValueKey('tp-list-head')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
     expect(find.byKey(const ValueKey('tp-add')), findsOneWidget, reason: '"TIR parkı əlavə et +" on the map (users add parks, 20.11.2026)');
     expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
@@ -109,6 +113,8 @@ void main() {
     expect(find.byKey(const ValueKey('tp-route')), findsNothing, reason: 'nothing before a park is chosen');
     // The pin opens the park: its card first in the list, with the way.
     await tester.tap(find.byKey(const ValueKey('tp-pin-p1')));
+    await tester.pump(const Duration(milliseconds: 400));
+    // The list opens (an animation) to show the chosen park's card.
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const ValueKey('tp-route')), findsOneWidget);
     expect(find.text('Marşrut və vaxt üçün GPS-i aktiv edin'), findsOneWidget, reason: 'no GPS here');
@@ -310,24 +316,30 @@ void main() {
       expect(page, contains('const AppTileLayer(),'));
       expect(page.contains('ColorFilter.matrix'), isFalse);
     }
-    final add = svc.indexOf("buttonKey: 'svc-add',");
-    // Measured in the map area (not the screen), so the button sits right
-    // above the list on any phone.
-    expect(svc.lastIndexOf('gap: 10,', add), greaterThan(svc.lastIndexOf('gap: 76,', add)));
+    // Measured in the map area (not the screen), so the buttons sit right
+    // above the list on any phone (owner, 20.11.2026: on the right, the place
+    // button above the round +, both riding on top of the list).
+    for (final page in [svc, tp]) {
+      expect(page, contains('bottom: box.maxHeight * e + 10,'));
+      expect(page, contains('MapAddRoundButton('));
+      expect(page.indexOf('my_location'), lessThan(page.indexOf('MapAddRoundButton(')), reason: 'the place button above the +');
+    }
     expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
     expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
     // One form for both pages: the same header, sheet and button places;
     // only the names change (owner, 31.10.2026). No banner, the panel stays
     // where the finger leaves it (owner, 20.11.2026).
+    // Parklar rests closed at the bottom (its peek in points, owner 20.11.2026).
+    expect(tp, contains('initialChildSize: peek,'));
+    expect(tp, contains('minChildSize: peek,'));
     for (final page in [svc, tp]) {
-      expect(page, contains('initialChildSize: kTirParkSheetStart,'));
-      expect(page, contains('minChildSize: kTirParkSheetMin,'));
+      expect(page, contains('initialChildSize: peek,'));
+      expect(page, contains('minChildSize: peek,'));
       expect(page, contains('snap: false,'));
       expect(page, contains('MapPageHeader(s: s)'));
       expect(page.contains('MapPageBanner('), isFalse);
     }
-    expect(svc, contains('sheet: kTirParkSheetStart,'));
-    expect(svc, contains('gap: 76,'), reason: 'locate button above the add button');
+    expect(kTirParkSheetPeek, lessThanOrEqualTo(64), reason: 'the closed list is one thin strip ("xəritəni çox bağlamaq olmaz")');
     // Each map its own "+" (owner, 06.11.2026): Servislər → registration,
     // Mağazalar → the shop form, Parklar → the TIR Parkı page.
     expect(svc, contains('onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),'));
@@ -367,7 +379,7 @@ void main() {
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     for (final page in [tp, svc]) {
-      expect(page, contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart)'),
+      expect(page.contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart)') || page.contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetOpen - 0.05)'), isTrue,
           reason: 'a short swipe on a card is no tap that lifts the panel back up');
       expect(page.contains('snapSizes'), isFalse);
     }

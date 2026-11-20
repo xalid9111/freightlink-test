@@ -113,7 +113,7 @@ void main() {
 
   test('Mağazalar: no service parts on the shops map; "Mağaza əlavə et" (owner, 05.11.2026)', () {
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
-    expect(svc, contains("label: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),"));
+    expect(svc, contains("tooltip: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),"));
     expect(svc, contains('if (!widget.shops) SizedBox('), reason: 'no Təkər təmiri / Akkumulyator … chips');
     expect(svc, contains('categories: widget.shops ? const [] : cats,'), reason: 'no service categories in the search either');
     expect(svc, contains('if (!shops) ...[\n                    const SizedBox(height: 4),\n                    ServiceLegend(s: s),'),

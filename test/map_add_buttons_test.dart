@@ -58,7 +58,8 @@ void main() {
     await tester.pumpWidget(app(router('/tirpark'), repo));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('tp-list')), findsOneWidget, reason: 'the parks list');
-    expect(find.text('TIR parkı əlavə et'), findsOneWidget);
+    // A round + (its words as a tooltip) on the right over the list (owner, 20.11.2026).
+    expect(find.byTooltip('TIR parkı əlavə et'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('tp-add')));
     await tester.pump(const Duration(milliseconds: 300));
     // Choosing the place: the pin in the middle, the list out of the way.
@@ -110,7 +111,7 @@ void main() {
     }
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     expect(tp, contains('TirParkAddSheet(lat: c.latitude, lng: c.longitude, s: s)'));
-    expect(tp, contains("MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding)"));
+    expect(tp, contains("MapAddRoundButton(buttonKey: 'tp-add', tooltip: s.t('tp_add'), onTap: _startAdding)"));
     expect(tp, contains('if (askSignIn(context)) return;'), reason: 'a visitor signs in first');
     expect(src('lib/core/router/app_router.dart'), contains('builder: (context, state) => const NavRoom(child: TirParkScreen()),'));
   });

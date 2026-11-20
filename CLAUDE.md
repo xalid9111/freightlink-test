@@ -1084,6 +1084,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   false: no "TIR Parkı" / "Park rezervasiyalarım" on Profil, no booking on
   the park card / page, no TIR Park notices); the server, parks, bookings,
   workers and their history are untouched — the flag brings them back.
+  Later the same day (owner's pictures: "tam aşağıda olsun, sürüşdürüb
+  açanda açılsın … xəritəni bağlamasın … sağ tərəfdə əlavə et + alt panelin
+  həmən üstündə, konum işarəsi onun üzərində"): on Parklar, Servislər and
+  Mağazalar the list RESTS CLOSED as one thin strip (handle + one line:
+  "Yaxınlıqdakı TIR parkları · n park · 100 km" / "n servis · 100 km …",
+  kTirParkSheetPeek = 58 pt), opens by a pull or a tap on that line (half
+  open, kTirParkSheetOpen 0.55; a second tap closes it), a pin opens it to
+  show the card; on the RIGHT, right on top of the list, the place button
+  and under it the round orange + (MapAddRoundButton: Park / Servis /
+  Mağaza əlavə et, its words only as a tooltip) — they ride up and down with
+  the list and leave when it is opened high; "Bugünkü plan" under the
+  list's line.
 - "Maşınlarım" (owner's pictures and answers, 20.11.2026, SQL 0130 —
   stage 2 of the Xəritə tab; lib/features/fleet): "Xəritə | Maşınlarım"
   under the header on Parklar / Servislər / Mağazalar and on /fleet

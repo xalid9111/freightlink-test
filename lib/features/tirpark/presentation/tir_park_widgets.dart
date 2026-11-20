@@ -368,6 +368,36 @@ class ParksServicesSwitch extends StatelessWidget {
   }
 }
 
+/// The round orange + on the map pages (owner, 20.11.2026): right side,
+/// right on top of the list, the place button above it; its words only as a
+/// tooltip, so it covers as little of the map as possible.
+class MapAddRoundButton extends StatelessWidget {
+  final String buttonKey, tooltip;
+  final VoidCallback onTap;
+  const MapAddRoundButton({super.key, required this.buttonKey, required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: Material(
+            color: AppColors.accentFill,
+            shape: const CircleBorder(),
+            elevation: 4,
+            shadowColor: AppColors.accentFill.withValues(alpha: 0.5),
+            child: InkWell(
+              key: ValueKey(buttonKey),
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: const SizedBox(width: 56, height: 56, child: Icon(Icons.add, color: Colors.white, size: 32)),
+            ),
+          ),
+        ),
+      );
+}
+
 /// "… əlavə et +" on a map: a label pill running under a round orange +.
 class MapAddButton extends StatelessWidget {
   final String label, buttonKey;
@@ -419,6 +449,13 @@ class MapAddButton extends StatelessWidget {
 /// it stays wherever the finger leaves it (no snapping back up).
 const kTirParkSheetStart = 0.36;
 const kTirParkSheetMin = 0.2;
+
+/// The map pages (owner, 20.11.2026: "tam aşağıda olsun, sürüşdürüb açanda
+/// açılsın … xəritəni çox bağlamaq olmaz"): the list rests as one thin
+/// strip — its handle and one line (this many points); a pull or a tap on
+/// it opens it.
+const kTirParkSheetPeek = 58.0;
+const kTirParkSheetOpen = 0.55;
 
 class AboveSheet extends StatelessWidget {
   final double sheet, gap;
