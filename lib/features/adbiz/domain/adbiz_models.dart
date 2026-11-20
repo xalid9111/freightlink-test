@@ -147,7 +147,20 @@ class AdbizEntry {
 
   /// Paid by card (the tick, 0113); false = cash.
   final bool paidCard;
-  const AdbizEntry({required this.id, required this.dayId, required this.title, required this.amount, this.createdAt, this.paidCard = false});
+
+  /// The worker's own price fix (0132): the first price and his note
+  /// (Qeyd); null = never changed by the worker.
+  final double? fixedFrom;
+  final String? fixNote;
+  const AdbizEntry(
+      {required this.id,
+      required this.dayId,
+      required this.title,
+      required this.amount,
+      this.createdAt,
+      this.paidCard = false,
+      this.fixedFrom,
+      this.fixNote});
 
   factory AdbizEntry.fromJson(Map<String, dynamic> j) => AdbizEntry(
         id: j['id'] as String,
@@ -156,7 +169,50 @@ class AdbizEntry {
         amount: _d(j['amount']),
         createdAt: _t(j['created_at']),
         paidCard: j['paid_card'] == true,
+        fixedFrom: j['fixed_from'] == null ? null : _d(j['fixed_from']),
+        fixNote: (j['fix_note'] as String?)?.trim().isEmpty ?? true ? null : (j['fix_note'] as String).trim(),
       );
+
+  /// Changed by the worker (0132).
+  bool get isFixed => fixedFrom != null && fixedFrom != amount;
+}
+
+/// The jobs in ONE fixed order whatever source sent them (owner, 20.11.2026:
+/// "qiymət ardıcıllığı yer dəyişir … sabit et"): written first → last; the
+/// same moment → by id. The screen shows them newest on top.
+List<AdbizEntry> adbizSortEntries(Iterable<AdbizEntry> list) {
+  final out = list.toList();
+  out.sort((a, b) {
+    final ta = a.createdAt, tb = b.createdAt;
+    if (ta != null && tb != null && ta != tb) return ta.compareTo(tb);
+    if (ta == null && tb != null) return 1;
+    if (ta != null && tb == null) return -1;
+    return a.id.compareTo(b.id);
+  });
+  return out;
+}
+
+/// The server's list plus the jobs this device has just saved but the list
+/// has not brought yet (a late / lost realtime message never hides them);
+/// one row per id, in the fixed order.
+List<AdbizEntry> adbizMergeEntries(List<AdbizEntry> server, Iterable<AdbizEntry> justSaved) {
+  final ids = {for (final e in server) e.id};
+  return adbizSortEntries([...server, for (final e in justSaved) if (!ids.contains(e.id)) e]);
+}
+
+/// The same job (name and amount) already written in the last [within]
+/// (owner, 20.11.2026: the worker wrote it twice) — asked before adding.
+AdbizEntry? adbizRecentTwin(List<AdbizEntry> list, String title, double amount, DateTime now,
+    {Duration within = const Duration(minutes: 10)}) {
+  // Case and the Azerbaijani I / ı / İ do not matter.
+  String key(String v) => v.trim().replaceAll(RegExp(r'\s+'), ' ').replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase().replaceAll('ı', 'i');
+  final t = key(title);
+  for (final e in list.reversed) {
+    final at = e.createdAt;
+    if (at == null || now.difference(at).abs() > within) continue;
+    if (key(e.title) == t && (e.amount - amount).abs() < 0.005) return e;
+  }
+  return null;
 }
 
 /// The money of the jobs paid by card.

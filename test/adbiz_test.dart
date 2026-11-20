@@ -85,6 +85,10 @@ class _Repo implements AdbizRepository {
     return 'x${dayX.length}';
   }
 
+  final fixes = <(String, double, String)>[];
+  @override
+  Future<void> workerFixEntry(String id, double amount, String note) async => fixes.add((id, amount, note));
+
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
@@ -276,10 +280,12 @@ void main() {
       expect(find.byKey(const ValueKey('adb-percent')), findsNothing);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '120.00 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-spent-total'))).data, '30.00 AZN');
-      // The worker: no edit / delete on saved jobs or expenses, the lock note.
-      expect(find.byIcon(Icons.edit_outlined), findsNothing);
+      // The worker: no delete, no change of a rasxod; on his today's open
+      // day only a job's PRICE with a note (✎, owner 20.11.2026; 0132).
+      expect(find.byIcon(Icons.edit_outlined), findsNWidgets(4), reason: 'one ✎ per job, none on the rasxod');
       expect(find.byIcon(Icons.delete_outline), findsNothing);
       expect(find.byKey(const ValueKey('adb-fix-admin-only')), findsOneWidget);
+      expect(find.text('adb_fix_worker_today'), findsOneWidget);
       // No net-profit card for the worker (the owner's panel only).
       expect(find.text('adb_net'), findsNothing);
       await t.enterText(find.byKey(const ValueKey('adb-exp-title')), 'Boya');
@@ -376,8 +382,8 @@ void main() {
       await t.tap(find.byKey(const ValueKey('adb-card-e2')));
       await t.pump();
       expect(repo.ticks, [('e1', false), ('e2', true)]);
-      // …but still no edit / delete of the name or amount.
-      expect(find.byIcon(Icons.edit_outlined), findsNothing);
+      // …no delete; the ✎ only changes the price with a note (0132).
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
     });
 
     testWidgets('a closed day: the worker\'s tick is shown, not changeable', (t) async {
@@ -832,6 +838,119 @@ void main() {
     expect(router, contains("path: 'adbiz',"));
     expect(router, isNot(contains("path: '/adbiz")), reason: 'entered only from Profil');
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains('const AdbizProfileEntry(),'));
+  });
+
+  group('owner, 20.11.2026: the job shows at once, a twin is asked, one fixed order, the worker\'s price fix', () {
+    test('one fixed order whatever sent the list (by time, then id)', () {
+      final t0 = DateTime(2026, 11, 20, 10);
+      final a = AdbizEntry(id: 'a', dayId: 'd1', title: 'A', amount: 1, createdAt: t0);
+      final b = AdbizEntry(id: 'b', dayId: 'd1', title: 'B', amount: 2, createdAt: t0.add(const Duration(minutes: 1)));
+      final c = AdbizEntry(id: 'c', dayId: 'd1', title: 'C', amount: 3, createdAt: t0.add(const Duration(minutes: 1)));
+      for (final order in [
+        [a, b, c],
+        [c, b, a],
+        [b, a, c],
+        [c, a, b],
+      ]) {
+        expect([for (final e in adbizSortEntries(order)) e.id], ['a', 'b', 'c']);
+      }
+    });
+    test('the job just saved stays until the list brings it; never twice', () {
+      final t0 = DateTime(2026, 11, 20, 10);
+      final a = AdbizEntry(id: 'a', dayId: 'd1', title: 'A', amount: 1, createdAt: t0);
+      final n = AdbizEntry(id: 'n', dayId: 'd1', title: 'N', amount: 50, createdAt: t0.add(const Duration(minutes: 5)));
+      expect([for (final e in adbizMergeEntries([a], [n])) e.id], ['a', 'n'], reason: 'an old list without it still shows it');
+      expect([for (final e in adbizMergeEntries([n, a], [n])) e.id], ['a', 'n'], reason: 'once the list has it: one row');
+    });
+    test('a twin: the same name and amount in the last 10 minutes', () {
+      final now = DateTime(2026, 11, 20, 18, 55);
+      final list = [AdbizEntry(id: 'x', dayId: 'd1', title: 'Banner çapı', amount: 50, createdAt: DateTime(2026, 11, 20, 18, 52))];
+      expect(adbizRecentTwin(list, ' banner ÇAPI ', 50, now)?.id, 'x');
+      expect(adbizRecentTwin(list, 'Banner çapı', 45, now), isNull, reason: 'another amount');
+      expect(adbizRecentTwin(list, 'Banner çapı', 50, DateTime(2026, 11, 20, 19, 10)), isNull, reason: 'older than 10 minutes');
+    });
+
+    testWidgets('a saved job shows at once even when the list never brings it', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()]);
+      await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'Banner');
+      await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '50');
+      await t.tap(find.byKey(const ValueKey('adb-add-job')));
+      await t.pump();
+      await t.pump();
+      expect(repo.adds.length, 1);
+      expect(find.byKey(const ValueKey('adb-job-e1')), findsOneWidget, reason: 'the server never sent it, it is shown');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-total'))).data, '50.00 AZN');
+      // The same job again at once: asked first; Cancel adds nothing.
+      await t.enterText(find.byKey(const ValueKey('adb-job-title')), 'banner');
+      await t.enterText(find.byKey(const ValueKey('adb-job-amount')), '50');
+      await t.tap(find.byKey(const ValueKey('adb-add-job')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('adb_twin_title'), findsOneWidget);
+      await t.tap(find.text('common_cancel'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.adds.length, 1, reason: 'not written twice');
+      expect(find.text('banner'), findsOneWidget, reason: 'what was typed stays');
+      // "Yenə əlavə et" = a real second job.
+      await t.tap(find.byKey(const ValueKey('adb-add-job')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.adds.length, 2);
+      expect(repo.adds[1].$4, isNot(repo.adds[0].$4), reason: 'a new job for the server');
+    });
+
+    testWidgets('the worker changes a price: new price + Qeyd (required, empty at first) → OK', (t) async {
+      final repo = _Repo();
+      await _pumpNotebook(t, repo, days: [_day()], entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Vizit kart', amount: 40)]);
+      await t.tap(find.byIcon(Icons.edit_outlined));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('adb_fix_title'), findsOneWidget);
+      expect(t.widget<TextField>(find.byKey(const ValueKey('adb-fix-note'))).controller!.text, '', reason: 'no ready text in Qeyd');
+      expect(find.byKey(const ValueKey('adb-dlg-title')), findsNothing, reason: 'the name is not changed');
+      await t.enterText(find.byKey(const ValueKey('adb-fix-amount')), '35');
+      await t.tap(find.byKey(const ValueKey('adb-fix-ok')));
+      await t.pump();
+      expect(find.text('adb_err_note_required'), findsOneWidget);
+      expect(repo.fixes, isEmpty);
+      await t.enterText(find.byKey(const ValueKey('adb-fix-note')), 'Endirim');
+      await t.tap(find.byKey(const ValueKey('adb-fix-ok')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.fixes.single, ('e1', 35.0, 'Endirim'));
+    });
+
+    testWidgets('a changed job says so with its note', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day()], entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Vizit kart', amount: 35, fixedFrom: 40, fixNote: 'Endirim'),
+      ]);
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-job-e1')), matching: find.textContaining('Endirim')), findsOneWidget);
+    });
+
+    testWidgets('a closed day: no price fix for the worker', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day(status: 'closed', closedBy: 'boss')], entries: const [
+        AdbizEntry(id: 'e1', dayId: 'd1', title: 'Vizit kart', amount: 40),
+      ]);
+      expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    });
+
+    test('SQL 0132: only the worker\'s own today\'s open day, a note, the first price kept, audited, nothing deleted', () {
+      final sql = src('supabase/migrations/0132_ad_business_worker_fix.sql');
+      final lower = sql.toLowerCase();
+      for (final bad in ['drop table', 'truncate', 'delete from']) {
+        expect(lower.contains(bad), isFalse, reason: bad);
+      }
+      expect(sql, contains("raise exception 'note_required'"));
+      expect(sql, contains('fixed_from = coalesce(fixed_from, e.amount)'));
+      expect(sql, contains("d.status <> 'open' or d.work_date <> public._adbiz_today()"));
+      expect(sql, contains("'entry.worker_fix'"));
+      expect(src('supabase/tests/local/run_local.sh'), contains('168_ad_business_worker_fix.sql'));
+    });
   });
 
   group('live lists never wait for realtime (owner, 13.11.2026: the last 50 AZN job did not show)', () {

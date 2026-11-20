@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../finance/domain/finance_models.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
 
@@ -140,6 +141,62 @@ Future<(String, double)?> askTitleAmount(BuildContext context, AppStrings s,
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('common_cancel'))),
           FilledButton(key: const ValueKey('adb-dlg-save'), onPressed: ok, child: Text(s.t('adb_save'))),
+        ],
+      );
+    }),
+  );
+}
+
+/// The worker's price fix (owner, 20.11.2026): the new price + "Qeyd"
+/// (required, 3–200 letters, empty — no ready text) → OK.
+Future<(double, String)?> askAmountNote(BuildContext context, AppStrings s, {required String title, required double amount}) {
+  final a = TextEditingController(text: amount == amount.roundToDouble() ? '${amount.toInt()}' : amount.toStringAsFixed(2));
+  final n = TextEditingController();
+  String? err;
+  return showDialog<(double, String)>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(builder: (ctx, set) {
+      void ok() {
+        final v = parseAmount(a.text);
+        if (v == null) {
+          set(() => err = s.t('adb_err_form'));
+          return;
+        }
+        if (n.text.trim().length < 3) {
+          set(() => err = s.t('adb_err_note_required'));
+          return;
+        }
+        Navigator.pop(ctx, (v, n.text.trim()));
+      }
+
+      return AlertDialog(
+        title: Text(s.t('adb_fix_title')),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('$title · ${s.t('adb_fix_now', {'amount': money(amount)})}', style: TextStyle(color: AppColors.textSoft)),
+            const SizedBox(height: 8),
+            TextField(
+              key: const ValueKey('adb-fix-amount'),
+              controller: a,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: s.t('adb_fix_new'), suffixText: 'AZN'),
+            ),
+            TextField(
+              key: const ValueKey('adb-fix-note'),
+              controller: n,
+              maxLength: 200,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(labelText: s.t('adb_fix_note')),
+            ),
+            Text(s.t('adb_fix_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            if (err != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(err!, style: TextStyle(color: AppColors.danger))),
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('common_cancel'))),
+          FilledButton(key: const ValueKey('adb-fix-ok'), onPressed: ok, child: const Text('OK')),
         ],
       );
     }),

@@ -33,10 +33,45 @@ final adbizDaysProvider = StreamProvider.autoDispose.family<List<AdbizDay>, Stri
   return adbizLive(ref, () => repo.watchDays(userId), () => repo.days(userId));
 });
 
-/// Live: one day's jobs (oldest first) — the same on every device.
+/// Live: one day's jobs (oldest first) — the same on every device, in one
+/// fixed order whatever sent them (adbizSortEntries).
 final adbizEntriesProvider = StreamProvider.autoDispose.family<List<AdbizEntry>, String>((ref, dayId) {
   final repo = ref.watch(adbizRepositoryProvider);
-  return adbizLive(ref, () => repo.watchEntries(dayId), () => repo.entries(dayId));
+  return adbizLive(ref, () => repo.watchEntries(dayId), () => repo.entries(dayId)).map(adbizSortEntries);
+});
+
+/// The jobs this device has just saved (owner, 20.11.2026: "yazdığı an
+/// görünmür … iki qeyd"): shown at once, until the server's list brings
+/// them; kept for [kAdbizJustSavedFor] at most (a job deleted elsewhere
+/// does not stay).
+const kAdbizJustSavedFor = Duration(minutes: 2);
+
+class AdbizJustSaved extends StateNotifier<Map<String, (AdbizEntry, DateTime)>> {
+  AdbizJustSaved() : super(const {});
+  void add(AdbizEntry e) => state = {...state, e.id: (e, DateTime.now())};
+  void drop(Iterable<String> ids) {
+    if (!ids.any(state.containsKey)) return;
+    state = {for (final x in state.entries) if (!ids.contains(x.key)) x.key: x.value};
+  }
+
+  Iterable<AdbizEntry> alive(DateTime now) => [
+        for (final x in state.values)
+          if (now.difference(x.$2) < kAdbizJustSavedFor) x.$1
+      ];
+}
+
+final adbizJustSavedProvider =
+    StateNotifierProvider.autoDispose.family<AdbizJustSaved, Map<String, (AdbizEntry, DateTime)>, String>((ref, dayId) {
+  ref.keepAlive();
+  return AdbizJustSaved();
+});
+
+/// What the notebook shows: the server's jobs + the ones just saved here.
+final adbizShownEntriesProvider = Provider.autoDispose.family<List<AdbizEntry>, String>((ref, dayId) {
+  final server = ref.watch(adbizEntriesProvider(dayId)).valueOrNull ?? const <AdbizEntry>[];
+  ref.watch(adbizJustSavedProvider(dayId));
+  final just = ref.read(adbizJustSavedProvider(dayId).notifier);
+  return adbizMergeEntries(server, just.alive(DateTime.now()));
 });
 
 /// Live: one day's expenses (rasxod). Before SQL 0111 there is no day_id:

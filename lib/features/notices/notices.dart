@@ -12,6 +12,8 @@ import '../../core/router/safe_navigation.dart';
 import '../../core/startup/startup_steps.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/presentation/providers/auth_providers.dart';
+import '../fleet/presentation/fleet_forms.dart' show fleetErrorKey;
+import '../fleet/presentation/fleet_providers.dart';
 import '../jobs/domain/job_applications.dart';
 import '../tirpark/domain/tir_park.dart' show kParkManagementOn;
 import '../jobs/presentation/job_applications_screen.dart' show jobNoticeTime;
@@ -75,6 +77,8 @@ class AppNotice {
         'tirpark_payment_review' => s.t('ntf_tp_payment'),
         'tirpark_worker_request' => s.t('ntf_tp_worker'),
         'fleet_expense' => s.t('ntf_fleet_expense', {'name': '${data['name'] ?? ''}'}),
+        'fleet_driver_invite' => s.t('ntf_fleet_invite', {'name': '${data['owner'] ?? ''}'.trim()}),
+        'fleet_driver_answer' => s.t(data['accepted'] == true ? 'ntf_fleet_accepted' : 'ntf_fleet_declined', {'name': '${data['driver'] ?? ''}'.trim()}),
         _ when isJob => s.t(_job.textKey),
         _ => title,
       };
@@ -84,6 +88,7 @@ class AppNotice {
         'cargo_offer_new' || 'cargo_offer_accepted' || 'cargo_offer_rejected' => body,
         'tirpark_booking' => [data['plate'] ?? data['booking_no'], body].where((v) => '${v ?? ''}'.trim().isNotEmpty).join(' · '),
         'fleet_expense' => [data['truck'], amount].where((v) => '${v ?? ''}'.trim().isNotEmpty).join(' · '),
+        'fleet_driver_invite' || 'fleet_driver_answer' => body,
         'tirpark_payment_review' || 'tirpark_worker_request' => [title.split(': ').skip(1).join(': '), body]
             .where((v) => v.trim().isNotEmpty)
             .join(' · '),
@@ -96,6 +101,8 @@ class AppNotice {
         'cargo_offer_rejected' => Icons.highlight_off,
         'tirpark_booking' || 'tirpark_payment_review' || 'tirpark_worker_request' => Icons.local_parking,
         'fleet_expense' => Icons.receipt_long_outlined,
+        'fleet_driver_invite' => Icons.local_shipping_outlined,
+        'fleet_driver_answer' => data['accepted'] == true ? Icons.how_to_reg_outlined : Icons.person_off_outlined,
         'job_match_vacancy' => Icons.work_outline,
         'job_match_seeker' => Icons.local_shipping_outlined,
         _ when isJob => Icons.assignment_ind_outlined,
@@ -107,7 +114,8 @@ class AppNotice {
     final cargo = data['cargo_id'];
     if (type.startsWith('cargo_offer') && cargo != null) return '/load/$cargo';
     if (type.startsWith('tirpark_')) return '/tirpark/manage';
-    if (type == 'fleet_expense' && data['truck_id'] != null) return '/fleet/t/${data['truck_id']}';
+    if ((type == 'fleet_expense' || type == 'fleet_driver_answer') && data['truck_id'] != null) return '/fleet/t/${data['truck_id']}';
+    if (type == 'fleet_driver_invite') return null; // answered with its own buttons
     if (isJob) return _job.route;
     return null;
   }
@@ -118,7 +126,11 @@ class AppNotice {
   bool get opensInTab => (route?.startsWith('/tirpark') ?? false) || (route?.startsWith('/fleet') ?? false);
 
   /// An "act on it" notice whose matter may be settled later.
-  bool get isAction => type == 'tirpark_worker_request' || type == 'tirpark_payment_review' || type == 'fleet_expense';
+  bool get isAction =>
+      type == 'tirpark_worker_request' || type == 'tirpark_payment_review' || type == 'fleet_expense' || type == 'fleet_driver_invite';
+
+  /// "… sizi sürücü kimi əlavə edir" — Qəbul et / Rədd et (0131).
+  bool get isDriverInvite => type == 'fleet_driver_invite' && data['invite_id'] != null;
 }
 
 /// The notices without the settled ones (owner, 18.11.2026: "işçi təsdiqi
@@ -218,6 +230,20 @@ class NoticesRepository {
         for (final n in exp) {
           final st = state['${n.data['expense_id']}'];
           if (st != null && st != 'pending') out.add(n.id);
+        }
+      } catch (_) {}
+    }
+    // A driver invitation already answered / taken back (0131).
+    final inv = [
+      for (final n in list)
+        if (n.isDriverInvite) n
+    ];
+    if (inv.isNotEmpty) {
+      try {
+        final res = await _c.rpc('fleet_my_driver_invites').timeout(const Duration(seconds: 15));
+        final open = {for (final r in (res as List? ?? const [])) '$r'};
+        for (final n in inv) {
+          if (!open.contains('${n.data['invite_id']}')) out.add(n.id);
         }
       } catch (_) {}
     }
@@ -323,6 +349,26 @@ class _NoticesScreenState extends ConsumerState<NoticesScreen> {
     ref.invalidate(myNoticesProvider);
   }
 
+  final _answering = <String>{};
+
+  /// The invited driver says yes / no (0131); the notice then leaves.
+  Future<void> _answer(AppStrings s, AppNotice n, bool accept) async {
+    if (!_answering.add(n.id)) return;
+    setState(() {});
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final name = await ref.read(fleetRepositoryProvider).answerInvite('${n.data['invite_id']}', accept);
+      _read([n.id]);
+      ref.invalidate(fleetProvider);
+      messenger.showSnackBar(SnackBar(content: Text(accept ? s.t('fl_joined', {'name': name}) : s.t('ntf_fleet_you_declined'))));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(s.t(fleetErrorKey(e)))));
+    } finally {
+      ref.invalidate(settledNoticesProvider);
+      if (mounted) setState(() => _answering.remove(n.id));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
@@ -377,9 +423,32 @@ class _NoticesScreenState extends ConsumerState<NoticesScreen> {
                 ),
                 title: Text(n.text(s),
                     style: TextStyle(color: AppColors.text, fontWeight: isNew ? FontWeight.w600 : FontWeight.w400)),
-                subtitle: Text([detail, when].where((v) => v.trim().isNotEmpty).join('\n'),
-                    style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
-                isThreeLine: detail.trim().isNotEmpty && when.isNotEmpty,
+                subtitle: !n.isDriverInvite
+                    ? Text([detail, when].where((v) => v.trim().isNotEmpty).join('\n'),
+                        style: TextStyle(color: AppColors.textSoft, fontSize: 12.5))
+                    : Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                        Text([detail, when].where((v) => v.trim().isNotEmpty).join('\n'),
+                            style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          Expanded(
+                            child: FilledButton(
+                              key: ValueKey('notice-accept-${n.id}'),
+                              onPressed: _answering.contains(n.id) ? null : () => _answer(s, n, true),
+                              child: Text(s.t('ntf_fleet_accept')),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              key: ValueKey('notice-decline-${n.id}'),
+                              onPressed: _answering.contains(n.id) ? null : () => _answer(s, n, false),
+                              child: Text(s.t('ntf_fleet_decline')),
+                            ),
+                          ),
+                        ]),
+                      ]),
+                isThreeLine: n.isDriverInvite || (detail.trim().isNotEmpty && when.isNotEmpty),
                 trailing: isNew ? Icon(Icons.circle, size: 10, color: AppColors.accent) : null,
                 onTap: () {
                   _read([n.id]);

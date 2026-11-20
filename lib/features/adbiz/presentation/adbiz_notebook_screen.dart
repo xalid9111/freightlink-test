@@ -265,6 +265,10 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
   /// (owner, 10.11.2026; the server refuses the worker too).
   bool get _canFix => widget.manager;
 
+  /// The worker changes a job's price on his own TODAY's open day, with a
+  /// note (owner, 20.11.2026; 0132 — the server checks it again).
+  bool get _canWorkerFix => !widget.manager && _open;
+
   @override
   void dispose() {
     for (final c in [_title, _amount, _xTitle, _xAmount]) {
@@ -288,15 +292,34 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
       setState(() => _error = s.t('adb_err_form'));
       return;
     }
+    // The same job a moment ago (owner, 20.11.2026: written twice) — asked.
+    final twin = adbizRecentTwin(ref.read(adbizShownEntriesProvider(day.id)), title, amount, DateTime.now());
+    if (twin != null) {
+      setState(() => _busy = true);
+      final again = await adbizConfirm(
+          context,
+          s,
+          s.t('adb_twin_title'),
+          s.t('adb_twin_body', {'job': '${twin.title} · ${money(twin.amount)}', 'time': hhmm(twin.createdAt)}),
+          ok: s.t('adb_twin_ok'));
+      if (!mounted) return;
+      if (!again) {
+        setState(() => _busy = false);
+        return;
+      }
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(adbizRepositoryProvider).addEntry(day.id, title, amount, _key, card: _v113 ? _card : null);
-      // Shown at once from the server, never only when realtime arrives
-      // (owner, 13.11.2026: the last 50 AZN job did not show).
+      final card = _v113 ? _card : null;
+      final id = await ref.read(adbizRepositoryProvider).addEntry(day.id, title, amount, _key, card: card);
       adbizResync(ref, day);
+      // Shown at once, whatever the lists bring later (owner, 13.11 and
+      // 20.11.2026: the job did not show, so it was written again).
+      ref.read(adbizJustSavedProvider(day.id).notifier).add(AdbizEntry(
+          id: id, dayId: day.id, title: title, amount: (amount * 100).roundToDouble() / 100, createdAt: DateTime.now(), paidCard: card ?? false));
       _key = adbizClientKey();
       _title.clear();
       _amount.clear();
@@ -307,6 +330,18 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
       if (mounted) setState(() => _error = adbizError(s, e));
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// The worker's own price fix with a note (owner, 20.11.2026; 0132).
+  Future<void> _workerFix(AdbizEntry e) async {
+    final r = await askAmountNote(context, s, title: e.title, amount: e.amount);
+    if (r == null) return;
+    try {
+      await ref.read(adbizRepositoryProvider).workerFixEntry(e.id, r.$1, r.$2);
+      adbizResync(ref, day);
+    } catch (err) {
+      if (mounted) adbizSnack(context, adbizError(s, err));
     }
   }
 
@@ -446,7 +481,8 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final entries = ref.watch(adbizEntriesProvider(day.id)).valueOrNull ?? const <AdbizEntry>[];
+    // The server's jobs + the ones just saved here, in one fixed order.
+    final entries = ref.watch(adbizShownEntriesProvider(day.id));
     final expenses = ref.watch(adbizDayExpensesProvider(day.id)).valueOrNull ?? const <AdbizExpense>[];
     final p = DayProgress.of(entries, day.target, expenses);
     final company = ref.watch(adbizCompanyProvider(day.companyId));
@@ -540,8 +576,11 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
                 child: FilledButton.icon(
                   key: const ValueKey('adb-add-job'),
                   onPressed: _busy ? null : _add,
-                  icon: const Icon(Icons.add_circle_outline),
-                  label: Text(s.t('adb_add_job'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  icon: _busy
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.add_circle_outline),
+                  label: Text(s.t(_busy ? 'adb_saving' : 'adb_add_job'),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
               ),
             ]),
@@ -571,7 +610,7 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.lock_outline, size: 15, color: AppColors.accent),
                   const SizedBox(width: 6),
-                  Text(s.t('adb_fix_admin_only'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+                  Text(s.t(_canWorkerFix ? 'adb_fix_worker_today' : 'adb_fix_admin_only'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
                 ]),
               ),
           ],
@@ -588,7 +627,15 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
             title: entries[i].title,
             time: hhmm(entries[i].createdAt),
             amount: money(entries[i].amount),
-            onEdit: _canFix ? () => _edit(entries[i]) : null,
+            fix: entries[i].isFixed
+                ? s.t('adb_fixed', {'from': money(entries[i].fixedFrom!), 'to': money(entries[i].amount)}) +
+                    (entries[i].fixNote == null ? '' : ' · ${entries[i].fixNote}')
+                : null,
+            onEdit: _canFix
+                ? () => _edit(entries[i])
+                : _canWorkerFix
+                    ? () => _workerFix(entries[i])
+                    : null,
             onDelete: _canFix ? () => _delete(entries[i]) : null,
             tick: !v113
                 ? null
@@ -1094,8 +1141,20 @@ class _Row extends StatelessWidget {
 
   /// The card tick at the end of a job (0113).
   final Widget? tick;
+
+  /// "düzəldildi (40 AZN → 35 AZN) · the note" (the worker's fix, 0132).
+  final String? fix;
   const _Row(
-      {super.key, required this.n, required this.title, required this.time, required this.amount, this.amountColor, this.onEdit, this.onDelete, this.tick});
+      {super.key,
+      required this.n,
+      required this.title,
+      required this.time,
+      required this.amount,
+      this.amountColor,
+      this.onEdit,
+      this.onDelete,
+      this.tick,
+      this.fix});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1115,6 +1174,7 @@ class _Row extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: TextStyle(fontSize: 15.5, color: AppColors.text)),
               if (time.isNotEmpty) Text(time, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+              if (fix != null) Text(fix!, style: TextStyle(fontSize: 11.5, color: AppColors.accent)),
             ]),
           ),
           // The card tick under the amount, at the end of the job (0113).
