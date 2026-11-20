@@ -13,7 +13,10 @@ import '../../notices/notices.dart' show NoticeBell;
 /// heart on the right (fixed on every page, owner 17.11.2026).
 class MapPageHeader extends StatelessWidget {
   final AppStrings s;
-  const MapPageHeader({super.key, required this.s});
+
+  /// The title's text key ("Xəritə" by default, "Maşınlarım" on /fleet).
+  final String titleKey;
+  const MapPageHeader({super.key, required this.s, this.titleKey = 'nav_map'});
 
   static const double height = 58;
 
@@ -26,7 +29,7 @@ class MapPageHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 8, 12, 6),
         child: Stack(alignment: Alignment.center, children: [
           Text(
-            s.t('nav_map'),
+            s.t(titleKey),
             key: const ValueKey('map-page-title'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -48,6 +51,60 @@ class MapPageHeader extends StatelessWidget {
               child: Icon(Icons.favorite_border, size: 21, color: AppColors.accent),
             ),
           ]),
+        ]),
+      ),
+    );
+  }
+}
+
+/// "Xəritə | Maşınlarım" (owner's picture, 20.11.2026): under the header on
+/// the map pages and on Maşınlarım; the chosen half filled orange.
+class MapFleetSwitch extends StatelessWidget {
+  final AppStrings s;
+  final bool fleet;
+  final VoidCallback onMap, onFleet;
+  const MapFleetSwitch({super.key, required this.s, required this.fleet, required this.onMap, required this.onFleet});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget half(String key, IconData icon, String label, bool on, VoidCallback tap) => Expanded(
+          child: Material(
+            color: on ? AppColors.accentFill : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              key: ValueKey(key),
+              borderRadius: BorderRadius.circular(16),
+              onTap: on ? null : tap,
+              child: SizedBox(
+                height: 42,
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(icon, size: 20, color: on ? Colors.white : AppColors.text),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+      child: Container(
+        key: const ValueKey('map-fleet-switch'),
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(19),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(children: [
+          half('switch-map', Icons.place, s.t('nav_map'), !fleet, onMap),
+          const SizedBox(width: 4),
+          half('switch-fleet', Icons.local_shipping_outlined, s.t('fl_title'), fleet, onFleet),
         ]),
       ),
     );

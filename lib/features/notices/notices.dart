@@ -74,6 +74,7 @@ class AppNotice {
         'tirpark_booking' => s.t('ntf_tp_booking'),
         'tirpark_payment_review' => s.t('ntf_tp_payment'),
         'tirpark_worker_request' => s.t('ntf_tp_worker'),
+        'fleet_expense' => s.t('ntf_fleet_expense', {'name': '${data['name'] ?? ''}'}),
         _ when isJob => s.t(_job.textKey),
         _ => title,
       };
@@ -82,6 +83,7 @@ class AppNotice {
   String detail() => switch (type) {
         'cargo_offer_new' || 'cargo_offer_accepted' || 'cargo_offer_rejected' => body,
         'tirpark_booking' => [data['plate'] ?? data['booking_no'], body].where((v) => '${v ?? ''}'.trim().isNotEmpty).join(' · '),
+        'fleet_expense' => [data['truck'], amount].where((v) => '${v ?? ''}'.trim().isNotEmpty).join(' · '),
         'tirpark_payment_review' || 'tirpark_worker_request' => [title.split(': ').skip(1).join(': '), body]
             .where((v) => v.trim().isNotEmpty)
             .join(' · '),
@@ -93,6 +95,7 @@ class AppNotice {
         'cargo_offer_accepted' => Icons.check_circle_outline,
         'cargo_offer_rejected' => Icons.highlight_off,
         'tirpark_booking' || 'tirpark_payment_review' || 'tirpark_worker_request' => Icons.local_parking,
+        'fleet_expense' => Icons.receipt_long_outlined,
         'job_match_vacancy' => Icons.work_outline,
         'job_match_seeker' => Icons.local_shipping_outlined,
         _ when isJob => Icons.assignment_ind_outlined,
@@ -104,6 +107,7 @@ class AppNotice {
     final cargo = data['cargo_id'];
     if (type.startsWith('cargo_offer') && cargo != null) return '/load/$cargo';
     if (type.startsWith('tirpark_')) return '/tirpark/manage';
+    if (type == 'fleet_expense' && data['truck_id'] != null) return '/fleet/t/${data['truck_id']}';
     if (isJob) return _job.route;
     return null;
   }
@@ -111,10 +115,10 @@ class AppNotice {
   /// The route lives inside a bottom-bar tab (TIRPark): it is opened with
   /// go — pushed over the full-screen /notifications page it stayed black
   /// (owner, 18.11.2026).
-  bool get opensInTab => route?.startsWith('/tirpark') ?? false;
+  bool get opensInTab => (route?.startsWith('/tirpark') ?? false) || (route?.startsWith('/fleet') ?? false);
 
   /// An "act on it" notice whose matter may be settled later.
-  bool get isAction => type == 'tirpark_worker_request' || type == 'tirpark_payment_review';
+  bool get isAction => type == 'tirpark_worker_request' || type == 'tirpark_payment_review' || type == 'fleet_expense';
 }
 
 /// The notices without the settled ones (owner, 18.11.2026: "işçi təsdiqi
@@ -195,6 +199,25 @@ class NoticesRepository {
         for (final n in pays) {
           final st = status['${n.data['booking_id']}'];
           if (st != null && st != 'payment_review') out.add(n.id);
+        }
+      } catch (_) {}
+    }
+    // A driver's expense the owner already approved / rejected (0130).
+    final exp = [
+      for (final n in list)
+        if (n.type == 'fleet_expense' && n.data['expense_id'] != null) n
+    ];
+    if (exp.isNotEmpty) {
+      try {
+        final rows = await _c
+            .from('fleet_expenses')
+            .select('id,status,deleted_at')
+            .inFilter('id', [for (final n in exp) '${n.data['expense_id']}'])
+            .timeout(const Duration(seconds: 15));
+        final state = {for (final r in rows as List) '${(r as Map)['id']}': r['deleted_at'] != null ? 'deleted' : '${r['status'] ?? ''}'};
+        for (final n in exp) {
+          final st = state['${n.data['expense_id']}'];
+          if (st != null && st != 'pending') out.add(n.id);
         }
       } catch (_) {}
     }

@@ -420,7 +420,13 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
       body: Column(children: [
         // No banner any more (owner, 20.11.2026, the "Xəritə" tab):
         // TırLink · Xəritə · 🔔 · ❤️ — the same header as Parklar.
-        SafeArea(bottom: false, child: MapPageHeader(s: s)),
+        SafeArea(
+          bottom: false,
+          child: Column(children: [
+            MapPageHeader(s: s),
+            MapFleetSwitch(s: s, fleet: false, onMap: () {}, onFleet: () => context.go('/fleet')),
+          ]),
+        ),
         // The map and its controls under the banner (no second top inset).
         Expanded(
           child: MediaQuery.removePadding(

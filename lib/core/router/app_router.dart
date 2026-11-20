@@ -1,5 +1,7 @@
 import '../../features/empty_trucks/presentation/empty_truck_detail_screen.dart';
 import '../../features/empty_trucks/presentation/empty_truck_form_screen.dart';
+import '../../features/fleet/presentation/fleet_screen.dart' show FleetScreen;
+import '../../features/fleet/presentation/fleet_truck_screen.dart' show FleetTruckScreen;
 import '../../features/notices/notices.dart' show NoticesScreen;
 import '../../features/favorites/favorites.dart' show FavoritesScreen, favTabOf;
 import 'package:flutter/widgets.dart' show GlobalKey, Listenable, NavigatorState;
@@ -531,6 +533,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ],
             ),
             GoRoute(path: '/services', builder: (context, state) => NavRoom(child: ServicesMapScreen(shops: state.uri.queryParameters['shops'] == '1'))),
+            // "Maşınlarım" (owner, 20.11.2026, SQL 0130): Xəritə | Maşınlarım.
+            GoRoute(
+              path: '/fleet',
+              builder: (context, state) => NavRoom(child: FleetScreen(tab: state.uri.queryParameters['tab'])),
+              routes: [
+                GoRoute(path: 't/:id', builder: (context, state) => NavRoom(child: FleetTruckScreen(id: state.pathParameters['id']!))),
+              ],
+            ),
           ]),
           // Branch 6 — TIR Bazarı: a separate part of the app, downloaded
           // only when the tab is opened (deferred).
