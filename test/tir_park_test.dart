@@ -89,6 +89,10 @@ void main() {
     expect(find.byKey(const ValueKey('notice-bell')), findsOneWidget);
     expect(find.byKey(const ValueKey('map-favorites')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
+    // The list rests closed at the bottom (owner, 20.11.2026); a tap on its title opens it.
+    expect(find.byKey(const ValueKey('tp-card-p2')), findsNothing, reason: 'closed: only the title and the count');
+    await tester.tap(find.byKey(const ValueKey('tp-list-head')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
     expect(find.byKey(const ValueKey('tp-add')), findsOneWidget, reason: '"TIR parkı əlavə et +" on the map (users add parks, 20.11.2026)');
     expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
@@ -109,6 +113,8 @@ void main() {
     expect(find.byKey(const ValueKey('tp-route')), findsNothing, reason: 'nothing before a park is chosen');
     // The pin opens the park: its card first in the list, with the way.
     await tester.tap(find.byKey(const ValueKey('tp-pin-p1')));
+    await tester.pump(const Duration(milliseconds: 400));
+    // The list opens (an animation) to show the chosen park's card.
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const ValueKey('tp-route')), findsOneWidget);
     expect(find.text('Marşrut və vaxt üçün GPS-i aktiv edin'), findsOneWidget, reason: 'no GPS here');
@@ -319,9 +325,12 @@ void main() {
     // One form for both pages: the same header, sheet and button places;
     // only the names change (owner, 31.10.2026). No banner, the panel stays
     // where the finger leaves it (owner, 20.11.2026).
+    // Parklar rests closed at the bottom (its peek in points, owner 20.11.2026).
+    expect(tp, contains('initialChildSize: peek,'));
+    expect(tp, contains('minChildSize: peek,'));
+    expect(svc, contains('initialChildSize: kTirParkSheetStart,'));
+    expect(svc, contains('minChildSize: kTirParkSheetMin,'));
     for (final page in [svc, tp]) {
-      expect(page, contains('initialChildSize: kTirParkSheetStart,'));
-      expect(page, contains('minChildSize: kTirParkSheetMin,'));
       expect(page, contains('snap: false,'));
       expect(page, contains('MapPageHeader(s: s)'));
       expect(page.contains('MapPageBanner('), isFalse);
@@ -367,7 +376,7 @@ void main() {
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
     final svc = src('lib/features/services/presentation/services_map_screen.dart');
     for (final page in [tp, svc]) {
-      expect(page, contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart)'),
+      expect(page.contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart)') || page.contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetOpen - 0.05)'), isTrue,
           reason: 'a short swipe on a card is no tap that lifts the panel back up');
       expect(page.contains('snapSizes'), isFalse);
     }

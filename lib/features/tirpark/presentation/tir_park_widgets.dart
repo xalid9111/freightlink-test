@@ -420,6 +420,12 @@ class MapAddButton extends StatelessWidget {
 const kTirParkSheetStart = 0.36;
 const kTirParkSheetMin = 0.2;
 
+/// Parklar (owner, 20.11.2026: "Yaxınlıqdakı TIR parkları tam aşağıda olsun,
+/// sürüşdürüb açanda açılsın"): the list rests showing only its handle,
+/// title and count (this many points); a pull or a tap on the title opens it.
+const kTirParkSheetPeek = 104.0;
+const kTirParkSheetOpen = 0.55;
+
 class AboveSheet extends StatelessWidget {
   final double sheet, gap;
   final double? left;

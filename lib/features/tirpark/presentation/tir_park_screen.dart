@@ -72,6 +72,9 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   bool _adding = false;
   // Park names next to the pins from this zoom on (not a crowd far out).
   bool _labels = false;
+  // The nearby list's height (part of the map) and its lowest place.
+  final _extent = ValueNotifier<double>(0);
+  double _peek = 0.2;
 
   @override
   void initState() {
@@ -86,6 +89,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     _search.dispose();
     _searchFocus.dispose();
     _sheet.dispose();
+    _extent.dispose();
     super.dispose();
   }
 
@@ -157,9 +161,17 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   void _select(TirPark p, {bool fromPin = false}) {
     setState(() => _selectedId = p.id);
     _move(LatLng(p.lat, p.lng), 13);
-    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart) {
-      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    // The list rests closed now: a pin opens it far enough to show the card.
+    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetOpen - 0.05) {
+      _sheet.animateTo(kTirParkSheetOpen, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
+  }
+
+  /// A tap on the list's handle / title: closed → half open, else closed.
+  void _toggleList() {
+    if (!_sheet.isAttached) return;
+    final open = _sheet.size > _peek + 0.05;
+    _sheet.animateTo(open ? _peek : kTirParkSheetOpen, duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
   }
 
   /// "TIR parkı əlavə et +": a visitor signs in first; then the place.
@@ -225,7 +237,10 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                   await ref.read(tirParkRepositoryProvider).adminOsmSetHidden(p.id, true);
                   ref.invalidate(osmTruckParksProvider);
                   if (mounted) {
-                    setState(() => _lastOsm = [for (final o in _lastOsm) if (o.id != p.id) o]);
+                    setState(() => _lastOsm = [
+                          for (final o in _lastOsm)
+                            if (o.id != p.id) o
+                        ]);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('osm_hidden'))));
                   }
                 } catch (_) {
@@ -253,7 +268,10 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     for (final p in parks) {
       if (p.id == _selectedId) selected = p;
     }
-    final shownOnMap = [for (final p in parks) if (_needs.isEmpty || _needs.every(p.amenities.contains)) p];
+    final shownOnMap = [
+      for (final p in parks)
+        if (_needs.isEmpty || _needs.every(p.amenities.contains)) p
+    ];
     // OSM map data: only on the map (never in the list), hidden while a
     // facility filter is on (the filter is about the platform's parks).
     final osmOn = _osmBounds != null && _needs.isEmpty;
@@ -266,7 +284,14 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     final promos = promoAsync.valueOrNull ?? _lastPromos;
     if (promoAsync.hasValue) _lastPromos = promoAsync.value!;
     final ordered = promotedFirst(found, (e) => e.$1.id, promos);
-    premiumMaybeStart(promoAsync.hasValue ? [for (final p in ordered) if (_premium(p.$1, promos)) p.$1.id, for (final p in shownOnMap) if (_premium(p, promos)) p.id] : null);
+    premiumMaybeStart(promoAsync.hasValue
+        ? [
+            for (final p in ordered)
+              if (_premium(p.$1, promos)) p.$1.id,
+            for (final p in shownOnMap)
+              if (_premium(p, promos)) p.id
+          ]
+        : null);
     // The selected park stands first in the list.
     final list = [
       ...ordered.where((e) => e.$1.id == _selectedId),
@@ -284,209 +309,232 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
         if (!didPop && _adding) setState(() => _adding = false);
       },
       child: Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(children: [
-          // No banner any more (owner, 20.11.2026): TırLink · Xəritə · 🔔 · ❤️.
-          MapPageHeader(s: s),
-          MapFleetSwitch(s: s, fleet: false, onMap: () {}, onFleet: () => context.go('/fleet')),
-          Expanded(
-            child: Stack(children: [
-              Positioned.fill(
-                child: FlutterMap(
-                  mapController: _map,
-                  options: MapOptions(
-                    initialCenter: _center,
-                    initialZoom: 10,
-                    minZoom: 3,
-                    maxZoom: 18,
-                    backgroundColor: AppColors.hero,
-                    interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-                    onMapReady: () {
-                      _mapReady = true;
-                      premiumMapReady();
-                      if (me != null) _move(me, 11);
-                      _osmFrom(_map.camera);
-                    },
-                    onPositionChanged: (camera, _) {
-                      final labels = camera.zoom >= kParkLabelZoom;
-                      if (labels != _labels) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) setState(() => _labels = labels);
-                        });
-                      }
-                      _osmTimer?.cancel();
-                      _osmTimer = Timer(const Duration(milliseconds: 400), () => _osmFrom(camera));
-                    },
-                    onTap: (_, __) {
-                      _searchFocus.unfocus();
-                      if (_selectedId != null) setState(() => _selectedId = null);
-                    },
-                  ),
-                  children: [
-                    // Night: the map dimmed to the dark page (owner's picture).
-                    const AppTileLayer(),
-                    if (selected != null && me != null)
-                      PolylineLayer(polylines: [
-                        Polyline(
-                          points: route?.points ?? [me, LatLng(selected.lat, selected.lng)],
-                          color: AppColors.accent,
-                          strokeWidth: 4,
-                        ),
-                      ]),
-                    // OSM map data under the platform's pins.
-                    if (osm.isNotEmpty)
-                      MarkerLayer(markers: [
-                        for (final o in osm)
-                          Marker(
-                            key: ValueKey('tp-osm-${o.id}'),
-                            point: LatLng(o.lat, o.lng),
-                            width: OsmParkPin.width,
-                            height: OsmParkPin.height,
-                            alignment: Alignment.center,
-                            child: GestureDetector(onTap: () => _openOsm(o, s), child: OsmParkPin(selected: o.id == _osmSelected)),
-                          ),
-                      ]),
-                    MarkerLayer(markers: [
-                      for (final p in shownOnMap)
-                        if (!_premium(p, promos))
-                          Marker(
-                            key: ValueKey('tp-pin-${p.id}'),
-                            point: LatLng(p.lat, p.lng),
-                            // The pin stays on its point; its name runs to the right.
-                            width: _labels ? kParkLabelMarkerWidth : 46,
-                            height: 54,
-                            alignment: Alignment.topCenter,
-                            child: GestureDetector(
-                                onTap: () => _select(p, fromPin: true),
-                                child: _labels
-                                    ? TirParkNamedPin(name: p.name, approved: p.isApproved, selected: p.id == _selectedId)
-                                    : TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
-                          ),
-                      // Promoted parks (owner, 05.11.2026): the premium icon,
-                      // 20 % bigger, on top, dropped in once after the map.
-                      for (final p in shownOnMap)
-                        if (_premium(p, promos))
-                          Marker(
-                            key: ValueKey('tp-premium-${p.id}'),
-                            point: LatLng(p.lat, p.lng),
-                            width: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
-                            height: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
-                            alignment: Alignment.topCenter,
-                            child: GestureDetector(
-                              onTap: () => _select(p, fromPin: true),
-                              child: PremiumDropIn(
-                                clock: premiumClock,
-                                started: premiumStarted,
-                                index: premiumIndex(p.id),
-                                child: PremiumMarker(
-                                  kind: PremiumPinKind.park,
-                                  size: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
-                                  label: promos[p.id]!.isPremium ? s.t('mk_promo_premium') : null,
+        body: SafeArea(
+          bottom: false,
+          child: Column(children: [
+            // No banner any more (owner, 20.11.2026): TırLink · Xəritə · 🔔 · ❤️.
+            MapPageHeader(s: s),
+            MapFleetSwitch(s: s, fleet: false, onMap: () {}, onFleet: () => context.go('/fleet')),
+            Expanded(
+              child: LayoutBuilder(builder: (context, box) {
+                // The nearby list's lowest place in points (owner, 20.11.2026:
+                // "tam aşağıda olsun, sürüşdürüb açanda açılsın"): only its
+                // handle, title and "n park · 100 km" show above the bottom bar.
+                final peek = (kTirParkSheetPeek / box.maxHeight).clamp(0.08, 0.5).toDouble();
+                _peek = peek;
+                return Stack(children: [
+                  Positioned.fill(
+                    child: FlutterMap(
+                      mapController: _map,
+                      options: MapOptions(
+                        initialCenter: _center,
+                        initialZoom: 10,
+                        minZoom: 3,
+                        maxZoom: 18,
+                        backgroundColor: AppColors.hero,
+                        interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                        onMapReady: () {
+                          _mapReady = true;
+                          premiumMapReady();
+                          if (me != null) _move(me, 11);
+                          _osmFrom(_map.camera);
+                        },
+                        onPositionChanged: (camera, _) {
+                          final labels = camera.zoom >= kParkLabelZoom;
+                          if (labels != _labels) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) setState(() => _labels = labels);
+                            });
+                          }
+                          _osmTimer?.cancel();
+                          _osmTimer = Timer(const Duration(milliseconds: 400), () => _osmFrom(camera));
+                        },
+                        onTap: (_, __) {
+                          _searchFocus.unfocus();
+                          if (_selectedId != null) setState(() => _selectedId = null);
+                        },
+                      ),
+                      children: [
+                        // Night: the map dimmed to the dark page (owner's picture).
+                        const AppTileLayer(),
+                        if (selected != null && me != null)
+                          PolylineLayer(polylines: [
+                            Polyline(
+                              points: route?.points ?? [me, LatLng(selected.lat, selected.lng)],
+                              color: AppColors.accent,
+                              strokeWidth: 4,
+                            ),
+                          ]),
+                        // OSM map data under the platform's pins.
+                        if (osm.isNotEmpty)
+                          MarkerLayer(markers: [
+                            for (final o in osm)
+                              Marker(
+                                key: ValueKey('tp-osm-${o.id}'),
+                                point: LatLng(o.lat, o.lng),
+                                width: OsmParkPin.width,
+                                height: OsmParkPin.height,
+                                alignment: Alignment.center,
+                                child: GestureDetector(onTap: () => _openOsm(o, s), child: OsmParkPin(selected: o.id == _osmSelected)),
+                              ),
+                          ]),
+                        MarkerLayer(markers: [
+                          for (final p in shownOnMap)
+                            if (!_premium(p, promos))
+                              Marker(
+                                key: ValueKey('tp-pin-${p.id}'),
+                                point: LatLng(p.lat, p.lng),
+                                // The pin stays on its point; its name runs to the right.
+                                width: _labels ? kParkLabelMarkerWidth : 46,
+                                height: 54,
+                                alignment: Alignment.topCenter,
+                                child: GestureDetector(
+                                    onTap: () => _select(p, fromPin: true),
+                                    child: _labels
+                                        ? TirParkNamedPin(name: p.name, approved: p.isApproved, selected: p.id == _selectedId)
+                                        : TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
+                              ),
+                          // Promoted parks (owner, 05.11.2026): the premium icon,
+                          // 20 % bigger, on top, dropped in once after the map.
+                          for (final p in shownOnMap)
+                            if (_premium(p, promos))
+                              Marker(
+                                key: ValueKey('tp-premium-${p.id}'),
+                                point: LatLng(p.lat, p.lng),
+                                width: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                                height: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                                alignment: Alignment.topCenter,
+                                child: GestureDetector(
+                                  onTap: () => _select(p, fromPin: true),
+                                  child: PremiumDropIn(
+                                    clock: premiumClock,
+                                    started: premiumStarted,
+                                    index: premiumIndex(p.id),
+                                    child: PremiumMarker(
+                                      kind: PremiumPinKind.park,
+                                      size: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
+                                      label: promos[p.id]!.isPremium ? s.t('mk_promo_premium') : null,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          if (me != null)
+                            Marker(
+                              point: me,
+                              width: 22,
+                              height: 22,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.blue,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 3),
                                 ),
                               ),
                             ),
-                          ),
-                      if (me != null)
-                        Marker(
-                          point: me,
-                          width: 22,
-                          height: 22,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.blue,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
-                            ),
-                          ),
-                        ),
-                    ]),
-                    const AppMapAttribution(),
-                  ],
-                ),
-              ),
-              // Choosing the place of a new park: a fixed pin in the middle.
-              if (_adding)
-                IgnorePointer(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 54),
-                      child: Icon(Icons.location_on, key: const ValueKey('tp-add-pin'), size: 54, color: AppColors.accentFill),
+                        ]),
+                        const AppMapAttribution(),
+                      ],
                     ),
                   ),
-                ),
-              // Search · filter, and Parklar | Servislər.
-              Positioned(
-                left: 12,
-                right: 12,
-                top: 10,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Row(children: [
-                    Expanded(
-                      child: Container(
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.card.withValues(alpha: 0.96),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.line),
-                        ),
-                        child: TextField(
-                          key: const ValueKey('tp-search'),
-                          controller: _search,
-                          focusNode: _searchFocus,
-                          textInputAction: TextInputAction.search,
-                          onChanged: (v) => setState(() => _query = v),
-                          onSubmitted: (_) => _submitSearch(parks),
-                          decoration: InputDecoration(
-                            filled: false,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            prefixIcon: Icon(Icons.search, color: AppColors.textSoft),
-                            hintText: s.t('tp_search_hint'),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                  // Choosing the place of a new park: a fixed pin in the middle.
+                  if (_adding)
+                    IgnorePointer(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 54),
+                          child: Icon(Icons.location_on, key: const ValueKey('tp-add-pin'), size: 54, color: AppColors.accentFill),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    _RoundButton(
-                      buttonKey: 'tp-filter',
-                      icon: Icons.tune,
-                      badge: _needs.length,
-                      tooltip: s.t('tp_filter'),
-                      onTap: () => _openFilter(s),
-                    ),
-                  ]),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ParksServicesSwitch(
-                        parks: true,
-                        s: s,
-                        onParks: () {},
-                        onServices: () => context.go('/services'),
-                        onShops: () => context.go('/services?shops=1')),
+                  // Search · filter, and Parklar | Servislər.
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    top: 10,
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      Row(children: [
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: AppColors.card.withValues(alpha: 0.96),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.line),
+                            ),
+                            child: TextField(
+                              key: const ValueKey('tp-search'),
+                              controller: _search,
+                              focusNode: _searchFocus,
+                              textInputAction: TextInputAction.search,
+                              onChanged: (v) => setState(() => _query = v),
+                              onSubmitted: (_) => _submitSearch(parks),
+                              decoration: InputDecoration(
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                prefixIcon: Icon(Icons.search, color: AppColors.textSoft),
+                                hintText: s.t('tp_search_hint'),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        _RoundButton(
+                          buttonKey: 'tp-filter',
+                          icon: Icons.tune,
+                          badge: _needs.length,
+                          tooltip: s.t('tp_filter'),
+                          onTap: () => _openFilter(s),
+                        ),
+                      ]),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: ParksServicesSwitch(
+                            parks: true, s: s, onParks: () {}, onServices: () => context.go('/services'), onShops: () => context.go('/services?shops=1')),
+                      ),
+                    ]),
                   ),
-                ]),
-              ),
-              // My position.
-              if (!_adding)
-                AboveSheet(
-                  sheet: kTirParkSheetStart,
-                  gap: 76,
-                  child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
-                ),
-              // "TIR parkı əlavə et +" (owner, 20.11.2026: users add parks) /
-              // choosing the place.
-              AboveSheet(
-                left: _adding ? 12 : null,
-                // While choosing the place the panel is gone, so the pin in
-                // the middle of the map stays in view.
-                sheet: _adding ? 0 : kTirParkSheetStart,
-                gap: _adding ? 96 : 10,
-                child: _adding
-                    ? Container(
+                  // "TIR parkı əlavə et +" and my position sit right on top of
+                  // the nearby list and ride up and down with it (owner,
+                  // 20.11.2026: "xəritənin ortasından götür, aşağı yerləşdir").
+                  if (!_adding)
+                    ValueListenableBuilder<double>(
+                      valueListenable: _extent,
+                      builder: (context, extent, _) {
+                        final e = extent < peek ? peek : extent;
+                        if (e > 0.7) return const SizedBox.shrink();
+                        return Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: box.maxHeight * e + 10,
+                          child: Row(children: [
+                            // A long language / narrow phone: the button gets smaller, never cut.
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
+                          ]),
+                        );
+                      },
+                    ),
+                  // "TIR parkı əlavə et +" (owner, 20.11.2026: users add parks) /
+                  // choosing the place.
+                  if (_adding)
+                    AboveSheet(
+                      left: 12,
+                      // While choosing the place the panel is gone, so the pin in
+                      // the middle of the map stays in view.
+                      sheet: 0,
+                      gap: 16,
+                      child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.card,
@@ -514,66 +562,78 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                             ),
                           ]),
                         ]),
-                      )
-                    : MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding),
-              ),
-              // Nearby parks (100 km). It stays where the finger leaves it
-              // (owner, 20.11.2026); its lowest place keeps the title above
-              // the floating bottom bar.
-              if (!_adding)
-                DraggableScrollableSheet(
-                  controller: _sheet,
-                  initialChildSize: kTirParkSheetStart,
-                  minChildSize: kTirParkSheetMin,
-                  maxChildSize: 0.92,
-                  snap: false,
-                  builder: (context, scroll) => Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                      border: Border(top: BorderSide(color: AppColors.line)),
+                      ),
                     ),
-                    child: ListView.builder(
-                      key: const ValueKey('tp-list'),
-                      controller: scroll,
-                      // Room under the last card for the floating bottom bar.
-                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
-                      itemCount: list.length + 1,
-                      itemBuilder: (context, i) {
-                        // "Bugünkü plan" (Maşınlarım, 0130) over the nearby parks.
-                        if (i == 0) {
-                          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                            FleetTodayCard(s: s),
-                            _ListHead(s: s, count: list.length, async: async),
-                          ]);
-                        }
-                        final (p, km) = list[i - 1];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: TirParkCard(
-                            park: p,
-                            km: km,
-                            s: s,
-                            selected: p.id == _selectedId,
-                            onTap: () => _select(p),
-                            onOpen: () => context.pushOnce('/tirpark/p/${p.id}'),
-                            onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
-                            onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
-                            // Park management is off (owner, 20.11.2026): no booking on the card.
-                            booking: kParkManagementOn && p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
-                            badge: (promos[p.id]?.isPromoted ?? false) ? PlacePromoTag(s: s, promo: promos[p.id]!) : null,
-                            footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
-                          ),
-                        );
+                  // Nearby parks (100 km). It stays where the finger leaves it
+                  // (owner, 20.11.2026); its lowest place keeps the title above
+                  // the floating bottom bar.
+                  if (!_adding)
+                    NotificationListener<DraggableScrollableNotification>(
+                      onNotification: (n) {
+                        _extent.value = n.extent;
+                        return false;
                       },
+                      child: DraggableScrollableSheet(
+                        controller: _sheet,
+                        initialChildSize: peek,
+                        minChildSize: peek,
+                        maxChildSize: 0.92,
+                        snap: false,
+                        builder: (context, scroll) => Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                            border: Border(top: BorderSide(color: AppColors.line)),
+                          ),
+                          child: ListView.builder(
+                            key: const ValueKey('tp-list'),
+                            controller: scroll,
+                            // Room under the last card for the floating bottom bar.
+                            padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
+                            itemCount: list.length + 1,
+                            itemBuilder: (context, i) {
+                              // "Bugünkü plan" (Maşınlarım, 0130) over the nearby parks.
+                              if (i == 0) {
+                                return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                                  // A tap on the handle / title opens or closes the list.
+                                  GestureDetector(
+                                    key: const ValueKey('tp-list-head'),
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _toggleList,
+                                    child: _ListHead(s: s, count: list.length, async: async),
+                                  ),
+                                  FleetTodayCard(s: s),
+                                ]);
+                              }
+                              final (p, km) = list[i - 1];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: TirParkCard(
+                                  park: p,
+                                  km: km,
+                                  s: s,
+                                  selected: p.id == _selectedId,
+                                  onTap: () => _select(p),
+                                  onOpen: () => context.pushOnce('/tirpark/p/${p.id}'),
+                                  onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
+                                  onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
+                                  // Park management is off (owner, 20.11.2026): no booking on the card.
+                                  booking: kParkManagementOn && p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
+                                  badge: (promos[p.id]?.isPromoted ?? false) ? PlacePromoTag(s: s, promo: promos[p.id]!) : null,
+                                  footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-            ]),
-          ),
-        ]),
+                ]);
+              }),
+            ),
+          ]),
+        ),
       ),
-    ),
     );
   }
 }
@@ -636,8 +696,6 @@ class _RoundButton extends StatelessWidget {
         ),
       );
 }
-
-
 
 class _FilterSheet extends StatefulWidget {
   final Set<String> initial;
