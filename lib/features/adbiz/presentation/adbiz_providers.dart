@@ -90,6 +90,7 @@ final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExp
 /// After a write on this device: read the day again at once (never wait for
 /// realtime to show what was just saved).
 void adbizResync(WidgetRef ref, AdbizDay day) {
+  ref.invalidate(adbizMyMonthProvider((userId: day.userId, month: DateTime(day.workDate.year, day.workDate.month, 1))));
   ref.invalidate(adbizEntriesProvider(day.id));
   ref.invalidate(adbizDayExpensesProvider(day.id));
   ref.invalidate(adbizDaysProvider(day.userId));
@@ -127,3 +128,24 @@ final adbizMemberTaskProvider = FutureProvider.autoDispose.family<String?, Strin
 /// The month / year cards of a company's year (0115); an error = not ready.
 final adbizPeriodsProvider = FutureProvider.autoDispose.family<AdbizPeriods, ({String companyId, int year})>(
     (ref, k) => ref.watch(adbizRepositoryProvider).periods(k.companyId, k.year));
+
+/// The worker's own month on his notebook (0133). null = no monthly target
+/// for that month, or SQL 0133 not run yet (the card is simply not shown).
+final adbizMyMonthProvider =
+    FutureProvider.autoDispose.family<AdbizMonth?, ({String userId, DateTime month})>((ref, k) async {
+  try {
+    final m = await ref.watch(adbizRepositoryProvider).myMonth(k.userId, k.month);
+    return m.target == null ? null : m;
+  } catch (_) {
+    return null;
+  }
+});
+
+/// The company's monthly target now (0133); null = none / not ready.
+final adbizMonthTargetProvider = FutureProvider.autoDispose.family<double?, String>((ref, companyId) async {
+  try {
+    return await ref.watch(adbizRepositoryProvider).monthTarget(companyId, bakuToday());
+  } catch (_) {
+    return null;
+  }
+});

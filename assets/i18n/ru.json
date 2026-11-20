@@ -2136,7 +2136,7 @@
   "adb_cash_total": "Наличные",
   "adb_task": "Задание",
   "adb_ok": "Хорошо",
-  "adb_result_reached_title": "Поздравляем!",
+  "adb_result_reached_title": "Поздравляем! Цель выполнена",
   "adb_result_reached": "Сегодня цель перевыполнена: {net}/{target} AZN. Отличная работа!",
   "adb_result_minus_title": "День закрыт",
   "adb_result_minus": "До цели не хватило {left} AZN — остались в минусе. Завтра больше!",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name} отказался быть водителем",
   "ntf_fleet_accept": "Принять",
   "ntf_fleet_decline": "Отклонить",
-  "ntf_fleet_you_declined": "Приглашение отклонено"
+  "ntf_fleet_you_declined": "Приглашение отклонено",
+  "adb_total_spent": "Расходы",
+  "adb_card_moved": "Оплачено на карту",
+  "adb_net_income": "Чистый доход",
+  "adb_so_far": "на сегодня ({from}–{to})",
+  "adb_month_this": "Этот месяц",
+  "adb_month_days": "{n} раб. дн.",
+  "adb_month_target": "Месячная цель",
+  "adb_month_collected": "Собрано",
+  "adb_month_gap": "Общий минус",
+  "adb_month_reached": "🎉 Поздравляем! Месячная цель выполнена · {over} AZN",
+  "adb_month_minus": "Этот месяц ({month}): общий минус",
+  "adb_month_plus": "Этот месяц ({month}): сверх цели",
+  "adb_month_target_hint": "Считается с этого месяца; прошлые месяцы не меняются."
 }

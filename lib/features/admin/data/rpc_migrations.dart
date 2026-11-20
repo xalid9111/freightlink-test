@@ -249,6 +249,8 @@ const kRpcMigration = <String, String>{
   'fleet_driver_answer': '0131_fleet_driver_invite.sql',
   'fleet_my_driver_invites': '0131_fleet_driver_invite.sql',
   'adbiz_entry_worker_fix': '0132_ad_business_worker_fix.sql',
+  'adbiz_my_month': '0133_ad_business_month_target.sql',
+  'adbiz_month_target_set': '0133_ad_business_month_target.sql',
   'fleet_truck_save': '0130_fleet.sql',
   'fleet_truck_remove': '0130_fleet.sql',
   'fleet_job_save': '0130_fleet.sql',

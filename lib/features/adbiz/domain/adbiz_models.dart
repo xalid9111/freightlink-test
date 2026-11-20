@@ -390,10 +390,50 @@ class AdbizPeriodSum {
   /// what they are (already inside [net] / [gap]).
   final bool imported;
   final double impNet, impGap;
-  const AdbizPeriodSum(this.key, this.net, this.gap, {this.imported = false, this.impNet = 0, this.impGap = 0});
+
+  /// The month's target (0133); null = the old way (days' gaps).
+  final double? target;
+  const AdbizPeriodSum(this.key, this.net, this.gap, {this.imported = false, this.impNet = 0, this.impGap = 0, this.target});
 
   factory AdbizPeriodSum.fromJson(Map<String, dynamic> j) => AdbizPeriodSum((j['key'] as num).toInt(), _d(j['net']), _d(j['gap']),
-      imported: j['imported'] == true, impNet: _d(j['imp_net']), impGap: _d(j['imp_gap']));
+      imported: j['imported'] == true, impNet: _d(j['imp_net']), impGap: _d(j['imp_gap']), target: j['target'] == null ? null : _d(j['target']));
+}
+
+/// The worker's own month (0133, owner 21.11.2026): the monthly target the
+/// Baş admin set, what he collected (jobs − his rasxod, + the old account
+/// when he is the month's only worker) and the "Ümumi mənfi" = collected −
+/// target (≥ 0 = the month's target reached). [target] null = no monthly
+/// target for that month (nothing shown).
+class AdbizMonth {
+  final DateTime month;
+  final double? target;
+  final double collected;
+  final int days;
+  const AdbizMonth({required this.month, this.target, this.collected = 0, this.days = 0});
+
+  factory AdbizMonth.fromJson(Map<String, dynamic> j) => AdbizMonth(
+        month: DateTime.tryParse('${j['month']}') ?? DateTime.now(),
+        target: j['target'] == null ? null : _d(j['target']),
+        collected: _d(j['collected']),
+        days: (j['days'] as num?)?.toInt() ?? 0,
+      );
+
+  /// collected − target (negative = still in the minus).
+  double get gap => target == null ? 0 : ((collected - target!) * 100).roundToDouble() / 100;
+  bool get reached => target != null && gap >= 0;
+
+  /// 0…1 of the target (for the still bar).
+  double get share => target == null || target! <= 0 ? 0 : (collected / target!).clamp(0, 1).toDouble();
+}
+
+/// "−3 615" / "+230" / "0": a signed whole-or-cents amount with a real minus.
+String adbizSigned(double v) {
+  final a = v.abs();
+  final n = a == a.roundToDouble() ? a.toInt().toString() : a.toStringAsFixed(2);
+  final g = n.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
+  if (v < 0) return '−$g';
+  if (v > 0) return '+$g';
+  return g;
 }
 
 /// A typed signed amount: "-215", "11", "−4693", "5 784,50" → the number;

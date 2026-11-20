@@ -2136,7 +2136,7 @@
   "adb_cash_total": "Nakit",
   "adb_task": "Görev",
   "adb_ok": "Tamam",
-  "adb_result_reached_title": "Tebrikler!",
+  "adb_result_reached_title": "Tebrikler! Hedefe ulaşıldı",
   "adb_result_reached": "Bugün hedefi aştınız: {net}/{target} AZN. Harika iş!",
   "adb_result_minus_title": "Gün kapandı",
   "adb_result_minus": "Hedefe {left} AZN eksik kaldı — ekside kaldı. Yarın daha fazla!",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name} sürücülüğü reddetti",
   "ntf_fleet_accept": "Kabul et",
   "ntf_fleet_decline": "Reddet",
-  "ntf_fleet_you_declined": "Davet reddedildi"
+  "ntf_fleet_you_declined": "Davet reddedildi",
+  "adb_total_spent": "Masraflar",
+  "adb_card_moved": "Karta aktarılan",
+  "adb_net_income": "Net gelir",
+  "adb_so_far": "şimdiye kadar ({from}–{to})",
+  "adb_month_this": "Bu ay",
+  "adb_month_days": "{n} iş günü",
+  "adb_month_target": "Aylık hedef",
+  "adb_month_collected": "Toplanan",
+  "adb_month_gap": "Toplam eksi",
+  "adb_month_reached": "🎉 Tebrikler! Aylık hedefe ulaşıldı · {over} AZN",
+  "adb_month_minus": "Bu ay ({month}) toplam eksi",
+  "adb_month_plus": "Bu ay ({month}) hedefin üstünde",
+  "adb_month_target_hint": "Bu aydan itibaren sayılır; geçmiş aylar değişmez."
 }

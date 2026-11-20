@@ -9,7 +9,7 @@ import '../../../core/widgets/birth_date_field.dart' show monthName;
 import '../../finance/domain/finance_models.dart';
 import '../data/adbiz_repository.dart';
 import '../domain/adbiz_models.dart';
-import 'adbiz_notebook_screen.dart' show adbizAmount, adbizConfirmDeleteDay;
+import 'adbiz_notebook_screen.dart' show adbizAmount, adbizConfirmDeleteDay, adbizMonthTitle, adbizNum;
 import 'adbiz_providers.dart';
 import 'adbiz_widgets.dart';
 
@@ -163,6 +163,38 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
         done: s.t('adb_saved'));
   }
 
+  /// The Baş admin's monthly target, counted from this month on (0133).
+  Future<void> _editMonthTarget(AppStrings s, double current) async {
+    final c = TextEditingController(text: adbizNum(current));
+    final v = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.t('adb_month_target')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          TextField(
+            key: const ValueKey('adb-month-target-field'),
+            controller: c,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(suffixText: 'AZN'),
+          ),
+          const SizedBox(height: 8),
+          Text(s.t('adb_month_target_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('common_cancel'))),
+          FilledButton(
+              key: const ValueKey('adb-month-target-save'), onPressed: () => Navigator.pop(ctx, parseAmount(c.text)), child: Text(s.t('adb_save'))),
+        ],
+      ),
+    );
+    if (v == null || !mounted) return;
+    await _run(s, () async {
+      await ref.read(adbizRepositoryProvider).setMonthTarget(widget.companyId, bakuToday(), v);
+      ref.invalidate(adbizMonthTargetProvider(widget.companyId));
+    }, done: s.t('adb_saved'));
+  }
+
   // ---- delete a (test) work day from the archive (0115) -----------------------------------
   Future<void> _deleteDayOn(AppStrings s, DateTime date, List<AdbizWorkerSum> workers) async {
     if (_busy) return;
@@ -288,42 +320,56 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
       }),
     );
 
-    // 2. Ümumi gəlir · Xərclər · Xalis mənfəət.
+    // 2. Four parts (owner, 21.11.2026): Ümumi gəlir · Rasxodlar · Karta
+    // köçürülən (jobs paid by card, inside the income) · Xalis gəlir.
     final sep = Container(width: 1, height: 70, color: AppColors.adbLine);
-    final totals = AdbizGlass(
-      highlight: true,
-      padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
-      child: Row(children: [
-        Expanded(child: AdbizBigStat(icon: Icons.trending_up, label: s.t('adb_income'), value: adbizAmount(r?.income ?? 0), color: AppColors.adbIncome, valueKey: 'adb-income')),
-        sep,
-        Expanded(child: AdbizBigStat(icon: Icons.receipt_long_outlined, label: s.t('adb_expenses'), value: adbizAmount(r?.expenses ?? 0), color: AppColors.adbSpend, valueKey: 'adb-expenses')),
-        sep,
-        Expanded(child: AdbizBigStat(icon: Icons.account_balance_wallet_outlined, label: s.t('adb_net'), value: adbizAmount(r?.net ?? 0), color: AppColors.adbNet, valueKey: 'adb-net')),
-      ]),
-    );
-    final soft = TextStyle(fontSize: 15, color: AppColors.adbTextSoft);
-    // Card money apart (owner, 10.11.2026): "Kartla … · Nağd …".
-    final cardLine = !v113
+    final lang = ref.watch(currentLocaleProvider).languageCode;
+    final today = bakuToday();
+    final monthCaption = _period != AdbizPeriod.month
         ? null
-        : Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(children: [
-              Icon(Icons.credit_card, size: 20, color: AppColors.adbNet),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(text: '${s.t('adb_card_total')}: '),
-                    TextSpan(text: adbizAmount(r?.card ?? 0), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.adbNet)),
-                    TextSpan(text: '  ·  ${s.t('adb_cash_total')}: '),
-                    TextSpan(text: adbizAmount(r?.cash ?? 0), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.adbIncome)),
-                  ]),
-                  key: const ValueKey('adb-card-line'),
-                  style: soft,
-                ),
-              ),
-            ]),
-          );
+        : '${adbizMonthTitle(_date, lang)}'
+            '${_date.year == today.year && _date.month == today.month ? ' · ${s.t('adb_so_far', {'from': '1', 'to': '${today.day}'})}' : ''}';
+    final totals = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (monthCaption != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+          child: Text(monthCaption, key: const ValueKey('adb-month-caption'), style: TextStyle(fontSize: 14, color: AppColors.adbTextSoft)),
+        ),
+      AdbizGlass(
+        highlight: true,
+        padding: const EdgeInsets.fromLTRB(4, 16, 4, 16),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+              child: AdbizBigStat(
+                  compact: true, icon: Icons.trending_up, label: s.t('adb_income'), value: adbizAmount(r?.income ?? 0), color: AppColors.adbIncome, valueKey: 'adb-income')),
+          sep,
+          Expanded(
+              child: AdbizBigStat(
+                  compact: true,
+                  icon: Icons.receipt_long_outlined,
+                  label: s.t('adb_total_spent'),
+                  value: adbizAmount(r?.expenses ?? 0),
+                  color: AppColors.adbSpend,
+                  valueKey: 'adb-expenses')),
+          sep,
+          Expanded(
+              child: AdbizBigStat(
+                  compact: true, icon: Icons.credit_card, label: s.t('adb_card_moved'), value: adbizAmount(r?.card ?? 0), color: AppColors.adbNet, valueKey: 'adb-card')),
+          sep,
+          Expanded(
+              child: AdbizBigStat(
+                  compact: true,
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: s.t('adb_net_income'),
+                  value: adbizAmount(r?.net ?? 0),
+                  color: AppColors.adbGold,
+                  valueKey: 'adb-net')),
+        ]),
+      ),
+    ]);
+    final soft = TextStyle(fontSize: 15, color: AppColors.adbTextSoft);
+    // The card money is the third part of the totals (owner, 21.11.2026);
+    // the old "Kartla … · Nağd …" line is gone.
     final daysLine = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(children: [
@@ -392,6 +438,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     ];
 
     // 4. Gündəlik hədəf: ✏️ (Baş admin) | the switch (the workers see it or not).
+    final monthTarget = ref.watch(adbizMonthTargetProvider(widget.companyId)).valueOrNull;
     final targetCard = company == null
         ? null
         : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -430,6 +477,31 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                 ),
               ]),
             ),
+            // The monthly target (0133): set by the Baş admin from this month on.
+            if (monthTarget != null) ...[
+              const SizedBox(height: 10),
+              AdbizGlass(
+                key: const ValueKey('adb-month-target-card'),
+                padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                child: Row(children: [
+                  Icon(Icons.calendar_month_outlined, size: 28, color: AppColors.adbTeal),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(s.t('adb_month_target'), style: TextStyle(fontSize: 15, color: AppColors.adbText)),
+                      Text(adbizAmount(monthTarget), key: const ValueKey('adb-month-target-value'),
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+                    ]),
+                  ),
+                  if (chief)
+                    IconButton(
+                      key: const ValueKey('adb-month-target-edit'),
+                      icon: Icon(Icons.edit_outlined, color: AppColors.adbText),
+                      onPressed: _busy ? null : () => _editMonthTarget(s, monthTarget),
+                    ),
+                ]),
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
               child: Text(!v113 ? s.t('adb_need_sql') : s.t(company.showTarget ? 'adb_show_target' : 'adb_hide_target_note'),
@@ -647,7 +719,6 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           if (cards != null) ...[cards, gap],
           totals,
           const SizedBox(height: 12),
-          if (cardLine != null) ...[cardLine, const SizedBox(height: 10)],
           daysLine,
           const SizedBox(height: 22),
           workersHead,
@@ -836,18 +907,35 @@ class AdbizBigStat extends StatelessWidget {
   final String label, value;
   final Color color;
   final String? valueKey;
-  const AdbizBigStat({super.key, required this.icon, required this.label, required this.value, required this.color, this.valueKey});
+
+  /// Four in a row (owner, 21.11.2026): smaller, the label on two lines.
+  final bool compact;
+  const AdbizBigStat(
+      {super.key, required this.icon, required this.label, required this.value, required this.color, this.valueKey, this.compact = false});
 
   @override
   Widget build(BuildContext context) => Column(children: [
-        Icon(icon, color: color, size: 32),
+        Icon(icon, color: color, size: compact ? 24 : 32),
         const SizedBox(height: 8),
-        Text(label, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 15, color: AppColors.adbText)),
+        SizedBox(
+          height: compact ? 34 : null,
+          child: Center(
+            child: Text(label,
+                textAlign: TextAlign.center,
+                maxLines: compact ? 2 : 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: compact ? 12.5 : 15, height: 1.15, color: AppColors.adbText)),
+          ),
+        ),
         const SizedBox(height: 6),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(value, key: valueKey == null ? null : ValueKey<String>(valueKey!), style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: color)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 0),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value,
+                key: valueKey == null ? null : ValueKey<String>(valueKey!),
+                style: TextStyle(fontSize: compact ? 20 : 30, fontWeight: FontWeight.w600, color: color)),
+          ),
         ),
       ]);
 }

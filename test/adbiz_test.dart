@@ -85,6 +85,16 @@ class _Repo implements AdbizRepository {
     return 'x${dayX.length}';
   }
 
+  AdbizMonth? month;
+  @override
+  Future<AdbizMonth> myMonth(String userId, DateTime date) async => month ?? (throw const AdbizNotReady());
+  double? target;
+  final targetsSet = <(DateTime, double)>[];
+  @override
+  Future<double?> monthTarget(String companyId, DateTime date) async => target;
+  @override
+  Future<void> setMonthTarget(String companyId, DateTime from, double amount) async => targetsSet.add((from, amount));
+
   final fixes = <(String, double, String)>[];
   @override
   Future<void> workerFixEntry(String id, double amount, String note) async => fixes.add((id, amount, note));
@@ -94,6 +104,7 @@ class _Repo implements AdbizRepository {
 }
 
 const _s = AppStrings({});
+final _nov = DateTime(2026, 11);
 final _today = bakuToday();
 
 AdbizDay _day({String status = 'open', double target = 235, String? closedBy}) =>
@@ -509,11 +520,11 @@ void main() {
   });
 
   group('the owner\'s panel (owner\'s picture)', () {
-    Future<_Repo> pumpPanel(WidgetTester t, {bool v113 = true, bool chief = false, bool v114 = false}) async {
+    Future<_Repo> pumpPanel(WidgetTester t, {bool v113 = true, bool chief = false, bool v114 = false, double? target}) async {
       t.view.physicalSize = const Size(412, 2400);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);
-      final repo = _Repo();
+      final repo = _Repo()..target = target;
       final rep = AdbizReport.fromJson({
         'income': 60, 'card': 40, 'expenses': 8, 'net': 52, 'days_open': 1, 'days_closed': 0,
         'workers': [{'user_id': 'u1', 'name': 'İmran MMC', 'role': 'worker', 'total': 60, 'card': 40, 'days': 1}],
@@ -555,9 +566,15 @@ void main() {
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-income'))).data, '60 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-expenses'))).data, '8 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '52 AZN');
-      final line = t.widget<Text>(find.byKey(const ValueKey('adb-card-line'))).textSpan!.toPlainText();
-      expect(line, contains('40 AZN'));
-      expect(line, contains('20 AZN'));
+      // Four parts (owner, 21.11.2026): the card money is the third one.
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-card'))).data, '40 AZN');
+      expect(find.text('adb_total_spent'), findsOneWidget);
+      expect(find.text('adb_card_moved'), findsOneWidget);
+      expect(find.text('adb_net_income'), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-card-line')), findsNothing, reason: 'the old line is gone');
+      double x(String k) => t.getCenter(find.byKey(ValueKey(k))).dx;
+      expect(x('adb-income') < x('adb-expenses') && x('adb-expenses') < x('adb-card') && x('adb-card') < x('adb-net'), isTrue,
+          reason: 'left to right: gəlir · rasxod · kart · xalis');
       expect(find.byKey(const ValueKey('adb-days-line')), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-total-u1'))).data, '60 AZN');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-card-u1'))).data, '40 AZN');
@@ -567,6 +584,35 @@ void main() {
       expect(find.text('Hamıya'), findsOneWidget);
       expect(find.byKey(const ValueKey('adb-words-edit')), findsOneWidget);
       expect(find.byKey(const ValueKey('utep-logo')), findsOneWidget);
+    });
+
+    testWidgets('the monthly target (0133): shown; only the Baş admin edits it', (t) async {
+      await pumpPanel(t, target: 6110);
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-month-target-value'))).data, '6110 AZN');
+      expect(find.byKey(const ValueKey('adb-month-target-edit')), findsNothing, reason: 'the owner only sees it');
+    });
+
+    testWidgets('the Baş admin sets the monthly target from this month on', (t) async {
+      final repo = await pumpPanel(t, chief: true, target: 6110);
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-month-target-edit')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.enterText(find.byKey(const ValueKey('adb-month-target-field')), '6500');
+      await t.tap(find.byKey(const ValueKey('adb-month-target-save')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.targetsSet.single.$2, 6500);
+      expect(repo.targetsSet.single.$1.month, _today.month);
+    });
+
+    testWidgets('Ay: "Noyabr · indiyə qədər (1–21)" over the four parts', (t) async {
+      await pumpPanel(t);
+      await t.tap(find.byKey(const ValueKey('adb-period-month')));
+      await t.pump();
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);
     });
 
     testWidgets('before SQL 0113: no card line, the switch and the words wait', (t) async {
@@ -950,6 +996,80 @@ void main() {
       expect(sql, contains("d.status <> 'open' or d.work_date <> public._adbiz_today()"));
       expect(sql, contains("'entry.worker_fix'"));
       expect(src('supabase/tests/local/run_local.sh'), contains('168_ad_business_worker_fix.sql'));
+    });
+  });
+
+  group('the monthly target and the month\'s Ümumi mənfi (owner, 21.11.2026; 0133)', () {
+    test('the month: gap = collected − target, the still bar share, signed amounts', () {
+      final m = AdbizMonth.fromJson({'month': '2026-11-01', 'target': 6110, 'collected': 2495, 'days': 12});
+      expect((m.gap, m.reached, m.days), (-3615.0, false, 12));
+      expect(m.share, closeTo(0.408, 0.001));
+      final ok = AdbizMonth(month: _nov, target: 6110, collected: 6340);
+      expect((ok.gap, ok.reached, ok.share), (230.0, true, 1.0));
+      expect(adbizSigned(-3615), '−3 615');
+      expect(adbizSigned(230), '+230');
+      expect(adbizSigned(0), '0');
+      expect(AdbizPeriodSum.fromJson({'key': 11, 'net': 1, 'gap': 2, 'target': 6110}).target, 6110);
+      expect(AdbizPeriodSum.fromJson({'key': 10, 'net': 1, 'gap': 2}).target, isNull, reason: 'the old way');
+    });
+
+    testWidgets('the worker\'s notebook: "Bu ay" always there, the Ümumi mənfi in red', (t) async {
+      final repo = _Repo()..month = AdbizMonth(month: DateTime(_today.year, _today.month, 1), target: 6110, collected: 2495, days: 12);
+      await _pumpNotebook(t, repo, days: [_day()], entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Nömrə', amount: 52)]);
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-card')), findsOneWidget);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-month-target'))).data, '6110 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-month-gap'))).data, '−3 615 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-month-gap'))).style!.color, AppColors.danger);
+      expect(find.byKey(const ValueKey('adb-star')), findsOneWidget, reason: 'the animated bar is unchanged');
+    });
+
+    testWidgets('the month over its target: Təbriklər! Aylıq hədəf yerinə yetirildi', (t) async {
+      final repo = _Repo()..month = AdbizMonth(month: DateTime(_today.year, _today.month, 1), target: 6110, collected: 6340, days: 25);
+      await _pumpNotebook(t, repo, days: [_day()]);
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-reached')), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-month-gap')), findsNothing);
+    });
+
+    testWidgets('no monthly target (or SQL 0133 not run): no card', (t) async {
+      await _pumpNotebook(t, _Repo(), days: [_day()]);
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-card')), findsNothing);
+    });
+
+    testWidgets('closing the day shows the month\'s Ümumi mənfi too', (t) async {
+      final repo = _Repo()..month = AdbizMonth(month: DateTime(_today.year, _today.month, 1), target: 6110, collected: 2510, days: 13);
+      await _pumpNotebook(t, repo, days: [_day()], entries: const [AdbizEntry(id: 'e1', dayId: 'd1', title: 'Vitrin', amount: 250)]);
+      await t.ensureVisible(find.byKey(const ValueKey('adb-close-day')));
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-close-day')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.tap(find.byKey(const ValueKey('adb-confirm')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const ValueKey('adb-result-reached')), findsOneWidget);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-result-month'))).data, '−3 600 AZN');
+    });
+
+    test('the title says the target was reached (6 languages)', () {
+      for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
+        expect(src('assets/i18n/$l.json'), isNot(contains('"adb_result_reached_title": "Təbriklər!"')));
+      }
+      expect(src('assets/i18n/az.json'), contains('"adb_result_reached_title": "Təbriklər! Hədəf yerinə yetirildi"'));
+    });
+
+    test('SQL 0133: target per month from the Baş admin, old months untouched, nothing deleted', () {
+      final sql = src('supabase/migrations/0133_ad_business_month_target.sql');
+      final lower = sql.toLowerCase();
+      for (final bad in ['drop table', 'truncate', 'delete from', 'update public.adbiz_month_import', 'update adbiz_month_import']) {
+        expect(lower.contains(bad), isFalse, reason: bad);
+      }
+      expect(sql, contains("select c.id, date '2026-11-01', 6110"));
+      expect(sql, contains('gap := v_days_gap + imp_gap;'), reason: 'a month before any target keeps the old way');
+      expect(sql, contains('perform public._adbiz_require_chief();'));
+      expect(src('supabase/tests/local/run_local.sh'), contains('169_ad_business_month_target.sql'));
     });
   });
 

@@ -2136,7 +2136,7 @@
   "adb_cash_total": "Nağd",
   "adb_task": "Tapşırıq",
   "adb_ok": "Oldu",
-  "adb_result_reached_title": "Təbriklər!",
+  "adb_result_reached_title": "Təbriklər! Hədəf yerinə yetirildi",
   "adb_result_reached": "Bu gün hədəfi aşdınız: {net}/{target} AZN. Əla iş!",
   "adb_result_minus_title": "Gün bağlandı",
   "adb_result_minus": "Hədəfə {left} AZN çatmadı — mənfidə qaldı. Sabah daha çox!",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name} sürücü olmağı rədd etdi",
   "ntf_fleet_accept": "Qəbul et",
   "ntf_fleet_decline": "Rədd et",
-  "ntf_fleet_you_declined": "Dəvət rədd edildi"
+  "ntf_fleet_you_declined": "Dəvət rədd edildi",
+  "adb_total_spent": "Rasxodlar",
+  "adb_card_moved": "Karta köçürülən",
+  "adb_net_income": "Xalis gəlir",
+  "adb_so_far": "indiyə qədər ({from}–{to})",
+  "adb_month_this": "Bu ay",
+  "adb_month_days": "{n} iş günü",
+  "adb_month_target": "Aylıq hədəf",
+  "adb_month_collected": "Toplanan",
+  "adb_month_gap": "Ümumi mənfi",
+  "adb_month_reached": "🎉 Təbriklər! Aylıq hədəf yerinə yetirildi · {over} AZN",
+  "adb_month_minus": "Bu ay ({month}) ümumi mənfi",
+  "adb_month_plus": "Bu ay ({month}) hədəfdən artıq",
+  "adb_month_target_hint": "Bu aydan etibarən sayılır; keçmiş aylar dəyişmir."
 }

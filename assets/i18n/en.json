@@ -2136,7 +2136,7 @@
   "adb_cash_total": "Cash",
   "adb_task": "Task",
   "adb_ok": "OK",
-  "adb_result_reached_title": "Congratulations!",
+  "adb_result_reached_title": "Congratulations! Target reached",
   "adb_result_reached": "You beat today's target: {net}/{target} AZN. Great work!",
   "adb_result_minus_title": "Day closed",
   "adb_result_minus": "{left} AZN short of the target — left in the minus. More tomorrow!",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name} declined to be the driver",
   "ntf_fleet_accept": "Accept",
   "ntf_fleet_decline": "Decline",
-  "ntf_fleet_you_declined": "Invitation declined"
+  "ntf_fleet_you_declined": "Invitation declined",
+  "adb_total_spent": "Expenses",
+  "adb_card_moved": "Paid to card",
+  "adb_net_income": "Net income",
+  "adb_so_far": "so far ({from}–{to})",
+  "adb_month_this": "This month",
+  "adb_month_days": "{n} work days",
+  "adb_month_target": "Monthly target",
+  "adb_month_collected": "Collected",
+  "adb_month_gap": "Total minus",
+  "adb_month_reached": "🎉 Congratulations! Monthly target reached · {over} AZN",
+  "adb_month_minus": "This month ({month}) total minus",
+  "adb_month_plus": "This month ({month}) over the target",
+  "adb_month_target_hint": "Counts from this month on; past months do not change."
 }

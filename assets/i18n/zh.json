@@ -2136,7 +2136,7 @@
   "adb_cash_total": "现金",
   "adb_task": "任务",
   "adb_ok": "好的",
-  "adb_result_reached_title": "恭喜！",
+  "adb_result_reached_title": "恭喜！目标已完成",
   "adb_result_reached": "今天超额完成目标：{net}/{target} AZN。干得好！",
   "adb_result_minus_title": "当天已结束",
   "adb_result_minus": "距目标还差 {left} AZN —— 仍为负数。明天加油！",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name} 拒绝担任司机",
   "ntf_fleet_accept": "接受",
   "ntf_fleet_decline": "拒绝",
-  "ntf_fleet_you_declined": "已拒绝邀请"
+  "ntf_fleet_you_declined": "已拒绝邀请",
+  "adb_total_spent": "支出",
+  "adb_card_moved": "转入卡",
+  "adb_net_income": "净收入",
+  "adb_so_far": "截至目前（{from}–{to}）",
+  "adb_month_this": "本月",
+  "adb_month_days": "{n} 个工作日",
+  "adb_month_target": "月目标",
+  "adb_month_collected": "已收",
+  "adb_month_gap": "总差额",
+  "adb_month_reached": "🎉 恭喜！月目标已完成 · {over} AZN",
+  "adb_month_minus": "本月（{month}）总差额",
+  "adb_month_plus": "本月（{month}）超出目标",
+  "adb_month_target_hint": "从本月起计算；以往月份不变。"
 }
