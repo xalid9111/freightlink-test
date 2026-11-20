@@ -48,6 +48,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
     with SingleTickerProviderStateMixin, PremiumDropHost<ServicesMapScreen> {
   final _map = MapController();
   final _sheet = DraggableScrollableController();
+  // The list's height (part of the map) and its lowest place.
+  final _extent = ValueNotifier<double>(0);
+  double _peek = 0.1;
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
 
@@ -95,6 +98,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _sheet.dispose();
+    _extent.dispose();
     super.dispose();
   }
 
@@ -193,8 +197,8 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
       }
     });
     if (hasPin) _moveMap(LatLng(p.lat, p.lng), 14);
-    if (_sheet.isAttached && _sheet.size < kTirParkSheetStart) {
-      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    if (_sheet.isAttached && _sheet.size < kTirParkSheetOpen - 0.05) {
+      _sheet.animateTo(kTirParkSheetOpen, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
   }
 
@@ -223,9 +227,17 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
   void _select(ServiceProvider p, {bool fromPin = false}) {
     setState(() => _selectedId = p.id);
     if (hasRealCoords(p.lat, p.lng)) _moveMap(LatLng(p.lat, p.lng), math.max(_mapReady ? _map.camera.zoom : 12, 13));
-    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart) {
-      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    // The list rests closed: a pin opens it far enough to show the card.
+    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetOpen - 0.05) {
+      _sheet.animateTo(kTirParkSheetOpen, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
+  }
+
+  /// A tap on the list's handle / count line: closed → half open, else closed.
+  void _toggleList() {
+    if (!_sheet.isAttached) return;
+    final open = _sheet.size > _peek + 0.05;
+    _sheet.animateTo(open ? _peek : kTirParkSheetOpen, duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
   }
 
   Future<void> _openFilters(AppStrings s) async {
@@ -432,7 +444,12 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: Stack(
+            child: LayoutBuilder(builder: (context, box) {
+            // The list rests as one thin strip at the bottom (owner,
+            // 20.11.2026, as on Parklar).
+            final peek = (kTirParkSheetPeek / box.maxHeight).clamp(0.08, 0.5).toDouble();
+            _peek = peek;
+            return Stack(
         children: [
           Positioned.fill(
             child: FlutterMap(
@@ -627,39 +644,48 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               ),
             ),
           ),
-          // My location button.
-          AboveSheet(
-            sheet: kTirParkSheetStart,
-            gap: 76,
-            child: _RoundButton(
-              icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
-              tooltip: s.t('svc_my_location'),
-              highlighted: loc.state == GpsState.ok,
-              onTap: () => _locate(),
-            ),
-          ),
-          // "Servis əlavə et" (owner, 31.10.2026): one's own service, or
-          // joining as a master / service centre (the existing flows). It
-          // sits at the bottom of the map, right above the list, like "TIR
-          // parkı əlavə et" (owner, 31.10.2026).
-          AboveSheet(
-            sheet: kTirParkSheetStart,
-            gap: 10,
-            child: MapAddButton(
-              buttonKey: 'svc-add',
-              label: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),
-              // Each section its own form (owner, 06.11.2026): Servislər →
-              // the registration page (master / service centre), Mağazalar →
-              // the shop form (spare_parts ticked).
-              onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),
-            ),
+          // Right side, right on top of the list (owner, 20.11.2026): my
+          // place above the round + ("Servis / Mağaza əlavə et"); both ride
+          // up and down with the list and leave when it is opened high.
+          ValueListenableBuilder<double>(
+            valueListenable: _extent,
+            builder: (context, extent, _) {
+              final e = extent < peek ? peek : extent;
+              if (e > 0.7) return const SizedBox.shrink();
+              return Positioned(
+                right: 12,
+                bottom: box.maxHeight * e + 10,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  _RoundButton(
+                    icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
+                    tooltip: s.t('svc_my_location'),
+                    highlighted: loc.state == GpsState.ok,
+                    onTap: () => _locate(),
+                  ),
+                  const SizedBox(height: 10),
+                  // Each section its own form (owner, 06.11.2026): Servislər →
+                  // the registration page (master / service centre), Mağazalar →
+                  // the shop form (spare_parts ticked).
+                  MapAddRoundButton(
+                    buttonKey: 'svc-add',
+                    tooltip: s.t(widget.shops ? 'svc_add_shop' : 'svc_add'),
+                    onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),
+                  ),
+                ]),
+              );
+            },
           ),
           // Results sheet. It stays where the finger leaves it (owner,
           // 20.11.2026: with snap it sprang back up); the same sizes as Parklar.
-          DraggableScrollableSheet(
+          NotificationListener<DraggableScrollableNotification>(
+            onNotification: (n) {
+              _extent.value = n.extent;
+              return false;
+            },
+            child: DraggableScrollableSheet(
             controller: _sheet,
-            initialChildSize: kTirParkSheetStart,
-            minChildSize: kTirParkSheetMin,
+            initialChildSize: peek,
+            minChildSize: peek,
             maxChildSize: 0.88,
             snap: false,
             builder: (context, scroll) => _ResultsSheet(
@@ -678,10 +704,13 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               onSelect: _select,
               onRetry: () => ref.invalidate(serviceNearbyProvider(_query)),
               onWiden: () => setState(() => _query = _query.copyWith(radiusKm: math.min(_query.radiusKm * 2.5, 1000))),
+              onToggle: _toggleList,
             ),
           ),
+          ),
         ],
-      ),
+      );
+            }),
           ),
         ),
       ]),
@@ -804,6 +833,9 @@ class _ResultsSheet extends ConsumerWidget {
   final VoidCallback onRetry;
   final VoidCallback onWiden;
 
+  /// A tap on the handle / count line opens or closes the list.
+  final VoidCallback? onToggle;
+
   const _ResultsSheet({
     required this.scroll,
     required this.s,
@@ -820,6 +852,7 @@ class _ResultsSheet extends ConsumerWidget {
     required this.onSelect,
     required this.onRetry,
     required this.onWiden,
+    this.onToggle,
   });
 
   @override
@@ -844,7 +877,11 @@ class _ResultsSheet extends ConsumerWidget {
         controller: scroll,
         slivers: [
           SliverToBoxAdapter(
-            child: Padding(
+            child: GestureDetector(
+              key: const ValueKey('svc-list-head'),
+              behavior: HitTestBehavior.opaque,
+              onTap: onToggle,
+              child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -897,6 +934,7 @@ class _ResultsSheet extends ConsumerWidget {
                   ],
                 ],
               ),
+            ),
             ),
           ),
           if (results.hasError && items.isEmpty)

@@ -316,10 +316,14 @@ void main() {
       expect(page, contains('const AppTileLayer(),'));
       expect(page.contains('ColorFilter.matrix'), isFalse);
     }
-    final add = svc.indexOf("buttonKey: 'svc-add',");
-    // Measured in the map area (not the screen), so the button sits right
-    // above the list on any phone.
-    expect(svc.lastIndexOf('gap: 10,', add), greaterThan(svc.lastIndexOf('gap: 76,', add)));
+    // Measured in the map area (not the screen), so the buttons sit right
+    // above the list on any phone (owner, 20.11.2026: on the right, the place
+    // button above the round +, both riding on top of the list).
+    for (final page in [svc, tp]) {
+      expect(page, contains('bottom: box.maxHeight * e + 10,'));
+      expect(page, contains('MapAddRoundButton('));
+      expect(page.indexOf('my_location'), lessThan(page.indexOf('MapAddRoundButton(')), reason: 'the place button above the +');
+    }
     expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
     expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
     // One form for both pages: the same header, sheet and button places;
@@ -328,15 +332,14 @@ void main() {
     // Parklar rests closed at the bottom (its peek in points, owner 20.11.2026).
     expect(tp, contains('initialChildSize: peek,'));
     expect(tp, contains('minChildSize: peek,'));
-    expect(svc, contains('initialChildSize: kTirParkSheetStart,'));
-    expect(svc, contains('minChildSize: kTirParkSheetMin,'));
     for (final page in [svc, tp]) {
+      expect(page, contains('initialChildSize: peek,'));
+      expect(page, contains('minChildSize: peek,'));
       expect(page, contains('snap: false,'));
       expect(page, contains('MapPageHeader(s: s)'));
       expect(page.contains('MapPageBanner('), isFalse);
     }
-    expect(svc, contains('sheet: kTirParkSheetStart,'));
-    expect(svc, contains('gap: 76,'), reason: 'locate button above the add button');
+    expect(kTirParkSheetPeek, lessThanOrEqualTo(64), reason: 'the closed list is one thin strip ("xəritəni çox bağlamaq olmaz")');
     // Each map its own "+" (owner, 06.11.2026): Servislər → registration,
     // Mağazalar → the shop form, Parklar → the TIR Parkı page.
     expect(svc, contains('onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),'));

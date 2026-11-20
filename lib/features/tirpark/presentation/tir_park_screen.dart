@@ -507,20 +507,15 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                         final e = extent < peek ? peek : extent;
                         if (e > 0.7) return const SizedBox.shrink();
                         return Positioned(
-                          left: 12,
                           right: 12,
                           bottom: box.maxHeight * e + 10,
-                          child: Row(children: [
-                            // A long language / narrow phone: the button gets smaller, never cut.
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
+                          // Right side, one above the other (owner, 20.11.2026:
+                          // "konum işarəsi onun üzərində olsun"): my place,
+                          // then the round + right on top of the list.
+                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
                             _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
+                            const SizedBox(height: 10),
+                            MapAddRoundButton(buttonKey: 'tp-add', tooltip: s.t('tp_add'), onTap: _startAdding),
                           ]),
                         );
                       },
@@ -650,15 +645,22 @@ class _ListHead extends StatelessWidget {
           child: Container(
             width: 42,
             height: 5,
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(3)),
           ),
         ),
-        Text(s.t('tp_nearby'), style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text)),
-        const SizedBox(height: 2),
-        Text(s.t('tp_nearby_count', {'n': '$count', 'km': kTirParkRadiusKm.round().toString()}),
-            key: const ValueKey('tp-count'), style: TextStyle(fontSize: 14, color: AppColors.textSoft)),
-        const SizedBox(height: 12),
+        // One line (owner, 20.11.2026: "xəritəni çox bağlamaq olmaz"): the
+        // closed list is only this thin strip.
+        Row(children: [
+          Expanded(
+            child: Text(s.t('tp_nearby'),
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600, color: AppColors.text)),
+          ),
+          const SizedBox(width: 8),
+          Text(s.t('tp_nearby_count', {'n': '$count', 'km': kTirParkRadiusKm.round().toString()}),
+              key: const ValueKey('tp-count'), style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
+        ]),
+        const SizedBox(height: 14),
         if (async.isLoading && !async.hasValue)
           const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
         else if (async.error is TirParkNotReady)
