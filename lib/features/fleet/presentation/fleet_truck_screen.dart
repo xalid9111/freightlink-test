@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../domain/fleet.dart';
 import 'fleet_forms.dart';
+import 'fleet_screen.dart' show FleetDriverWaitingPill;
 import 'fleet_providers.dart';
 
 /// One truck (owner's picture 3, 20.11.2026). The owner: the profit (agreed
@@ -175,6 +176,8 @@ class _ProfitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = fleetProfit(jobs, expenses);
+    final spent = fleetSpent(expenses);
+    final waiting = fleetWaiting(expenses);
     final negative = p.values.any((v) => v < 0);
     final c = negative ? AppColors.accent : AppColors.online;
     return Container(
@@ -185,19 +188,53 @@ class _ProfitCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: c.withValues(alpha: 0.7)),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(s.t(negative ? 'fl_profit_negative' : 'fl_profit'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.text)),
-        const SizedBox(height: 6),
-        if (p.isEmpty)
-          Text('0', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.textSoft))
-        else
-          Wrap(spacing: 18, runSpacing: 4, children: [
-            for (final e in p.entries)
-              Text('${fleetAmount(e.value)} ${e.key}',
-                  key: ValueKey('fl-profit-${e.key}'),
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: e.value < 0 ? AppColors.accent : AppColors.online)),
-          ]),
-      ]),
+      child: IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(s.t(negative ? 'fl_profit_negative' : 'fl_profit'),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.text)),
+              const SizedBox(height: 6),
+              if (p.isEmpty)
+                Text('0', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.textSoft))
+              else
+                for (final e in p.entries)
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text('${fleetAmount(e.value)} ${e.key}',
+                        key: ValueKey('fl-profit-${e.key}'),
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: e.value < 0 ? AppColors.accent : AppColors.online)),
+                  ),
+            ]),
+          ),
+          VerticalDivider(width: 24, thickness: 1, color: c.withValues(alpha: 0.35)),
+          // The expenses' total in red on the right (owner, 20.11.2026):
+          // only the approved ones count; a driver's waiting one apart.
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(s.t('fl_spent'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.text)),
+              const SizedBox(height: 6),
+              if (spent.isEmpty)
+                Text('0', key: const ValueKey('fl-spent-0'), style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.danger))
+              else
+                for (final e in spent.entries)
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text('${fleetAmount(e.value)} ${e.key}',
+                        key: ValueKey('fl-spent-${e.key}'),
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.danger)),
+                  ),
+              for (final e in waiting.entries)
+                Text(s.t('fl_spent_waiting', {'amount': '${fleetAmount(e.value)} ${e.key}'}),
+                    key: ValueKey('fl-spent-wait-${e.key}'),
+                    textAlign: TextAlign.end,
+                    style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+            ]),
+          ),
+        ]),
+      ),
     );
   }
 }
@@ -445,7 +482,10 @@ class _DriverCard extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: 6),
-          Text(s.t(truck.driverId != null ? 'fl_driver_linked' : 'fl_driver_not_linked'), style: TextStyle(color: AppColors.textSoft)),
+          if (truck.driverWaiting)
+            Align(alignment: Alignment.centerLeft, child: FleetDriverWaitingPill(s: s))
+          else
+            Text(s.t(truck.driverId != null ? 'fl_driver_linked' : 'fl_driver_not_linked'), style: TextStyle(color: AppColors.textSoft)),
           const SizedBox(height: 10),
           if (truck.driverId == null)
             OutlinedButton.icon(

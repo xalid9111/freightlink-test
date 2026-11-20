@@ -33,7 +33,7 @@ String adbizClientKey([Random? r]) {
 }
 
 const kAdbizReasons = [
-  'day_closed', 'not_allowed', 'not_member', 'chief_admin_only', 'invalid_argument', 'not_found', 'other_company', 'company_deleted',
+  'day_closed', 'not_allowed', 'not_member', 'chief_admin_only', 'invalid_argument', 'not_found', 'other_company', 'company_deleted', 'note_required',
 ];
 
 /// UTEP Reklam (0110). Reads go through RLS (a member sees only his own
@@ -162,6 +162,10 @@ class AdbizRepository {
 
   Future<void> updateEntry(String id, String title, double amount) =>
       _run(() => _c.rpc('adbiz_update_entry', params: {'p_entry': id, 'p_title': title, 'p_amount': amount}));
+
+  /// The worker's own price fix on his today's open day, with a note (0132).
+  Future<void> workerFixEntry(String id, double amount, String note) => _run(
+      () => _c.rpc('adbiz_entry_worker_fix', params: {'p_entry': id, 'p_amount': amount, 'p_note': note}));
 
   Future<void> deleteEntry(String id) => _run(() => _c.rpc('adbiz_delete_entry', params: {'p_entry': id}));
 

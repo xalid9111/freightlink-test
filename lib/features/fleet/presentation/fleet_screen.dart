@@ -458,6 +458,11 @@ class FleetTruckCard extends StatelessWidget {
                       ),
                     ]),
                   ],
+                  // The chosen registered driver has not said yes yet (0131).
+                  if (!driver && truck.driverWaiting) ...[
+                    const SizedBox(height: 6),
+                    FleetDriverWaitingPill(s: s, key: ValueKey('fl-driver-wait-${truck.id}')),
+                  ],
                 ]),
               ),
             ]),
@@ -638,4 +643,24 @@ class FleetTodayCard extends ConsumerWidget {
       ]),
     );
   }
+}
+
+/// "⏳ Sürücü təsdiqi gözləyir" (0131).
+class FleetDriverWaitingPill extends StatelessWidget {
+  final AppStrings s;
+  const FleetDriverWaitingPill({super.key, required this.s});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(color: AppColors.urgentBg, borderRadius: BorderRadius.circular(20)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.hourglass_top, size: 14, color: AppColors.urgentFg),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(s.t('fl_driver_waiting'),
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.urgentFg)),
+          ),
+        ]),
+      );
 }

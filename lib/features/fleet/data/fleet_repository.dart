@@ -34,6 +34,7 @@ class FleetRepository {
     'already_decided',
     'too_many',
     'blocked',
+    'invite_closed',
   ];
 
   Future<T> _run<T>(Future<T> Function() f) async {
@@ -147,6 +148,32 @@ class FleetRepository {
       });
 
   Future<void> unlinkDriver(String truckId) => _run(() => _c.rpc('fleet_driver_unlink', params: {'p_truck': truckId}).timeout(_timeout));
+
+  /// The registered accounts whose name holds [q] (0131); before 0131 /
+  /// on any error: none (the field stays a plain name).
+  Future<List<FleetPerson>> searchDrivers(String q) async {
+    if (q.trim().length < 2) return const [];
+    try {
+      final res = await _c.rpc('fleet_driver_search', params: {'p_q': q.trim()}).timeout(_timeout);
+      return [for (final r in (res as List? ?? const [])) FleetPerson.fromJson(Map<String, dynamic>.from(r as Map))];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// The owner asks a registered account to drive the truck (0131).
+  Future<void> inviteDriver(String truckId, String userId) =>
+      _run(() => _c.rpc('fleet_driver_invite_user', params: {'p_truck': truckId, 'p_user': userId}).timeout(_timeout));
+
+  /// The owner takes a waiting invitation back.
+  Future<void> cancelDriverInvite(String truckId) =>
+      _run(() => _c.rpc('fleet_driver_invite_cancel', params: {'p_truck': truckId}).timeout(_timeout));
+
+  /// The invited driver answers; returns the truck's name.
+  Future<String> answerInvite(String inviteId, bool accept) => _run(() async {
+        final res = await _c.rpc('fleet_driver_answer', params: {'p_invite': inviteId, 'p_accept': accept}).timeout(_timeout);
+        return '${(res as Map)['name'] ?? ''}';
+      });
 
   String? get me => _me;
 }

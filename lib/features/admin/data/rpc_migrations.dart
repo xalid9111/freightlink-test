@@ -243,6 +243,12 @@ const kRpcMigration = <String, String>{
   'adbiz_admin_company_delete': '0126_ad_business_company_delete.sql',
   // 0130: Maşınlarım.
   'fleet_driver_jobs': '0130_fleet.sql',
+  'fleet_driver_search': '0131_fleet_driver_invite.sql',
+  'fleet_driver_invite_user': '0131_fleet_driver_invite.sql',
+  'fleet_driver_invite_cancel': '0131_fleet_driver_invite.sql',
+  'fleet_driver_answer': '0131_fleet_driver_invite.sql',
+  'fleet_my_driver_invites': '0131_fleet_driver_invite.sql',
+  'adbiz_entry_worker_fix': '0132_ad_business_worker_fix.sql',
   'fleet_truck_save': '0130_fleet.sql',
   'fleet_truck_remove': '0130_fleet.sql',
   'fleet_job_save': '0130_fleet.sql',

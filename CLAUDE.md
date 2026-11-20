@@ -811,6 +811,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   the program's days; months and years then simply go on from the
   program. The chosen month's "Köhnə hesab" row on the Ay view with ✏️
   (owner / Baş admin; both empty = taken off; audited); no direct writes.
+  A saved job shows at once (owner, 20.11.2026: "yazdığı an görünmür …
+  iki qeyd"): the device keeps what it just saved until the lists bring it
+  (adbizJustSavedProvider, adbizMergeEntries), the jobs stand in ONE fixed
+  order (time, then id — adbizSortEntries; scrolling never moves them), the
+  button reads "Yadda saxlanılır…", and the same name + amount within 10
+  minutes asks "Bu iş artıq yazılıb … Yenə əlavə et?" first. The worker
+  changes a job's PRICE (never its name) on his own today's open day: ✎ →
+  "Qiyməti dəyiş" (new price + "Qeyd", required, empty — no ready text) →
+  OK (SQL 0132, adbiz_entry_worker_fix: first price kept in fixed_from,
+  fix_note, audited 'entry.worker_fix'); the row shows "düzəldildi (40 →
+  35) · the note"; a closed / past day stays the owner's / Baş admin's.
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam
@@ -1120,6 +1131,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   stands over the nearby parks on the map. Server: own rows only (RLS), every
   write through fleet_* functions, a double tap never adds twice
   (client_key), "Sil" = deleted_at (history kept), nothing deleted.
+  The driver from the registered users (owner, 20.11.2026, SQL 0131): typing
+  the driver's name (≥ 2 letters) lists TırLink accounts (picture, name,
+  blue badge — no phone / e-mail, never oneself or a blocked account,
+  fleet_driver_search, ≤ 10); "Seç" → on save he gets a bell notice "…
+  sizi sürücü kimi əlavə edir" with Qəbul et / Rədd et and the truck shows
+  "Sürücü təsdiqi gözləyir" (pending_driver_id) — never linked without his
+  yes (fleet_driver_answer: yes = linked like the code, the owner is told
+  either way); ✕ on the chosen one takes it back; a name not in the list
+  is just typed as before; the one-time code stays. The truck page's
+  Qazanc card has the approved expenses' total in red on the right
+  ("Rasxod", per currency) with "+ n təsdiq gözləyir" under it.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/core/localization/locale_controller.dart';
+import 'package:freightlink/core/theme/app_theme.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
+import 'package:freightlink/features/fleet/data/fleet_repository.dart';
 import 'package:freightlink/features/fleet/domain/fleet.dart';
 import 'package:freightlink/features/fleet/presentation/fleet_forms.dart';
 import 'package:freightlink/features/fleet/presentation/fleet_providers.dart';
@@ -36,8 +38,44 @@ FleetJob _job(String id, String truck, {Duration from = Duration.zero, double? p
 FleetExpense _exp(String id, String truck, double a, String cur, {String status = 'approved', String by = _owner}) =>
     FleetExpense(id: id, truckId: truck, name: 'Ay-$id', amount: a, currency: cur, status: status, createdBy: by);
 
-Widget _app(Widget home, FleetData data, {String uid = _owner}) => ProviderScope(
+class _Repo implements FleetRepository {
+  final saved = <String>[];
+  final invited = <(String, String)>[];
+  final cancelled = <String>[];
+  final answers = <(String, bool)>[];
+  final asked = <String>[];
+  @override
+  Future<List<FleetPerson>> searchDrivers(String q) async {
+    asked.add(q);
+    return const [
+      FleetPerson(id: 'u-ali', name: 'Əli Məmmədov', verified: true),
+      FleetPerson(id: 'u-ali2', name: 'Əli Həsənov'),
+    ];
+  }
+
+  @override
+  Future<String> saveTruck({String? id, required String name, String? plate, String? driverName}) async {
+    saved.add('$name|$driverName');
+    return id ?? 't-new';
+  }
+
+  @override
+  Future<void> inviteDriver(String truckId, String userId) async => invited.add((truckId, userId));
+  @override
+  Future<void> cancelDriverInvite(String truckId) async => cancelled.add(truckId);
+  @override
+  Future<String> answerInvite(String inviteId, bool accept) async {
+    answers.add((inviteId, accept));
+    return 'Volvo FH 2022';
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+Widget _app(Widget home, FleetData data, {String uid = _owner, FleetRepository? repo}) => ProviderScope(
       overrides: [
+        if (repo != null) fleetRepositoryProvider.overrideWithValue(repo),
         stringsProvider.overrideWithValue(_lang('az')),
         currentUserIdProvider.overrideWithValue(uid),
         currentUserProvider.overrideWithValue(null),
@@ -149,6 +187,123 @@ void main() {
     expect(find.byKey(const ValueKey('fl-exp-approve-26')), findsOneWidget);
     expect(find.byKey(const ValueKey('fl-exp-reject-26')), findsOneWidget);
     expect(find.byKey(const ValueKey('fl-driver-card')), findsOneWidget);
+    // The expenses' total in red on the right (owner, 20.11.2026): only the
+    // approved ones; the driver's waiting one apart.
+    expect(tester.widget<Text>(find.byKey(const ValueKey('fl-spent-AZN'))).data, '450 AZN');
+    expect(tester.widget<Text>(find.byKey(const ValueKey('fl-spent-USD'))).data, '30 USD');
+    expect(tester.widget<Text>(find.byKey(const ValueKey('fl-spent-AZN'))).style!.color, AppColors.danger);
+    expect(tester.widget<Text>(find.byKey(const ValueKey('fl-spent-wait-USD'))).data, '+ 80 USD təsdiq gözləyir');
+    expect(tester.getCenter(find.byKey(const ValueKey('fl-spent-AZN'))).dx,
+        greaterThan(tester.getCenter(find.byKey(const ValueKey('fl-profit-AZN'))).dx),
+        reason: 'right of the profit');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the driver from the registered users (0131): typed name → the list → Seç → saved and asked', (tester) async {
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _Repo();
+    await tester.pumpWidget(_app(
+      Builder(
+        builder: (c) => Scaffold(body: Center(child: TextButton(onPressed: () => showFleetTruckForm(c), child: const Text('open')))),
+      ),
+      const FleetData(),
+      repo: repo,
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('fl-truck-name')), 'Volvo FH 2022');
+    await tester.enterText(find.byKey(const ValueKey('fl-truck-driver')), 'Əl');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    expect(repo.asked, ['Əl']);
+    expect(find.byKey(const ValueKey('fl-driver-found')), findsOneWidget);
+    expect(find.text('TırLink istifadəçiləri'), findsOneWidget);
+    expect(find.text('Siyahıda yoxdursa, adı sadəcə yazın.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('fl-driver-user-u-ali')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('fl-driver-picked')), findsOneWidget);
+    expect(find.text('Əli Məmmədov'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('fl-truck-save')));
+    await tester.pumpAndSettle();
+    expect(repo.saved.single, 'Volvo FH 2022|Əli Məmmədov');
+    expect(repo.invited.single, ('t-new', 'u-ali'), reason: 'asked, never linked without his yes');
+  });
+
+  testWidgets('a plain name stays a plain name; ✕ on a waiting driver takes the invitation back', (tester) async {
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _Repo();
+    const waiting = FleetTruck(id: 't1', ownerId: _owner, name: 'Volvo', driverName: 'Əli Məmmədov', pendingDriverId: 'u-ali');
+    await tester.pumpWidget(_app(
+      Builder(
+        builder: (c) => Scaffold(
+            body: Center(child: TextButton(onPressed: () => showFleetTruckForm(c, truck: waiting), child: const Text('open')))),
+      ),
+      const FleetData(),
+      repo: repo,
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('fl-driver-picked')), findsOneWidget, reason: 'the waiting one is shown chosen');
+    await tester.tap(find.byKey(const ValueKey('fl-driver-unpick')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const ValueKey('fl-truck-driver')), 'Rəşad');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.byKey(const ValueKey('fl-truck-save')));
+    await tester.pumpAndSettle();
+    expect(repo.saved.single, 'Volvo|Rəşad');
+    expect(repo.cancelled, ['t1']);
+    expect(repo.invited, isEmpty);
+  });
+
+  testWidgets('"Sürücü təsdiqi gözləyir" on the card and the truck page', (tester) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const waiting = FleetTruck(id: 't1', ownerId: _owner, name: 'Volvo FH 2022', driverName: 'Əli Məmmədov', pendingDriverId: 'u-ali');
+    await tester.pumpWidget(_app(const FleetScreen(), const FleetData(trucks: [waiting])));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('fl-driver-wait-t1')), findsOneWidget);
+    expect(find.text('Sürücü təsdiqi gözləyir'), findsOneWidget);
+    await tester.pumpWidget(_app(const FleetTruckScreen(id: 't1'), const FleetData(trucks: [waiting])));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('fl-driver-card')), matching: find.text('Sürücü təsdiqi gözləyir')), findsOneWidget);
+  });
+
+  testWidgets('the driver answers in Bildirişlər: Qəbul et / Rədd et', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _Repo();
+    const n = AppNotice(
+        id: 'n1',
+        type: 'fleet_driver_invite',
+        body: 'Volvo FH 2022 · 99-AC-981',
+        data: {'invite_id': 'i1', 'owner': 'Kamran Əliyev', 'truck': 'Volvo FH 2022'});
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        stringsProvider.overrideWithValue(_lang('az')),
+        currentUserIdProvider.overrideWithValue(_drv),
+        currentUserProvider.overrideWithValue(null),
+        fleetRepositoryProvider.overrideWithValue(repo),
+        fleetProvider.overrideWith((ref) async => const FleetData()),
+        myNoticesProvider.overrideWith((ref) => Stream.value(const [n])),
+        settledNoticesProvider.overrideWith((ref) async => const <String>{}),
+        noticesRepositoryProvider.overrideWithValue(_Notices()),
+      ],
+      child: const MaterialApp(home: NoticesScreen()),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Kamran Əliyev sizi sürücü kimi əlavə edir'), findsOneWidget);
+    expect(find.text('Qəbul et'), findsOneWidget);
+    expect(find.text('Rədd et'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('notice-accept-n1')));
+    await tester.pumpAndSettle();
+    expect(repo.answers.single, ('i1', true));
+    expect(find.text('«Volvo FH 2022» maşınına qoşuldunuz ✓'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -273,6 +428,38 @@ void main() {
       expect(sql, contains("currency in ('AZN', 'USD', 'EUR', 'RUB', 'TRY')"));
       expect(_read('supabase/tests/local/run_local.sh'), contains('166_fleet.sql'));
     });
+    test('the driver invitation notices: texts, no route for the invite, the answer opens the truck', () {
+      final az = _lang('az');
+      const inv = AppNotice(id: 'a', type: 'fleet_driver_invite', body: 'Volvo · 99-AC-981', data: {'invite_id': 'i1', 'owner': 'Kamran'});
+      expect(inv.text(az), 'Kamran sizi sürücü kimi əlavə edir');
+      expect(inv.detail(), 'Volvo · 99-AC-981');
+      expect(inv.isAction, isTrue, reason: 'hidden once answered');
+      expect(inv.isDriverInvite, isTrue);
+      expect(inv.route, isNull);
+      const yes = AppNotice(id: 'b', type: 'fleet_driver_answer', data: {'truck_id': 't1', 'driver': 'Əli', 'accepted': true});
+      const no = AppNotice(id: 'c', type: 'fleet_driver_answer', data: {'truck_id': 't1', 'driver': 'Əli', 'accepted': false});
+      expect(yes.text(az), 'Əli sürücü kimi qəbul etdi');
+      expect(no.text(az), 'Əli sürücü olmağı rədd etdi');
+      expect(yes.route, '/fleet/t/t1');
+      expect(_read('lib/features/notices/notices.dart'), contains("_c.rpc('fleet_my_driver_invites')"));
+    });
+    test('SQL 0131: search gives names only, the invite waits for his yes, nothing deleted', () {
+      final sql = _read('supabase/migrations/0131_fleet_driver_invite.sql');
+      final lower = sql.toLowerCase();
+      for (final bad in ['drop table', 'truncate', 'delete from']) {
+        expect(lower.contains(bad), isFalse, reason: bad);
+      }
+      final search = sql.substring(sql.indexOf('function public.fleet_driver_search'), sql.indexOf('function public.fleet_driver_invite_user'));
+      expect(search, contains('returns table (id uuid, full_name text, avatar_url text, is_verified boolean)'));
+      expect(search.contains('email'), isFalse);
+      expect(search.contains('phone'), isFalse);
+      expect(search, contains('not public.is_blocked(p.id)'));
+      expect(search, contains('limit 10'));
+      final answer = sql.substring(sql.indexOf('function public.fleet_driver_answer'));
+      expect(answer, contains('v_i.invited_user is distinct from v_me'), reason: 'only the invited account answers');
+      expect(sql, contains("'fleet_driver_invite'"));
+      expect(_read('supabase/tests/local/run_local.sh'), contains('167_fleet_driver_invite.sql'));
+    });
     test('every Maşınlarım text in all 6 languages', () {
       final keys = RegExp(r"'(fl_[a-z_]+)'")
           .allMatches([
@@ -284,10 +471,17 @@ void main() {
       expect(keys.length, greaterThan(50));
       for (final l in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
         final m = jsonDecode(_read('assets/i18n/$l.json')) as Map;
-        for (final k in [...keys, 'ntf_fleet_expense']) {
+        for (final k in [...keys, 'ntf_fleet_expense', 'ntf_fleet_invite', 'ntf_fleet_accepted', 'ntf_fleet_declined', 'ntf_fleet_accept', 'ntf_fleet_decline']) {
           expect(m[k], isNotNull, reason: '$l $k');
         }
       }
     });
   });
+}
+
+class _Notices implements NoticesRepository {
+  @override
+  Future<void> markRead(List<String> ids) async {}
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

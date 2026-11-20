@@ -13,7 +13,11 @@ double _num(Object? v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}'
 class FleetTruck {
   final String id, ownerId, name;
   final String? plate, driverName, driverId;
-  const FleetTruck({required this.id, required this.ownerId, required this.name, this.plate, this.driverName, this.driverId});
+
+  /// A registered driver asked and not answered yet (0131).
+  final String? pendingDriverId;
+  const FleetTruck(
+      {required this.id, required this.ownerId, required this.name, this.plate, this.driverName, this.driverId, this.pendingDriverId});
 
   factory FleetTruck.fromJson(Map<String, dynamic> j) => FleetTruck(
         id: '${j['id']}',
@@ -22,7 +26,11 @@ class FleetTruck {
         plate: j['plate'] as String?,
         driverName: j['driver_name'] as String?,
         driverId: j['driver_id'] as String?,
+        pendingDriverId: j['pending_driver_id'] as String?,
       );
+
+  /// "Sürücü təsdiqi gözləyir" (0131).
+  bool get driverWaiting => pendingDriverId != null && driverId != pendingDriverId;
 
   bool isOwner(String? uid) => uid != null && uid == ownerId;
 }
@@ -120,6 +128,12 @@ Map<String, double> fleetSpent(Iterable<FleetExpense> expenses) => sumByCurrency
         if (e.approved) (e.currency, e.amount)
     ]);
 
+/// A driver's expenses still waiting for the owner (not counted yet).
+Map<String, double> fleetWaiting(Iterable<FleetExpense> expenses) => sumByCurrency([
+      for (final e in expenses)
+        if (e.pending) (e.currency, e.amount)
+    ]);
+
 /// Profit per currency = income − approved expenses.
 Map<String, double> fleetProfit(Iterable<FleetJob> jobs, Iterable<FleetExpense> expenses) {
   final income = fleetIncome(jobs);
@@ -176,3 +190,25 @@ String fleetAmount(double v) {
 
 /// "14:30".
 String fleetTime(DateTime t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+/// A registered account offered as the driver (0131): name, picture, the
+/// blue badge — never a phone or an e-mail.
+class FleetPerson {
+  final String id, name;
+  final String? avatarUrl;
+  final bool verified;
+  const FleetPerson({required this.id, required this.name, this.avatarUrl, this.verified = false});
+
+  factory FleetPerson.fromJson(Map<String, dynamic> j) => FleetPerson(
+        id: '${j['id']}',
+        name: '${j['full_name'] ?? ''}'.trim(),
+        avatarUrl: j['avatar_url'] as String?,
+        verified: j['is_verified'] == true,
+      );
+
+  String get initials {
+    final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    return parts.take(2).map((p) => String.fromCharCode(p.runes.first).toUpperCase()).join();
+  }
+}

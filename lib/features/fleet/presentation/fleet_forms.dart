@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/birth_date_field.dart' show monthName;
+import '../../../core/widgets/user_avatar.dart';
 import '../data/fleet_repository.dart';
 import '../domain/fleet.dart';
 import 'fleet_providers.dart';
@@ -21,6 +23,7 @@ String fleetErrorKey(Object e) => switch (e) {
       FleetRefused(reason: 'own_truck') => 'fl_err_own_truck',
       FleetRefused(reason: 'already_decided') => 'fl_err_decided',
       FleetRefused(reason: 'too_many') => 'fl_err_too_many',
+      FleetRefused(reason: 'invite_closed') => 'fl_err_invite_closed',
       _ => 'tp_err_generic',
     };
 
@@ -117,13 +120,53 @@ class _TruckFormState extends ConsumerState<_TruckForm> {
   bool _busy = false;
   String? _err;
 
+  /// The registered account chosen as the driver (0131); a waiting one is
+  /// shown chosen when the form opens.
+  late FleetPerson? _picked = widget.truck?.driverWaiting == true
+      ? FleetPerson(id: widget.truck!.pendingDriverId!, name: widget.truck!.driverName ?? '')
+      : null;
+  List<FleetPerson> _found = const [];
+  Timer? _debounce;
+  int _ask = 0;
+
   @override
   void dispose() {
+    _debounce?.cancel();
     _name.dispose();
     _plate.dispose();
     _driver.dispose();
     super.dispose();
   }
+
+  /// While the name is typed: the registered accounts that hold it.
+  void _typed(String v) {
+    _debounce?.cancel();
+    if (v.trim().length < 2) {
+      if (_found.isNotEmpty) setState(() => _found = const []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final n = ++_ask;
+      final res = await ref.read(fleetRepositoryProvider).searchDrivers(v);
+      if (!mounted || n != _ask) return;
+      setState(() => _found = res);
+    });
+  }
+
+  void _pick(FleetPerson p) {
+    _debounce?.cancel();
+    _ask++;
+    setState(() {
+      _picked = p;
+      _driver.text = p.name;
+      _found = const [];
+    });
+  }
+
+  void _unpick() => setState(() {
+        _picked = null;
+        _driver.clear();
+      });
 
   Future<void> _save(AppStrings s) async {
     if (_busy) return;
@@ -135,16 +178,28 @@ class _TruckFormState extends ConsumerState<_TruckForm> {
       _busy = true;
       _err = null;
     });
+    final repo = ref.read(fleetRepositoryProvider);
     try {
-      await ref.read(fleetRepositoryProvider).saveTruck(
-            id: widget.truck?.id,
-            name: _name.text.trim(),
-            plate: _plate.text.trim().isEmpty ? null : _plate.text.trim(),
-            driverName: _driver.text.trim().isEmpty ? null : _driver.text.trim(),
-          );
+      final id = await repo.saveTruck(
+        id: widget.truck?.id,
+        name: _name.text.trim(),
+        plate: _plate.text.trim().isEmpty ? null : _plate.text.trim(),
+        driverName: _driver.text.trim().isEmpty ? null : _driver.text.trim(),
+      );
+      final truckId = widget.truck?.id ?? id;
+      final was = widget.truck?.driverWaiting == true ? widget.truck!.pendingDriverId : null;
+      final picked = _picked;
+      // The chosen account is asked (a bell notice; never linked without
+      // his yes); a waiting one taken off (✕) is taken back.
+      if (picked != null && picked.id != was && picked.id != widget.truck?.driverId) {
+        await repo.inviteDriver(truckId, picked.id);
+      } else if (picked == null && was != null) {
+        await repo.cancelDriverInvite(truckId);
+      }
       ref.invalidate(fleetProvider);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
+      ref.invalidate(fleetProvider);
       if (mounted) setState(() => _err = s.t(fleetErrorKey(e)));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -154,6 +209,7 @@ class _TruckFormState extends ConsumerState<_TruckForm> {
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
+    final picked = _picked;
     return _SheetFrame(title: s.t(widget.truck == null ? 'fl_add_truck' : 'fl_edit_truck'), children: [
       _label(s.t('fl_truck_name')),
       TextField(
@@ -172,13 +228,85 @@ class _TruckFormState extends ConsumerState<_TruckForm> {
         decoration: const InputDecoration(hintText: '99-AC-981', counterText: ''),
       ),
       _label(s.t('fl_driver')),
-      TextField(
-        key: const ValueKey('fl-truck-driver'),
-        controller: _driver,
-        maxLength: 60,
-        textCapitalization: TextCapitalization.words,
-        decoration: InputDecoration(hintText: s.t('fl_driver_hint'), counterText: ''),
-      ),
+      if (picked != null)
+        // The chosen registered account: its picture, name, ✕.
+        Container(
+          key: const ValueKey('fl-driver-picked'),
+          padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.accent),
+          ),
+          child: Row(children: [
+            _PersonAvatar(p: picked),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(picked.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, color: AppColors.text)),
+                Text(s.t('fl_driver_will_ask'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              ]),
+            ),
+            IconButton(
+              key: const ValueKey('fl-driver-unpick'),
+              tooltip: s.t('common_cancel'),
+              onPressed: _busy ? null : _unpick,
+              icon: Icon(Icons.close, color: AppColors.textSoft),
+            ),
+          ]),
+        )
+      else ...[
+        TextField(
+          key: const ValueKey('fl-truck-driver'),
+          controller: _driver,
+          maxLength: 60,
+          textCapitalization: TextCapitalization.words,
+          onChanged: (v) {
+            setState(() {});
+            _typed(v);
+          },
+          decoration: InputDecoration(hintText: s.t('fl_driver_hint'), counterText: ''),
+        ),
+        if (_found.isNotEmpty)
+          Container(
+            key: const ValueKey('fl-driver-found'),
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(
+              color: AppColors.cardAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
+                child: Text(s.t('fl_driver_users'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              ),
+              for (final p in _found)
+                InkWell(
+                  key: ValueKey('fl-driver-user-${p.id}'),
+                  onTap: () => _pick(p),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(children: [
+                      _PersonAvatar(p: p),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 15, color: AppColors.text)),
+                      ),
+                      if (p.verified) ...[const SizedBox(width: 4), const VerifiedTick(size: 15)],
+                      const Spacer(),
+                      Text(s.t('fl_driver_pick'), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w500)),
+                    ]),
+                  ),
+                ),
+            ]),
+          ),
+        if (_driver.text.trim().length >= 2)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(s.t('fl_driver_free_hint'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+          ),
+      ],
       _error(_err),
       const SizedBox(height: 16),
       FilledButton(
@@ -188,6 +316,19 @@ class _TruckFormState extends ConsumerState<_TruckForm> {
       ),
     ]);
   }
+}
+
+/// A registered account's picture (else the initials) in the accent ring.
+class _PersonAvatar extends StatelessWidget {
+  final FleetPerson p;
+  const _PersonAvatar({required this.p});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.accent, width: 1.5)),
+        child: UserAvatar(imageUrl: p.avatarUrl, initials: p.initials, radius: 16),
+      );
 }
 
 // ---------------------------------------------------------------- job
