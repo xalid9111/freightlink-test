@@ -81,6 +81,47 @@ class TirParkPin extends StatelessWidget {
   }
 }
 
+/// A park pin with its name to the right (owner's picture, 20.11.2026):
+/// the pin stands in the middle of a wide box, so it stays on its point.
+class TirParkNamedPin extends StatelessWidget {
+  final String name;
+  final bool approved, selected;
+  const TirParkNamedPin({super.key, required this.name, required this.approved, this.selected = false});
+
+  @override
+  Widget build(BuildContext context) => Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
+        TirParkPin(approved: approved, selected: selected),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: selected ? 10 : 6,
+          child: Row(children: [
+            const Spacer(),
+            SizedBox(width: (selected ? 44.0 : 36.0) + 2),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  key: const ValueKey('tp-pin-name'),
+                  margin: const EdgeInsets.only(left: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.card.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  child: Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.text)),
+                ),
+              ),
+            ),
+          ]),
+        ),
+      ]);
+}
+
 class _PinTail extends CustomPainter {
   final Color color;
   _PinTail(this.color);
@@ -291,36 +332,38 @@ class ParksServicesSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget seg(String key, IconData icon, String label, bool on, VoidCallback tap) => InkWell(
-          key: ValueKey(key),
-          borderRadius: BorderRadius.circular(20),
-          onTap: on ? null : tap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(color: on ? AppColors.accentFill : Colors.transparent, borderRadius: BorderRadius.circular(20)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: on ? Colors.white : AppColors.text),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(fontSize: 13.5, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
-            ]),
+    // Three separate pills (owner's picture, 20.11.2026): the chosen one
+    // filled orange, the others outlined.
+    Widget seg(String key, IconData icon, String label, bool on, VoidCallback tap) => Material(
+          color: on ? AppColors.accentFill : AppColors.card.withValues(alpha: 0.96),
+          shape: StadiumBorder(side: BorderSide(color: on ? AppColors.accentFill : AppColors.line)),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: ValueKey(key),
+            onTap: on ? null : tap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon, size: 17, color: on ? Colors.white : AppColors.text),
+                const SizedBox(width: 7),
+                Text(label,
+                    style: TextStyle(fontSize: 14, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+              ]),
+            ),
           ),
         );
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), parks, onParks),
-          seg('tp-tab-services', Icons.home_repair_service_outlined, s.t('nav_services'), !parks && !shops, onServices),
-          if (onShops != null) seg('tp-tab-shops', Icons.storefront_outlined, s.t('tp_shops'), shops, onShops!),
-        ]),
-      ),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        seg('tp-tab-parks', Icons.local_parking, s.t('tp_parks'), parks, onParks),
+        const SizedBox(width: 8),
+        seg('tp-tab-services', Icons.build_outlined, s.t('nav_services'), !parks && !shops, onServices),
+        if (onShops != null) ...[
+          const SizedBox(width: 8),
+          seg('tp-tab-shops', Icons.storefront_outlined, s.t('tp_shops'), shops, onShops!),
+        ],
+      ]),
     );
   }
 }
@@ -370,6 +413,13 @@ class MapAddButton extends StatelessWidget {
 /// screen, so the place is measured there (owner, 31.10.2026: the "əlavə
 /// et" buttons sit right above the list on TIRPark and Servislər). Must be
 /// a child of the map's Stack; taps outside [child] reach the map.
+/// The map pages' list panel (Parklar, Servislər, Mağazalar — owner,
+/// 20.11.2026): its first and lowest height (part of the map). The first
+/// card shows above the floating bottom bar; at its lowest the title does;
+/// it stays wherever the finger leaves it (no snapping back up).
+const kTirParkSheetStart = 0.36;
+const kTirParkSheetMin = 0.2;
+
 class AboveSheet extends StatelessWidget {
   final double sheet, gap;
   final double? left;

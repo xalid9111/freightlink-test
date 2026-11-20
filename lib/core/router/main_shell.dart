@@ -180,7 +180,7 @@ List<_NavItem> _navItems(AppStrings strings, int unread, [Map<NewItemsSection, i
       // TIRPark (owner, 31.10.2026) in place of Servislər, which opens from it.
       // New parks / services / shops and new TIR Bazarı ads since the last
       // look (owner, 13.11.2026).
-      _NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark'), badge: fresh[NewItemsSection.tirpark] ?? 0),
+      _NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_map'), badge: fresh[NewItemsSection.tirpark] ?? 0),
       _NavItem(6, Icons.storefront_outlined, Icons.storefront, strings.t('nav_market'), badge: fresh[NewItemsSection.market] ?? 0),
       _NavItem(3, Icons.chat_bubble_outline, Icons.chat_bubble, strings.t('nav_messages'), badge: unread),
       _NavItem(4, Icons.person_outline, Icons.person, strings.t('nav_profile')),

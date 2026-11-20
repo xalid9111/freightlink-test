@@ -188,7 +188,8 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 // TIR Parkı: park management, workers, bookings — one entry with
                 // the red count of everything waiting (0085, 0088, 0089).
-                Consumer(builder: (context, ref, _) {
+                // Switched off with the park management (owner, 20.11.2026).
+                if (kParkManagementOn) Consumer(builder: (context, ref, _) {
                   final n = tirParkWaitingCount(ref);
                   return _MenuCard(children: [
                     _MenuRow(

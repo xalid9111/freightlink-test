@@ -1925,9 +1925,9 @@
   "svc_shop": "Mağaza",
   "tp_stop_add": "Dayanacaq əlavə et",
   "tp_stop_add_sub": "Xəritədə yer göstər — sürücülər bir-birinə dayanacaq göstərsin",
-  "tp_stop_title": "Yeni dayanacaq",
-  "tp_stop_hint": "Bu, sadə dayanacaqdır: rezervasiya, tutum və sahib idarəsi yoxdur. Yadda saxlayan kimi xəritədə hamıya görünür.",
-  "tp_stop_sent": "Dayanacaq əlavə edildi və xəritədə göstərilir.",
+  "tp_stop_title": "Yeni TIR parkı",
+  "tp_stop_hint": "Yadda saxlayan kimi park xəritədə hamıya görünür.",
+  "tp_stop_sent": "TIR parkı əlavə edildi və xəritədə göstərilir ✓",
   "svc_shop_note": "Hər hesabın bir servis profili var. \"Ehtiyat hissələri satışı\" kateqoriyası servisinizə əlavə edildi — yadda saxlayın, Mağazalar xəritəsində görünəcək.",
   "shop_create_title": "Mağaza profili yarat",
   "shop_edit_title": "Mağazanı redaktə et",
@@ -2377,5 +2377,7 @@
   "ntf_offer_rejected": "Təklifiniz rədd edildi: {amount}",
   "ntf_tp_booking": "Parkınıza yeni rezervasiya",
   "ntf_tp_payment": "Yeni ödəniş — yoxlayın",
-  "ntf_tp_worker": "İşçi təsdiq gözləyir"
+  "ntf_tp_worker": "İşçi təsdiq gözləyir",
+  "nav_map": "Xəritə",
+  "tp_add_off": "Park əlavə etmək hələ serverdə açılmayıb (SQL 0129). Bir az sonra yenidən cəhd edin."
 }

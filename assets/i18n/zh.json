@@ -1925,9 +1925,9 @@
   "svc_shop": "商店",
   "tp_stop_add": "添加停车点",
   "tp_stop_add_sub": "在地图上标出位置，司机之间互相分享停车点",
-  "tp_stop_title": "新停车点",
-  "tp_stop_hint": "这是普通停车点：没有预订、容量或业主管理。保存后立即在地图上对所有人可见。",
-  "tp_stop_sent": "停车点已添加，现已显示在地图上。",
+  "tp_stop_title": "新的 TIR 停车场",
+  "tp_stop_hint": "保存后，该停车场立即在地图上对所有人可见。",
+  "tp_stop_sent": "TIR 停车场已添加，现已显示在地图上 ✓",
   "svc_shop_note": "每个账户只有一个服务资料。“配件销售”类别已添加到您的服务中——保存后将显示在商店地图上。",
   "shop_create_title": "创建商店资料",
   "shop_edit_title": "编辑商店",
@@ -2377,5 +2377,7 @@
   "ntf_offer_rejected": "您的报价被拒绝：{amount}",
   "ntf_tp_booking": "您的停车场有新预订",
   "ntf_tp_payment": "新付款——请核对",
-  "ntf_tp_worker": "员工等待批准"
+  "ntf_tp_worker": "员工等待批准",
+  "nav_map": "地图",
+  "tp_add_off": "服务器尚未开启添加停车场 (SQL 0129)。请稍后再试。"
 }

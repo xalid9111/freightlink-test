@@ -25,9 +25,10 @@ select tests.check((select status = 'approved' from public.service_providers whe
 select tests.check(exists (select 1 from jsonb_array_elements(public.nearby_services(40.6, 49.9, 20)) e where e->>'name' = 'Yeni Servis 2'),
   'N6 on the map right away');
 
--- Parking spots are no longer added by users (0100); one made before it.
-select tests.check(tests.err($$ select public.tir_park_add('Ələt dayanacağı', 39.95, 49.40, null, '{}', null) $$) like '%not_available%',
-  'N7 a user cannot add a parking spot any more (0100)');
+-- Users add parks again (0129), published at once; one made before stays.
+select tests.check(tests.err($$ select public.tir_park_add('Ələt TIR parkı', 39.80, 49.10, null, '{}', null) $$) is null,
+  'N7 a user adds a park (0129)');
+select tests.check((select status = 'approved' from public.tir_parks where name = 'Ələt TIR parkı'), 'N7b … shown at once');
 reset role;  -- users no longer add parks (0100): the park is made directly
 with n as (insert into public.tir_parks (name, lat, lng, city, amenities, created_by, status)
            values ('Ələt dayanacağı', 39.95, 49.40, null, '{}', :user, 'approved') returning id)

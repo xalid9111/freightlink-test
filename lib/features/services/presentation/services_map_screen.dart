@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../core/layout/desktop_layout.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
@@ -19,8 +18,7 @@ import 'services_providers.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/widgets/map_tiles.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
-import '../../../core/widgets/page_hero.dart';
-import '../../tirpark/presentation/map_page_banner.dart';
+import '../../tirpark/presentation/map_page_header.dart';
 import '../../tirpark/presentation/tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
 import '../../promo/premium_pin.dart';
@@ -195,8 +193,8 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
       }
     });
     if (hasPin) _moveMap(LatLng(p.lat, p.lng), 14);
-    if (_sheet.isAttached && _sheet.size < 0.4) {
-      _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    if (_sheet.isAttached && _sheet.size < kTirParkSheetStart) {
+      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
   }
 
@@ -220,11 +218,13 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
     });
   }
 
-  void _select(ServiceProvider p) {
+  /// Only a PIN raises the list (owner, 20.11.2026: a short swipe on a card
+  /// counted as a tap and lifted the panel back up).
+  void _select(ServiceProvider p, {bool fromPin = false}) {
     setState(() => _selectedId = p.id);
     if (hasRealCoords(p.lat, p.lng)) _moveMap(LatLng(p.lat, p.lng), math.max(_mapReady ? _map.camera.zoom : 12, 13));
-    if (_sheet.isAttached && _sheet.size < 0.4) {
-      _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart) {
+      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
   }
 
@@ -259,7 +259,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
           width: sel ? 46 : 38,
           height: sel ? 46 : 38,
           child: GestureDetector(
-            onTap: () => _select(p),
+            onTap: () => _select(p, fromPin: true),
             child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro),
           ),
         ));
@@ -280,7 +280,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               width: sel ? 46 : 38,
               height: sel ? 46 : 38,
               child: GestureDetector(
-                  onTap: () => _select(p),
+                  onTap: () => _select(p, fromPin: true),
                   child: ServicePin(type: p.markerType, active: p.isActive, selected: sel, pro: p.isPro)),
             ));
           }
@@ -320,7 +320,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
         height: size,
         alignment: Alignment.topCenter,
         child: GestureDetector(
-          onTap: () => _select(p),
+          onTap: () => _select(p, fromPin: true),
           child: PremiumDropIn(
             clock: premiumClock,
             started: premiumStarted,
@@ -418,72 +418,9 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
 
     return Scaffold(
       body: Column(children: [
-        // Banner (owner, 21.10.2026): night / day picture, the admin
-        // changes it here (pencil).
-        // On the phone the same banner as TIRPark (owner, 31.10.2026: both
-        // pages keep one form, only the names change).
-        SafeArea(
-          bottom: false,
-          child: isDesktopLayout(context)
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                  child: LayoutBuilder(
-                    builder: (context, c) => widget.shops
-                        ? PageHeroBanner(
-                            // Mağazalar has its own banner (owner, 08.11.2026, 0108).
-                            page: 'shops',
-                            strings: s,
-                            kicker: s.t('tp_shops'),
-                            defaultTitle: s.t('shop_hero_title'),
-                            defaultAccent: s.t('shop_hero_accent'),
-                            defaultSubtitle: s.t('shop_hero_subtitle'),
-                            icon: Icons.storefront,
-                            compact: false,
-                            whole: true,
-                            height: kDesktopMapBannerHeight(c.maxWidth),
-                          )
-                        : PageHeroBanner(
-                            page: 'services',
-                            strings: s,
-                            kicker: s.t('nav_services'),
-                            defaultTitle: s.t('svc_hero_title'),
-                            defaultAccent: s.t('svc_hero_accent'),
-                            defaultSubtitle: s.t('svc_hero_subtitle'),
-                            icon: Icons.handyman,
-                            compact: false,
-                            whole: true,
-                            height: kDesktopMapBannerHeight(c.maxWidth),
-                          ),
-                  ),
-                )
-              : widget.shops
-                  ? MapPageBanner(
-                      // Mağazalar has its own banner (owner, 08.11.2026, 0108):
-                      // its own picture, texts and pencil; until the admin
-                      // sets one, the shop picture of the profile pages.
-                      s: s,
-                      page: 'shops',
-                      brandIcon: Icons.storefront,
-                      editIcon: Icons.storefront,
-                      brandAccent: '',
-                      brandRest: s.t('tp_shops'),
-                      defaultTitle: s.t('shop_hero_title'),
-                      defaultAccent: s.t('shop_hero_accent'),
-                      defaultSubtitle: s.t('shop_hero_subtitle'),
-                      asset: 'assets/images/profile/cover_shop.jpg',
-                    )
-                  : MapPageBanner(
-                      s: s,
-                      page: 'services',
-                      brandIcon: Icons.handyman,
-                      editIcon: Icons.handyman,
-                      brandAccent: '',
-                      brandRest: s.t('nav_services'),
-                      defaultTitle: s.t('svc_hero_title'),
-                      defaultAccent: s.t('svc_hero_accent'),
-                      defaultSubtitle: s.t('svc_hero_subtitle'),
-                    ),
-        ),
+        // No banner any more (owner, 20.11.2026, the "Xəritə" tab):
+        // TırLink · Xəritə · 🔔 · ❤️ — the same header as Parklar.
+        SafeArea(bottom: false, child: MapPageHeader(s: s)),
         // The map and its controls under the banner (no second top inset).
         Expanded(
           child: MediaQuery.removePadding(
@@ -686,7 +623,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
           ),
           // My location button.
           AboveSheet(
-            sheet: 0.26,
+            sheet: kTirParkSheetStart,
             gap: 76,
             child: _RoundButton(
               icon: loc.state == GpsState.locating ? Icons.gps_not_fixed : Icons.my_location,
@@ -700,7 +637,7 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
           // sits at the bottom of the map, right above the list, like "TIR
           // parkı əlavə et" (owner, 31.10.2026).
           AboveSheet(
-            sheet: 0.26,
+            sheet: kTirParkSheetStart,
             gap: 10,
             child: MapAddButton(
               buttonKey: 'svc-add',
@@ -711,14 +648,14 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
               onTap: () => context.pushOnce(widget.shops ? kShopAddRoute : kServiceAddRoute),
             ),
           ),
-          // Results sheet.
+          // Results sheet. It stays where the finger leaves it (owner,
+          // 20.11.2026: with snap it sprang back up); the same sizes as Parklar.
           DraggableScrollableSheet(
             controller: _sheet,
-            initialChildSize: 0.26,
-            minChildSize: 0.12,
+            initialChildSize: kTirParkSheetStart,
+            minChildSize: kTirParkSheetMin,
             maxChildSize: 0.88,
-            snap: true,
-            snapSizes: const [0.26, 0.5],
+            snap: false,
             builder: (context, scroll) => _ResultsSheet(
               scroll: scroll,
               s: s,

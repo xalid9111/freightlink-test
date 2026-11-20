@@ -832,7 +832,8 @@ void main() {
     expect(src('lib/features/tirpark/data/tir_park_repository.dart'), contains("'p_plate': plate,"));
     expect(src('supabase/tests/local/run_local.sh'), contains('0081_tir_park_booking_card.sql'));
     expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('TirParkCardBooking(park: p, s: s)'));
-    expect(src('lib/features/tirpark/presentation/tir_park_detail_screen.dart'), contains('if (park.isManaged) ...['));
+    // Off with the park management (owner, 20.11.2026; kParkManagementOn).
+    expect(src('lib/features/tirpark/presentation/tir_park_detail_screen.dart'), contains('if (kParkManagementOn && park.isManaged) ...['));
     expect(src('lib/core/router/app_router.dart'), contains("path: 'manage'"));
     expect(src('lib/features/auth/presentation/profile_screen.dart'), contains("context.pushOnce('/tirpark/manage')"));
     expect(src('supabase/tests/local/run_local.sh'), contains('117_tir_park_booking.sql'));

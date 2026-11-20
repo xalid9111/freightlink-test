@@ -83,6 +83,7 @@ class _TirParkAddSheetState extends ConsumerState<TirParkAddSheet> {
       setState(() => _error = s.t(switch (e.reason) {
             'duplicate_nearby' => 'tp_err_duplicate',
             'too_many' => 'tp_err_too_many',
+            'not_available' => 'tp_add_off',
             _ => 'tp_err_generic',
           }));
     } on TirParkNotReady {

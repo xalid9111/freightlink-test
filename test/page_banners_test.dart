@@ -89,9 +89,10 @@ void main() {
 
   group('guards', () {
     String read(String p) => File(p).readAsStringSync();
-    test('banners on the phone TIR Bazarı page and on Services (phone + computer)', () {
+    test('banner on the phone TIR Bazarı page; the map pages have none (owner, 20.11.2026)', () {
       expect(read('lib/features/market/presentation/market_home_screen.dart').contains("page: 'market',"), isTrue);
-      expect(read('lib/features/services/presentation/services_map_screen.dart').contains("page: 'services',"), isTrue);
+      expect(read('lib/features/services/presentation/services_map_screen.dart').contains("page: 'services',"), isFalse);
+      expect(read('lib/features/services/presentation/services_map_screen.dart').contains('MapPageHeader(s: s)'), isTrue);
       expect(read('lib/features/market/presentation/market_home_desktop.dart').contains("ref.watch(pageHeroShownProvider('market'))"), isTrue);
     });
     test('pencil only for admins; saving is checked on the server', () {

@@ -71,9 +71,11 @@ void main() {
       expect(w.isAction, isTrue);
       expect(_n('tirpark_payment_review').isAction, isTrue);
       expect(j.isAction, isFalse);
-      expect(visibleNotices([w, j], {'tirpark_worker_request'}), [j]);
-      expect(unreadNoticeCount(visibleNotices([w, j], {'tirpark_worker_request'})), 1);
-      expect(visibleNotices([w, j], const {}), [w, j]);
+      expect(visibleNotices([w, j], {'tirpark_worker_request'}, parkManagement: true), [j]);
+      expect(unreadNoticeCount(visibleNotices([w, j], {'tirpark_worker_request'}, parkManagement: true)), 1);
+      expect(visibleNotices([w, j], const {}, parkManagement: true), [w, j]);
+      // Park management off (owner, 20.11.2026): its notices are not shown.
+      expect(visibleNotices([w, j], const {}), [j]);
       final src = _read('lib/features/notices/notices.dart');
       expect(src, contains("if (st != null && st != 'pending') out.add(n.id);"), reason: 'only a definite answer hides it');
       expect(src, contains("if (st != null && st != 'payment_review') out.add(n.id);"));
@@ -132,7 +134,7 @@ void main() {
         'lib/features/market/presentation/market_home_screen.dart': 'openFavorites(context, FavTab.market)',
         'lib/features/chat/presentation/conversations_screen.dart': "key: const ValueKey('msg-favorites')",
         'lib/features/auth/presentation/profile_screen.dart': "key: const ValueKey('profile-favorites')",
-        'lib/features/tirpark/presentation/map_page_banner.dart': "key: ValueKey('map-favorites-\$page')",
+        'lib/features/tirpark/presentation/map_page_header.dart': "key: const ValueKey('map-favorites')",
         'lib/core/layout/desk_header_actions.dart': "key: const ValueKey('desk-favorites')",
         'lib/features/cargo/presentation/cargo_marketplace_desktop.dart': "key: const ValueKey('desk-favorites')",
       };
@@ -143,9 +145,9 @@ void main() {
         expect(src.indexOf(heart), greaterThan(b), reason: '$file: the bell is left of the heart');
       });
     });
-    test('the maps (TIRPark · Servislər · Mağazalar) use the banner with the bell', () {
-      expect(_read('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('MapPageBanner('));
-      expect(_read('lib/features/services/presentation/services_map_screen.dart'), contains('MapPageBanner('));
+    test('the maps (Parklar · Servislər · Mağazalar) use the Xəritə header with the bell', () {
+      expect(_read('lib/features/tirpark/presentation/tir_park_screen.dart'), contains('MapPageHeader(s: s)'));
+      expect(_read('lib/features/services/presentation/services_map_screen.dart'), contains('MapPageHeader(s: s)'));
     });
     test('/notifications is routed; a visitor is asked to sign in first', () {
       expect(_read('lib/core/router/app_router.dart'), contains("path: '/notifications'"));

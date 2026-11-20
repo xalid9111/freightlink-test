@@ -380,11 +380,9 @@ class PageHeroPrefetch {
   static String? pageOf(Uri address) {
     final f = address.fragment;
     final route = f.isNotEmpty ? f.split('?').first : '';
-    final q = f.contains('?') ? Uri.splitQueryString(f.substring(f.indexOf('?') + 1)) : const <String, String>{};
     return switch (route) {
       '/market' => 'market',
-      '/tirpark' => 'tirpark',
-      '/services' => q['shops'] == '1' ? 'shops' : 'services',
+      // The map pages have no banner any more (owner, 20.11.2026).
       _ => null,
     };
   }

@@ -50,6 +50,8 @@ class TirParkRepository {
         'invalid_code', 'name_required', 'already_worker',
         // 0092: one plate per truck.
         'duplicate_plate', 'plates_count',
+        // 0100: adding parks was off until 0129 is run.
+        'not_available',
       ]) {
         if (e.message.contains(r)) throw TirParkRefused(r);
       }
