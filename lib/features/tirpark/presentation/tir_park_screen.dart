@@ -10,9 +10,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/layout/desktop_layout.dart';
 import '../../../core/widgets/map_tiles.dart';
-import '../../../core/widgets/page_hero.dart' show PageHeroBanner, kDesktopMapBannerHeight;
 import '../../../core/constants/app_constants.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../services/geo_service.dart';
@@ -21,21 +19,23 @@ import '../../services/presentation/services_providers.dart';
 import '../data/tir_park_repository.dart';
 import '../domain/osm_truck_park.dart';
 import '../domain/tir_park.dart';
-import 'map_page_banner.dart';
+import '../../../core/router/guest_access.dart';
+import 'map_page_header.dart';
+import 'tir_park_add_sheet.dart';
 import 'osm_parks.dart';
 import 'tir_park_booking.dart';
 import 'tir_park_widgets.dart';
 import '../../promo/place_promo.dart';
 import '../../promo/premium_pin.dart';
 
-/// TIRPark (owner, 31.10.2026, picture): the banner, the map with the park
-/// pins, the search, "TIR parkı əlavə et" and the nearby parks below.
-/// "Servislər" (the former tab) opens from here. Approved parks for
-/// everybody; one's own parks waiting for approval are shown grey.
+/// The "Xəritə" tab — Parklar (owner's picture, 20.11.2026): the header
+/// (TırLink · Xəritə · bell · heart, no banner), the search and Parklar |
+/// Servislər | Mağazalar over the map, the park pins with their names,
+/// "TIR parkı əlavə et +" and the nearby parks (100 km) below.
 class TirParkScreen extends ConsumerStatefulWidget {
-  // Users no longer place parking spots (owner, 07.11.2026): no "Dayanacaq
-  // əlavə et" — parks come only through "Park işlədirəm" (admin approval)
-  // and the admins. The map's "TIR parkı əlavə et +" opens that page.
+  // Users add parks again (owner, 20.11.2026: "istifadəçilər park əlavə edə
+  // bilsin", SQL 0129): "TIR parkı əlavə et +" → move the map so the place
+  // is under the pin in the middle → name, city, amenities → shown at once.
   const TirParkScreen({super.key});
 
   @override
@@ -44,6 +44,10 @@ class TirParkScreen extends ConsumerStatefulWidget {
 
 /// Nearby list radius (owner's picture: "5 park · 100 km").
 const kTirParkRadiusKm = 100.0;
+
+/// Park names next to the pins from this zoom on.
+const kParkLabelZoom = 10.5;
+const kParkLabelMarkerWidth = 300.0;
 
 class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTickerProviderStateMixin, PremiumDropHost<TirParkScreen> {
   final _map = MapController();
@@ -63,6 +67,10 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
   String? _selectedId;
   String _query = '';
   Set<String> _needs = const {};
+  // Choosing the place of a new park (a fixed pin in the middle).
+  bool _adding = false;
+  // Park names next to the pins from this zoom on (not a crowd far out).
+  bool _labels = false;
 
   @override
   void initState() {
@@ -139,14 +147,44 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
     if (picked != null) setState(() => _needs = picked);
   }
 
-  /// A pin or a card: the park opens first (its card on top of the list,
-  /// the list raised), then the way there is drawn and "Marşrut" offers
-  /// the navigation apps (owner, 01.11.2026 — like Servislər).
-  void _select(TirPark p) {
+  /// A pin or a card: the park opens first (its card on top of the list),
+  /// then the way there is drawn and "Marşrut" offers the navigation apps
+  /// (owner, 01.11.2026 — like Servislər). Only a PIN raises the list: a
+  /// card is already in view, and a short swipe on a card counted as a tap
+  /// lifted the panel back up after the user pulled it down (owner,
+  /// 20.11.2026: "aşağı sürüşdürəndə aşağıda qalsın").
+  void _select(TirPark p, {bool fromPin = false}) {
     setState(() => _selectedId = p.id);
     _move(LatLng(p.lat, p.lng), 13);
-    if (_sheet.isAttached && _sheet.size < 0.4) {
-      _sheet.animateTo(0.42, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart) {
+      _sheet.animateTo(kTirParkSheetStart, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
+  }
+
+  /// "TIR parkı əlavə et +": a visitor signs in first; then the place.
+  void _startAdding() {
+    if (askSignIn(context)) return;
+    setState(() {
+      _adding = true;
+      _selectedId = null;
+    });
+  }
+
+  Future<void> _confirmPlace(AppStrings s) async {
+    final c = _mapReady ? _map.camera.center : _center;
+    final added = await showModalBottomSheet<bool>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => TirParkAddSheet(lat: c.latitude, lng: c.longitude, s: s),
+    );
+    if (!mounted) return;
+    if (added == true) {
+      setState(() => _adding = false);
+      ref.invalidate(tirParksProvider);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.t('tp_stop_sent'))));
     }
   }
 
@@ -238,44 +276,18 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
       route = ref.watch(routeInfoProvider((aLat: me.latitude, aLng: me.longitude, bLat: selected.lat, bLng: selected.lng))).valueOrNull;
     }
 
+    // While a place is being chosen, "back" leaves that mode first.
     return PopScope(
+      canPop: !_adding,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _adding) setState(() => _adding = false);
+      },
       child: Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(children: [
-          // The computer: the same wide banner as Servislər / Mağazalar, the
-          // whole picture shown (owner, 13.11.2026); the phone keeps its own.
-          if (isDesktopLayout(context))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: LayoutBuilder(
-                builder: (context, c) => PageHeroBanner(
-                  page: 'tirpark',
-                  strings: s,
-                  kicker: 'TIRPark',
-                  defaultTitle: s.t('tp_title_1'),
-                  defaultAccent: s.t('tp_title_2'),
-                  defaultSubtitle: s.t('tp_subtitle'),
-                  icon: Icons.local_parking,
-                  compact: false,
-                  whole: true,
-                  height: kDesktopMapBannerHeight(c.maxWidth),
-                ),
-              ),
-            )
-          else
-            MapPageBanner(
-              s: s,
-              page: 'tirpark',
-              brandIcon: Icons.local_shipping_outlined,
-              editIcon: Icons.local_parking,
-              brandAccent: 'TIR',
-              brandRest: 'Park',
-              defaultTitle: s.t('tp_title_1'),
-              defaultAccent: s.t('tp_title_2'),
-              defaultSubtitle: s.t('tp_subtitle'),
-              asset: 'assets/images/tirpark/banner.jpg',
-            ),
+          // No banner any more (owner, 20.11.2026): TırLink · Xəritə · 🔔 · ❤️.
+          MapPageHeader(s: s),
           Expanded(
             child: Stack(children: [
               Positioned.fill(
@@ -295,6 +307,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                       _osmFrom(_map.camera);
                     },
                     onPositionChanged: (camera, _) {
+                      final labels = camera.zoom >= kParkLabelZoom;
+                      if (labels != _labels) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _labels = labels);
+                        });
+                      }
                       _osmTimer?.cancel();
                       _osmTimer = Timer(const Duration(milliseconds: 400), () => _osmFrom(camera));
                     },
@@ -333,11 +351,15 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                           Marker(
                             key: ValueKey('tp-pin-${p.id}'),
                             point: LatLng(p.lat, p.lng),
-                            width: 46,
+                            // The pin stays on its point; its name runs to the right.
+                            width: _labels ? kParkLabelMarkerWidth : 46,
                             height: 54,
                             alignment: Alignment.topCenter,
                             child: GestureDetector(
-                                onTap: () => _select(p), child: TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
+                                onTap: () => _select(p, fromPin: true),
+                                child: _labels
+                                    ? TirParkNamedPin(name: p.name, approved: p.isApproved, selected: p.id == _selectedId)
+                                    : TirParkPin(approved: p.isApproved, selected: p.id == _selectedId)),
                           ),
                       // Promoted parks (owner, 05.11.2026): the premium icon,
                       // 20 % bigger, on top, dropped in once after the map.
@@ -350,7 +372,7 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                             height: p.id == _selectedId ? kPremiumPinSelectedSize : kPremiumPinSize,
                             alignment: Alignment.topCenter,
                             child: GestureDetector(
-                              onTap: () => _select(p),
+                              onTap: () => _select(p, fromPin: true),
                               child: PremiumDropIn(
                                 clock: premiumClock,
                                 started: premiumStarted,
@@ -381,6 +403,16 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                   ],
                 ),
               ),
+              // Choosing the place of a new park: a fixed pin in the middle.
+              if (_adding)
+                IgnorePointer(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 54),
+                      child: Icon(Icons.location_on, key: const ValueKey('tp-add-pin'), size: 54, color: AppColors.accentFill),
+                    ),
+                  ),
+                ),
               // Search · filter, and Parklar | Servislər.
               Positioned(
                 left: 12,
@@ -437,28 +469,62 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                 ]),
               ),
               // My position.
-              AboveSheet(
-                sheet: 0.26,
-                gap: 76,
-                child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
-              ),
-              // "TIR parkı əlavə et +" (owner, 07.11.2026: kept on the map) —
-              // opens the TIR Parkı page: Park işlədirəm · Park işçisiyəm.
-              AboveSheet(
-                sheet: 0.26,
-                gap: 10,
-                child: MapAddButton(
-                  buttonKey: 'tp-add',
-                  label: s.t('tp_add'),
-                  onTap: () => context.pushOnce('/profile/tirpark'),
+              if (!_adding)
+                AboveSheet(
+                  sheet: kTirParkSheetStart,
+                  gap: 76,
+                  child: _RoundButton(buttonKey: 'tp-locate', icon: Icons.my_location, tooltip: s.t('svc_my_location'), onTap: () => _locate()),
                 ),
+              // "TIR parkı əlavə et +" (owner, 20.11.2026: users add parks) /
+              // choosing the place.
+              AboveSheet(
+                left: _adding ? 12 : null,
+                // While choosing the place the panel is gone, so the pin in
+                // the middle of the map stays in view.
+                sheet: _adding ? 0 : kTirParkSheetStart,
+                gap: _adding ? 96 : 10,
+                child: _adding
+                    ? Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.line),
+                        ),
+                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          Text(s.t('tp_pick_place'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.text)),
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                key: const ValueKey('tp-add-cancel'),
+                                onPressed: () => setState(() => _adding = false),
+                                child: Text(s.t('common_cancel')),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: FilledButton(
+                                key: const ValueKey('tp-add-here'),
+                                onPressed: () => _confirmPlace(s),
+                                child: Text(s.t('tp_pick_here')),
+                              ),
+                            ),
+                          ]),
+                        ]),
+                      )
+                    : MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding),
               ),
-              // Nearby parks.
-              DraggableScrollableSheet(
+              // Nearby parks (100 km). It stays where the finger leaves it
+              // (owner, 20.11.2026); its lowest place keeps the title above
+              // the floating bottom bar.
+              if (!_adding)
+                DraggableScrollableSheet(
                   controller: _sheet,
-                  initialChildSize: 0.26,
-                  minChildSize: 0.12,
+                  initialChildSize: kTirParkSheetStart,
+                  minChildSize: kTirParkSheetMin,
                   maxChildSize: 0.92,
+                  snap: false,
                   builder: (context, scroll) => Container(
                     decoration: BoxDecoration(
                       color: AppColors.background,
@@ -468,7 +534,8 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                     child: ListView.builder(
                       key: const ValueKey('tp-list'),
                       controller: scroll,
-                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
+                      // Room under the last card for the floating bottom bar.
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
                       itemCount: list.length + 1,
                       itemBuilder: (context, i) {
                         if (i == 0) return _ListHead(s: s, count: list.length, async: async);
@@ -484,7 +551,8 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                             onOpen: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onReviews: () => context.pushOnce('/tirpark/p/${p.id}'),
                             onWrite: () => context.pushOnce('/tirpark/p/${p.id}?write=1'),
-                            booking: p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
+                            // Park management is off (owner, 20.11.2026): no booking on the card.
+                            booking: kParkManagementOn && p.isManaged ? TirParkCardBooking(park: p, s: s) : null,
                             badge: (promos[p.id]?.isPromoted ?? false) ? PlacePromoTag(s: s, promo: promos[p.id]!) : null,
                             footer: TirParkRouteRow(s: s, route: route, hasGps: me != null, onNavigate: () => _navigate(p, s)),
                           ),

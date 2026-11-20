@@ -13,6 +13,7 @@ import '../../core/startup/startup_steps.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/presentation/providers/auth_providers.dart';
 import '../jobs/domain/job_applications.dart';
+import '../tirpark/domain/tir_park.dart' show kParkManagementOn;
 import '../jobs/presentation/job_applications_screen.dart' show jobNoticeTime;
 
 // "Bildirişlər" (owner, 17.11.2026: "mesajdan başqa gələn bütün bildirişlər
@@ -120,8 +121,12 @@ class AppNotice {
 /// təsdiqlənib, amma yenə də görünür"): a worker request already approved /
 /// rejected, a receipt already confirmed / rejected leave the list and the
 /// count. Stored rows are never changed.
-List<AppNotice> visibleNotices(List<AppNotice> list, Set<String> settled) =>
-    settled.isEmpty ? list : [for (final n in list) if (!settled.contains(n.id)) n];
+/// With the park management off (owner, 20.11.2026) its notices (booking,
+/// receipt, worker request) are not shown either; the rows stay.
+List<AppNotice> visibleNotices(List<AppNotice> list, Set<String> settled, {bool parkManagement = kParkManagementOn}) => [
+      for (final n in list)
+        if (!settled.contains(n.id) && (parkManagement || !n.type.startsWith('tirpark_'))) n
+    ];
 
 /// The newest stand on top; the unread ones are counted on the bell.
 int unreadNoticeCount(List<AppNotice> list) => list.where((n) => !n.isRead).length;

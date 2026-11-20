@@ -1925,9 +1925,9 @@
   "svc_shop": "Shop",
   "tp_stop_add": "Add a parking spot",
   "tp_stop_add_sub": "Mark a place on the map so drivers can show each other where to park",
-  "tp_stop_title": "New parking spot",
-  "tp_stop_hint": "This is a plain parking spot: no booking, capacity or owner management. It shows on the map for everyone as soon as you save it.",
-  "tp_stop_sent": "Parking spot added — it is on the map now.",
+  "tp_stop_title": "New TIR park",
+  "tp_stop_hint": "As soon as you save it, the park shows on the map for everyone.",
+  "tp_stop_sent": "TIR park added — it is on the map now ✓",
   "svc_shop_note": "Each account has one service profile. The \"Spare parts sales\" category was added to your service — save it and it will show on the Shops map.",
   "shop_create_title": "Create shop profile",
   "shop_edit_title": "Edit shop",
@@ -2377,5 +2377,7 @@
   "ntf_offer_rejected": "Your offer was declined: {amount}",
   "ntf_tp_booking": "New booking at your park",
   "ntf_tp_payment": "New payment — please check",
-  "ntf_tp_worker": "A worker is waiting for approval"
+  "ntf_tp_worker": "A worker is waiting for approval",
+  "nav_map": "Map",
+  "tp_add_off": "Adding parks is not switched on on the server yet (SQL 0129). Please try again later."
 }

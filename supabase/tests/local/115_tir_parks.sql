@@ -8,9 +8,16 @@ set role authenticated;
 select tests.login(:user1);
 create temp table ids (k text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
--- 0100 (owner, 07.11.2026): users no longer add parks; every call is refused.
-select tests.check(tests.err($$ select public.tir_park_add('Utep TIR Parkı', 40.4560, 49.7300, 'Xırdalan', array['secure']) $$) like '%not_available%',
-  'T1 a user cannot add a park / spot (0100)');
+-- 0129 (owner, 20.11.2026): users add parks again, shown at once (0100 had
+-- switched it off). A place away from the parks made below.
+select tests.check(tests.err($$ select public.tir_park_add('Qobu TIR Parkı', 40.4000, 49.6000, 'Qobu', array['secure']) $$) is null,
+  'T1 a user adds a park (0129)');
+select tests.check((select status = 'approved' and created_by = 'a0000000-0000-4000-8000-000000000012'
+                      from public.tir_parks where name = 'Qobu TIR Parkı'), 'T1b … shown at once, his own');
+select tests.check(tests.err($$ select public.tir_park_add('Qobu 2', 40.4001, 49.6001, null, '{}') $$) like '%duplicate_nearby%',
+  'T1c closer than 60 m is refused');
+select tests.check(tests.err($$ select public.tir_park_add('X', 40.30, 49.60, null, '{}') $$) like '%name_required%',
+  'T1d a name is required');
 select tests.check(tests.err($$ insert into public.tir_parks (name, lat, lng) values ('Direct', 40.1, 49.1) $$) like '%permission denied%'
                    or tests.err($$ insert into public.tir_parks (name, lat, lng) values ('Direct', 40.1, 49.1) $$) like '%row-level security%',
   'T2 …nor by writing into the table');

@@ -186,8 +186,8 @@ void main() {
     expect(sql, contains('create table if not exists public.tirpark_hero ('));
     expect(sql, contains("elsif p_page = 'tirpark' then"));
     // The TIRPark banner: the admin pencil, the shared editor; GIF kept.
-    expect(src('lib/features/tirpark/presentation/tir_park_screen.dart'), contains("page: 'tirpark',"));
-    expect(src('lib/features/tirpark/presentation/map_page_banner.dart'), contains('showPageHeroEditor(context, strings: s, page: page,'));
+    // The map pages have no banner any more (owner, 20.11.2026); the table stays.
+    expect(src('lib/features/tirpark/presentation/tir_park_screen.dart').contains("page: 'tirpark',"), isFalse);
     final hero = src('lib/core/widgets/page_hero.dart');
     expect(hero, contains("'tirpark': 'tirpark_hero'"));
     expect(hero, contains("'gif' => 'image/gif'"));

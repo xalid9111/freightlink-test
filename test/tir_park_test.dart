@@ -68,7 +68,7 @@ void main() {
     expect(find.byIcon(Icons.star_rounded), findsNothing, reason: 'no fake rating');
   });
 
-  testWidgets('the page: banner, search, Parklar | Servislər, add button, nearby list', (tester) async {
+  testWidgets('the page: Xəritə header (no banner), search, Parklar | Servislər, add button, nearby list', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -80,12 +80,17 @@ void main() {
       child: const MaterialApp(home: TirParkScreen()),
     ));
     await tester.pump(const Duration(milliseconds: 300));
-    for (final t in ['TIR', 'Park', 'Yolda özünə uyğun', 'park tap', 'Parklar', 'Servislər', 'Yaxınlıqdakı TIR parkları', '2 park · 100 km']) {
+    for (final t in ['Xəritə', 'Parklar', 'Servislər', 'Yaxınlıqdakı TIR parkları', '2 park · 100 km']) {
       expect(find.text(t), findsWidgets, reason: t);
     }
+    // The banner is gone (owner, 20.11.2026: "tam çıxsın").
+    expect(find.text('Yolda özünə uyğun'), findsNothing);
+    expect(find.byKey(const ValueKey('map-page-header')), findsOneWidget);
+    expect(find.byKey(const ValueKey('notice-bell')), findsOneWidget);
+    expect(find.byKey(const ValueKey('map-favorites')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-pin-p1')), findsOneWidget);
     expect(find.byKey(const ValueKey('tp-card-p2')), findsOneWidget, reason: 'the nearest park first');
-    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget, reason: '"TIR parkı əlavə et +" stays on the map (owner, 07.11.2026)');
+    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget, reason: '"TIR parkı əlavə et +" on the map (users add parks, 20.11.2026)');
     expect(find.byKey(const ValueKey('tp-add-here')), findsNothing);
   });
 
@@ -281,7 +286,8 @@ void main() {
 
   test('wired: TIRPark tab in place of Servislər (kept, opened from TIRPark), admin approval, safe SQL', () {
     final shell = src('lib/core/router/main_shell.dart');
-    expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_tirpark'), badge: fresh[NewItemsSection.tirpark] ?? 0),"));
+    // The tab reads "Xəritə" (owner, 20.11.2026); same place, same route.
+    expect(shell, contains("_NavItem(5, Icons.place_outlined, Icons.place, strings.t('nav_map'), badge: fresh[NewItemsSection.tirpark] ?? 0),"));
     expect(shell.contains("strings.t('nav_services'))"), isFalse);
     expect(shell, contains("5: '/tirpark'"));
     final router = src('lib/core/router/app_router.dart');
@@ -310,15 +316,17 @@ void main() {
     expect(svc.lastIndexOf('gap: 10,', add), greaterThan(svc.lastIndexOf('gap: 76,', add)));
     expect(svc.contains('MediaQuery.sizeOf(context).height * 0.28'), isFalse);
     expect(tp.contains('MediaQuery.sizeOf(context).height * 0.26'), isFalse);
-    // One form for both pages: the same banner, sheet and button places;
-    // only the names change (owner, 31.10.2026).
-    expect(svc, contains('initialChildSize: 0.26,'));
-    expect(tp, contains('initialChildSize: 0.26,'));
-    expect(svc, contains("page: 'services',"));
-    expect(svc, contains('sheet: 0.26,'));
+    // One form for both pages: the same header, sheet and button places;
+    // only the names change (owner, 31.10.2026). No banner, the panel stays
+    // where the finger leaves it (owner, 20.11.2026).
     for (final page in [svc, tp]) {
-      expect(page, contains('MapPageBanner('));
+      expect(page, contains('initialChildSize: kTirParkSheetStart,'));
+      expect(page, contains('minChildSize: kTirParkSheetMin,'));
+      expect(page, contains('snap: false,'));
+      expect(page, contains('MapPageHeader(s: s)'));
+      expect(page.contains('MapPageBanner('), isFalse);
     }
+    expect(svc, contains('sheet: kTirParkSheetStart,'));
     expect(svc, contains('gap: 76,'), reason: 'locate button above the add button');
     // Each map its own "+" (owner, 06.11.2026): Servislər → registration,
     // Mağazalar → the shop form, Parklar → the TIR Parkı page.
@@ -334,9 +342,41 @@ void main() {
     expect(sql, contains('perform public._require_admin();'));
     for (final lang in ['az', 'tr', 'en', 'ru', 'ka', 'zh']) {
       final m = jsonDecode(src('assets/i18n/$lang.json')) as Map;
-      for (final k in ['nav_tirpark', 'tp_add', 'tp_nearby', 'tp_pending', 'tp_err_duplicate', for (final a in kTirParkAmenities) 'tp_am_$a']) {
+      for (final k in ['nav_map', 'tp_add', 'tp_nearby', 'tp_pending', 'tp_err_duplicate', for (final a in kTirParkAmenities) 'tp_am_$a']) {
         expect(m[k], isNotNull, reason: '$lang $k');
       }
     }
+  });
+
+  testWidgets('a park pin carries its name on the right; the pin stays on its point (owner\'s picture, 20.11.2026)', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: Center(child: SizedBox(width: kParkLabelMarkerWidth, height: 54, child: TirParkNamedPin(name: 'Utep TIR Parkı', approved: true))),
+      ),
+    ));
+    expect(find.text('Utep TIR Parkı'), findsOneWidget);
+    final box = tester.getRect(find.byType(TirParkNamedPin));
+    final pin = tester.getRect(find.byType(TirParkPin));
+    final name = tester.getRect(find.byKey(const ValueKey('tp-pin-name')));
+    expect(pin.center.dx, closeTo(box.center.dx, 0.5), reason: 'the pin in the middle = on its point');
+    expect(name.left, greaterThan(pin.right), reason: 'the name to the right of the pin');
+    expect(tester.takeException(), isNull);
+  });
+
+  test('the list panel stays where it is left; only a pin lifts it; park management off', () {
+    final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
+    final svc = src('lib/features/services/presentation/services_map_screen.dart');
+    for (final page in [tp, svc]) {
+      expect(page, contains('if (fromPin && _sheet.isAttached && _sheet.size < kTirParkSheetStart)'),
+          reason: 'a short swipe on a card is no tap that lifts the panel back up');
+      expect(page.contains('snapSizes'), isFalse);
+    }
+    expect(tp, contains('onTap: () => _select(p, fromPin: true),'));
+    expect(tp, contains('onTap: () => _select(p),'), reason: 'a card selects without lifting');
+    expect(kTirParkSheetMin, greaterThan(0.12), reason: 'the title stays above the floating bottom bar');
+    expect(kParkManagementOn, isFalse);
+    expect(tp, contains('booking: kParkManagementOn && p.isManaged ? TirParkCardBooking(park: p, s: s) : null,'));
+    expect(tp, contains('kTirParkRadiusKm'), reason: 'the nearby list stays at 100 km');
+    expect(kTirParkRadiusKm, 100);
   });
 }

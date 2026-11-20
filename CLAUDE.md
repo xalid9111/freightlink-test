@@ -1065,6 +1065,25 @@ files to the owner separately (they are run by hand in the SQL editor).
   hides; stored rows unchanged); a TIRPark notice opens /tirpark/manage with
   go (it lives inside the TIRPark tab — pushed over /notifications it was a
   black page).
+- "Xəritə" tab (owner's picture, 20.11.2026, SQL 0129 — stage 1; stage 2 =
+  Maşınlarım): the bottom bar's TIRPark tab reads "Xəritə" (nav_map, same
+  place / route / new-items count). Parklar, Servislər and Mağazalar have NO
+  banner any more (phone and computer, "tam çıxsın"; the hero tables stay in
+  the database, nothing is prefetched for them): MapPageHeader = TırLink
+  mark · "Xəritə" · 🔔 · ❤️; the search, filter and Parklar · Servislər ·
+  Mağazalar (three separate pills, the chosen one orange) over the map; park
+  pins carry their name on the right from zoom 10.5 (TirParkNamedPin); the
+  nearby list (100 km) starts at 36 % of the map, its lowest is 20 % (the
+  title above the floating bar) and it STAYS where the finger leaves it
+  (snap off; only a pin lifts it — a short swipe on a card counted as a tap
+  and lifted it back up). Users add parks again (0129, the 0099 rules:
+  signed in, not blocked, ≥ 2 letters, nothing closer than 60 m, 10 a day,
+  shown at once, an admin can hide): "TIR parkı əlavə et +" → move the map
+  under the pin → name, city, amenities → "TIR parkı əlavə edildi ✓". The
+  park management system is switched OFF in the app (kParkManagementOn =
+  false: no "TIR Parkı" / "Park rezervasiyalarım" on Profil, no booking on
+  the park card / page, no TIR Park notices); the server, parks, bookings,
+  workers and their history are untouched — the flag brings them back.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

@@ -227,7 +227,8 @@ class _TirParkDetailScreenState extends ConsumerState<TirParkDetailScreen> {
                 // Space booking (owner, 01.11.2026, 0079; 02.11.2026, 0081):
                 // every park with an approved manager — open, full or
                 // "Rezervasiya bağlıdır".
-                if (park.isManaged) ...[
+                // Off with the park management (owner, 20.11.2026).
+                if (kParkManagementOn && park.isManaged) ...[
                   const SizedBox(height: 16),
                   // A visitor books after signing in (0107).
                   if (isSignedOut()) GuestSignInButton(s: s, label: 'guest_book_sign_in') else TirParkBookingSection(park: park, s: s),

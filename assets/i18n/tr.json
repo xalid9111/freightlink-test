@@ -1925,9 +1925,9 @@
   "svc_shop": "Mağaza",
   "tp_stop_add": "Park yeri ekle",
   "tp_stop_add_sub": "Haritada yeri gösterin — sürücüler birbirine park yeri göstersin",
-  "tp_stop_title": "Yeni park yeri",
-  "tp_stop_hint": "Bu basit bir park yeridir: rezervasyon, kapasite ve sahip yönetimi yoktur. Kaydedince haritada herkese görünür.",
-  "tp_stop_sent": "Park yeri eklendi ve haritada gösteriliyor.",
+  "tp_stop_title": "Yeni TIR parkı",
+  "tp_stop_hint": "Kaydedince park haritada herkese görünür.",
+  "tp_stop_sent": "TIR parkı eklendi ve haritada gösteriliyor ✓",
   "svc_shop_note": "Her hesabın bir servis profili vardır. \"Yedek parça satışı\" kategorisi servisinize eklendi — kaydedin, Mağazalar haritasında görünecek.",
   "shop_create_title": "Mağaza profili oluştur",
   "shop_edit_title": "Mağazayı düzenle",
@@ -2377,5 +2377,7 @@
   "ntf_offer_rejected": "Teklifiniz reddedildi: {amount}",
   "ntf_tp_booking": "Parkınıza yeni rezervasyon",
   "ntf_tp_payment": "Yeni ödeme — kontrol edin",
-  "ntf_tp_worker": "Çalışan onay bekliyor"
+  "ntf_tp_worker": "Çalışan onay bekliyor",
+  "nav_map": "Harita",
+  "tp_add_off": "Park ekleme sunucuda henüz açılmadı (SQL 0129). Biraz sonra tekrar deneyin."
 }

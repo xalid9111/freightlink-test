@@ -112,9 +112,10 @@ void main() {
 
   test('the start-up request is taken once by the banner', () async {
     expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/market')), 'market');
-    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/tirpark')), 'tirpark');
-    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/services')), 'services');
-    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/services?shops=1')), 'shops');
+    // The map pages have no banner any more (owner, 20.11.2026): nothing asked.
+    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/tirpark')), isNull);
+    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/services')), isNull);
+    expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/services?shops=1')), isNull);
     expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/#/cargo')), isNull);
     expect(PageHeroPrefetch.pageOf(Uri.parse('https://a/b/')), isNull);
     final early = _Repo();

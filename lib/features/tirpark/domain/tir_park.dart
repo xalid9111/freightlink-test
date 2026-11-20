@@ -1,5 +1,12 @@
 import 'dart:math' as math;
 
+/// The park management system (owner panel, workers, booking, "Park
+/// işlədirəm") is switched OFF in the app (owner, 20.11.2026: "park idarə
+/// etmə sistemini layihədə söndür"). Nothing is deleted on the server: parks,
+/// bookings, workers and their history stay; set this to true to bring the
+/// screens back.
+const kParkManagementOn = false;
+
 /// TIRPark (owner, 31.10.2026, migration 0077): a TIR park on the map.
 /// Added by drivers, approved by an admin; until then only its author
 /// (and admins) see it.

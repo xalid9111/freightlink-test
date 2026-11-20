@@ -1,8 +1,7 @@
 // The "+" on each map opens its own form (owner, 06.11.2026): Servislər →
-// the service registration, Mağazalar → the shop form (spare_parts ticked),
-// Parklar → the TIR Parkı page; TIR Parkı → "Dayanacaq əlavə et" places a
-// plain parking spot on the map (the existing tir_park_add, no manager, so
-// no booking / capacity / owner panel); a park already there opens.
+// the service registration, Mağazalar → the shop form (spare_parts ticked).
+// Parklar (owner, 20.11.2026, SQL 0129): "TIR parkı əlavə et +" → the user
+// moves the map under the pin → name, city, amenities → shown at once.
 import 'dart:convert';
 import 'dart:io';
 
@@ -51,20 +50,44 @@ void main() {
         child: MaterialApp.router(routerConfig: r),
       );
 
-  testWidgets('Parklar: "TIR parkı əlavə et +" stays on the map and opens the TIR Parkı page; no spot placing, an old ?add= link does nothing (0100)', (tester) async {
+  testWidgets('Parklar: "TIR parkı əlavə et +" → pick the place on the map → the form → saved (0129)', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final repo = _FakeParks();
-    await tester.pumpWidget(app(router('/tirpark?add=1'), repo));
+    await tester.pumpWidget(app(router('/tirpark'), repo));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const ValueKey('tp-add-here')), findsNothing, reason: 'no "place a spot" mode');
-    expect(find.byKey(const ValueKey('tp-list')), findsOneWidget, reason: 'the parks list stays');
-    expect(find.byKey(const ValueKey('tp-add')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tp-list')), findsOneWidget, reason: 'the parks list');
     expect(find.text('TIR parkı əlavə et'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('tp-add')));
+    await tester.pump(const Duration(milliseconds: 300));
+    // Choosing the place: the pin in the middle, the list out of the way.
+    expect(find.byKey(const ValueKey('tp-add-pin')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tp-list')), findsNothing);
+    expect(find.text('TIR Parkı page'), findsNothing, reason: 'no longer the management page');
+    await tester.tap(find.byKey(const ValueKey('tp-add-here')));
     await tester.pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 5));
-    expect(find.text('TIR Parkı page'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('tp-name')), 'Qobu TIR Parkı');
+    await tester.ensureVisible(find.byKey(const ValueKey('tp-save')));
+    await tester.tap(find.byKey(const ValueKey('tp-save')));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 5));
+    expect(repo.added, ['Qobu TIR Parkı']);
+    expect(find.byKey(const ValueKey('tp-add-pin')), findsNothing, reason: 'back to the map and the list');
+    expect(find.byKey(const ValueKey('tp-list')), findsOneWidget);
+  });
+
+  testWidgets('Parklar: "Ləğv et" leaves the place picking without saving', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _FakeParks();
+    await tester.pumpWidget(app(router('/tirpark'), repo));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const ValueKey('tp-add')));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const ValueKey('tp-add-cancel')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('tp-add-pin')), findsNothing);
     expect(repo.added, isEmpty);
   });
 
@@ -74,15 +97,21 @@ void main() {
     expect(p.contains("'tp_stop_add'"), isFalse);
   });
 
-  test('server: tir_park_add refuses everybody (0100); the park owner and manager flows stay', () {
-    final sql = src('supabase/migrations/0100_no_user_spots_service_chat_context.sql');
-    expect(sql, contains("raise exception 'not_available' using errcode = '42501';"));
-    expect(sql.contains('function public.tir_park_owner_apply'), isFalse, reason: '"Park işlədirəm" untouched');
-    expect(sql.contains('function public.tir_park_manage_apply'), isFalse, reason: 'manager applications untouched');
-    expect(sql.toLowerCase().contains('delete from'), isFalse, reason: 'nothing is deleted');
+  test('server: tir_park_add works again (0129): checks, shown at once, nothing deleted', () {
+    final sql = src('supabase/migrations/0129_users_add_parks.sql');
+    expect(sql, contains("raise exception 'duplicate_nearby'"));
+    expect(sql, contains("raise exception 'too_many'"));
+    expect(sql, contains("raise exception 'name_required'"));
+    expect(sql, contains("v_uid, 'approved', now())"), reason: 'shown at once');
+    expect(sql.contains('not_available'), isFalse);
+    final lower = sql.toLowerCase();
+    for (final bad in ['delete from', 'drop table', 'truncate', 'alter table']) {
+      expect(lower.contains(bad), isFalse, reason: bad);
+    }
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
-    expect(tp.contains('TirParkAddSheet'), isFalse);
-    expect(tp, contains("onTap: () => context.pushOnce('/profile/tirpark'),"), reason: 'the map + opens the TIR Parkı page');
+    expect(tp, contains('TirParkAddSheet(lat: c.latitude, lng: c.longitude, s: s)'));
+    expect(tp, contains("MapAddButton(buttonKey: 'tp-add', label: s.t('tp_add'), onTap: _startAdding)"));
+    expect(tp, contains('if (askSignIn(context)) return;'), reason: 'a visitor signs in first');
     expect(src('lib/core/router/app_router.dart'), contains('builder: (context, state) => const NavRoom(child: TirParkScreen()),'));
   });
 

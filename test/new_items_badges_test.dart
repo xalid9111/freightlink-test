@@ -60,7 +60,8 @@ void main() {
 
   test('wiring: TIRPark and TIR Bazarı carry the counts; the open section is marked seen; counts only, not rows', () {
     final shell = src('lib/core/router/main_shell.dart');
-    expect(shell.contains("strings.t('nav_tirpark'), badge: fresh[NewItemsSection.tirpark] ?? 0"), isTrue);
+    // The tab reads "Xəritə" since 20.11.2026; the count stays on it.
+    expect(shell.contains("strings.t('nav_map'), badge: fresh[NewItemsSection.tirpark] ?? 0"), isTrue);
     expect(shell.contains("strings.t('nav_market'), badge: fresh[NewItemsSection.market] ?? 0"), isTrue);
     expect(shell.contains('markSeen(openSection)'), isTrue);
     final b = src('lib/core/notify/new_items_badges.dart');
@@ -81,14 +82,13 @@ void main() {
     expect(src('lib/features/auth/presentation/settings_screen.dart').contains("ValueKey('settings-test-sound')"), isTrue);
   });
 
-  test('computer map banners: the whole picture, one height for all three', () {
-    final hero = src('lib/core/widgets/page_hero.dart');
-    expect(hero.contains('double kDesktopMapBannerHeight(double width) => (width * 0.16).clamp(200.0, 260.0);'), isTrue);
-    expect(hero.contains('fit: BoxFit.contain'), isTrue);
-    expect(hero.contains('ImageFilter.blur('), isTrue);
+  test('map pages: no banner on the phone or the computer, the Xəritə header instead (owner, 20.11.2026)', () {
     final tp = src('lib/features/tirpark/presentation/tir_park_screen.dart');
-    expect(tp.contains("page: 'tirpark'") && tp.contains('whole: true'), isTrue);
     final sv = src('lib/features/services/presentation/services_map_screen.dart');
-    expect(RegExp(r'whole: true,\s*height: kDesktopMapBannerHeight').allMatches(sv).length, 2);
+    for (final page in [tp, sv]) {
+      expect(page.contains('PageHeroBanner('), isFalse);
+      expect(page.contains('MapPageHeader(s: s)'), isTrue);
+    }
+    expect(File('lib/features/tirpark/presentation/map_page_banner.dart').existsSync(), isFalse);
   });
 }
