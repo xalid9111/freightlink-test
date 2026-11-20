@@ -8,6 +8,8 @@
 
 begin;
 reset role;
+-- These checks are about the old way (before a monthly target, 0133).
+do $$ begin if to_regclass('public.adbiz_month_targets') is not null then execute 'delete from public.adbiz_month_targets'; end if; end $$;
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000000', :chief, 'authenticated', 'authenticated', 'Xelilov.1881@gmail.com', '{"full_name":"Founder","role":"cargo_owner"}')
   on conflict (id) do nothing;

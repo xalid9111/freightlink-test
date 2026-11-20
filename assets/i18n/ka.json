@@ -2136,7 +2136,7 @@
   "adb_cash_total": "ნაღდი",
   "adb_task": "დავალება",
   "adb_ok": "კარგი",
-  "adb_result_reached_title": "გილოცავთ!",
+  "adb_result_reached_title": "გილოცავთ! მიზანი შესრულდა",
   "adb_result_reached": "დღეს მიზანი გადააჭარბეთ: {net}/{target} AZN. შესანიშნავია!",
   "adb_result_minus_title": "დღე დაიხურა",
   "adb_result_minus": "მიზნამდე {left} AZN დააკლდა — მინუსში დარჩა. ხვალ მეტი!",
@@ -2503,5 +2503,18 @@
   "ntf_fleet_declined": "{name}-მა უარი თქვა მძღოლობაზე",
   "ntf_fleet_accept": "მიღება",
   "ntf_fleet_decline": "უარყოფა",
-  "ntf_fleet_you_declined": "მოწვევა უარყოფილია"
+  "ntf_fleet_you_declined": "მოწვევა უარყოფილია",
+  "adb_total_spent": "ხარჯები",
+  "adb_card_moved": "ბარათზე გადარიცხული",
+  "adb_net_income": "წმინდა შემოსავალი",
+  "adb_so_far": "დღემდე ({from}–{to})",
+  "adb_month_this": "ეს თვე",
+  "adb_month_days": "{n} სამუშაო დღე",
+  "adb_month_target": "თვის მიზანი",
+  "adb_month_collected": "შეგროვდა",
+  "adb_month_gap": "საერთო მინუსი",
+  "adb_month_reached": "🎉 გილოცავთ! თვის მიზანი შესრულდა · {over} AZN",
+  "adb_month_minus": "ეს თვე ({month}) — საერთო მინუსი",
+  "adb_month_plus": "ეს თვე ({month}) — მიზანს ზემოთ",
+  "adb_month_target_hint": "ითვლება ამ თვიდან; წარსული თვეები არ იცვლება."
 }

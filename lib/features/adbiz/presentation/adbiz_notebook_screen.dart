@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/birth_date_field.dart' show monthName;
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../finance/domain/finance_models.dart';
 import '../data/adbiz_repository.dart';
@@ -432,10 +433,20 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     try {
       await ref.read(adbizRepositoryProvider).closeDay(day.id);
       adbizResync(ref, day);
+      // The month's Ümumi mənfi with the result (0133; none before it).
+      AdbizMonth? month;
+      try {
+        final m = await ref.read(adbizRepositoryProvider).myMonth(day.userId, day.workDate);
+        month = m.target == null ? null : m;
+      } catch (_) {}
       // The day's result, at once (owner, 10.11.2026): "Təbriklər!" when
       // the target is reached, otherwise how much stayed in the minus.
       if (mounted) {
-        await showAdbizDayResult(context, s, p, showTarget: showTarget, company: ref.read(adbizCompanyProvider(day.companyId)));
+        await showAdbizDayResult(context, s, p,
+            showTarget: showTarget,
+            company: ref.read(adbizCompanyProvider(day.companyId)),
+            month: month,
+            lang: ref.read(currentLocaleProvider).languageCode);
       }
     } catch (e) {
       if (mounted) adbizSnack(context, adbizError(s, e));
@@ -489,6 +500,8 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
     final v113 = company?.v113 == true;
     final showTarget = company?.showTarget ?? true;
     final myTask = ref.watch(adbizMemberTaskProvider(day.userId)).valueOrNull;
+    final month = ref.watch(adbizMyMonthProvider((userId: day.userId, month: DateTime(day.workDate.year, day.workDate.month, 1)))).valueOrNull;
+    final lang = ref.watch(currentLocaleProvider).languageCode;
     final card = cardTotal(entries);
     // The worker's own tick on a saved job: only on his open day (0113).
     bool canTick(AdbizEntry e) => v113 && (widget.manager || _open);
@@ -836,6 +849,8 @@ class _AdbizDayPanelState extends ConsumerState<AdbizDayPanel> {
         const SizedBox(height: 10),
         numbers,
         const SizedBox(height: 10),
+        // "Bu ay": the month's Ümumi mənfi, always shown (owner, 21.11.2026; 0133).
+        if (showTarget && month != null) ...[AdbizMonthCard(s: s, m: month, lang: lang), const SizedBox(height: 10)],
         if (taskCard != null) ...[taskCard, const SizedBox(height: 10)],
         if (form != null) ...[form, const SizedBox(height: 10)],
         list,
@@ -1342,7 +1357,8 @@ String adbizFillResult(String text, DayProgress p) => text
     .replaceAll('{hədəf}', adbizNum(p.target));
 
 /// Shown at once when the worker closes the day.
-Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress p, {required bool showTarget, AdbizCompany? company}) {
+Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress p,
+    {required bool showTarget, AdbizCompany? company, AdbizMonth? month, String lang = 'az'}) {
   if (!showTarget || p.target <= 0) {
     adbizSnack(context, s.t('adb_closed_done'));
     return Future.value();
@@ -1355,7 +1371,23 @@ Future<void> showAdbizDayResult(BuildContext context, AppStrings s, DayProgress 
       key: ValueKey(ok ? 'adb-result-reached' : 'adb-result-minus'),
       icon: Icon(ok ? Icons.celebration_outlined : Icons.flag_outlined, size: 48, color: c),
       title: Text(title, textAlign: TextAlign.center, style: TextStyle(color: c, fontWeight: FontWeight.w600)),
-      content: Text(body, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppColors.text)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(body, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppColors.text)),
+        // The month so far (0133): "Bu ay (Noyabr) ümumi mənfi −3 600 AZN".
+        if (month != null) ...[
+          const SizedBox(height: 14),
+          Row(children: [
+            Expanded(
+              child: Text(s.t(month.reached ? 'adb_month_plus' : 'adb_month_minus', {'month': adbizMonthTitle(month.month, lang)}),
+                  style: TextStyle(fontSize: 15, color: AppColors.text)),
+            ),
+            const SizedBox(width: 8),
+            Text('${adbizSigned(month.gap)} AZN',
+                key: const ValueKey('adb-result-month'),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: month.reached ? AppColors.online : AppColors.danger)),
+          ]),
+        ],
+      ]),
       actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(s.t('adb_ok')))],
       actionsAlignment: MainAxisAlignment.center,
     ),
@@ -1409,4 +1441,88 @@ Future<bool> adbizConfirmDeleteDay(BuildContext context, AppStrings s, DateTime 
     'x_sum': adbizNum(expenses.fold<double>(0, (a, e) => a + e.amount)),
   });
   return adbizConfirm(context, s, s.t('adb_delete_day_title'), body, ok: s.t('adb_delete'));
+}
+
+/// "Noyabr" in the user's language.
+String adbizMonthTitle(DateTime m, String lang) {
+  final t = monthName(m.month, lang);
+  return t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
+}
+
+/// "Bu ay" (owner, 21.11.2026; 0133): the monthly target, what was collected,
+/// a STILL bar (the animated bar above is unchanged) and the "Ümumi mənfi"
+/// in big red — or "Təbriklər! Aylıq hədəf yerinə yetirildi · +… AZN".
+class AdbizMonthCard extends StatelessWidget {
+  final AppStrings s;
+  final AdbizMonth m;
+  final String lang;
+  const AdbizMonthCard({super.key, required this.s, required this.m, required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    final ok = m.reached;
+    final c = ok ? AppColors.online : AppColors.danger;
+    final soft = TextStyle(fontSize: 14.5, color: AppColors.textSoft);
+    Widget row(String l, String v, Color vc, String key) => Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Row(children: [
+            Expanded(child: Text(l, style: soft)),
+            Text(v, key: ValueKey(key), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: vc)),
+          ]),
+        );
+    return Container(
+      key: const ValueKey('adb-month-card'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.withValues(alpha: 0.6)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Icon(Icons.calendar_month_outlined, color: c, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text('${s.t('adb_month_this')} · ${adbizMonthTitle(m.month, lang)}',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+          ),
+          Text(s.t('adb_month_days', {'n': '${m.days}'}), style: soft),
+        ]),
+        row(s.t('adb_month_target'), '${adbizNum(m.target ?? 0)} AZN', AppColors.text, 'adb-month-target'),
+        row(s.t('adb_month_collected'), '${adbizNum(m.collected)} AZN', AppColors.online, 'adb-month-collected'),
+        const SizedBox(height: 10),
+        // A still bar — never animated (owner, 21.11.2026).
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            height: 10,
+            child: Stack(children: [
+              Positioned.fill(child: ColoredBox(color: AppColors.line)),
+              FractionallySizedBox(
+                key: const ValueKey('adb-month-bar'),
+                widthFactor: m.share,
+                heightFactor: 1,
+                child: ColoredBox(color: c),
+              ),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (ok)
+          Text(s.t('adb_month_reached', {'over': adbizSigned(m.gap)}),
+              key: const ValueKey('adb-month-reached'),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c))
+        else
+          Row(children: [
+            Expanded(child: Text(s.t('adb_month_gap'), style: TextStyle(fontSize: 16, color: AppColors.text))),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('${adbizSigned(m.gap)} AZN',
+                  key: const ValueKey('adb-month-gap'), style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: c)),
+            ),
+          ]),
+      ]),
+    );
+  }
 }

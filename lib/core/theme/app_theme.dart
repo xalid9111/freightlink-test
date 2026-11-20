@@ -164,6 +164,8 @@ class AppColors {
   static Color get adbIncome => isDay ? const Color(0xFF16A34A) : const Color(0xFF4ADE80);
   static Color get adbSpend => isDay ? const Color(0xFFDC2626) : const Color(0xFFFF6B6B);
   static Color get adbNet => isDay ? const Color(0xFF2563EB) : const Color(0xFF3BA2FF);
+  /// Xalis gəlir on the four-part card (owner's design, 21.11.2026).
+  static Color get adbGold => isDay ? const Color(0xFFB7791F) : const Color(0xFFFFD166);
   /// The month / year cards (owner's picture, 10.11.2026): dark green top =
   /// net income, red bottom = the days' minus / plus; the same by day and night.
   static const Color adbTileNet = Color(0xFF2E6B63);

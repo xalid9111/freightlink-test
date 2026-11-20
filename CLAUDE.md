@@ -822,6 +822,20 @@ files to the owner separately (they are run by hand in the SQL editor).
   OK (SQL 0132, adbiz_entry_worker_fix: first price kept in fixed_from,
   fix_note, audited 'entry.worker_fix'); the row shows "düzəldildi (40 →
   35) · the note"; a closed / past day stays the owner's / Baş admin's.
+  The month's "Ümumi mənfi" (owner, 21.11.2026, SQL 0133): the Baş admin
+  sets the company's MONTHLY target (Aylıq hədəf ✏️ on the owner panel;
+  adbiz_month_targets, counted from that month on; UTEP Reklam 6110 AZN
+  from November 2026); a month with a target: gap = the month's net (+ the
+  old account's net) − target × the workers of that month; months before
+  any target keep the old figures (5999). The worker's notebook always
+  shows "Bu ay" (aylıq hədəf · toplanan · a STILL bar · Ümumi mənfi in red,
+  or "🎉 Təbriklər! Aylıq hədəf yerinə yetirildi · +… AZN";
+  adbiz_my_month); the animated day bar is unchanged. Closing the day
+  says "Təbriklər! Hədəf yerinə yetirildi" (target reached) and adds the
+  month's Ümumi mənfi. The owner panel's totals are FOUR parts, left to
+  right: Ümumi gəlir · Rasxodlar · Karta köçürülən (jobs paid by card,
+  inside the income) · Xalis gəlir (gəlir − rasxod); Ay shows "Noyabr ·
+  indiyə qədər (1–21)" over them; the old "Kartla · Nağd" line is gone.
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam

@@ -32,6 +32,8 @@ String adbizClientKey([Random? r]) {
   return '${s.substring(0, 8)}-${s.substring(8, 12)}-${s.substring(12, 16)}-${s.substring(16, 20)}-${s.substring(20)}';
 }
 
+String _ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 const kAdbizReasons = [
   'day_closed', 'not_allowed', 'not_member', 'chief_admin_only', 'invalid_argument', 'not_found', 'other_company', 'company_deleted', 'note_required',
 ];
@@ -162,6 +164,29 @@ class AdbizRepository {
 
   Future<void> updateEntry(String id, String title, double amount) =>
       _run(() => _c.rpc('adbiz_update_entry', params: {'p_entry': id, 'p_title': title, 'p_amount': amount}));
+
+  /// The worker's own month (0133): target, collected, Ümumi mənfi.
+  Future<AdbizMonth> myMonth(String userId, DateTime date) => _run(() async {
+        final r = await _c.rpc('adbiz_my_month', params: {'p_user': userId, 'p_date': _ymd(date)});
+        return AdbizMonth.fromJson(Map<String, dynamic>.from(r as Map));
+      });
+
+  /// The company's current monthly target (0133); null = none set.
+  Future<double?> monthTarget(String companyId, DateTime date) => _run(() async {
+        final r = await _c
+            .from('adbiz_month_targets')
+            .select('amount')
+            .eq('company_id', companyId)
+            .lte('from_month', _ymd(DateTime(date.year, date.month, 1)))
+            .order('from_month', ascending: false)
+            .limit(1);
+        final l = r as List;
+        return l.isEmpty ? null : double.tryParse('${(l.first as Map)['amount']}');
+      });
+
+  /// The Baş admin sets the monthly target from a month on (audited).
+  Future<void> setMonthTarget(String companyId, DateTime from, double amount) => _run(() =>
+      _c.rpc('adbiz_month_target_set', params: {'p_company': companyId, 'p_from': _ymd(DateTime(from.year, from.month, 1)), 'p_amount': amount}));
 
   /// The worker's own price fix on his today's open day, with a note (0132).
   Future<void> workerFixEntry(String id, double amount, String note) => _run(
