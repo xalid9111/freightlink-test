@@ -139,7 +139,7 @@ void main() {
 
   test('the reset-password e-mail opens the app\'s own page with token_hash (works in any browser)', () {
     final r = src('lib/core/router/app_router.dart');
-    expect(r.contains("ResetPasswordScreen(tokenHash: state.uri.queryParameters['token_hash'])"), isTrue);
+    expect(r.contains("tokenHash: state.uri.queryParameters['token_hash'],"), isTrue);
     final doc = src('docs/RESET_PASSWORD_EMAIL.md');
     expect(doc.contains('https://tirlink.app/#/reset-password?token_hash={{ .TokenHash }}&type=recovery'), isTrue);
   });

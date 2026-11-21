@@ -324,6 +324,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   template links to https://tirlink.app/#/reset-password?token_hash=…&type=
   recovery (docs/RESET_PASSWORD_EMAIL.md) so the link works in any browser
   (Gmail's, Safari, the Home Screen app), not only the one that asked.
+  A refused link (owner, 21.11.2026: "şifrəni sıfırla basdıqda bu səhifəyə
+  yönləndirilir"): Supabase sends an expired / already opened link back as
+  "#error=…&error_code=otp_expired" — the router now opens /reset-password?
+  link_error=1 (urlHasAuthLinkError; a cancelled Google sign-in is left
+  alone), which says the link is used / expired, that only the NEWEST
+  e-mail's link works, and has "Yeni link göndər" + "Girişə qayıt" right
+  there (no second notice on top). Such a link means the e-mail still uses
+  Supabase's default {{ .ConfirmationURL }} — the token_hash template
+  above is what keeps mail scanners and other browsers from using it up.
+  The language (flag + AZ / RU …, AuthLanguageButton → the Ayarlar picker)
+  stands at the top right of the login, register and reset pages.
 - Təklif və iradlar + problems for the admins (owner, 13.11.2026, SQL 0120):
   Profil → Hesab və görünüş → "Təklif və iradlar" (/support: Təklif / irad ·
   Ödəniş problemi · VIP / reklam problemi, text, Göndər → green "Təşəkkürlər!

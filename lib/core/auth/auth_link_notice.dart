@@ -39,6 +39,20 @@ class _AuthLinkNoticeState extends ConsumerState<AuthLinkNotice> {
   }
 
   void _show() {
+    // The reset page explains a refused reset link itself (app_router.dart
+    // sends such links there) — no second notice on top of it.
+    Future<void>.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      String path = '';
+      try {
+        path = widget.router.routerDelegate.currentConfiguration.uri.path;
+      } catch (_) {}
+      if (path == '/reset-password') return;
+      _notify();
+    });
+  }
+
+  void _notify() {
     final now = DateTime.now();
     if (_last != null && now.difference(_last!) < const Duration(seconds: 15)) return;
     final m = appMessengerKey.currentState;

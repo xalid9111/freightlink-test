@@ -2532,5 +2532,7 @@
   "share_failed": "Not sent. Please try again shortly.",
   "fl_link_search_hint": "Type the driver's name and pick his TırLink account. He is linked to the truck after he taps Accept.",
   "fl_link_none": "No account found with this name",
-  "fl_link_by_code": "Join with a code"
+  "fl_link_by_code": "Join with a code",
+  "pw_link_used": "This link no longer works: it has expired or was already opened. Every new request cancels the older links — open only the link in the newest e-mail. Tap the button below for a new link.",
+  "pw_link_new": "Send a new link"
 }
