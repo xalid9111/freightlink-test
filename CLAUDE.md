@@ -1162,6 +1162,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   Mağaza əlavə et, its words only as a tooltip) — they ride up and down with
   the list and leave when it is opened high; "Bugünkü plan" under the
   list's line.
+  The user's own place (owner, 21.11.2026: "işıq kimi yanıb sönsün, diqqət
+  çəksin", mockup approved) blinks on Parklar, Servislər and Mağazalar:
+  MyLocationDot (core/widgets/my_location_dot.dart) — the blue dot with its
+  white ring, a breathing glow and a light wave spreading out and fading
+  every 1.8 s, in its own RepaintBoundary; phones asking for less motion
+  get a still halo.
 - "Maşınlarım" (owner's pictures and answers, 20.11.2026, SQL 0130 —
   stage 2 of the Xəritə tab; lib/features/fleet): "Xəritə | Maşınlarım"
   under the header on Parklar / Servislər / Mağazalar and on /fleet
@@ -1201,6 +1207,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   is only the small "Kodla qoşulma" link at its bottom. The truck page's
   Qazanc card has the approved expenses' total in red on the right
   ("Rasxod", per currency) with "+ n təsdiq gözləyir" under it.
+  The "Ümumi" card (owner's design, approved in the design editor
+  21.11.2026): the card glows blue (AppColors.blue border + glow), one row
+  of three tiles per currency — Gəlir and Qazanc glowing tiles, Rasxodlar
+  plain with the amount in AppColors.accentFill, Qazanc green (red when
+  negative); each amount with its currency.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

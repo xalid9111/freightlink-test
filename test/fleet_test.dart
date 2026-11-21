@@ -157,6 +157,14 @@ void main() {
     expect(find.text('1 işdə'), findsOneWidget);
     expect(find.byKey(const ValueKey('fl-add-truck')), findsOneWidget);
     expect(find.byKey(const ValueKey('fl-totals')), findsOneWidget);
+    // The owner's approved look (design editor, 21.11.2026): glowing card, Gəlir / Qazanc glowing tiles, orange expenses.
+    for (final k in ['income','spent','profit']) {
+      expect(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('fl-tot-$k-')), findsWidgets, reason: k);
+    }
+    final card = tester.widget<Container>(find.byKey(const ValueKey('fl-totals')));
+    expect((card.decoration as BoxDecoration).boxShadow, isNotEmpty, reason: 'the card glows');
+    final spent = tester.widget<Container>(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('fl-tot-spent-')).first);
+    expect((spent.decoration as BoxDecoration).boxShadow, isNull, reason: 'expenses: no glow, orange text');
     expect(find.text('Volvo FH 2022'), findsOneWidget);
     expect(find.text('99-AC-981'), findsOneWidget);
     expect(find.text('Rəşad Məmmədov'), findsOneWidget);
