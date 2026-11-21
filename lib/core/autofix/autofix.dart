@@ -310,8 +310,11 @@ class AutoFix {
 
   Future<void> _pollCommand() async {
     _lastPoll = DateTime.now();
-    if (SupabaseConfig.client.auth.currentSession == null) return;
     try {
+      // The page can become visible before Supabase has started (the very
+      // first frame): reading the client then threw an uncaught error on
+      // every cold start (22.11.2026). Now it is just "no session yet".
+      if (SupabaseConfig.client.auth.currentSession == null) return;
       final rows = await SupabaseConfig.client.rpc('autofix_latest_command').timeout(const Duration(seconds: 15));
       if (rows is! List || rows.isEmpty) return;
       final row = Map<String, dynamic>.from(rows.first as Map);
@@ -345,7 +348,11 @@ class AutoFix {
 
   Future<void> flush() async {
     if (_flushing || _queue.isEmpty) return;
-    if (SupabaseConfig.client.auth.currentSession == null) return; // kept until sign-in
+    try {
+      if (SupabaseConfig.client.auth.currentSession == null) return; // kept until sign-in
+    } catch (_) {
+      return; // Supabase not started yet (hidden before the first frame): kept for the next flush
+    }
     _flushing = true;
     try {
       final keys = _queue.keys.take(20).toList();

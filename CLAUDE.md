@@ -1216,6 +1216,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   glowing tiles keep AppColors.card as their ground (Flutter paints a
   shadow under the box too; the web glow lies only outside), blur
   kFleetGlowBlur = 21.6 (= CSS 26 px), 40 % colour, 53 % border.
+- No empty first screen, no second load at start-up (owner, 22.11.2026:
+  "ilk açanda 0 maşın gəlir, sonra yenidən yüklənir … kartlar iki dəfə
+  yüklənməsin"): currentUserIdProvider takes the id of the session
+  Supabase restores on the device before runApp() (sessionUserIdProvider)
+  until the auth stream's first answer, so pages read their data ONCE with
+  the right account; the same id from the stream re-reads nothing, a real
+  sign-out still clears it (test/auth_start_test.dart). AutoFix's admin-
+  command poll and report flush no longer throw when the page becomes
+  visible before Supabase has started (an uncaught error on every cold
+  start).
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new
