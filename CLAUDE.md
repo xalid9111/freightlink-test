@@ -1207,6 +1207,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   is only the small "Kodla qoşulma" link at its bottom. The truck page's
   Qazanc card has the approved expenses' total in red on the right
   ("Rasxod", per currency) with "+ n təsdiq gözləyir" under it.
+  The "Ümumi" card (owner's design, approved in the design editor
+  21.11.2026): the card glows blue (AppColors.blue border + glow), one row
+  of three tiles per currency — Gəlir and Qazanc glowing tiles, Rasxodlar
+  plain with the amount in AppColors.accentFill, Qazanc green (red when
+  negative); each amount with its currency.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

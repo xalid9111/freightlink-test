@@ -322,7 +322,10 @@ class _FilterButton extends StatelessWidget {
 }
 
 /// "Ümumi": income · expenses · profit per currency (owner, 20.11.2026: "nəticə
-/// Maşınlarım bölməsində ümumi rasxod və qazanc görünsün").
+/// Maşınlarım bölməsində ümumi rasxod və qazanc görünsün"). The look is the
+/// owner's own, approved in the design editor (21.11.2026): the card glows
+/// blue, Gəlir and Qazanc are glowing tiles, the expenses stand in orange —
+/// so the three never blur into one another. One row of tiles per currency.
 class FleetTotalsCard extends StatelessWidget {
   final AppStrings s;
   final List<FleetJob> jobs;
@@ -338,42 +341,57 @@ class FleetTotalsCard extends StatelessWidget {
       for (final c in kFleetCurrencies)
         if (income.containsKey(c) || spent.containsKey(c)) c
     ];
-    TextStyle head = TextStyle(fontSize: 12.5, color: AppColors.textSoft);
+    final glow = AppColors.blue;
     return Container(
       key: const ValueKey('fl-totals'),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.line)),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: glow.withValues(alpha: 0.53)),
+        boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: 26)],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(s.t('fl_totals'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
-        const SizedBox(height: 8),
+        Text(s.t('fl_totals'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
+        const SizedBox(height: 10),
         if (currencies.isEmpty)
           Text(s.t('fl_totals_empty'), style: TextStyle(color: AppColors.textSoft))
-        else ...[
-          Row(children: [
-            const Expanded(child: SizedBox()),
-            Expanded(flex: 3, child: Text(s.t('fl_income'), textAlign: TextAlign.right, style: head)),
-            Expanded(flex: 3, child: Text(s.t('fl_expenses'), textAlign: TextAlign.right, style: head)),
-            Expanded(flex: 3, child: Text(s.t('fl_profit_short'), textAlign: TextAlign.right, style: head)),
-          ]),
-          for (final c in currencies)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Row(children: [
-                Expanded(child: Text(c, style: TextStyle(color: AppColors.textSoft))),
-                Expanded(flex: 3, child: _num(income[c] ?? 0, AppColors.text)),
-                Expanded(flex: 3, child: _num(-(spent[c] ?? 0), AppColors.text)),
-                Expanded(flex: 3, child: _num(profit[c] ?? 0, (profit[c] ?? 0) < 0 ? AppColors.danger : AppColors.online, bold: true)),
-              ]),
-            ),
-        ],
+        else
+          for (final c in currencies) ...[
+            if (c != currencies.first) const SizedBox(height: 10),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: _tile(ValueKey('fl-tot-income-$c'), s.t('fl_income'), income[c] ?? 0, c, AppColors.text, glow: glow)),
+              const SizedBox(width: 8),
+              Expanded(child: _tile(ValueKey('fl-tot-spent-$c'), s.t('fl_expenses'), -(spent[c] ?? 0), c, AppColors.accentFill)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _tile(ValueKey('fl-tot-profit-$c'), s.t('fl_profit_short'), profit[c] ?? 0, c,
+                      (profit[c] ?? 0) < 0 ? AppColors.danger : AppColors.online,
+                      bold: true, glow: glow)),
+            ]),
+          ],
       ]),
     );
   }
 
-  Widget _num(double v, Color c, {bool bold = false}) => FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
-        child: Text(fleetAmount(v), style: TextStyle(fontSize: 15, color: c, fontWeight: bold ? FontWeight.w600 : FontWeight.w400)),
+  Widget _tile(Key key, String label, double v, String cur, Color color, {bool bold = false, Color? glow}) => Container(
+        key: key,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: glow == null ? null : Border.all(color: glow.withValues(alpha: 0.53)),
+          boxShadow: glow == null ? null : [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: 26)],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text('${fleetAmount(v)} $cur',
+                style: TextStyle(fontSize: 16, color: color, fontWeight: bold ? FontWeight.w600 : FontWeight.w400)),
+          ),
+        ]),
       );
 }
 
