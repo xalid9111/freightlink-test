@@ -38,7 +38,24 @@ void main() {
     expect(py.toLowerCase().contains('overpass-api'), isFalse);
     // Only these workflows exist (CLAUDE.md §1): one Pages deploy, the gate, two manual / scheduled data jobs.
     final names = Directory('.github/workflows').listSync().map((e) => e.uri.pathSegments.last).toSet();
-    expect(names, {'deploy.yml', 'autofix-ci.yml', 'supabase-functions.yml', 'osm-truck-parks.yml'});
+    expect(names, {'deploy.yml', 'autofix-ci.yml', 'supabase-functions.yml', 'osm-truck-parks.yml', 'supabase-auth-email.yml'});
+  });
+
+  test('Supabase auth email (owner, 21.11.2026): manual only, recovery subject + body only, token from the secret', () {
+    final f = File('.github/workflows/supabase-auth-email.yml').readAsStringSync();
+    expect(f.contains('workflow_dispatch:'), isTrue);
+    expect(RegExp(r'^\s*(push|pull_request|schedule):', multiLine: true).hasMatch(f), isFalse);
+    expect(RegExp(r'pages|deploy-pages|upload-pages', caseSensitive: false).hasMatch(f), isFalse);
+    expect(f.contains(r'${{ secrets.SUPABASE_ACCESS_TOKEN }}'), isTrue);
+    expect(RegExp(r'sbp_[A-Za-z0-9]{10,}').hasMatch(f), isFalse);
+    expect(f.contains('REF: jqdqtfmxnqezlsetelpi'), isTrue);
+    // Only the recovery e-mail's two fields are sent — nothing else in Auth changes.
+    expect(f.contains("'{mailer_subjects_recovery: (\$s | rtrimstr(\"\\n\")), mailer_templates_recovery_content: \$b}'"), isTrue);
+    expect(RegExp(r'-X (DELETE|POST)').hasMatch(f), isFalse);
+    final body = File('supabase/auth/recovery_email.html').readAsStringSync();
+    expect(body.contains('https://tirlink.app/#/reset-password?token_hash={{ .TokenHash }}&type=recovery'), isTrue);
+    expect(body.contains('ConfirmationURL'), isFalse, reason: 'the default link is what mail scanners use up');
+    expect(File('supabase/auth/recovery_subject.txt').readAsStringSync().trim(), 'TırLink — şifrənin yenilənməsi');
   });
 
   test('the site lives at the root of tirlink.app: base href "/" (owner, 13.11.2026)', () {
