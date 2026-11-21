@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/locale_controller.dart';
 import 'change_password_screen.dart' show ForgotPasswordButton;
 import 'providers/auth_providers.dart';
+import 'widgets/auth_language_button.dart';
 import '../../../core/widgets/tirlink_wordmark.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -79,9 +80,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               onPressed: () => context.go(from != null && isGuestPath(Uri.parse(from).path) ? from : '/cargo'),
             ),
           ),
+          // The language at the top right (owner, 21.11.2026).
+          const Positioned(top: 8, right: 8, child: AuthLanguageButton()),
           Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Form(

@@ -36,6 +36,7 @@ import '../../features/ads/presentation/profile_catalog.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_edit_screen.dart';
 import '../../features/services/presentation/services_map_screen.dart';
+import '../auth/auth_link_problem.dart' show authLinkErrorIn;
 import '../autofix/route_error_screen.dart';
 import '../config/supabase_config.dart';
 import 'go_router_refresh_stream.dart';
@@ -100,6 +101,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final signedIn = SupabaseConfig.client.auth.currentSession != null;
       final loc = state.matchedLocation;
 
+      // A reset link Supabase refused (expired / already opened): the reset
+      // page explains it and sends a new link (owner, 21.11.2026), never the
+      // bare login page. The browser's address is looked at only once.
+      if (!signedIn && state.uri.queryParameters['link_error'] == null && authLinkErrorIn(state.uri)) {
+        return '/reset-password?link_error=1';
+      }
       // Password reset link: the screen handles signed-in (recovery) and
       // signed-out (token_hash link / expired link) states itself.
       if (loc == '/reset-password') return null;
@@ -134,7 +141,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ResetPasswordScreen(tokenHash: state.uri.queryParameters['token_hash']),
+        builder: (context, state) => ResetPasswordScreen(
+          tokenHash: state.uri.queryParameters['token_hash'],
+          linkError: state.uri.queryParameters['link_error'] != null,
+        ),
       ),
       GoRoute(
         path: '/settings',

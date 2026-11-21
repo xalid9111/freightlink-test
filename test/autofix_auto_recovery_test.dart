@@ -106,6 +106,7 @@ void main() {
     await t.pumpAndSettle();
     reportAuthLinkProblem();
     await t.pump();
+    await t.pump(const Duration(milliseconds: 700));
     await t.pump(const Duration(milliseconds: 300));
     expect(find.text('Bu link artıq işləmir'), findsOneWidget);
     await t.tap(find.text('Giriş'));

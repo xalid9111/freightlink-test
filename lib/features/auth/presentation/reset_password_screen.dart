@@ -10,7 +10,8 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/password_recovery.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/password_service.dart';
-import 'change_password_screen.dart' show PasswordField;
+import 'change_password_screen.dart' show ForgotPasswordButton, PasswordField;
+import 'widgets/auth_language_button.dart';
 
 /// /reset-password — opened from the e-mailed reset link.
 ///
@@ -28,7 +29,11 @@ import 'change_password_screen.dart' show PasswordField;
 ///    Safari): verified here with verifyOTP.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String? tokenHash;
-  const ResetPasswordScreen({super.key, this.tokenHash});
+  /// Opened from a reset link Supabase already refused (otp_expired …,
+  /// app_router.dart sends such addresses here): say so at once and offer a
+  /// new link right on this page (owner, 21.11.2026).
+  final bool linkError;
+  const ResetPasswordScreen({super.key, this.tokenHash, this.linkError = false});
 
   @override
   ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -68,9 +73,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     super.dispose();
   }
 
-  bool get _signedIn => SupabaseConfig.client.auth.currentSession != null;
+  bool get _signedIn {
+    try {
+      return SupabaseConfig.client.auth.currentSession != null;
+    } catch (_) {
+      return false; // Supabase not started (tests)
+    }
+  }
 
   Future<void> _start() async {
+    if (widget.linkError && !_recovery.value && !_signedIn) {
+      setState(() {
+        _phase = _Phase.invalid;
+        _error = ref.read(stringsProvider).t('pw_link_used');
+      });
+      return;
+    }
     final hash = widget.tokenHash;
     if (hash != null && hash.isNotEmpty && !_recovery.value) {
       try {
@@ -171,9 +189,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         body = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Icon(Icons.link_off, size: 40, color: AppColors.accent),
           const SizedBox(height: 12),
-          Text(_error ?? strings.t('error_pw_link_invalid'), textAlign: TextAlign.center),
+          Text(_error ?? strings.t('error_pw_link_invalid'), key: const ValueKey('pw-link-invalid'), textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _cancel, child: Text(strings.t('pw_reset_go_login'))),
+          // A new link right here — no need to find "Şifrəni unutdum" first.
+          ForgotPasswordButton(key: const ValueKey('pw-link-new'), email: null, strings: strings, labelKey: 'pw_link_new'),
+          const SizedBox(height: 6),
+          OutlinedButton(onPressed: _cancel, child: Text(strings.t('pw_reset_go_login'))),
         ]);
       case _Phase.notRecovery:
         body = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -238,7 +259,11 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       // A recovery session must end with a new password or a sign-out.
       canPop: _phase != _Phase.form,
       child: Scaffold(
-        appBar: AppBar(title: Text(strings.t('pw_reset_title')), automaticallyImplyLeading: _phase != _Phase.form),
+        appBar: AppBar(
+          title: Text(strings.t('pw_reset_title')),
+          automaticallyImplyLeading: _phase != _Phase.form,
+          actions: const [Padding(padding: EdgeInsets.only(right: 8), child: AuthLanguageButton())],
+        ),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(

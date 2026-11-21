@@ -10,6 +10,7 @@ import '../../../core/utils/age.dart';
 import '../../../core/widgets/birth_date_field.dart';
 import '../../../core/widgets/phone_country_field.dart';
 import 'providers/auth_providers.dart';
+import 'widgets/auth_language_button.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   final String role; // cargo_owner | carrier — chosen on RoleSelectScreen
@@ -137,6 +138,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/login'),
         ),
+        actions: const [Padding(padding: EdgeInsets.only(right: 8), child: AuthLanguageButton())],
       ),
       body: SafeArea(
         child: Center(

@@ -2532,5 +2532,7 @@
   "share_failed": "Gönderilemedi. Biraz sonra tekrar deneyin.",
   "fl_link_search_hint": "Sürücünün adını yazın ve TırLink hesabını seçin. Kabul et dedikten sonra araca bağlanır.",
   "fl_link_none": "Bu isimde hesap bulunamadı",
-  "fl_link_by_code": "Kodla bağlanma"
+  "fl_link_by_code": "Kodla bağlanma",
+  "pw_link_used": "Bu bağlantı artık çalışmıyor: süresi dolmuş veya zaten açılmış. Her yeni istek eski bağlantıları iptal eder — yalnızca en son gelen e-postadaki bağlantıyı açın. Yeni bağlantı için aşağıdaki düğmeye basın.",
+  "pw_link_new": "Yeni bağlantı gönder"
 }
