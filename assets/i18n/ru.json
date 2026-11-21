@@ -2518,5 +2518,7 @@
   "adb_month_plus": "Этот месяц ({month}): сверх цели",
   "adb_month_target_hint": "Считается с этого месяца; прошлые месяцы не меняются.",
   "adb_so_far_year": "на сегодня",
-  "adb_old_included": "В чистый доход входит старый учёт: {amount}"
+  "adb_old_included": "В чистый доход входит старый учёт: {amount}",
+  "row_share": "Поделиться",
+  "row_link_copied": "Ссылка скопирована ✓"
 }

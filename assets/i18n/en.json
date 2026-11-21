@@ -2518,5 +2518,7 @@
   "adb_month_plus": "This month ({month}) over the target",
   "adb_month_target_hint": "Counts from this month on; past months do not change.",
   "adb_so_far_year": "so far",
-  "adb_old_included": "Net income includes the old account: {amount}"
+  "adb_old_included": "Net income includes the old account: {amount}",
+  "row_share": "Share",
+  "row_link_copied": "Link copied ✓"
 }

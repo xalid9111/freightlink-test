@@ -221,6 +221,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   AppColors.accent with the currency under it behind a thin upright line,
   Premium / VIP marks over it, ›; kPhoneLoadColumns = 1, so the order is
   load, VIP, load, VIP …. Tested for 6 languages × 320–390 pt × 125 %.
+  Less clutter (owner's picture, 21.11.2026): the heart and a new "Paylaş"
+  stand as two round buttons half over the card's upper right edge
+  (kRowButtonsLift); the route runs the whole width on top; the poster's
+  picture stands left of the second line (the thin line + "22 T | <icon>
+  Ref | 📅 30 noy"); price, marks, icons, › unchanged. Paylaş = the phone's
+  share sheet (Web Share: route · price + https://tirlink.app/#/cargo/<id>),
+  else the link is copied ("Link kopyalandı ✓"); the computer's tiles
+  unchanged.
   The phone's Loads page top (owner, later 17.11.2026: "xəritənin sonu
   kəskindir … iş mərkəzi və digərlərini qaytar yerinə"): the old map
   section as before — the logo, slogan, heart and profile picture over the

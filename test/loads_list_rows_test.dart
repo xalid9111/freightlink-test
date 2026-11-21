@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -119,6 +120,45 @@ void main() {
         t.getTopLeft(find.byKey(const ValueKey('row-poster'))).dy,
         greaterThan(t.getTopLeft(find.byKey(const ValueKey('cargo-heart-c1'))).dy),
         reason: 'the picture under the heart');
+  });
+
+  testWidgets("owner's design 21.11.2026: heart + Paylaş on the upper right edge, the route the whole width, the picture by the 2nd line",
+      (t) async {
+    final s = lang('az');
+    await t.pumpWidget(host(CargoListRow(cargo: load('c1'), strings: s, onTap: () {}), s));
+    await t.pump();
+    await t.pump();
+    final card = t.getRect(find.byKey(const ValueKey('cargo-row-c1')));
+    final heart = t.getRect(find.byKey(const ValueKey('row-heart')));
+    final share = t.getRect(find.byKey(const ValueKey('row-share')));
+    final route = t.getRect(find.byKey(const ValueKey('row-route')));
+    final poster = t.getRect(find.byKey(const ValueKey('row-poster')));
+    final meta = t.getRect(find.byKey(const ValueKey('row-meta')));
+    expect(heart.center.dy, closeTo(card.top, 2), reason: 'half over the card\'s top edge');
+    expect(share.left, greaterThan(heart.right), reason: 'Paylaş right of the heart');
+    expect(share.right, lessThan(card.right) , reason: 'on the right side');
+    expect(heart.left, greaterThan(card.center.dx), reason: 'right half of the card');
+    expect(route.left, lessThan(poster.right), reason: 'the route starts at the left edge, over the picture');
+    expect(route.bottom, lessThanOrEqualTo(poster.top + 2), reason: 'the picture on the second line');
+    expect((poster.center.dy - meta.center.dy).abs(), lessThan(14), reason: 'beside the 22 T | Ref | 30 noy line');
+    expect(find.byKey(const ValueKey('row-share-c1')), findsOneWidget);
+  });
+
+  testWidgets('Paylaş without a share sheet copies the load link', (t) async {
+    final s = lang('az');
+    String? copied;
+    t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String?;
+      return null;
+    });
+    await t.pumpWidget(host(CargoListRow(cargo: load('c1'), strings: s, onTap: () {}), s));
+    await t.pump();
+    await t.tap(find.byKey(const ValueKey('row-share-c1')));
+    await t.pump();
+    await t.pump();
+    expect(copied, contains('#/cargo/c1'));
+    expect(copied, contains('5 100 USD'));
+    expect(find.text('Link kopyalandı ✓'), findsOneWidget);
   });
 
   testWidgets('VIP / Premium marks stay by the price', (t) async {

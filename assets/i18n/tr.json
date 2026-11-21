@@ -2518,5 +2518,7 @@
   "adb_month_plus": "Bu ay ({month}) hedefin üstünde",
   "adb_month_target_hint": "Bu aydan itibaren sayılır; geçmiş aylar değişmez.",
   "adb_so_far_year": "şimdiye kadar",
-  "adb_old_included": "Net gelire eski hesap dahildir: {amount}"
+  "adb_old_included": "Net gelire eski hesap dahildir: {amount}",
+  "row_share": "Paylaş",
+  "row_link_copied": "Bağlantı kopyalandı ✓"
 }

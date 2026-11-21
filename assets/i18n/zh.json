@@ -2518,5 +2518,7 @@
   "adb_month_plus": "本月（{month}）超出目标",
   "adb_month_target_hint": "从本月起计算；以往月份不变。",
   "adb_so_far_year": "截至目前",
-  "adb_old_included": "净收入包含旧账：{amount}"
+  "adb_old_included": "净收入包含旧账：{amount}",
+  "row_share": "分享",
+  "row_link_copied": "链接已复制 ✓"
 }
