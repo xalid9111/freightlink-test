@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,9 +52,23 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     SharedPreferences.getInstance().then((prefs) => prefs.setString(_viewKey, v)).catchError((_) => false);
   }
 
+  /// The panel never waits for a manual refresh (owner, 21.11.2026): it is
+  /// read again every [kAdbizResyncEvery] (a worker's job on his own phone)
+  /// and whenever the owner comes back from a worker's notebook.
+  Timer? _tick;
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+    _tick = Timer.periodic(kAdbizResyncEvery, (_) {
+      if (mounted) _refresh();
+    });
     SharedPreferences.getInstance().then((prefs) {
       final v = adbizViewDecode(prefs.getString(_viewKey));
       if (v != null && mounted) {
@@ -71,9 +87,9 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
   }
 
   void _refresh() {
-    ref.invalidate(adbizPeriodsProvider((companyId: widget.companyId, year: _date.year)));
-    ref.invalidate(adbizReportProvider(_key));
-    ref.invalidate(adbizExpensesProvider(_key));
+    ref.invalidate(adbizPeriodsProvider);
+    ref.invalidate(adbizReportProvider);
+    ref.invalidate(adbizExpensesProvider);
     ref.invalidate(adbizCompaniesProvider);
     ref.invalidate(adbizMeProvider);
   }
@@ -304,8 +320,10 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     await _run(s, () => ref.read(adbizRepositoryProvider).memberTask(w.userId, r), done: s.t('adb_saved'));
   }
 
-  void _openWorker(AdbizWorkerSum w) =>
-      context.pushOnce(Uri(path: '/profile/adbiz/worker/${w.userId}', queryParameters: {'name': w.name}).toString());
+  Future<void> _openWorker(AdbizWorkerSum w) async {
+    await context.pushOnce(Uri(path: '/profile/adbiz/worker/${w.userId}', queryParameters: {'name': w.name}).toString());
+    if (mounted) _refresh(); // what was written there shows here at once
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -372,14 +390,26 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
       AdbizGlass(
         highlight: true,
         padding: const EdgeInsets.fromLTRB(4, 16, 4, 16),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: LayoutBuilder(builder: (context, c) {
+          // One size for all four amounts (owner's picture: "3952" big,
+          // "2162.50" small looked uneven): the largest that fits the widest.
+          final vs = adbizFitSize(
+              [
+                adbizAmount(r?.income ?? 0),
+                adbizAmount(r?.expenses ?? 0),
+                adbizAmount(r?.card ?? 0),
+                adbizAmount((r?.net ?? 0) + oldNet),
+              ],
+              (c.maxWidth - 3) / 4 - 6,
+              MediaQuery.textScalerOf(context));
+          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
               child: AdbizBigStat(
-                  compact: true, icon: Icons.trending_up, label: s.t('adb_income'), value: adbizAmount(r?.income ?? 0), color: AppColors.adbIncome, valueKey: 'adb-income')),
+                  compact: true, valueSize: vs, icon: Icons.trending_up, label: s.t('adb_income'), value: adbizAmount(r?.income ?? 0), color: AppColors.adbIncome, valueKey: 'adb-income')),
           sep,
           Expanded(
               child: AdbizBigStat(
-                  compact: true,
+                  compact: true, valueSize: vs,
                   icon: Icons.receipt_long_outlined,
                   label: s.t('adb_total_spent'),
                   value: adbizAmount(r?.expenses ?? 0),
@@ -388,17 +418,18 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           sep,
           Expanded(
               child: AdbizBigStat(
-                  compact: true, icon: Icons.credit_card, label: s.t('adb_card_moved'), value: adbizAmount(r?.card ?? 0), color: AppColors.adbNet, valueKey: 'adb-card')),
+                  compact: true, valueSize: vs, icon: Icons.credit_card, label: s.t('adb_card_moved'), value: adbizAmount(r?.card ?? 0), color: AppColors.adbNet, valueKey: 'adb-card')),
           sep,
           Expanded(
               child: AdbizBigStat(
-                  compact: true,
+                  compact: true, valueSize: vs,
                   icon: Icons.account_balance_wallet_outlined,
                   label: s.t('adb_net_income'),
                   value: adbizAmount((r?.net ?? 0) + oldNet),
                   color: AppColors.adbGold,
                   valueKey: 'adb-net')),
-        ]),
+          ]);
+        }),
       ),
       if (oldNet != 0)
         Padding(
@@ -944,8 +975,18 @@ class AdbizBigStat extends StatelessWidget {
 
   /// Four in a row (owner, 21.11.2026): smaller, the label on two lines.
   final bool compact;
+
+  /// The amount's size, the same for the four (adbizFitSize).
+  final double? valueSize;
   const AdbizBigStat(
-      {super.key, required this.icon, required this.label, required this.value, required this.color, this.valueKey, this.compact = false});
+      {super.key,
+      required this.icon,
+      required this.label,
+      required this.value,
+      required this.color,
+      this.valueKey,
+      this.compact = false,
+      this.valueSize});
 
   @override
   Widget build(BuildContext context) => Column(children: [
@@ -968,7 +1009,7 @@ class AdbizBigStat extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(value,
                 key: valueKey == null ? null : ValueKey<String>(valueKey!),
-                style: TextStyle(fontSize: compact ? 20 : 30, fontWeight: FontWeight.w600, color: color)),
+                style: TextStyle(fontSize: valueSize ?? (compact ? 20 : 30), fontWeight: FontWeight.w600, color: color)),
           ),
         ),
       ]);
@@ -1398,4 +1439,22 @@ class _AdbizOldMonthDialogState extends State<AdbizOldMonthDialog> {
           FilledButton(key: const ValueKey('adb-old-save'), onPressed: _ok, child: Text(s.t('adb_save'))),
         ],
       );
+}
+
+/// The largest font size (20 → 11) at which every text fits [width] — so the
+/// four amounts of the panel stand in one size.
+double adbizFitSize(List<String> texts, double width, TextScaler scaler) {
+  for (var size = 20.0; size > 11; size -= 0.5) {
+    final fits = texts.every((t) {
+      final tp = TextPainter(
+        text: TextSpan(text: t, style: TextStyle(fontSize: size, fontWeight: FontWeight.w600)),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      return tp.width <= width;
+    });
+    if (fits) return size;
+  }
+  return 11;
 }

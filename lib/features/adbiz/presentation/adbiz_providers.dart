@@ -90,6 +90,12 @@ final adbizDayExpensesProvider = StreamProvider.autoDispose.family<List<AdbizExp
 /// After a write on this device: read the day again at once (never wait for
 /// realtime to show what was just saved).
 void adbizResync(WidgetRef ref, AdbizDay day) {
+  // The owner panel's totals and month / year cards read these: a job or
+  // rasxod written in a notebook (also on an old day) shows there at once
+  // (owner, 21.11.2026: "noyabrın 1-nə 500 AZN yazdım, panel dəyişmədi").
+  ref.invalidate(adbizReportProvider);
+  ref.invalidate(adbizPeriodsProvider);
+  ref.invalidate(adbizExpensesProvider);
   ref.invalidate(adbizMyMonthProvider((userId: day.userId, month: DateTime(day.workDate.year, day.workDate.month, 1))));
   ref.invalidate(adbizEntriesProvider(day.id));
   ref.invalidate(adbizDayExpensesProvider(day.id));
