@@ -326,6 +326,10 @@ class _FilterButton extends StatelessWidget {
 /// owner's own, approved in the design editor (21.11.2026): the card glows
 /// blue, Gəlir and Qazanc are glowing tiles, the expenses stand in orange —
 /// so the three never blur into one another. One row of tiles per currency.
+/// The editor's glow is CSS `0 0 26px` (Gaussian sigma = 13); Flutter's
+/// blurRadius r gives sigma = 0.577 r + 0.5, so 21.6 draws the same glow.
+const double kFleetGlowBlur = 21.6;
+
 class FleetTotalsCard extends StatelessWidget {
   final AppStrings s;
   final List<FleetJob> jobs;
@@ -349,7 +353,7 @@ class FleetTotalsCard extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: glow.withValues(alpha: 0.53)),
-        boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: 26)],
+        boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: kFleetGlowBlur)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(s.t('fl_totals'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text)),
@@ -377,10 +381,14 @@ class FleetTotalsCard extends StatelessWidget {
   Widget _tile(Key key, String label, double v, String cur, Color color, {bool bold = false, Color? glow}) => Container(
         key: key,
         padding: const EdgeInsets.all(8),
+        // The tile keeps the card's own ground: a web glow lies only OUTSIDE
+        // the box, while Flutter paints the shadow under it too — without a
+        // ground the tile turned blue inside (owner, 21.11.2026).
         decoration: BoxDecoration(
+          color: glow == null ? null : AppColors.card,
           borderRadius: BorderRadius.circular(12),
           border: glow == null ? null : Border.all(color: glow.withValues(alpha: 0.53)),
-          boxShadow: glow == null ? null : [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: 26)],
+          boxShadow: glow == null ? null : [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: kFleetGlowBlur)],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
