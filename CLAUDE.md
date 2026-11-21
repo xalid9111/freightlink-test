@@ -20,12 +20,14 @@ to copy-paste.
 | Quality gate | repo `.github/workflows/autofix-ci.yml` (reference copy: `docs/autofix/autofix-ci.yml`) | every branch / PR: static checks, SQL/RLS tests on a throw-away Postgres, `flutter analyze`, `flutter test`, `flutter build web`; result also in Admin → AutoFix |
 | Edge Functions | repo `.github/workflows/supabase-functions.yml` ("Supabase functions") | deploys one function from `supabase/functions/` to Supabase, **only by hand** (Actions → Run workflow, works from a phone); needs the secret `SUPABASE_ACCESS_TOKEN` |
 | OSM truck parks | repo `.github/workflows/osm-truck-parks.yml` ("OSM truck parks") | TIRPark map data (0117): once a month (+ by hand) downloads Geofabrik's country extracts, filters lorry parking with osmium (`scripts/osm_truck_parks`) and upserts `osm_truck_parks` through the Supabase SQL API (secret `SUPABASE_ACCESS_TOKEN`); never AZ, never Overpass, never Pages |
+| Auth e-mail | repo `.github/workflows/supabase-auth-email.yml` ("Supabase auth email") | **only by hand** (Actions → Run workflow, from a phone; owner, 21.11.2026: "kompüterim yoxdur, sən et"): writes ONLY the "Reset password" e-mail's subject + body (`supabase/auth/recovery_subject.txt`, `recovery_email.html` = the token_hash link) into Supabase Auth through the Management API (secret `SUPABASE_ACCESS_TOKEN`) and checks it was saved |
 | Database | Supabase project `jqdqtfmxnqezlsetelpi` | changed **only** by forward-only migrations in `supabase/migrations/` that the owner runs in the SQL editor |
 | Runtime errors | AutoFix (`lib/core/autofix`, migration 0034) | Admin → AutoFix (xətalar) |
 
-Only `deploy.yml`, `autofix-ci.yml`, the manual `supabase-functions.yml`
-and the monthly / manual data job `osm-truck-parks.yml` (owner, 11.11.2026)
-are active workflows. Never add a second Pages deploy workflow (the old `ci.yml` / `deploy-web.yml` from the
+Only `deploy.yml`, `autofix-ci.yml`, the manual `supabase-functions.yml`,
+the monthly / manual data job `osm-truck-parks.yml` (owner, 11.11.2026)
+and the manual `supabase-auth-email.yml` (owner, 21.11.2026) are active
+workflows. Never add a second Pages deploy workflow (the old `ci.yml` / `deploy-web.yml` from the
 ZIP era were intentionally not carried over).
 
 `flutter analyze / test / build` run in GitHub Actions (AutoFix CI on the
