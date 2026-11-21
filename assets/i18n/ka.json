@@ -2516,5 +2516,7 @@
   "adb_month_reached": "🎉 გილოცავთ! თვის მიზანი შესრულდა · {over} AZN",
   "adb_month_minus": "ეს თვე ({month}) — საერთო მინუსი",
   "adb_month_plus": "ეს თვე ({month}) — მიზანს ზემოთ",
-  "adb_month_target_hint": "ითვლება ამ თვიდან; წარსული თვეები არ იცვლება."
+  "adb_month_target_hint": "ითვლება ამ თვიდან; წარსული თვეები არ იცვლება.",
+  "adb_so_far_year": "დღემდე",
+  "adb_old_included": "წმინდა შემოსავალში შედის ძველი აღრიცხვა: {amount}"
 }

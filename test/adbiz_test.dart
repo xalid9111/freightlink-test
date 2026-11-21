@@ -18,6 +18,7 @@ import 'package:freightlink/features/adbiz/presentation/adbiz_providers.dart';
 import 'package:freightlink/features/adbiz/presentation/adbiz_widgets.dart';
 import 'package:freightlink/features/auth/presentation/profile_screen.dart';
 import 'package:freightlink/features/auth/presentation/providers/auth_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String src(String p) => File(p).readAsStringSync();
 
@@ -140,6 +141,7 @@ Future<void> _pumpNotebook(WidgetTester t, _Repo repo,
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   group('the numbers', () {
     test('collected = the sum; remaining never below 0; the target never caps the earnings', () {
       final e = [
@@ -613,6 +615,37 @@ void main() {
       await t.pump();
       await t.pump();
       expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);
+    });
+
+    test('the chosen view kept on the device: encode / decode', () {
+      expect(adbizViewEncode(AdbizPeriod.month, DateTime(2026, 10, 1)), 'month|2026-10-01');
+      expect(adbizViewDecode('year|2025-01-01'), (AdbizPeriod.year, DateTime(2025)));
+      expect(adbizViewDecode('weird'), isNull);
+      expect(adbizViewDecode(null), isNull);
+    });
+
+    testWidgets('the chosen Ay stays (also its month) after the page is opened again', (t) async {
+      SharedPreferences.setMockInitialValues({'adbiz_view_c': 'month|${_today.year}-01-01'});
+      await pumpPanel(t);
+      await t.pump();
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-period-label'))).data, '01.${_today.year}');
+      // Xalis gəlir = the month card's net: the old account counts too.
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '5836 AZN');
+      expect(find.byKey(const ValueKey('adb-old-included')), findsOneWidget);
+      // The same panel on top, the month cards under it.
+      expect(t.getTopLeft(find.byKey(const ValueKey('adb-income'))).dy, lessThan(t.getTopLeft(find.byKey(const ValueKey('adb-month-1'))).dy));
+      await t.tap(find.byKey(const ValueKey('adb-period-year')));
+      await t.pump();
+      await t.pump();
+      expect((await SharedPreferences.getInstance()).getString('adbiz_view_c'), startsWith('year|'));
+    });
+
+    testWidgets('Gün: the panel says which day; no old account', (t) async {
+      await pumpPanel(t);
+      expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);
+      expect(find.byKey(const ValueKey('adb-old-included')), findsNothing);
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '52 AZN');
     });
 
     testWidgets('before SQL 0113: no card line, the switch and the words wait', (t) async {

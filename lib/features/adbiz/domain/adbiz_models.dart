@@ -456,6 +456,22 @@ class AdbizPeriods {
       );
 }
 
+/// The owner panel's chosen view, kept on the device (owner, 21.11.2026:
+/// "proqramı açıb hansını seçdimsə o qalsın"): "month|2026-11-01".
+String adbizViewEncode(AdbizPeriod p, DateTime d) =>
+    '${p.name}|${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+/// Back from the device; null = nothing / broken (the default view).
+(AdbizPeriod, DateTime)? adbizViewDecode(String? v) {
+  if (v == null) return null;
+  final parts = v.split('|');
+  if (parts.length != 2) return null;
+  final p = AdbizPeriod.values.where((x) => x.name == parts[0]).firstOrNull;
+  final d = DateTime.tryParse(parts[1]);
+  if (p == null || d == null) return null;
+  return (p, DateTime(d.year, d.month, d.day));
+}
+
 /// Day / month / year of a date — the owner's report periods.
 enum AdbizPeriod { day, month, year }
 

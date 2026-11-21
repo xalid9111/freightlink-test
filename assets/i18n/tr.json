@@ -2516,5 +2516,7 @@
   "adb_month_reached": "🎉 Tebrikler! Aylık hedefe ulaşıldı · {over} AZN",
   "adb_month_minus": "Bu ay ({month}) toplam eksi",
   "adb_month_plus": "Bu ay ({month}) hedefin üstünde",
-  "adb_month_target_hint": "Bu aydan itibaren sayılır; geçmiş aylar değişmez."
+  "adb_month_target_hint": "Bu aydan itibaren sayılır; geçmiş aylar değişmez.",
+  "adb_so_far_year": "şimdiye kadar",
+  "adb_old_included": "Net gelire eski hesap dahildir: {amount}"
 }
