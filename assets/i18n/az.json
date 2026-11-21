@@ -2520,5 +2520,14 @@
   "adb_so_far_year": "indiyə qədər",
   "adb_old_included": "Xalis gəlirə köhnə hesab daxildir: {amount}",
   "row_share": "Paylaş",
-  "row_link_copied": "Link kopyalandı ✓"
+  "row_link_copied": "Link kopyalandı ✓",
+  "share_pick_title": "Sürücü seç",
+  "share_pick_hint": "Bu yükü göndərmək üçün sürücü seçin",
+  "share_n_drivers": "{n} sürücü",
+  "share_search": "Sürücü axtar",
+  "share_other": "Başqa yolla",
+  "share_picked": "Seçilən",
+  "share_send": "Sürücüyə göndər",
+  "share_sent": "Göndərildi ✓ — Mesajlar-da",
+  "share_failed": "Göndərilmədi. Bir az sonra yenidən cəhd edin."
 }

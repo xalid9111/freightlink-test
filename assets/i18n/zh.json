@@ -2520,5 +2520,14 @@
   "adb_so_far_year": "截至目前",
   "adb_old_included": "净收入包含旧账：{amount}",
   "row_share": "分享",
-  "row_link_copied": "链接已复制 ✓"
+  "row_link_copied": "链接已复制 ✓",
+  "share_pick_title": "选择司机",
+  "share_pick_hint": "选择要发送此货物的司机",
+  "share_n_drivers": "{n} 位司机",
+  "share_search": "搜索司机",
+  "share_other": "其他方式",
+  "share_picked": "已选",
+  "share_send": "发送给司机",
+  "share_sent": "已发送 ✓ — 在消息中",
+  "share_failed": "发送失败，请稍后重试。"
 }

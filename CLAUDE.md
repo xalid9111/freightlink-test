@@ -228,7 +228,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   Ref | 📅 30 noy"); price, marks, icons, › unchanged. Paylaş = the phone's
   share sheet (Web Share: route · price + https://tirlink.app/#/cargo/<id>),
   else the link is copied ("Link kopyalandı ✓"); the computer's tiles
-  unchanged.
+  unchanged. Later the same day (owner's pictures): Paylaş opens "Sürücü
+  seç" (cargo_share_sheet.dart) — my Maşınlarım drivers (linked accounts
+  only, once each with their plates; typed-only names left out), search by
+  name / plate, one picked, "Sürücüyə göndər" = a message in Mesajlar
+  (direct chat) with the load in one line + its link; WhatsApp (wa.me) and
+  "Başqa yolla" buttons; no drivers = the link shared at once. A TırLink link
+  in a chat opens the page in the app (appPathOf → go), others outside. The
+  İrəli çək / VIP / Premium marks stand left of the heart on the card's edge
+  (no longer over the price); loads still take no "Önə çıxar" (0102 stays).
   The phone's Loads page top (owner, later 17.11.2026: "xəritənin sonu
   kəskindir … iş mərkəzi və digərlərini qaytar yerinə"): the old map
   section as before — the logo, slogan, heart and profile picture over the

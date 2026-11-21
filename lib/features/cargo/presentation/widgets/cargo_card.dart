@@ -10,7 +10,6 @@ import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../../services/share_link.dart';
 import '../../../../models/cargo_model.dart';
 import '../../../../repositories/profile_repository.dart';
 import '../../../../core/router/safe_navigation.dart';
@@ -19,6 +18,7 @@ import '../../domain/truck_types.dart';
 import '../../domain/cargo_categories.dart' show categoryIconAsset;
 import '../../domain/cargo_pictures.dart' show cargoPictureCategory;
 import 'cargo_picture.dart';
+import 'cargo_share_sheet.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
 /// block (teal start dot, dashed line, end dot, flags + country + city),
@@ -615,12 +615,6 @@ class CargoListRow extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(8, 10, 0, 10),
               decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.line))),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                PromoMarks(
-                  key: const ValueKey('row-marks'),
-                  premium: cargo.isPremiumAt(now),
-                  vip: vip || cargo.isVipAt(now),
-                  size: 16,
-                ),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 92),
                   child: FittedBox(
@@ -651,18 +645,19 @@ class CargoListRow extends ConsumerWidget {
           child: child,
         );
 
-    Future<void> share() async {
-      final copied = await shareOrCopy(
-        title: 'TırLink',
-        text: '$routeText · ${_num(cargo.offeredPrice)} ${cargo.currency}',
-        url: appPageLink('/cargo/${cargo.id}'),
-      );
-      if (copied && context.mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(strings.t('row_link_copied'))));
-      }
-    }
+    // "Paylaş" (owner, 21.11.2026): pick one of my drivers and send the load
+    // to him in Mesajlar; no drivers → the link is shared at once.
+    Future<void> share() => shareCargo(
+          context,
+          ref,
+          cargoId: cargo.id,
+          strings: strings,
+          text: cargoShareText(
+            route: routeText,
+            details: [weight, if (type != null) type, dateFmt.format(cargo.pickupDate)].join(' · '),
+            price: '${_num(cargo.offeredPrice)} ${cargo.currency}',
+          ),
+        );
 
     // The buttons half over the card's top edge: the row keeps room for them
     // so they are tapped, never cut off.
@@ -672,6 +667,15 @@ class CargoListRow extends ConsumerWidget {
         top: 0,
         right: 34,
         child: Row(mainAxisSize: MainAxisSize.min, children: [
+          // İrəli çək / VIP / Premium left of the heart, on the card's edge
+          // (owner's picture, 21.11.2026); nothing when the load has none.
+          PromoMarks(
+            key: const ValueKey('row-marks'),
+            premium: cargo.isPremiumAt(now),
+            vip: vip || cargo.isVipAt(now),
+            size: 26,
+          ),
+          const SizedBox(width: 4),
           roundButton(
             key: const ValueKey('row-heart'),
             child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize),

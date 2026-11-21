@@ -144,6 +144,17 @@ void main() {
     expect(find.byKey(const ValueKey('row-share-c1')), findsOneWidget);
   });
 
+  testWidgets('VIP / Premium marks left of the heart on the card\'s edge (owner, 21.11.2026)', (t) async {
+    final s = lang('az');
+    await t.pumpWidget(host(CargoListRow(cargo: load('c1', vip: true), strings: s, vip: true, onTap: () {}), s));
+    await t.pump();
+    final marks = t.getRect(find.byKey(const ValueKey('row-marks')));
+    final heart = t.getRect(find.byKey(const ValueKey('row-heart')));
+    expect(marks.right, lessThanOrEqualTo(heart.left));
+    expect((marks.center.dy - heart.center.dy).abs(), lessThan(4));
+    expect(marks.center.dy, lessThan(t.getRect(find.text('5 100')).top), reason: 'not over the price any more');
+  });
+
   testWidgets('Paylaş without a share sheet copies the load link', (t) async {
     final s = lang('az');
     String? copied;
