@@ -843,6 +843,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   old account counts too ("Xalis gəlirə köhnə hesab daxildir: …"). The
   chosen view AND its date stay until the owner changes them, also after
   the app is closed (adbiz_view_<company> on the device).
+  Always fresh (owner, 21.11.2026: "noyabrın 1-nə 500 AZN yazdım, panel
+  dəyişmədi"): every notebook write (adbizResync) also reloads the panel's
+  report, month / year cards and expenses; the panel reads again every 20 s
+  and when the owner comes back from a worker's notebook. The four amounts
+  stand in one size (adbizFitSize). Checked end to end in SQL test 170.
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam

@@ -641,6 +641,27 @@ void main() {
       expect((await SharedPreferences.getInstance()).getString('adbiz_view_c'), startsWith('year|'));
     });
 
+    test('a notebook write (also on an old day) refreshes the panel; the panel reads again by itself', () {
+      final pr = src('lib/features/adbiz/presentation/adbiz_providers.dart');
+      final i = pr.indexOf('void adbizResync(');
+      final body = pr.substring(i, pr.indexOf('}', i));
+      for (final p in ['adbizReportProvider', 'adbizPeriodsProvider', 'adbizExpensesProvider']) {
+        expect(body.contains('ref.invalidate($p);'), isTrue, reason: p);
+      }
+      final c = src('lib/features/adbiz/presentation/adbiz_company_screen.dart');
+      expect(c, contains('Timer.periodic(kAdbizResyncEvery'));
+      expect(c, contains('if (mounted) _refresh(); // what was written there shows here at once'));
+      expect(src('supabase/tests/local/run_local.sh'), contains('170_ad_business_totals_check.sql'));
+    });
+
+    testWidgets('the four amounts stand in ONE size (owner\'s picture: uneven sizes)', (t) async {
+      await pumpPanel(t);
+      final sizes = {for (final k in ['adb-income', 'adb-expenses', 'adb-card', 'adb-net']) t.widget<Text>(find.byKey(ValueKey(k))).style!.fontSize};
+      expect(sizes.length, 1);
+      expect(adbizFitSize(['3952 AZN', '2162.50 AZN'], 70, TextScaler.noScaling),
+          adbizFitSize(['2162.50 AZN'], 70, TextScaler.noScaling), reason: 'the widest decides');
+    });
+
     testWidgets('Gün: the panel says which day; no old account', (t) async {
       await pumpPanel(t);
       expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);

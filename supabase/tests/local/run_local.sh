@@ -180,6 +180,7 @@ suites() {
   "${PSQL[@]}" -d "$DB" -f "$HERE/167_fleet_driver_invite.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/168_ad_business_worker_fix.sql" >/dev/null
   "${PSQL[@]}" -d "$DB" -f "$HERE/169_ad_business_month_target.sql" >/dev/null
+  "${PSQL[@]}" -d "$DB" -f "$HERE/170_ad_business_totals_check.sql" >/dev/null
   PGOPTIONS="-c client_min_messages=notice" "${PSQL[@]}" -d "$DB" -f "$HERE/../messaging_audit_test.sql" 2>&1 \
     | grep -E "ALL MESSAGING|FAILED|ERROR" | sed 's/^/messaging_audit_test: /'
 }
