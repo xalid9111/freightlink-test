@@ -659,6 +659,120 @@ class _JoinSheetState extends ConsumerState<_JoinSheet> {
 }
 
 /// The owner's one-time code for the driver (7 days).
+/// "Sürücünü hesabla bağla" (owner, 21.11.2026: "kodla deyil, axtarılaraq
+/// əlavə edilsin"): type the driver's name → the registered accounts → Seç →
+/// he gets the bell notice and says Qəbul et (0131). The one-time code stays
+/// as a small link at the bottom.
+Future<bool?> showFleetDriverSearch(BuildContext context, {required String truckId}) =>
+    _sheet<bool>(context, _DriverSearchSheet(truckId: truckId));
+
+class _DriverSearchSheet extends ConsumerStatefulWidget {
+  final String truckId;
+  const _DriverSearchSheet({required this.truckId});
+  @override
+  ConsumerState<_DriverSearchSheet> createState() => _DriverSearchSheetState();
+}
+
+class _DriverSearchSheetState extends ConsumerState<_DriverSearchSheet> {
+  List<FleetPerson> _found = const [];
+  Timer? _debounce;
+  int _ask = 0;
+  bool _busy = false;
+  String? _err;
+  String _q = '';
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _typed(String v) {
+    setState(() => _q = v);
+    _debounce?.cancel();
+    if (v.trim().length < 2) {
+      setState(() => _found = const []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final n = ++_ask;
+      final res = await ref.read(fleetRepositoryProvider).searchDrivers(v);
+      if (!mounted || n != _ask) return;
+      setState(() => _found = res);
+    });
+  }
+
+  Future<void> _pick(AppStrings s, FleetPerson p) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _err = null;
+    });
+    try {
+      await ref.read(fleetRepositoryProvider).inviteDriver(widget.truckId, p.id);
+      ref.invalidate(fleetProvider);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) setState(() => _err = s.t(fleetErrorKey(e)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
+    return _SheetFrame(title: s.t('fl_link_driver'), children: [
+      Text(s.t('fl_link_search_hint'), style: TextStyle(color: AppColors.textSoft)),
+      const SizedBox(height: 10),
+      TextField(
+        key: const ValueKey('fl-link-search'),
+        autofocus: true,
+        maxLength: 60,
+        textCapitalization: TextCapitalization.words,
+        onChanged: _typed,
+        decoration: InputDecoration(hintText: s.t('fl_driver_hint'), counterText: '', prefixIcon: Icon(Icons.search, color: AppColors.textSoft)),
+      ),
+      for (final p in _found)
+        InkWell(
+          key: ValueKey('fl-link-user-${p.id}'),
+          onTap: _busy ? null : () => _pick(s, p),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            child: Row(children: [
+              _PersonAvatar(p: p),
+              const SizedBox(width: 10),
+              Flexible(child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 15, color: AppColors.text))),
+              if (p.verified) ...[const SizedBox(width: 4), const VerifiedTick(size: 15)],
+              const Spacer(),
+              Text(s.t('fl_driver_pick'), style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w500)),
+            ]),
+          ),
+        ),
+      if (_q.trim().length >= 2 && _found.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(s.t('fl_link_none'), key: const ValueKey('fl-link-none'), style: TextStyle(color: AppColors.textSoft)),
+        ),
+      _error(_err),
+      const SizedBox(height: 8),
+      // The one-time code stays (it still works) — only as a small link.
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          key: const ValueKey('fl-link-by-code'),
+          onPressed: () {
+            Navigator.of(context).pop();
+            showFleetInviteSheet(context, truckId: widget.truckId);
+          },
+          icon: const Icon(Icons.key_outlined, size: 18),
+          label: Text(s.t('fl_link_by_code')),
+        ),
+      ),
+    ]);
+  }
+}
+
 Future<void> showFleetInviteSheet(BuildContext context, {required String truckId}) => _sheet<void>(context, _InviteSheet(truckId: truckId));
 
 class _InviteSheet extends ConsumerStatefulWidget {

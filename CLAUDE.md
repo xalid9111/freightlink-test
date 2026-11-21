@@ -1182,6 +1182,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   yes (fleet_driver_answer: yes = linked like the code, the owner is told
   either way); ✕ on the chosen one takes it back; a name not in the list
   is just typed as before; the one-time code stays. The truck page's
+  "Sürücünü hesabla bağla" (owner, 21.11.2026: "kodla deyil, axtarılaraq
+  əlavə edilsin") opens the same search (showFleetDriverSearch: name →
+  accounts → tap = the invitation, he answers Qəbul et); the one-time code
+  is only the small "Kodla qoşulma" link at its bottom. The truck page's
   Qazanc card has the approved expenses' total in red on the right
   ("Rasxod", per currency) with "+ n təsdiq gözləyir" under it.
 - Messages tab lists only chats the user is part of (even for admins).

@@ -2529,5 +2529,8 @@
   "share_picked": "Seçilən",
   "share_send": "Sürücüyə göndər",
   "share_sent": "Göndərildi ✓ — Mesajlar-da",
-  "share_failed": "Göndərilmədi. Bir az sonra yenidən cəhd edin."
+  "share_failed": "Göndərilmədi. Bir az sonra yenidən cəhd edin.",
+  "fl_link_search_hint": "Sürücünün adını yazın və TırLink hesabını seçin. O, Qəbul et basandan sonra maşına bağlanır.",
+  "fl_link_none": "Belə adda hesab tapılmadı",
+  "fl_link_by_code": "Kodla qoşulma"
 }

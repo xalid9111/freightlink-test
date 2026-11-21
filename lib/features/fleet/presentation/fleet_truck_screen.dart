@@ -490,7 +490,7 @@ class _DriverCard extends ConsumerWidget {
           if (truck.driverId == null)
             OutlinedButton.icon(
               key: const ValueKey('fl-link-driver'),
-              onPressed: () => showFleetInviteSheet(context, truckId: truck.id),
+              onPressed: () => showFleetDriverSearch(context, truckId: truck.id),
               icon: const Icon(Icons.link, size: 18),
               label: Text(s.t('fl_link_driver')),
             )
