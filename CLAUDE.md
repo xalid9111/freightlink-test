@@ -1211,7 +1211,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   21.11.2026): the card glows blue (AppColors.blue border + glow), one row
   of three tiles per currency — Gəlir and Qazanc glowing tiles, Rasxodlar
   plain with the amount in AppColors.accentFill, Qazanc green (red when
-  negative); each amount with its currency.
+  negative); each amount with its currency. The app draws the glow exactly like the
+  editor (owner, 21.11.2026: "fon rəngi eyni deyil, kölgə çox görünür"):
+  glowing tiles keep AppColors.card as their ground (Flutter paints a
+  shadow under the box too; the web glow lies only outside), blur
+  kFleetGlowBlur = 21.6 (= CSS 26 px), 40 % colour, 53 % border.
 - Messages tab lists only chats the user is part of (even for admins).
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new

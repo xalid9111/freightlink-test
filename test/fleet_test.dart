@@ -165,6 +165,9 @@ void main() {
     expect((card.decoration as BoxDecoration).boxShadow, isNotEmpty, reason: 'the card glows');
     final spent = tester.widget<Container>(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('fl-tot-spent-')).first);
     expect((spent.decoration as BoxDecoration).boxShadow, isNull, reason: 'expenses: no glow, orange text');
+    final inc = tester.widget<Container>(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('fl-tot-income-')).first);
+    expect((inc.decoration as BoxDecoration).color, isNotNull, reason: 'a glowing tile keeps the card ground — no blue inside (owner, 21.11.2026)');
+    expect((inc.decoration as BoxDecoration).boxShadow!.single.blurRadius, kFleetGlowBlur, reason: 'the same glow as the editor');
     expect(find.text('Volvo FH 2022'), findsOneWidget);
     expect(find.text('99-AC-981'), findsOneWidget);
     expect(find.text('Rəşad Məmmədov'), findsOneWidget);
