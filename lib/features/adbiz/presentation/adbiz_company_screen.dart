@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -36,9 +37,31 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
 
   AdbizPeriodKey get _key => (companyId: widget.companyId, period: _period, date: _date);
 
+  String get _viewKey => 'adbiz_view_${widget.companyId}';
+
+  /// Gün / Ay / İl and its date stay as chosen until the owner changes them
+  /// (owner, 21.11.2026) — kept on the device, also after a restart.
+  void _setView(AdbizPeriod p, DateTime d) {
+    setState(() {
+      _period = p;
+      _date = d;
+    });
+    final v = adbizViewEncode(p, d);
+    SharedPreferences.getInstance().then((prefs) => prefs.setString(_viewKey, v)).catchError((_) => false);
+  }
+
   @override
   void initState() {
     super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      final v = adbizViewDecode(prefs.getString(_viewKey));
+      if (v != null && mounted) {
+        setState(() {
+          _period = v.$1;
+          _date = v.$2;
+        });
+      }
+    }).catchError((_) {});
     // A day ends at 23:59 Baku: forgotten open days are closed first, then
     // the open / closed counts are read again (0112).
     Future.microtask(() async {
@@ -55,12 +78,12 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     ref.invalidate(adbizMeProvider);
   }
 
-  void _shift(int dir) => setState(() {
-        _date = switch (_period) {
-          AdbizPeriod.day => _date.add(Duration(days: dir)),
-          AdbizPeriod.month => DateTime(_date.year, _date.month + dir, 1),
-          AdbizPeriod.year => DateTime(_date.year + dir, 1, 1),
-        };
+  void _shift(int dir) => _setView(
+      _period,
+      switch (_period) {
+        AdbizPeriod.day => _date.add(Duration(days: dir)),
+        AdbizPeriod.month => DateTime(_date.year, _date.month + dir, 1),
+        AdbizPeriod.year => DateTime(_date.year + dir, 1, 1),
       });
 
   String _periodLabel(AppStrings s) => switch (_period) {
@@ -302,7 +325,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     final periodBar = AdbizGlass(
       padding: const EdgeInsets.all(10),
       child: LayoutBuilder(builder: (context, c) {
-        final pills = AdbizPeriodPills(s: s, value: _period, onChanged: (v) => setState(() => _period = v));
+        final pills = AdbizPeriodPills(s: s, value: _period, onChanged: (v) => _setView(v, _date));
         final date = Row(mainAxisSize: MainAxisSize.min, children: [
           IconButton(key: const ValueKey('adb-prev'), onPressed: () => _shift(-1), icon: Icon(Icons.chevron_left, color: AppColors.adbText)),
           Text(_periodLabel(s), key: const ValueKey('adb-period-label'),
@@ -325,13 +348,24 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     final sep = Container(width: 1, height: 70, color: AppColors.adbLine);
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final today = bakuToday();
-    final monthCaption = _period != AdbizPeriod.month
+    // The same panel for Gün · Ay · İl (owner, 21.11.2026), with what it covers.
+    final monthCaption = switch (_period) {
+      AdbizPeriod.day => '${_date.day} ${monthName(_date.month, lang)} ${_date.year}',
+      AdbizPeriod.month => '${adbizMonthTitle(_date, lang)}'
+          '${_date.year == today.year && _date.month == today.month ? ' · ${s.t('adb_so_far', {'from': '1', 'to': '${today.day}'})}' : ''}',
+      AdbizPeriod.year => '${_date.year}${_date.year == today.year ? ' · ${s.t('adb_so_far_year')}' : ''}',
+    };
+    // Xalis gəlir = the month / year cards' net: the old account counts too.
+    final perSums = _period == AdbizPeriod.day
         ? null
-        : '${adbizMonthTitle(_date, lang)}'
-            '${_date.year == today.year && _date.month == today.month ? ' · ${s.t('adb_so_far', {'from': '1', 'to': '${today.day}'})}' : ''}';
+        : ref.watch(adbizPeriodsProvider((companyId: widget.companyId, year: _date.year))).valueOrNull;
+    final oldNet = switch (_period) {
+      AdbizPeriod.day => 0.0,
+      AdbizPeriod.month => perSums?.months.where((m) => m.key == _date.month).firstOrNull?.impNet ?? 0.0,
+      AdbizPeriod.year => perSums?.years.where((y) => y.key == _date.year).firstOrNull?.impNet ?? 0.0,
+    };
     final totals = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      if (monthCaption != null)
-        Padding(
+      Padding(
           padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
           child: Text(monthCaption, key: const ValueKey('adb-month-caption'), style: TextStyle(fontSize: 14, color: AppColors.adbTextSoft)),
         ),
@@ -361,11 +395,17 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                   compact: true,
                   icon: Icons.account_balance_wallet_outlined,
                   label: s.t('adb_net_income'),
-                  value: adbizAmount(r?.net ?? 0),
+                  value: adbizAmount((r?.net ?? 0) + oldNet),
                   color: AppColors.adbGold,
                   valueKey: 'adb-net')),
         ]),
       ),
+      if (oldNet != 0)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+          child: Text(s.t('adb_old_included', {'amount': adbizAmount(oldNet)}),
+              key: const ValueKey('adb-old-included'), style: TextStyle(fontSize: 13, color: AppColors.adbTextSoft)),
+        ),
     ]);
     final soft = TextStyle(fontSize: 15, color: AppColors.adbTextSoft);
     // The card money is the third part of the totals (owner, 21.11.2026);
@@ -616,10 +656,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                 onPressed: _busy ? null : () => _deleteDayOn(s, d, r?.workers ?? const []),
               ),
             ]),
-            onTap: () => setState(() {
-              _period = AdbizPeriod.day;
-              _date = d;
-            }),
+            onTap: () => _setView(AdbizPeriod.day, d),
           ),
       ]),
     );
@@ -643,7 +680,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     title: cap(monthName(m.key, lang)),
                     sum: m,
                     selected: m.key == _date.month,
-                    onTap: () => setState(() => _date = DateTime(_date.year, m.key, 1)),
+                    onTap: () => _setView(AdbizPeriod.month, DateTime(_date.year, m.key, 1)),
                   ),
               ]
             : [
@@ -653,10 +690,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     title: '${y.key}',
                     sum: y,
                     selected: y.key == _date.year,
-                    onTap: () => setState(() {
-                      _period = AdbizPeriod.month;
-                      _date = DateTime(y.key, 1, 1);
-                    }),
+                    onTap: () => _setView(AdbizPeriod.month, DateTime(y.key, 1, 1)),
                   ),
               ];
         final sel = _period == AdbizPeriod.month ? p.months.where((m) => m.key == _date.month).firstOrNull : null;
@@ -716,9 +750,9 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
         final left = <Widget>[
           periodBar,
           gap,
-          if (cards != null) ...[cards, gap],
           totals,
-          const SizedBox(height: 12),
+          gap,
+          if (cards != null) ...[cards, gap],
           daysLine,
           const SizedBox(height: 22),
           workersHead,

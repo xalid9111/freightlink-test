@@ -836,6 +836,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   right: Ümumi gəlir · Rasxodlar · Karta köçürülən (jobs paid by card,
   inside the income) · Xalis gəlir (gəlir − rasxod); Ay shows "Noyabr ·
   indiyə qədər (1–21)" over them; the old "Kartla · Nağd" line is gone.
+  One panel for Gün · Ay · İl (owner's pictures, 21.11.2026): the four parts
+  stand right under the period bar in all three (with "21 noyabr 2026" /
+  "Noyabr · indiyə qədər (1–21)" / "2026 · indiyə qədər" over them), the
+  month / year cards under the panel; Xalis gəlir = the cards' net, so the
+  old account counts too ("Xalis gəlirə köhnə hesab daxildir: …"). The
+  chosen view AND its date stay until the owner changes them, also after
+  the app is closed (adbiz_view_<company> on the device).
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam

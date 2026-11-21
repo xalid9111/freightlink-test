@@ -2516,5 +2516,7 @@
   "adb_month_reached": "🎉 Congratulations! Monthly target reached · {over} AZN",
   "adb_month_minus": "This month ({month}) total minus",
   "adb_month_plus": "This month ({month}) over the target",
-  "adb_month_target_hint": "Counts from this month on; past months do not change."
+  "adb_month_target_hint": "Counts from this month on; past months do not change.",
+  "adb_so_far_year": "so far",
+  "adb_old_included": "Net income includes the old account: {amount}"
 }
