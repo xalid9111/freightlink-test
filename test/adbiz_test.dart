@@ -566,16 +566,16 @@ void main() {
       expect(find.byKey(const ValueKey('adb-period-day')), findsOneWidget);
       expect(find.byKey(const ValueKey('adb-period-label')), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-income'))).data, '60 AZN');
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-expenses'))).data, '8 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '…');
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '52 AZN');
       // Four parts (owner, 21.11.2026): the card money is the third one.
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-card'))).data, '40 AZN');
-      expect(find.text('adb_total_spent'), findsOneWidget);
+      expect(find.text('adb_month_gap'), findsWidgets);
       expect(find.text('adb_card_moved'), findsOneWidget);
       expect(find.text('adb_net_income'), findsOneWidget);
       expect(find.byKey(const ValueKey('adb-card-line')), findsNothing, reason: 'the old line is gone');
       double x(String k) => t.getCenter(find.byKey(ValueKey(k))).dx;
-      expect(x('adb-income') < x('adb-expenses') && x('adb-expenses') < x('adb-card') && x('adb-card') < x('adb-net'), isTrue,
+      expect(x('adb-income') < x('adb-minus') && x('adb-minus') < x('adb-card') && x('adb-card') < x('adb-net'), isTrue,
           reason: 'left to right: gəlir · rasxod · kart · xalis');
       expect(find.byKey(const ValueKey('adb-days-line')), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-total-u1'))).data, '60 AZN');
@@ -617,6 +617,33 @@ void main() {
       expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);
     });
 
+    test('Ümumi mənfi (owner, 22.11.2026): rasxod + the minus, one day = income − rasxod − the targets', () {
+      // The owner's month: 4190 income, 2162.50 rasxod, one worker, 6110 target → 4082.50 minus.
+      expect(adbizMinusText(4190 - 2162.50 - 6110), '4082.50 AZN');
+      expect(adbizMinusText(40), '+40 AZN', reason: 'over the target = a plus');
+      expect(adbizMinusText(0), '0 AZN');
+      expect(adbizMinusText(null), '…');
+      final r = AdbizReport.fromJson({'income': 120, 'expenses': 30, 'net': 90});
+      final day = DateTime(2026, 11, 22);
+      AdbizDay d(String u, DateTime w, double target) => AdbizDay(id: '$u$w', companyId: 'c', userId: u, workDate: w, target: target);
+      final gap = adbizDayGap(r, [
+        [d('a', day, 235), d('a', DateTime(2026, 11, 21), 235)],
+        [d('b', day, 100)],
+        const <AdbizDay>[], // a worker with no day that date
+      ], day);
+      expect(gap, 120 - 30 - 335);
+      expect(adbizDayGap(r, [null], day), isNull, reason: 'still loading = no made-up number');
+    });
+
+    testWidgets('İl: Ümumi mənfi = the year card\'s red half', (t) async {
+      await pumpPanel(t);
+      await t.tap(find.byKey(const ValueKey('adb-period-year')));
+      await t.pump();
+      await t.pump();
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '10197 AZN');
+      expect(find.text('adb_total_spent'), findsNothing);
+    });
+
     test('the chosen view kept on the device: encode / decode', () {
       expect(adbizViewEncode(AdbizPeriod.month, DateTime(2026, 10, 1)), 'month|2026-10-01');
       expect(adbizViewDecode('year|2025-01-01'), (AdbizPeriod.year, DateTime(2025)));
@@ -633,6 +660,8 @@ void main() {
       // Xalis gəlir = the month card's net: the old account counts too.
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '5836 AZN');
       expect(find.byKey(const ValueKey('adb-old-included')), findsOneWidget);
+      // Ümumi mənfi instead of Rasxodlar (owner, 22.11.2026) = the month card's red half.
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '215 AZN');
       // The same panel on top, the month cards under it.
       expect(t.getTopLeft(find.byKey(const ValueKey('adb-income'))).dy, lessThan(t.getTopLeft(find.byKey(const ValueKey('adb-month-1'))).dy));
       await t.tap(find.byKey(const ValueKey('adb-period-year')));
@@ -656,7 +685,7 @@ void main() {
 
     testWidgets('the four amounts stand in ONE size (owner\'s picture: uneven sizes)', (t) async {
       await pumpPanel(t);
-      final sizes = {for (final k in ['adb-income', 'adb-expenses', 'adb-card', 'adb-net']) t.widget<Text>(find.byKey(ValueKey(k))).style!.fontSize};
+      final sizes = {for (final k in ['adb-income', 'adb-minus', 'adb-card', 'adb-net']) t.widget<Text>(find.byKey(ValueKey(k))).style!.fontSize};
       expect(sizes.length, 1);
       expect(adbizFitSize(['3952 AZN', '2162.50 AZN'], 70, TextScaler.noScaling),
           adbizFitSize(['2162.50 AZN'], 70, TextScaler.noScaling), reason: 'the widest decides');
