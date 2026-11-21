@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/widgets/my_location_dot.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
@@ -347,22 +348,12 @@ class _ServicesMapScreenState extends ConsumerState<ServicesMapScreen>
       ));
     }
     if (me != null) {
+      // The user's place blinks like a light (owner, 21.11.2026).
       out.add(Marker(
         point: me,
-        width: 26,
-        height: 26,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.blue.withValues(alpha: 0.25),
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(color: AppColors.blue, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2.5)),
-          ),
-        ),
+        width: kMyLocationBox,
+        height: kMyLocationBox,
+        child: const IgnorePointer(child: MyLocationDot()),
       ));
     }
     return out;

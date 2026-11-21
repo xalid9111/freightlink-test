@@ -1162,6 +1162,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   Mağaza əlavə et, its words only as a tooltip) — they ride up and down with
   the list and leave when it is opened high; "Bugünkü plan" under the
   list's line.
+  The user's own place (owner, 21.11.2026: "işıq kimi yanıb sönsün, diqqət
+  çəksin", mockup approved) blinks on Parklar, Servislər and Mağazalar:
+  MyLocationDot (core/widgets/my_location_dot.dart) — the blue dot with its
+  white ring, a breathing glow and a light wave spreading out and fading
+  every 1.8 s, in its own RepaintBoundary; phones asking for less motion
+  get a still halo.
 - "Maşınlarım" (owner's pictures and answers, 20.11.2026, SQL 0130 —
   stage 2 of the Xəritə tab; lib/features/fleet): "Xəritə | Maşınlarım"
   under the header on Parklar / Servislər / Mağazalar and on /fleet

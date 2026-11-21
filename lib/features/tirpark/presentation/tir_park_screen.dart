@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/widgets/my_location_dot.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -419,17 +420,12 @@ class _TirParkScreenState extends ConsumerState<TirParkScreen> with SingleTicker
                                 ),
                               ),
                           if (me != null)
+                            // The user's place blinks like a light (owner, 21.11.2026).
                             Marker(
                               point: me,
-                              width: 22,
-                              height: 22,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.blue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 3),
-                                ),
-                              ),
+                              width: kMyLocationBox,
+                              height: kMyLocationBox,
+                              child: const IgnorePointer(child: MyLocationDot(dot: 22)),
                             ),
                         ]),
                         const AppMapAttribution(),
