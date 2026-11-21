@@ -2529,5 +2529,8 @@
   "share_picked": "已选",
   "share_send": "发送给司机",
   "share_sent": "已发送 ✓ — 在消息中",
-  "share_failed": "发送失败，请稍后重试。"
+  "share_failed": "发送失败，请稍后重试。",
+  "fl_link_search_hint": "输入司机姓名并选择其 TırLink 账户。司机点击“接受”后即与车辆关联。",
+  "fl_link_none": "未找到此姓名的账户",
+  "fl_link_by_code": "用代码加入"
 }

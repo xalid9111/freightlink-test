@@ -2529,5 +2529,8 @@
   "share_picked": "Chosen",
   "share_send": "Send to the driver",
   "share_sent": "Sent ✓ — in Messages",
-  "share_failed": "Not sent. Please try again shortly."
+  "share_failed": "Not sent. Please try again shortly.",
+  "fl_link_search_hint": "Type the driver's name and pick his TırLink account. He is linked to the truck after he taps Accept.",
+  "fl_link_none": "No account found with this name",
+  "fl_link_by_code": "Join with a code"
 }

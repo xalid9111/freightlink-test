@@ -70,6 +70,8 @@ class _Repo implements FleetRepository {
   }
 
   @override
+  Future<String> inviteCode(String truckId) async => 'AB12CD34';
+  @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
@@ -257,6 +259,38 @@ void main() {
     expect(repo.saved.single, 'Volvo|Rəşad');
     expect(repo.cancelled, ['t1']);
     expect(repo.invited, isEmpty);
+  });
+
+  testWidgets('the truck page: "Sürücünü hesabla bağla" searches the registered users; the code stays a small link', (tester) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = _Repo();
+    const free = FleetTruck(id: 't1', ownerId: _owner, name: 'Volvo FH 2022');
+    await tester.pumpWidget(_app(const FleetTruckScreen(id: 't1'), const FleetData(trucks: [free]), repo: repo));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('fl-link-driver')));
+    await tester.tap(find.byKey(const ValueKey('fl-link-driver')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('fl-link-search')), findsOneWidget, reason: 'a search, not the code');
+    expect(find.byKey(const ValueKey('fl-invite-code')), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('fl-link-search')), 'Əl');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    expect(repo.asked, ['Əl']);
+    await tester.tap(find.byKey(const ValueKey('fl-link-user-u-ali')));
+    await tester.pumpAndSettle();
+    expect(repo.invited.single, ('t1', 'u-ali'), reason: 'asked, never linked without his yes');
+    expect(find.byKey(const ValueKey('fl-link-search')), findsNothing, reason: 'the sheet closes');
+
+    // The one-time code still works, from the small link.
+    await tester.tap(find.byKey(const ValueKey('fl-link-driver')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('fl-link-by-code')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('fl-link-search')), findsNothing);
+    expect(find.byKey(const ValueKey('fl-invite-code')), findsOneWidget);
+    expect(find.text('AB12CD34'), findsOneWidget);
   });
 
   testWidgets('"Sürücü təsdiqi gözləyir" on the card and the truck page', (tester) async {
