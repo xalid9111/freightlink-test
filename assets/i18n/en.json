@@ -2518,5 +2518,16 @@
   "adb_month_plus": "This month ({month}) over the target",
   "adb_month_target_hint": "Counts from this month on; past months do not change.",
   "adb_so_far_year": "so far",
-  "adb_old_included": "Net income includes the old account: {amount}"
+  "adb_old_included": "Net income includes the old account: {amount}",
+  "row_share": "Share",
+  "row_link_copied": "Link copied ✓",
+  "share_pick_title": "Choose a driver",
+  "share_pick_hint": "Choose a driver to send this load to",
+  "share_n_drivers": "{n} drivers",
+  "share_search": "Search drivers",
+  "share_other": "Other ways",
+  "share_picked": "Chosen",
+  "share_send": "Send to the driver",
+  "share_sent": "Sent ✓ — in Messages",
+  "share_failed": "Not sent. Please try again shortly."
 }

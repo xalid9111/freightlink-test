@@ -18,6 +18,7 @@ import '../../domain/truck_types.dart';
 import '../../domain/cargo_categories.dart' show categoryIconAsset;
 import '../../domain/cargo_pictures.dart' show cargoPictureCategory;
 import 'cargo_picture.dart';
+import 'cargo_share_sheet.dart';
 
 /// Cargo card in the approved "night map" design: badge row, a route
 /// block (teal start dot, dashed line, end dot, flags + country + city),
@@ -556,7 +557,12 @@ class CargoListRow extends ConsumerWidget {
       ]),
     );
 
-    return Material(
+    final routeText =
+        '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'.trim();
+    // Owner's design (21.11.2026, "qarışıqlığı aradan qaldır"): the heart and
+    // "Paylaş" stand on the card's upper right edge; the route runs the whole
+    // width; the poster's picture stands left of the second line.
+    final card = Material(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
@@ -568,62 +574,47 @@ class CargoListRow extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.tileLine, width: 1),
           ),
-          padding: const EdgeInsets.fromLTRB(10, 12, 4, 12),
+          padding: const EdgeInsets.fromLTRB(12, 18, 4, 12),
           child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-              Column(children: [
-                Container(
-                  width: sideSize,
-                  height: sideSize,
-                  decoration: BoxDecoration(
-                    color: AppColors.cardAlt,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.line),
-                  ),
-                  alignment: Alignment.center,
-                  child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(
+                  routeText,
+                  key: const ValueKey('row-route'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.25),
                 ),
-                const SizedBox(height: 8),
-                // The poster's own profile picture (owner, 17.11.2026).
-                Container(
-                  key: const ValueKey('row-poster'),
-                  padding: const EdgeInsets.all(1.5),
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.accent, width: 2)),
-                  child: UserAvatar(
-                    imageUrl: poster?.avatarUrl,
-                    initials: _initialsOf(posterName),
-                    radius: (sideSize - 7) / 2,
+                const SizedBox(height: 6),
+                Row(children: [
+                  // The poster's own profile picture (owner, 17.11.2026).
+                  Container(
+                    key: const ValueKey('row-poster'),
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.accent, width: 2)),
+                    child: UserAvatar(
+                      imageUrl: poster?.avatarUrl,
+                      initials: _initialsOf(posterName),
+                      radius: (sideSize - 7) / 2,
+                    ),
                   ),
-                ),
-              ]),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                  Text(
-                    '${from?.flag ?? ''} ${Cities.label(cargo.pickupCity, localeCode)} → ${to?.flag ?? ''} ${Cities.label(cargo.destinationCity, localeCode)}'
-                        .trim(),
-                    key: const ValueKey('row-route'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.25),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                      Container(height: 1, color: AppColors.line),
+                      const SizedBox(height: 9),
+                      metaLine,
+                    ]),
                   ),
-                  const SizedBox(height: 9),
-                  Container(height: 1, color: AppColors.line),
-                  const SizedBox(height: 9),
-                  metaLine,
                 ]),
-              ),
-              const SizedBox(width: 8),
-              // The price behind a thin upright line (owner's design).
-              Container(
-                padding: const EdgeInsets.fromLTRB(8, 10, 0, 10),
-                decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.line))),
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                PromoMarks(
-                  key: const ValueKey('row-marks'),
-                  premium: cargo.isPremiumAt(now),
-                  vip: vip || cargo.isVipAt(now),
-                  size: 16,
-                ),
+              ]),
+            ),
+            const SizedBox(width: 8),
+            // The price behind a thin upright line (owner's design).
+            Container(
+              padding: const EdgeInsets.fromLTRB(8, 10, 0, 10),
+              decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.line))),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 92),
                   child: FittedBox(
@@ -633,14 +624,82 @@ class CargoListRow extends ConsumerWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(cargo.currency, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
-                ]),
-              ),
-              Icon(Icons.chevron_right, size: 22, color: AppColors.textSoft),
-            ]),
+              ]),
+            ),
+            Icon(Icons.chevron_right, size: 22, color: AppColors.textSoft),
+          ]),
         ),
       ),
     );
+
+    Widget roundButton({required Key key, required Widget child, String? tooltip}) => Container(
+          key: key,
+          width: sideSize,
+          height: sideSize,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.tileLine),
+          ),
+          alignment: Alignment.center,
+          child: child,
+        );
+
+    // "Paylaş" (owner, 21.11.2026): pick one of my drivers and send the load
+    // to him in Mesajlar; no drivers → the link is shared at once.
+    Future<void> share() => shareCargo(
+          context,
+          ref,
+          cargoId: cargo.id,
+          strings: strings,
+          text: cargoShareText(
+            route: routeText,
+            details: [weight, if (type != null) type, dateFmt.format(cargo.pickupDate)].join(' · '),
+            price: '${_num(cargo.offeredPrice)} ${cargo.currency}',
+          ),
+        );
+
+    // The buttons half over the card's top edge: the row keeps room for them
+    // so they are tapped, never cut off.
+    return Stack(clipBehavior: Clip.none, children: [
+      Padding(padding: const EdgeInsets.only(top: kRowButtonsLift), child: card),
+      Positioned(
+        top: 0,
+        right: 34,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          // İrəli çək / VIP / Premium left of the heart, on the card's edge
+          // (owner's picture, 21.11.2026); nothing when the load has none.
+          PromoMarks(
+            key: const ValueKey('row-marks'),
+            premium: cargo.isPremiumAt(now),
+            vip: vip || cargo.isVipAt(now),
+            size: 26,
+          ),
+          const SizedBox(width: 4),
+          roundButton(
+            key: const ValueKey('row-heart'),
+            child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: strings.t('row_share'),
+            child: InkResponse(
+              key: ValueKey('row-share-${cargo.id}'),
+              onTap: share,
+              radius: sideSize / 2 + 4,
+              child: roundButton(
+                key: const ValueKey('row-share'),
+                child: Icon(Icons.ios_share, size: 19, color: AppColors.text),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    ]);
   }
+
+  /// How far the heart / share buttons stand over the card's top edge.
+  static const kRowButtonsLift = sideSize / 2;
 
   /// The heart (owner, 17.11.2026: bigger than 13).
   static const kRowHeartSize = 19.0;

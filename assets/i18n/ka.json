@@ -2518,5 +2518,16 @@
   "adb_month_plus": "ეს თვე ({month}) — მიზანს ზემოთ",
   "adb_month_target_hint": "ითვლება ამ თვიდან; წარსული თვეები არ იცვლება.",
   "adb_so_far_year": "დღემდე",
-  "adb_old_included": "წმინდა შემოსავალში შედის ძველი აღრიცხვა: {amount}"
+  "adb_old_included": "წმინდა შემოსავალში შედის ძველი აღრიცხვა: {amount}",
+  "row_share": "გაზიარება",
+  "row_link_copied": "ბმული დაკოპირდა ✓",
+  "share_pick_title": "აირჩიეთ მძღოლი",
+  "share_pick_hint": "აირჩიეთ მძღოლი ამ ტვირთის გასაგზავნად",
+  "share_n_drivers": "{n} მძღოლი",
+  "share_search": "მძღოლის ძებნა",
+  "share_other": "სხვა გზით",
+  "share_picked": "არჩეული",
+  "share_send": "მძღოლს გაგზავნა",
+  "share_sent": "გაიგზავნა ✓ — შეტყობინებებში",
+  "share_failed": "ვერ გაიგზავნა. ცოტა ხანში სცადეთ."
 }

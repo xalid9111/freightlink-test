@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -11,6 +12,15 @@ import '../../../../core/theme/app_theme.dart';
 
 /// http(s):// … or www. … up to a space; trailing punctuation is not part of it.
 final _linkRe = RegExp(r'(?:https?:\/\/|www\.)[^\s<>"]+', caseSensitive: false);
+
+/// "https://tirlink.app/#/cargo/12" → "/cargo/12": a page of this app (its
+/// own address or tirlink.app); null for any other link.
+String? appPathOf(Uri link) {
+  final own = {'tirlink.app', 'www.tirlink.app', if (Uri.base.host.isNotEmpty) Uri.base.host};
+  if (!own.contains(link.host.toLowerCase())) return null;
+  final f = link.fragment;
+  return f.startsWith('/') && f.length > 1 ? f : null;
+}
 
 /// The text split into plain parts and link parts; only http / https links.
 List<(String text, Uri? link)> splitLinks(String text) {
@@ -54,7 +64,17 @@ class _LinkifiedTextState extends State<LinkifiedText> {
   }
 
   TapGestureRecognizer _tap(Uri link) {
-    final r = TapGestureRecognizer()..onTap = () => launchUrl(link, mode: LaunchMode.externalApplication);
+    final r = TapGestureRecognizer()
+      ..onTap = () {
+        // A TırLink page (a shared load …) opens right here in the app
+        // (owner, 21.11.2026: "linkə basıldıqda birbaşa yük açılsın").
+        final inApp = appPathOf(link);
+        if (inApp != null) {
+          GoRouter.of(context).go(inApp);
+          return;
+        }
+        launchUrl(link, mode: LaunchMode.externalApplication);
+      };
     _taps.add(r);
     return r;
   }
