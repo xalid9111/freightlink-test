@@ -451,8 +451,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
               child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 chip(s.t('adb_income'), adbizAmount(r?.income ?? 0), AppColors.adbIncome, AppColors.adbText, 'adb-income'),
                 const SizedBox(width: gapW),
-                chip(s.t('adb_month_gap'), minusText, (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbSpend,
-                    (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbText, 'adb-minus'),
+                // "Mənfi", red, always with "-" (owner, 22.11.2026).
+                chip(s.t('adb_minus'), minusText, AppColors.adbSpend, AppColors.adbSpend, 'adb-minus'),
                 const SizedBox(width: gapW),
                 chip(s.t('adb_card_moved'), adbizAmount(r?.card ?? 0), AppColors.adbNet, AppColors.adbText, 'adb-card'),
               ]),
@@ -1351,13 +1351,13 @@ double? adbizDayGap(AdbizReport r, List<List<AdbizDay>?> daysPerWorker, DateTime
   return r.income - r.expenses - targets;
 }
 
-/// "Ümumi mənfi" as shown: a minus as its amount ("2162.50 AZN"), a plus
-/// with "+" ("+40 AZN"), still loading "…".
+/// "Mənfi" as shown (owner, 22.11.2026: "+3530.50 AZN yerinə sadəcə
+/// -3530.50 yazılsın"): always with "-" ("-3530.50 AZN"), 0 as "0 AZN",
+/// still loading "…".
 String adbizMinusText(double? gap) {
   if (gap == null) return '…';
-  final v = (gap * 100).roundToDouble() / 100;
-  if (v > 0) return '+${adbizAmount(v)}';
-  return adbizAmount(v == 0 ? 0 : -v);
+  final v = ((gap.abs()) * 100).roundToDouble() / 100;
+  return v == 0 ? adbizAmount(0) : '-${adbizAmount(v)}';
 }
 
 /// A month / year row (owner's variant A, 22.11.2026 — replaces the green /

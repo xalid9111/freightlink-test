@@ -878,6 +878,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   name, a green bar = its net against the list's largest net, the net and
   under it "mənfi …" (the same signed figure the red half showed, adb_row_gap);
   the chosen one framed in adbTeal; a tap opens it as before.
+  The chip reads "Mənfi" (adb_minus) and its amount is red and always
+  written with "-" (owner, 22.11.2026: "+3530.50 AZN yerinə sadəcə
+  -3530.50"; adbizMinusText = "-" + the amount's size, 0 = "0 AZN").
   One panel for Gün · Ay · İl (owner's pictures, 21.11.2026): the four parts
   stand right under the period bar in all three (with "21 noyabr 2026" /
   "Noyabr · indiyə qədər (1–21)" / "2026 · indiyə qədər" over them), the
@@ -1240,6 +1243,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   visible before Supabase has started (an uncaught error on every cold
   start).
 - Messages tab lists only chats the user is part of (even for admins).
+- The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
+  avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText
+  (core/widgets/marquee_text.dart) — when it does not fit it rests 1.6 s,
+  glides smoothly to its end (28 pt / s), rests, glides back, repeats; a
+  text that fits stands still; less motion = the plain ellipsis.
 - Chat links and long chats (owner, 16.11.2026): http(s) / www links in a
   message (direct and group) are underlined and open with a tap in a new
   tab (LinkifiedText; only http / https). Older messages stay in the
