@@ -570,7 +570,7 @@ void main() {
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '52 AZN');
       // Four parts (owner, 21.11.2026): the card money is the third one.
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-card'))).data, '40 AZN');
-      expect(find.text('adb_month_gap'), findsWidgets);
+      expect(find.text('adb_minus'), findsOneWidget);
       expect(find.text('adb_card_moved'), findsOneWidget);
       expect(find.text('ADB_NET_INCOME'), findsOneWidget, reason: 'the hero label');
       expect(find.byKey(const ValueKey('adb-card-line')), findsNothing, reason: 'the old line is gone');
@@ -652,8 +652,8 @@ void main() {
 
     test('Ümumi mənfi (owner, 22.11.2026): rasxod + the minus, one day = income − rasxod − the targets', () {
       // The owner's month: 4190 income, 2162.50 rasxod, one worker, 6110 target → 4082.50 minus.
-      expect(adbizMinusText(4190 - 2162.50 - 6110), '4082.50 AZN');
-      expect(adbizMinusText(40), '+40 AZN', reason: 'over the target = a plus');
+      expect(adbizMinusText(4190 - 2162.50 - 6110), '-4082.50 AZN');
+      expect(adbizMinusText(3530.50), '-3530.50 AZN', reason: 'owner, 22.11.2026: always shown with "-"');
       expect(adbizMinusText(0), '0 AZN');
       expect(adbizMinusText(null), '…');
       final r = AdbizReport.fromJson({'income': 120, 'expenses': 30, 'net': 90});
@@ -673,7 +673,7 @@ void main() {
       await t.tap(find.byKey(const ValueKey('adb-period-year')));
       await t.pump();
       await t.pump();
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '10197 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '-10197 AZN');
       expect(find.text('adb_total_spent'), findsNothing);
     });
 
@@ -694,7 +694,7 @@ void main() {
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).data, '5836 AZN');
       expect(find.byKey(const ValueKey('adb-old-included')), findsOneWidget);
       // Ümumi mənfi instead of Rasxodlar (owner, 22.11.2026) = the month card's red half.
-      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '215 AZN');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '-215 AZN');
       // Variant A rows: the bar as long as the net against the largest month,
       // the net and the days' minus / plus under it.
       FractionallySizedBox bar(int m) => t.widget<FractionallySizedBox>(

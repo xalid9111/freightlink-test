@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/widgets/marquee_text.dart';
 import '../../../core/constants/countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/localization/locale_controller.dart';
@@ -358,7 +359,9 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                               ],
                             ],
                           ),
-                          Text(
+                          // Glides to show the rest when it does not fit (owner, 22.11.2026).
+                          MarqueeText(
+                            key: const ValueKey('chat-last-seen'),
                             otherOnline
                                 ? strings.t('chat_online')
                                 : (otherProfile?.lastSeenAt != null
