@@ -37,9 +37,16 @@
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-v3.png"/>
-  <link rel="icon" type="image/png" sizes="48x48" href="icons/tirlink-favicon-v3-48.png"/>
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/tirlink-icon-v3-192.png"/>
+  <!-- Favicon from the new T logo (owner, 22.11.2026; Google wants a square,
+       a multiple of 48 px, on a stable address). -->
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/tirlink-favicon-t-32.png"/>
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/tirlink-favicon-t-48.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/tirlink-favicon-t-192.png"/>
+  <!-- Who runs the site and its logo, for Google (no social links: none given). -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Organization","name":"TırLink","alternateName":"TirLink","url":"https://tirlink.app/","logo":"https://tirlink.app/icons/tirlink-logo-org-512.png"}
+  </script>
   <!-- Start downloading the app itself at once, in parallel with the
        start-up scripts (owner, 24.10.2026: "sayt gec yüklənir"). -->
   <link rel="preload" href="main.dart.js" as="script">

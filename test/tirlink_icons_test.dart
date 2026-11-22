@@ -74,10 +74,45 @@ void main() {
     final html = src('web/index.html');
     expect(html, contains('<link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v3.png">'));
     expect(png('web/icons/tirlink-apple-touch-v3.png'), (180, 180, 2));
-    expect(html, contains('href="favicon-v3.png"'));
-    expect(png('web/favicon-v3.png'), (32, 32, 2));
+    // Favicon from the new T logo (owner, 22.11.2026): square, no transparency.
+    expect(html, contains('<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48"/>'));
+    for (final (file, size) in [
+      ('icons/tirlink-favicon-t-32.png', 32),
+      ('icons/tirlink-favicon-t-48.png', 48),
+      ('icons/tirlink-favicon-t-192.png', 192),
+    ]) {
+      expect(html, contains('sizes="${size}x$size" href="$file"'), reason: file);
+      expect(png('web/$file'), (size, size, 2), reason: file);
+    }
+    expect(html, isNot(contains('href="favicon-v3.png"')));
+    expect(html, isNot(contains('href="icons/tirlink-favicon-v3-48.png"')));
+    // favicon.ico holds 16, 32 and 48 (ICO directory: count at 4, w / h per entry).
+    final ico = File('web/favicon.ico').readAsBytesSync();
+    expect(ico.sublist(0, 4), [0, 0, 1, 0], reason: 'an ICO file');
+    final n = ico[4] | (ico[5] << 8);
+    final sizes = {for (var i = 0; i < n; i++) ico[6 + i * 16] == 0 ? 256 : ico[6 + i * 16]};
+    expect(sizes, containsAll([16, 32, 48]));
     expect(html, isNot(contains('href="icons/apple-touch-icon.png"')));
     expect(html, isNot(contains('href="favicon.png"')));
+  });
+
+  test('Organization JSON-LD: valid, TırLink, the site and a logo file that exists', () {
+    final html = src('web/index.html');
+    final m = RegExp(r'<script type="application/ld\+json">([\s\S]*?)</script>').firstMatch(html);
+    expect(m, isNotNull, reason: 'the JSON-LD block is in <head>');
+    expect(html.indexOf('application/ld+json'), lessThan(html.indexOf('</head>')));
+    final ld = jsonDecode(m!.group(1)!) as Map<String, dynamic>;
+    expect(ld['@context'], 'https://schema.org');
+    expect(ld['@type'], 'Organization');
+    expect(ld['name'], 'TırLink');
+    expect(ld['url'], 'https://tirlink.app/');
+    expect(ld.containsKey('sameAs'), isFalse, reason: 'no made-up social links');
+    final logo = ld['logo'] as String;
+    expect(logo, startsWith('https://tirlink.app/'));
+    final file = 'web/${logo.substring('https://tirlink.app/'.length)}';
+    expect(File(file).existsSync(), isTrue, reason: '$file is published with the site');
+    final (w, h, _) = png(file);
+    expect((w, h), (512, 512), reason: 'square, at least 112 px');
   });
 
   test('start-up screen: the new logo (small WebP + PNG), dark ground and spinner unchanged', () {
