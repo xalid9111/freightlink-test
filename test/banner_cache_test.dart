@@ -63,6 +63,6 @@ void main() {
 
   test('the Loads counters ask for the number only (same exact count, one row sent)', () {
     final p = src('lib/features/cargo/presentation/providers/cargo_providers.dart');
-    expect('.limit(1)\n        .count(CountOption.exact);'.allMatches(p).length + '.limit(1)\n      .count(CountOption.exact);'.allMatches(p).length, 2);
+    expect('.limit(1)\n        .count(CountOption.exact);'.allMatches(p).length + '.limit(1)\n      .count(CountOption.exact);'.allMatches(p).length, 4);
   });
 }

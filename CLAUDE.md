@@ -253,6 +253,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   17.11.2026: "Yük hovuzu yerinə Yük əlavə et yazılsın") and the second
   "+ Yük əlavə et" over the loads list is gone. The computer's page is
   unchanged.
+  The map's counters (owner's pictures, 22.11.2026, approved mockup): three
+  capsules top right above "CANLI", in this order — aktiv yük (accent) ·
+  qeydiyyatlı istifadəçi (blue; user_profiles is_active, visitors too) ·
+  Daşıyıcılar bölməsindəki daşıyıcı (green; active empty_truck_ads), each an
+  exact server count (one row sent). StatCapsule: dark card ground, a 1.6
+  border in its colour, the icon in a tinted circle, the number white w600
+  with a comma between thousands (statCount, "11,280"); 22 pt tall, 66 pt
+  the least width (the picture's size), a longer number widens it; the row
+  only shrinks (FittedBox) on a very narrow phone, never cut; the name on a
+  long press (Tooltip). A tap: loads → the list, carriers → Daşıyıcılar.
+  The computer's three stats follow the same order and data (its look
+  unchanged). The old "Son 24 saat" counter is gone.
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the

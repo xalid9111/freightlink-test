@@ -207,7 +207,7 @@ void main() {
     expect(m, contains("_AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create'))"), reason: '"Yük əlavə et" under the map (was "Yük hovuzu")');
     // The map back (owner, 17.11.2026, later): only the city lights blink.
     expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false)"));
-    expect(RegExp(r'_StatCard\(\s+icon:').allMatches(m).length, 3, reason: 'the three real counters');
+    expect(RegExp(r'StatCapsule\(\s+key:').allMatches(m).length, 3, reason: 'the three real counters');
     final lm = src('lib/features/cargo/presentation/widgets/live_map.dart');
     expect(lm, contains('if (!routes) return;'), reason: 'no trucks / roads / bursts');
     expect(lm, contains('if (!widget.routes || _speed.slow == true) return _startCalm();'), reason: 'a calm timer, not every frame');

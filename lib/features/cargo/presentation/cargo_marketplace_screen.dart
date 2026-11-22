@@ -178,8 +178,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
           ref.invalidate(cargoFeedPagerProvider);
-          ref.invalidate(activeCarriersCountProvider);
-          ref.invalidate(newCargo24hCountProvider);
+          ref.invalidate(registeredUsersCountProvider);
+          ref.invalidate(truckAdsCountProvider);
           ref.invalidate(categoryFeedProvider);
           ref.invalidate(emptyTrucksProvider);
           ref.invalidate(myEmptyTrucksProvider);
@@ -406,7 +406,7 @@ class _Hero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    String stat(int n) => loaded ? '$n' : '—';
+    String stat(int n) => loaded ? statCount(n) : '—';
 
     // Title, map and counters stand in one cloud scene (the clouds above /
     // below the map are separate pictures that continue it): the owner's
@@ -474,34 +474,51 @@ class _Hero extends ConsumerWidget {
             // sadəcə şəhərlərdə işıqlar yanıb sönsün, hərəkət edən marşrutları sil").
             LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),
             // Three live counters (all real numbers from the database),
-            // top-right above "CANLI" (owner, 28.10.2026).
+            // top-right above "CANLI" (owner, 28.10.2026). The owner's
+            // capsules (22.11.2026): aktiv yük · qeydiyyatlı istifadəçi ·
+            // Daşıyıcılar bölməsindəki daşıyıcı; never cut, a long number
+            // only shrinks the row on a very narrow phone.
             Positioned(
               top: 6,
               right: 14,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  _StatCard(
-                    icon: Icons.local_shipping,
-                    color: AppColors.accent,
-                    value: stat(count),
-                    label: strings.t('home_stat_active'),
-                    onTap: () => _scrollToFeed(),
-                  ),
-                  const SizedBox(width: 4),
-                  _StatCard(
-                    icon: Icons.groups_2,
-                    color: AppColors.blue,
-                    value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                    label: strings.t('home_stat_carriers'),
-                  ),
-                  const SizedBox(width: 4),
-                  _StatCard(
-                    icon: Icons.bar_chart_rounded,
-                    color: AppColors.online,
-                    value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                    label: strings.t('home_stat_24h'),
-                    onTap: () => _scrollToFeed(),
-                  ),
-              ]),
+              left: 14,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    StatCapsule(
+                      key: const ValueKey('stat-loads'),
+                      icon: Icons.local_shipping,
+                      color: AppColors.accent,
+                      value: stat(count),
+                      label: strings.t('home_stat_active'),
+                      onTap: () => _scrollToFeed(),
+                    ),
+                    const SizedBox(width: 5),
+                    StatCapsule(
+                      key: const ValueKey('stat-users'),
+                      icon: Icons.groups_2_outlined,
+                      color: AppColors.blue,
+                      value: ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—',
+                      label: strings.t('home_stat_users'),
+                    ),
+                    const SizedBox(width: 5),
+                    StatCapsule(
+                      key: const ValueKey('stat-carriers'),
+                      icon: Icons.local_shipping_outlined,
+                      color: AppColors.online,
+                      value: ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—',
+                      label: strings.t('et_section_carriers'),
+                      onTap: () {
+                        ref.read(loadsSectionProvider.notifier).state = LoadsSection.carriers;
+                        _scrollToFeed();
+                      },
+                    ),
+                  ]),
+                ),
+              ),
             ),
           ]),
           _CloudScene(
@@ -653,13 +670,21 @@ class _AddLoadButton extends StatelessWidget {
 
 /// Tiny counter pill (~4 mm tall, ~1 cm wide): coloured icon + number.
 /// The label is kept as a tooltip / screen-reader text.
-class _StatCard extends StatelessWidget {
+/// One of the map's live counters (owner's picture, 22.11.2026): a dark
+/// capsule with a thick border in its colour, the icon in a tinted circle on
+/// the left and the number in white on the right. Its size on the picture is
+/// the least it takes (a short number keeps it); a longer number widens it.
+/// The name shows on a long press / hover (Tooltip) and to screen readers.
+class StatCapsule extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String value;
   final String label;
   final VoidCallback? onTap;
-  const _StatCard({required this.icon, required this.color, required this.value, required this.label, this.onTap});
+  const StatCapsule({super.key, required this.icon, required this.color, required this.value, required this.label, this.onTap});
+
+  static const double height = 22;
+  static const double minWidth = 66;
 
   @override
   Widget build(BuildContext context) {
@@ -668,26 +693,40 @@ class _StatCard extends StatelessWidget {
       child: Semantics(
         label: '$label: $value',
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(height / 2),
           onTap: onTap,
           child: Container(
-            // Half the earlier size (owner, 21.10.2026); the number stays readable.
-            height: 18,
-            constraints: const BoxConstraints(minWidth: 30),
-            padding: const EdgeInsets.symmetric(horizontal: 5),
+            height: height,
+            constraints: const BoxConstraints(minWidth: minWidth),
+            padding: const EdgeInsets.fromLTRB(3, 0, 9, 0),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
+              color: AppColors.card.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(height / 2),
+              border: Border.all(color: color, width: 1.6),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 10, color: color),
-                const SizedBox(width: 3),
-                Text(value,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, color: AppColors.text, height: 1)),
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.24), shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 10, color: color),
+                ),
+                const SizedBox(width: 5),
+                // The number stands in the middle of what is left.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: minWidth - 3 - 9 - 16 - 5 - 3.2),
+                  child: Text(value,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                        height: 1,
+                        fontFeatures: const [FontFeature.tabularFigures()])),
+                ),
               ],
             ),
           ),
