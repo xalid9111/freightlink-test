@@ -96,6 +96,13 @@ class _Repo implements AdbizRepository {
   @override
   Future<void> setMonthTarget(String companyId, DateTime from, double amount) async => targetsSet.add((from, amount));
 
+  final saves = <(String?, String, double, bool)>[];
+  @override
+  Future<String> companySave({String? id, required String name, required double dailyTarget, bool ownerManagesStaff = false}) async {
+    saves.add((id, name, dailyTarget, ownerManagesStaff));
+    return id ?? 'new';
+  }
+
   final fixes = <(String, double, String)>[];
   @override
   Future<void> workerFixEntry(String id, double amount, String note) async => fixes.add((id, amount, note));
@@ -612,6 +619,44 @@ void main() {
       await t.pump(const Duration(milliseconds: 400));
       expect(repo.targetsSet.single.$2, 6500);
       expect(repo.targetsSet.single.$1.month, _today.month);
+      // The daily target follows it (owner, 22.11.2026: ÷ 26 work days).
+      expect(repo.saves.single.$3, 250);
+      expect(repo.saves.single.$1, 'c');
+    });
+
+    test('the daily target = the monthly one / 26 (owner: 6110 → 235, 7000 → 269.23)', () {
+      expect(kAdbizWorkDays, 26);
+      expect(adbizDailyFromMonthly(6110), 235);
+      expect(adbizDailyFromMonthly(7000), 269.23);
+      expect(adbizDailyFromMonthly(0), 0);
+      expect(const AdbizCompanyForm('UTEP Reklam', 6110, false).dailyTarget, 235);
+    });
+
+    testWidgets('the company dialog asks for the MONTHLY target and shows the daily one live', (t) async {
+      AdbizCompanyForm? got;
+      await t.pumpWidget(MaterialApp(
+        home: Builder(
+          builder: (ctx) => Scaffold(
+            body: TextButton(
+              onPressed: () async => got = await showDialog<AdbizCompanyForm>(
+                  context: ctx,
+                  builder: (_) => const AdbizCompanyDialog(
+                      s: _s, company: AdbizCompany(id: 'c', name: 'Neuro Reklam', dailyTarget: 235), monthTarget: 6110)),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await t.tap(find.text('open'));
+      await t.pumpAndSettle();
+      expect(t.widget<TextField>(find.byKey(const ValueKey('adb-company-target'))).controller!.text, '6110');
+      expect(find.text('adb_month_target'), findsOneWidget);
+      await t.enterText(find.byKey(const ValueKey('adb-company-target')), '7000');
+      await t.pump();
+      await t.tap(find.byKey(const ValueKey('adb-company-save')));
+      await t.pumpAndSettle();
+      expect(got!.monthTarget, 7000);
+      expect(got!.dailyTarget, 269.23);
     });
 
     testWidgets('Ay: "Noyabr · indiyə qədər (1–21)" over the four parts', (t) async {

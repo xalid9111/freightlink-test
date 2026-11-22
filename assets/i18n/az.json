@@ -2512,6 +2512,7 @@
   "adb_month_this": "Bu ay",
   "adb_month_days": "{n} iş günü",
   "adb_month_target": "Aylıq hədəf",
+  "adb_daily_from_month": "Gündəlik hədəf: {month} / {days} = {day}",
   "adb_month_collected": "Toplanan",
   "adb_month_gap": "Ümumi mənfi",
   "adb_month_reached": "🎉 Təbriklər! Aylıq hədəf yerinə yetirildi · {over} AZN",

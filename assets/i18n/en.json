@@ -2512,6 +2512,7 @@
   "adb_month_this": "This month",
   "adb_month_days": "{n} work days",
   "adb_month_target": "Monthly target",
+  "adb_daily_from_month": "Daily target: {month} / {days} = {day}",
   "adb_month_collected": "Collected",
   "adb_month_gap": "Total minus",
   "adb_month_reached": "🎉 Congratulations! Monthly target reached · {over} AZN",

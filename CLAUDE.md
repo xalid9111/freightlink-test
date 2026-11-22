@@ -881,6 +881,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   The chip reads "Mənfi" (adb_minus) and its amount is red and always
   written with "-" (owner, 22.11.2026: "+3530.50 AZN yerinə sadəcə
   -3530.50"; adbizMinusText = "-" + the amount's size, 0 = "0 AZN").
+  The daily target comes from the monthly one (owner, 22.11.2026: "6110
+  yazıram, sistem onu 26 iş gününə bölür"): "Şirkəti düzəlt" / a new
+  company asks for the MONTHLY target and shows live "Gündəlik hədəf: 6110
+  / 26 = 235 AZN" (adbizDailyFromMonthly, kAdbizWorkDays = 26; 7000 →
+  269.23, two decimals as the server keeps them); saving writes the month
+  target (adbiz_set_month_target, from this month) AND the company's daily
+  target; the panel's Aylıq hədəf ✏️ does the same. No SQL; a worker's own
+  target still overrides; days already opened keep their target.
   One panel for Gün · Ay · İl (owner's pictures, 21.11.2026): the four parts
   stand right under the period bar in all three (with "21 noyabr 2026" /
   "Noyabr · indiyə qədər (1–21)" / "2026 · indiyə qədər" over them), the
@@ -1147,6 +1155,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   hides; stored rows unchanged); a TIRPark notice opens /tirpark/manage with
   go (it lives inside the TIRPark tab — pushed over /notifications it was a
   black page).
+  Read ones leave too (owner, 22.11.2026: "toxunulub təsdiq olunduqdan
+  sonra silinməlidir … baş qarışıqlığı yaranır"): a notice that is read —
+  tapped, answered (Qəbul et / Rədd et) or "Hamısını oxunmuş et" — is no
+  longer listed (visibleNotices skips is_read; a tapped one leaves at once);
+  the row stays in the database (is_read = true), nothing is deleted.
 - "Xəritə" tab (owner's picture, 20.11.2026, SQL 0129 — stage 1; stage 2 =
   Maşınlarım): the bottom bar's TIRPark tab reads "Xəritə" (nav_map, same
   place / route / new-items count). Parklar, Servislər and Mağazalar have NO

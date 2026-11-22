@@ -196,10 +196,17 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
   }
 
   Future<void> _editCompany(AppStrings s, AdbizCompany c) async {
-    final r = await showDialog<(String, double, bool)>(context: context, builder: (_) => AdbizCompanyDialog(s: s, company: c));
+    final month = ref.read(adbizMonthTargetProvider(widget.companyId)).valueOrNull;
+    final r = await showDialog<AdbizCompanyForm>(
+        context: context, builder: (_) => AdbizCompanyDialog(s: s, company: c, monthTarget: month));
     if (r == null || !mounted) return;
-    await _run(s, () => ref.read(adbizRepositoryProvider).companySave(id: c.id, name: r.$1, dailyTarget: r.$2, ownerManagesStaff: r.$3),
-        done: s.t('adb_saved'));
+    await _run(s, () async {
+      final repo = ref.read(adbizRepositoryProvider);
+      // The monthly target is written; the daily one follows it (÷ 26).
+      await repo.companySave(id: c.id, name: r.name, dailyTarget: r.dailyTarget, ownerManagesStaff: r.ownerManagesStaff);
+      if (r.monthTarget != month) await repo.setMonthTarget(c.id, bakuToday(), r.monthTarget);
+      ref.invalidate(adbizMonthTargetProvider(widget.companyId));
+    }, done: s.t('adb_saved'));
   }
 
   /// The Baş admin's monthly target, counted from this month on (0133).
@@ -218,6 +225,12 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
             decoration: const InputDecoration(suffixText: 'AZN'),
           ),
           const SizedBox(height: 8),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: c,
+            builder: (_, v, __) => Text(adbizDailyLine(s, parseAmount(v.text) ?? 0),
+                key: const ValueKey('adb-month-daily-line'), style: TextStyle(fontSize: 13, color: AppColors.adbText)),
+          ),
+          const SizedBox(height: 4),
           Text(s.t('adb_month_target_hint'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
         ]),
         actions: [
@@ -229,7 +242,14 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
     );
     if (v == null || !mounted) return;
     await _run(s, () async {
-      await ref.read(adbizRepositoryProvider).setMonthTarget(widget.companyId, bakuToday(), v);
+      final repo = ref.read(adbizRepositoryProvider);
+      await repo.setMonthTarget(widget.companyId, bakuToday(), v);
+      // The daily target follows the monthly one (owner, 22.11.2026: ÷ 26).
+      final c = ref.read(adbizCompanyProvider(widget.companyId));
+      if (c != null) {
+        await repo.companySave(
+            id: c.id, name: c.name, dailyTarget: adbizDailyFromMonthly(v), ownerManagesStaff: c.ownerManagesStaff);
+      }
       ref.invalidate(adbizMonthTargetProvider(widget.companyId));
     }, done: s.t('adb_saved'));
   }
@@ -1278,10 +1298,40 @@ class _AdbizUserPickerState extends ConsumerState<AdbizUserPicker> {
 
 /// Baş admin: a company's name, daily target and whether its owner may add /
 /// take off workers.
+/// Work days a month counts for the daily target (owner, 22.11.2026: "6110
+/// yazıram, sistem onu 26 iş gününə bölür").
+const int kAdbizWorkDays = 26;
+
+/// The daily target from the monthly one: 6110 → 235, 7000 → 269.23 (the
+/// server keeps two decimals).
+double adbizDailyFromMonthly(double month) => month <= 0 ? 0 : (month / kAdbizWorkDays * 100).roundToDouble() / 100;
+
+/// "Gündəlik hədəf: 6110 / 26 = 235 AZN".
+String adbizDailyLine(AppStrings s, double month) => s.t('adb_daily_from_month', {
+      'month': adbizNum(month),
+      'days': '$kAdbizWorkDays',
+      'day': adbizAmount(adbizDailyFromMonthly(month)),
+    });
+
+/// What the company dialog gives back.
+class AdbizCompanyForm {
+  final String name;
+  final double monthTarget;
+  final bool ownerManagesStaff;
+  const AdbizCompanyForm(this.name, this.monthTarget, this.ownerManagesStaff);
+  double get dailyTarget => adbizDailyFromMonthly(monthTarget);
+}
+
+/// A company (Baş admin): name, the MONTHLY target (the daily one is worked
+/// out from it, shown live under the field) and the owner's staff switch.
 class AdbizCompanyDialog extends StatefulWidget {
   final AppStrings s;
   final AdbizCompany? company;
-  const AdbizCompanyDialog({super.key, required this.s, this.company});
+
+  /// The month's target already saved (0133); null = worked out from the
+  /// daily one (× 26).
+  final double? monthTarget;
+  const AdbizCompanyDialog({super.key, required this.s, this.company, this.monthTarget});
 
   @override
   State<AdbizCompanyDialog> createState() => _AdbizCompanyDialogState();
@@ -1289,7 +1339,10 @@ class AdbizCompanyDialog extends StatefulWidget {
 
 class _AdbizCompanyDialogState extends State<AdbizCompanyDialog> {
   late final _name = TextEditingController(text: widget.company?.name ?? '');
-  late final _target = TextEditingController(text: widget.company == null ? '' : widget.company!.dailyTarget.toStringAsFixed(2));
+  late final _target = TextEditingController(
+      text: widget.monthTarget != null
+          ? adbizNum(widget.monthTarget!)
+          : (widget.company == null ? '' : adbizNum((widget.company!.dailyTarget * kAdbizWorkDays).roundToDouble())));
   late bool _staff = widget.company?.ownerManagesStaff ?? false;
   String? _error;
 
@@ -1308,20 +1361,29 @@ class _AdbizCompanyDialogState extends State<AdbizCompanyDialog> {
       setState(() => _error = s.t('adb_err_form'));
       return;
     }
-    Navigator.pop(context, (_name.text.trim(), t, _staff));
+    Navigator.pop(context, AdbizCompanyForm(_name.text.trim(), t, _staff));
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(s.t(widget.company == null ? 'adb_new_company' : 'adb_edit_company')),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
+        scrollable: true,
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           TextField(key: const ValueKey('adb-company-name'), controller: _name, maxLength: 80, decoration: InputDecoration(labelText: s.t('adb_company_name'))),
           TextField(
             key: const ValueKey('adb-company-target'),
             controller: _target,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(labelText: s.t('adb_company_target'), suffixText: 'AZN', helperText: s.t('adb_target_note')),
+            decoration: InputDecoration(labelText: s.t('adb_month_target'), suffixText: 'AZN'),
           ),
+          const SizedBox(height: 6),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _target,
+            builder: (_, v, __) => Text(adbizDailyLine(s, parseAmount(v.text) ?? 0),
+                key: const ValueKey('adb-company-daily-line'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(height: 4),
+          Text(s.t('adb_target_note'), style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _staff,

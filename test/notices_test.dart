@@ -65,6 +65,16 @@ void main() {
       expect(u.text(az), 'Salam');
       expect(u.route, isNull);
     });
+    test('a read notice (tapped / answered / read all) leaves the list; nothing is deleted (owner, 22.11.2026)', () {
+      const read = AppNotice(id: 'r', type: 'job_application', isRead: true);
+      const fresh = AppNotice(id: 'f', type: 'job_application');
+      expect(visibleNotices([read, fresh], const {}), [fresh]);
+      final src = _read('lib/features/notices/notices.dart');
+      expect(src, contains('if (!n.isRead && !settled.contains(n.id)'));
+      expect(src, contains('[for (final n in l) if (!_marked.contains(n.id)) n]'), reason: 'a tapped one leaves at once');
+      expect(src.contains(".from('notifications').delete("), isFalse, reason: 'rows stay in the database');
+    });
+
     test('a settled worker request / receipt leaves the list and the count (owner, 18.11.2026)', () {
       final w = _n('tirpark_worker_request', data: {'park_id': 'p', 'worker_id': 'u'});
       final j = _n('job_application');

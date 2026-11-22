@@ -2512,6 +2512,7 @@
   "adb_month_this": "Этот месяц",
   "adb_month_days": "{n} раб. дн.",
   "adb_month_target": "Месячная цель",
+  "adb_daily_from_month": "Дневная цель: {month} / {days} = {day}",
   "adb_month_collected": "Собрано",
   "adb_month_gap": "Общий минус",
   "adb_month_reached": "🎉 Поздравляем! Месячная цель выполнена · {over} AZN",
