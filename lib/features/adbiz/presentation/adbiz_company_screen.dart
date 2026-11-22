@@ -363,7 +363,6 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
 
     // 2. Four parts (owner, 21.11.2026): Ümumi gəlir · Rasxodlar · Karta
     // köçürülən (jobs paid by card, inside the income) · Xalis gəlir.
-    final sep = Container(width: 1, height: 70, color: AppColors.adbLine);
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final today = bakuToday();
     // The same panel for Gün · Ay · İl (owner, 21.11.2026), with what it covers.
@@ -399,56 +398,68 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
           child: Text(monthCaption, key: const ValueKey('adb-month-caption'), style: TextStyle(fontSize: 14, color: AppColors.adbTextSoft)),
         ),
+      // Variant A (owner, 22.11.2026: "A bəndi"): Xalis gəlir big on top,
+      // the old account under it, then Ümumi gəlir · Ümumi mənfi · Karta
+      // köçürülən as three chips (one size for the three, adbizFitSize).
       AdbizGlass(
+        key: const ValueKey('adb-hero'),
         highlight: true,
-        padding: const EdgeInsets.fromLTRB(4, 16, 4, 16),
-        child: LayoutBuilder(builder: (context, c) {
-          // One size for all four amounts (owner's picture: "3952" big,
-          // "2162.50" small looked uneven): the largest that fits the widest.
-          final vs = adbizFitSize(
-              [
-                adbizAmount(r?.income ?? 0),
-                minusText,
-                adbizAmount(r?.card ?? 0),
-                adbizAmount((r?.net ?? 0) + oldNet),
-              ],
-              (c.maxWidth - 3) / 4 - 6,
-              MediaQuery.textScalerOf(context));
-          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-              child: AdbizBigStat(
-                  compact: true, valueSize: vs, icon: Icons.trending_up, label: s.t('adb_income'), value: adbizAmount(r?.income ?? 0), color: AppColors.adbIncome, valueKey: 'adb-income')),
-          sep,
-          Expanded(
-              child: AdbizBigStat(
-                  compact: true, valueSize: vs,
-                  icon: Icons.receipt_long_outlined,
-                  label: s.t('adb_month_gap'),
-                  value: minusText,
-                  color: (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbSpend,
-                  valueKey: 'adb-minus')),
-          sep,
-          Expanded(
-              child: AdbizBigStat(
-                  compact: true, valueSize: vs, icon: Icons.credit_card, label: s.t('adb_card_moved'), value: adbizAmount(r?.card ?? 0), color: AppColors.adbNet, valueKey: 'adb-card')),
-          sep,
-          Expanded(
-              child: AdbizBigStat(
-                  compact: true, valueSize: vs,
-                  icon: Icons.account_balance_wallet_outlined,
-                  label: s.t('adb_net_income'),
-                  value: adbizAmount((r?.net ?? 0) + oldNet),
-                  color: AppColors.adbGold,
-                  valueKey: 'adb-net')),
-          ]);
-        }),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(s.t('adb_net_income').toUpperCase(),
+              style: TextStyle(fontSize: 12.5, letterSpacing: 0.5, color: AppColors.adbTextSoft)),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(adbizAmount((r?.net ?? 0) + oldNet),
+                key: const ValueKey('adb-net'),
+                style: TextStyle(fontSize: 34, fontWeight: FontWeight.w600, color: AppColors.adbGold)),
+          ),
+          if (oldNet != 0)
+            Text(s.t('adb_old_included', {'amount': adbizAmount(oldNet)}),
+                key: const ValueKey('adb-old-included'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
+          const SizedBox(height: 12),
+          LayoutBuilder(builder: (context, c) {
+            const gapW = 8.0;
+            final vs = adbizFitSize([adbizAmount(r?.income ?? 0), minusText, adbizAmount(r?.card ?? 0)],
+                (c.maxWidth - gapW * 2) / 3 - 18, MediaQuery.textScalerOf(context));
+            Widget chip(String label, String value, Color mark, Color color, String k) => Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.adbBg.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.adbLine),
+                    ),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Container(width: 8, height: 8, decoration: BoxDecoration(color: mark, borderRadius: BorderRadius.circular(2))),
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(child: Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.adbTextSoft))),
+                      ]),
+                      const SizedBox(height: 3),
+                      Text(value, key: ValueKey(k), maxLines: 1, softWrap: false,
+                          style: TextStyle(fontSize: vs, fontWeight: FontWeight.w600, color: color)),
+                    ]),
+                  ),
+                );
+            return IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                chip(s.t('adb_income'), adbizAmount(r?.income ?? 0), AppColors.adbIncome, AppColors.adbText, 'adb-income'),
+                const SizedBox(width: gapW),
+                chip(s.t('adb_month_gap'), minusText, (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbSpend,
+                    (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbText, 'adb-minus'),
+                const SizedBox(width: gapW),
+                chip(s.t('adb_card_moved'), adbizAmount(r?.card ?? 0), AppColors.adbNet, AppColors.adbText, 'adb-card'),
+              ]),
+            );
+          }),
+        ]),
       ),
-      if (oldNet != 0)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
-          child: Text(s.t('adb_old_included', {'amount': adbizAmount(oldNet)}),
-              key: const ValueKey('adb-old-included'), style: TextStyle(fontSize: 13, color: AppColors.adbTextSoft)),
-        ),
     ]);
     final soft = TextStyle(fontSize: 15, color: AppColors.adbTextSoft);
     // The card money is the third part of the totals (owner, 21.11.2026);
@@ -715,6 +726,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
             key: const ValueKey('adb-cards-wait'), style: TextStyle(color: AppColors.adbTextSoft));
       } else if (per.valueOrNull != null) {
         final p = per.valueOrNull!;
+        final maxNet = [for (final x in _period == AdbizPeriod.month ? p.months : p.years) x.net]
+            .fold<double>(0, (a, b) => b > a ? b : a);
         final items = _period == AdbizPeriod.month
             ? [
                 for (final m in p.months)
@@ -722,6 +735,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     key: ValueKey('adb-month-${m.key}'),
                     title: cap(monthName(m.key, lang)),
                     sum: m,
+                    maxNet: maxNet,
+                    gapLabel: s.t('adb_row_gap', {'amount': AdbizPeriodTile.whole(m.gap)}),
                     selected: m.key == _date.month,
                     onTap: () => _setView(AdbizPeriod.month, DateTime(_date.year, m.key, 1)),
                   ),
@@ -732,6 +747,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                     key: ValueKey('adb-year-${y.key}'),
                     title: '${y.key}',
                     sum: y,
+                    maxNet: maxNet,
+                    gapLabel: s.t('adb_row_gap', {'amount': AdbizPeriodTile.whole(y.gap)}),
                     selected: y.key == _date.year,
                     onTap: () => _setView(AdbizPeriod.month, DateTime(y.key, 1, 1)),
                   ),
@@ -739,12 +756,8 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
         final sel = _period == AdbizPeriod.month ? p.months.where((m) => m.key == _date.month).firstOrNull : null;
         final soft = TextStyle(fontSize: 13.5, color: AppColors.adbTextSoft);
         cards = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          LayoutBuilder(builder: (context, c) {
-            final cols = c.maxWidth >= 360 ? 4 : 3;
-            const gapW = 10.0;
-            final w = (c.maxWidth - gapW * (cols - 1)) / cols;
-            return Wrap(spacing: gapW, runSpacing: 14, children: [for (final t in items) SizedBox(width: w, child: t)]);
-          }),
+          // Variant A (owner, 22.11.2026): one row per month / year.
+          for (final t in items) Padding(padding: const EdgeInsets.only(bottom: 6), child: t),
           const SizedBox(height: 8),
           Text(s.t('adb_tiles_legend'), key: const ValueKey('adb-tiles-legend'), style: TextStyle(fontSize: 12.5, color: AppColors.adbTextSoft)),
           // The chosen month's old account (figures from before the program), ✏️ to fix.
@@ -1347,56 +1360,79 @@ String adbizMinusText(double? gap) {
   return adbizAmount(v == 0 ? 0 : -v);
 }
 
-/// A month / year card (owner's picture, 10.11.2026): the name over it, the
-/// net income on the dark green top, the days' minus / plus on the red
-/// bottom; a tap opens that month (or that year's months).
+/// A month / year row (owner's variant A, 22.11.2026 — replaces the green /
+/// red cards of 10.11.2026): the name, a bar as long as its net income
+/// against the largest of the list, the net and under it the days' minus /
+/// plus (the same signed figure the red half showed); a tap opens that month
+/// (or that year's months).
 class AdbizPeriodTile extends StatelessWidget {
   final String title;
   final AdbizPeriodSum sum;
   final bool selected;
+  final double maxNet;
+  final String gapLabel;
   final VoidCallback onTap;
-  const AdbizPeriodTile({super.key, required this.title, required this.sum, required this.onTap, this.selected = false});
+  const AdbizPeriodTile(
+      {super.key, required this.title, required this.sum, required this.onTap, this.selected = false, this.maxNet = 0, this.gapLabel = ''});
 
   static String whole(double v) => '${v.round()} AZN';
 
   /// A plain amount for a field: 5784 → "5784", 12.5 → "12.5".
   static String num(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 
+  /// The bar's share (0–1): net / the list's largest net; nothing for ≤ 0.
+  static double share(double net, double maxNet) => maxNet <= 0 || net <= 0 ? 0 : (net / maxNet).clamp(0.0, 1.0);
+
   @override
   Widget build(BuildContext context) {
-    Widget half(Color bg, String text, String k, {required bool top}) => Container(
-          height: 56,
-          color: bg,
-          alignment: Alignment.topRight,
-          padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topRight,
-            child: Text(text, key: ValueKey(k),
-                style: TextStyle(fontSize: 17, fontWeight: top ? FontWeight.w600 : FontWeight.w400, color: AppColors.adbTileText)),
-          ),
-        );
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(title, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adbText)),
-        const SizedBox(height: 6),
-        Container(
+    final f = share(sum.net, maxNet);
+    return Material(
+      color: selected ? AppColors.adbPanelHi : AppColors.adbPanel,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: BoxDecoration(
-            border: Border.all(color: selected ? AppColors.adbTeal : AppColors.adbLine, width: selected ? 2.5 : 1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? AppColors.adbTeal : AppColors.adbLine, width: selected ? 1.6 : 1),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              half(AppColors.adbTileNet, whole(sum.net), 'adb-tile-net-$title', top: true),
-              half(AppColors.adbTileGap, whole(sum.gap), 'adb-tile-gap-$title', top: false),
-            ]),
-          ),
+          child: Row(children: [
+            SizedBox(
+              width: 74,
+              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+            ),
+            Expanded(
+              child: Container(
+                height: 8,
+                alignment: Alignment.centerLeft,
+                decoration: BoxDecoration(color: AppColors.adbLine, borderRadius: BorderRadius.circular(4)),
+                child: FractionallySizedBox(
+                  key: ValueKey('adb-tile-bar-$title'),
+                  widthFactor: f,
+                  heightFactor: 1,
+                  child: Container(decoration: BoxDecoration(color: AppColors.adbIncome, borderRadius: BorderRadius.circular(4))),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Never past the edge: a long amount / language shrinks a little.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+                  Text(whole(sum.net), key: ValueKey('adb-tile-net-$title'),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+                  Text(gapLabel, key: ValueKey('adb-tile-gap-$title'), style: TextStyle(fontSize: 11.5, color: AppColors.adbSpend)),
+                ]),
+              ),
+            ),
+          ]),
         ),
-      ]),
+      ),
     );
   }
 }
