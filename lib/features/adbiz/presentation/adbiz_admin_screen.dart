@@ -27,11 +27,13 @@ class _AdbizAdminScreenState extends ConsumerState<AdbizAdminScreen> {
 
   Future<void> _create(AppStrings s) async {
     if (_busy) return;
-    final r = await showDialog<(String, double, bool)>(context: context, builder: (_) => AdbizCompanyDialog(s: s));
+    final r = await showDialog<AdbizCompanyForm>(context: context, builder: (_) => AdbizCompanyDialog(s: s));
     if (r == null || !mounted) return;
     setState(() => _busy = true);
     try {
-      await ref.read(adbizRepositoryProvider).companySave(name: r.$1, dailyTarget: r.$2, ownerManagesStaff: r.$3);
+      final repo = ref.read(adbizRepositoryProvider);
+      final id = await repo.companySave(name: r.name, dailyTarget: r.dailyTarget, ownerManagesStaff: r.ownerManagesStaff);
+      if (r.monthTarget > 0) await repo.setMonthTarget(id, bakuToday(), r.monthTarget);
       ref.invalidate(adbizCompaniesProvider);
       if (mounted) adbizSnack(context, s.t('adb_saved'));
     } catch (e) {
