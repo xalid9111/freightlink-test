@@ -139,9 +139,13 @@ class AppNotice {
 /// count. Stored rows are never changed.
 /// With the park management off (owner, 20.11.2026) its notices (booking,
 /// receipt, worker request) are not shown either; the rows stay.
+/// A notice already read (tapped, answered or "Hamısını oxunmuş et") leaves
+/// the list too (owner, 22.11.2026: "bildirişlər toxunulub təsdiq
+/// olunduqdan sonra silinməlidir … baş qarışıqlığı yaranır"); the row stays
+/// in the database (is_read = true), nothing is deleted.
 List<AppNotice> visibleNotices(List<AppNotice> list, Set<String> settled, {bool parkManagement = kParkManagementOn}) => [
       for (final n in list)
-        if (!settled.contains(n.id) && (parkManagement || !n.type.startsWith('tirpark_'))) n
+        if (!n.isRead && !settled.contains(n.id) && (parkManagement || !n.type.startsWith('tirpark_'))) n
     ];
 
 /// The newest stand on top; the unread ones are counted on the bell.
@@ -373,7 +377,8 @@ class _NoticesScreenState extends ConsumerState<NoticesScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     final lang = ref.watch(currentLocaleProvider).languageCode;
-    final notices = ref.watch(shownNoticesProvider);
+    // A tapped notice leaves at once, before the server's answer comes back.
+    final notices = ref.watch(shownNoticesProvider).whenData((l) => [for (final n in l) if (!_marked.contains(n.id)) n]);
     final list = notices.valueOrNull ?? const <AppNotice>[];
     final unread = [for (final n in list) if (!n.isRead && !_marked.contains(n.id)) n.id];
     return Scaffold(

@@ -1155,6 +1155,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   hides; stored rows unchanged); a TIRPark notice opens /tirpark/manage with
   go (it lives inside the TIRPark tab — pushed over /notifications it was a
   black page).
+  Read ones leave too (owner, 22.11.2026: "toxunulub təsdiq olunduqdan
+  sonra silinməlidir … baş qarışıqlığı yaranır"): a notice that is read —
+  tapped, answered (Qəbul et / Rədd et) or "Hamısını oxunmuş et" — is no
+  longer listed (visibleNotices skips is_read; a tapped one leaves at once);
+  the row stays in the database (is_read = true), nothing is deleted.
 - "Xəritə" tab (owner's picture, 20.11.2026, SQL 0129 — stage 1; stage 2 =
   Maşınlarım): the bottom bar's TIRPark tab reads "Xəritə" (nav_map, same
   place / route / new-items count). Parklar, Servislər and Mağazalar have NO
