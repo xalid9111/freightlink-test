@@ -382,6 +382,18 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
       AdbizPeriod.month => perSums?.months.where((m) => m.key == _date.month).firstOrNull?.impNet ?? 0.0,
       AdbizPeriod.year => perSums?.years.where((y) => y.key == _date.year).firstOrNull?.impNet ?? 0.0,
     };
+    // Ümumi mənfi instead of Rasxodlar (owner, 22.11.2026: "rasxodlar +
+    // mənfilər … cəm o ayın mənfisi"): the period's gap = income − rasxod −
+    // the targets (signed; the same number as the month / year cards' red
+    // half). Gün: the targets of that date's days (open ones too).
+    final double? gap = switch (_period) {
+      AdbizPeriod.day => r == null ? null : adbizDayGap(r, [
+          for (final w in r.workers) ref.watch(adbizDaysProvider(w.userId)).valueOrNull,
+        ], _date),
+      AdbizPeriod.month => perSums?.months.where((m) => m.key == _date.month).firstOrNull?.gap,
+      AdbizPeriod.year => perSums?.years.where((y) => y.key == _date.year).firstOrNull?.gap,
+    };
+    final minusText = adbizMinusText(gap);
     final totals = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
           padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
@@ -396,7 +408,7 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
           final vs = adbizFitSize(
               [
                 adbizAmount(r?.income ?? 0),
-                adbizAmount(r?.expenses ?? 0),
+                minusText,
                 adbizAmount(r?.card ?? 0),
                 adbizAmount((r?.net ?? 0) + oldNet),
               ],
@@ -411,10 +423,10 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
               child: AdbizBigStat(
                   compact: true, valueSize: vs,
                   icon: Icons.receipt_long_outlined,
-                  label: s.t('adb_total_spent'),
-                  value: adbizAmount(r?.expenses ?? 0),
-                  color: AppColors.adbSpend,
-                  valueKey: 'adb-expenses')),
+                  label: s.t('adb_month_gap'),
+                  value: minusText,
+                  color: (gap ?? 0) > 0 ? AppColors.adbIncome : AppColors.adbSpend,
+                  valueKey: 'adb-minus')),
           sep,
           Expanded(
               child: AdbizBigStat(
@@ -1310,6 +1322,29 @@ class _AdbizCompanyDialogState extends State<AdbizCompanyDialog> {
           FilledButton(key: const ValueKey('adb-company-save'), onPressed: _ok, child: Text(s.t('adb_save'))),
         ],
       );
+}
+
+/// The panel's "Ümumi mənfi" of one day (owner, 22.11.2026): income − rasxod
+/// − the targets of that date's days (every worker's, open or closed).
+/// null while a worker's days are still loading.
+double? adbizDayGap(AdbizReport r, List<List<AdbizDay>?> daysPerWorker, DateTime date) {
+  var targets = 0.0;
+  for (final days in daysPerWorker) {
+    if (days == null) return null;
+    for (final d in days) {
+      if (d.workDate.year == date.year && d.workDate.month == date.month && d.workDate.day == date.day) targets += d.target;
+    }
+  }
+  return r.income - r.expenses - targets;
+}
+
+/// "Ümumi mənfi" as shown: a minus as its amount ("2162.50 AZN"), a plus
+/// with "+" ("+40 AZN"), still loading "…".
+String adbizMinusText(double? gap) {
+  if (gap == null) return '…';
+  final v = (gap * 100).roundToDouble() / 100;
+  if (v > 0) return '+${adbizAmount(v)}';
+  return adbizAmount(v == 0 ? 0 : -v);
 }
 
 /// A month / year card (owner's picture, 10.11.2026): the name over it, the

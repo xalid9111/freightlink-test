@@ -865,6 +865,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   right: Ümumi gəlir · Rasxodlar · Karta köçürülən (jobs paid by card,
   inside the income) · Xalis gəlir (gəlir − rasxod); Ay shows "Noyabr ·
   indiyə qədər (1–21)" over them; the old "Kartla · Nağd" line is gone.
+  Ümumi mənfi in place of Rasxodlar (owner, 22.11.2026: "rasxodlar +
+  mənfilər … cəm o ayın mənfisi"): the panel's second part reads "Ümumi
+  mənfi" in Gün · Ay · İl = target(s) + rasxod − income (Ay / İl = the
+  month / year card's red half, so the old account counts; Gün = the targets
+  of that date's days, open ones too); a plus shows "+… AZN" in green.
+  Rasxod itself stays in Xərclər and the notebook.
   One panel for Gün · Ay · İl (owner's pictures, 21.11.2026): the four parts
   stand right under the period bar in all three (with "21 noyabr 2026" /
   "Noyabr · indiyə qədər (1–21)" / "2026 · indiyə qədər" over them), the
