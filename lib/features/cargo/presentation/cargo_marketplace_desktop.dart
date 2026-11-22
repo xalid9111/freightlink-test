@@ -83,8 +83,8 @@ class _DesktopMarketplace extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(marketplaceProvider);
-          ref.invalidate(activeCarriersCountProvider);
-          ref.invalidate(newCargo24hCountProvider);
+          ref.invalidate(registeredUsersCountProvider);
+          ref.invalidate(truckAdsCountProvider);
           ref.invalidate(categoryFeedProvider);
         },
         child: CustomScrollView(
@@ -309,7 +309,7 @@ class _DeskHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final day = AppColors.isDay;
     final clouds = day ? 'assets/images/world_map_day_v3_bottom.jpg' : 'assets/images/world_map_night_v4_bottom.jpg';
-    String stat(int n) => loaded ? '$n' : '—';
+    String stat(int n) => loaded ? statCount(n) : '—';
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
@@ -410,19 +410,19 @@ class _DeskHero extends ConsumerWidget {
                       onTap: _scrollToFeed,
                     ),
                     const SizedBox(width: 14),
+                    // The same three as the phone (owner, 22.11.2026).
                     _DeskStat(
                       icon: Icons.groups_2,
                       color: AppColors.blue,
-                      value: ref.watch(activeCarriersCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                      label: strings.t('home_stat_carriers'),
+                      value: ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—',
+                      label: strings.t('home_stat_users'),
                     ),
                     const SizedBox(width: 14),
                     _DeskStat(
-                      icon: Icons.bar_chart_rounded,
+                      icon: Icons.local_shipping_outlined,
                       color: AppColors.online,
-                      value: ref.watch(newCargo24hCountProvider).whenOrNull(data: (n) => '$n') ?? '—',
-                      label: strings.t('home_stat_24h'),
-                      onTap: _scrollToFeed,
+                      value: ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—',
+                      label: strings.t('et_section_carriers'),
                     ),
                   ],
                 ),

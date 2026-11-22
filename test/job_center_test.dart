@@ -211,7 +211,7 @@ void main() {
     expect(loads, contains('JobCenterMapButton(strings: strings),\n                const SizedBox(width: 8),'));
     expect(loads, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),"));
     final hero = loads.substring(loads.indexOf('LiveMap(liveLabel'), loads.indexOf('_CloudScene(', loads.indexOf('LiveMap(liveLabel')));
-    expect(RegExp('_StatCard\\(').allMatches(hero).length, 3, reason: 'all three counters on the map');
+    expect(RegExp('StatCapsule\\(').allMatches(hero).length, 3, reason: 'all three counters on the map');
     expect(hero.contains('JobCenterMapButton'), isFalse);
     expect(src('lib/features/cargo/presentation/widgets/live_map.dart'), contains('top: widget.badgeTop,'));
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("LiveMap(liveLabel: strings.t('map_live_badge'))),"),

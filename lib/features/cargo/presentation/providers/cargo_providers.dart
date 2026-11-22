@@ -126,6 +126,44 @@ final activeCarriersCountProvider = FutureProvider<int>((ref) async {
   }
 });
 
+/// Registered users (owner, 22.11.2026: the map's second capsule): every
+/// account that is not deactivated, counted in the public profile view
+/// (readable by visitors too, 0107) — one row sent, the server counts.
+final registeredUsersCountProvider = FutureProvider<int>((ref) async {
+  ref.watch(currentUserIdProvider);
+  final res = await SupabaseConfig.client
+      .from('user_profiles')
+      .select('id')
+      .eq('is_active', true)
+      .limit(1)
+      .count(CountOption.exact);
+  return res.count;
+});
+
+/// The carriers of the Daşıyıcılar section (owner, 22.11.2026: the third
+/// capsule): its active empty truck ads (0118), counted on the server.
+final truckAdsCountProvider = FutureProvider<int>((ref) async {
+  ref.watch(currentUserIdProvider);
+  final res = await SupabaseConfig.client
+      .from('empty_truck_ads')
+      .select('id')
+      .eq('status', 'active')
+      .limit(1)
+      .count(CountOption.exact);
+  return res.count;
+});
+
+/// "11,280": thousands apart with a comma, as on the owner's picture.
+String statCount(int n) {
+  final s = n.abs().toString();
+  final b = StringBuffer(n < 0 ? '-' : '');
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
+  }
+  return b.toString();
+}
+
 /// Loads posted in the last 24 hours (hidden ones excluded by RLS).
 final newCargo24hCountProvider = FutureProvider<int>((ref) async {
   ref.watch(currentUserIdProvider);
