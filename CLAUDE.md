@@ -871,6 +871,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   month / year card's red half, so the old account counts; Gün = the targets
   of that date's days, open ones too); a plus shows "+… AZN" in green.
   Rasxod itself stays in Xərclər and the notebook.
+  Variant A (owner, 22.11.2026: three mockups, "A bəndi"): the panel's top is
+  ONE card — "XALIS GƏLİR" with the amount big in adbGold, the old account
+  line under it, then three chips Ümumi gəlir · Ümumi mənfi · Karta
+  köçürülən (one size). The month / year cards are rows (AdbizPeriodTile):
+  name, a green bar = its net against the list's largest net, the net and
+  under it "mənfi …" (the same signed figure the red half showed, adb_row_gap);
+  the chosen one framed in adbTeal; a tap opens it as before.
   One panel for Gün · Ay · İl (owner's pictures, 21.11.2026): the four parts
   stand right under the period bar in all three (with "21 noyabr 2026" /
   "Noyabr · indiyə qədər (1–21)" / "2026 · indiyə qədər" over them), the

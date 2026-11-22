@@ -572,10 +572,15 @@ void main() {
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-card'))).data, '40 AZN');
       expect(find.text('adb_month_gap'), findsWidgets);
       expect(find.text('adb_card_moved'), findsOneWidget);
-      expect(find.text('adb_net_income'), findsOneWidget);
+      expect(find.text('ADB_NET_INCOME'), findsOneWidget, reason: 'the hero label');
       expect(find.byKey(const ValueKey('adb-card-line')), findsNothing, reason: 'the old line is gone');
       double x(String k) => t.getCenter(find.byKey(ValueKey(k))).dx;
-      expect(x('adb-income') < x('adb-minus') && x('adb-minus') < x('adb-card') && x('adb-card') < x('adb-net'), isTrue,
+      double y(String k) => t.getCenter(find.byKey(ValueKey(k))).dy;
+      // Variant A (owner, 22.11.2026): Xalis gəlir big on top, the three under it.
+      expect(y('adb-net') < y('adb-income'), isTrue, reason: 'Xalis gəlir on top');
+      expect(t.widget<Text>(find.byKey(const ValueKey('adb-net'))).style!.fontSize!,
+          greaterThan(t.widget<Text>(find.byKey(const ValueKey('adb-income'))).style!.fontSize!));
+      expect(x('adb-income') < x('adb-minus') && x('adb-minus') < x('adb-card'), isTrue,
           reason: 'left to right: gəlir · rasxod · kart · xalis');
       expect(find.byKey(const ValueKey('adb-days-line')), findsOneWidget);
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-worker-total-u1'))).data, '60 AZN');
@@ -615,6 +620,34 @@ void main() {
       await t.pump();
       await t.pump();
       expect(find.byKey(const ValueKey('adb-month-caption')), findsOneWidget);
+    });
+
+    testWidgets('variant A row fits a narrow phone (288 pt inside a 320 pt screen) at 125 %', (t) async {
+      t.view.physicalSize = const Size(288, 200);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(size: Size(288, 200), textScaler: TextScaler.linear(1.25)),
+          child: Scaffold(
+            body: AdbizPeriodTile(
+              title: 'Sentyabr',
+              sum: const AdbizPeriodSum(9, 61792.5, -10197),
+              maxNet: 61792.5,
+              gapLabel: 'mənfi -10197 AZN',
+              onTap: () {},
+            ),
+          ),
+        ),
+      ));
+      expect(t.takeException(), isNull);
+    });
+
+    test('variant A bar share: net / the largest, nothing for ≤ 0', () {
+      expect(AdbizPeriodTile.share(6076, 6076), 1.0);
+      expect(AdbizPeriodTile.share(3038, 6076), 0.5);
+      expect(AdbizPeriodTile.share(-100, 6076), 0.0);
+      expect(AdbizPeriodTile.share(100, 0), 0.0);
     });
 
     test('Ümumi mənfi (owner, 22.11.2026): rasxod + the minus, one day = income − rasxod − the targets', () {
@@ -662,6 +695,14 @@ void main() {
       expect(find.byKey(const ValueKey('adb-old-included')), findsOneWidget);
       // Ümumi mənfi instead of Rasxodlar (owner, 22.11.2026) = the month card's red half.
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-minus'))).data, '215 AZN');
+      // Variant A rows: the bar as long as the net against the largest month,
+      // the net and the days' minus / plus under it.
+      FractionallySizedBox bar(int m) => t.widget<FractionallySizedBox>(
+          find.descendant(of: find.byKey(ValueKey('adb-month-$m')), matching: find.byType(FractionallySizedBox)));
+      expect(bar(1).widthFactor, 1.0, reason: 'January is the largest net');
+      expect(bar(2).widthFactor, 0.0, reason: 'no net = no bar');
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-month-1')), matching: find.text('5784 AZN')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const ValueKey('adb-month-1')), matching: find.text('adb_row_gap')), findsOneWidget);
       // The same panel on top, the month cards under it.
       expect(t.getTopLeft(find.byKey(const ValueKey('adb-income'))).dy, lessThan(t.getTopLeft(find.byKey(const ValueKey('adb-month-1'))).dy));
       await t.tap(find.byKey(const ValueKey('adb-period-year')));
@@ -683,9 +724,9 @@ void main() {
       expect(src('supabase/tests/local/run_local.sh'), contains('170_ad_business_totals_check.sql'));
     });
 
-    testWidgets('the four amounts stand in ONE size (owner\'s picture: uneven sizes)', (t) async {
+    testWidgets('the three chips stand in ONE size (owner\'s picture: uneven sizes)', (t) async {
       await pumpPanel(t);
-      final sizes = {for (final k in ['adb-income', 'adb-minus', 'adb-card', 'adb-net']) t.widget<Text>(find.byKey(ValueKey(k))).style!.fontSize};
+      final sizes = {for (final k in ['adb-income', 'adb-minus', 'adb-card']) t.widget<Text>(find.byKey(ValueKey(k))).style!.fontSize};
       expect(sizes.length, 1);
       expect(adbizFitSize(['3952 AZN', '2162.50 AZN'], 70, TextScaler.noScaling),
           adbizFitSize(['2162.50 AZN'], 70, TextScaler.noScaling), reason: 'the widest decides');
@@ -735,8 +776,7 @@ void main() {
         expect(find.byKey(ValueKey('adb-month-$m')), findsOneWidget);
       }
       expect(find.text('5784 AZN'), findsOneWidget);
-      expect(find.text('-215 AZN'), findsOneWidget);
-      expect(find.text('11 AZN'), findsOneWidget);
+      expect(find.text('adb_row_gap'), findsNWidgets(12), reason: "each row: the days' minus / plus under its net");
       await t.tap(find.byKey(const ValueKey('adb-month-3')));
       await t.pump();
       expect(t.widget<Text>(find.byKey(const ValueKey('adb-period-label'))).data, '03.${_today.year}');
@@ -782,7 +822,7 @@ void main() {
       await t.pump();
       await t.pump();
       expect(find.text('61792 AZN'), findsOneWidget);
-      expect(find.text('-10197 AZN'), findsOneWidget);
+      expect(find.text('adb_row_gap'), findsWidgets);
       await t.tap(find.byKey(const ValueKey('adb-year-2025')));
       await t.pump();
       await t.pump();
