@@ -1302,6 +1302,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   command poll and report flush no longer throw when the page becomes
   visible before Supabase has started (an uncaught error on every cold
   start).
+- Coming back to the app keeps the place (owner, 23.11.2026, iPhone 11 Pro
+  Home Screen app: "başqa tətbiqə keçib geri qayıdanda səhifə aşağıdan
+  yuxarıya avtomatik sürüşür"): on coming back the token is renewed and the
+  users row read could fail for a moment — the auth stream then said
+  "signed out", every list (they all follow currentUserIdProvider) emptied,
+  the iOS bounce slid the page up and the lists were read again from the
+  top. Now a failed read for the SAME session keeps the known user
+  (userAfterFailedRead; another account or nobody known = as before), so
+  the lists, the page and its scroll place stay; a real sign-out still
+  clears them (auth_resume_test.dart). Android uses the same path.
 - Messages tab lists only chats the user is part of (even for admins).
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText
