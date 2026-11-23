@@ -270,6 +270,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   right under it (kStatRowTop), "CANLI" stands on the same line on the right
   (LiveMap badgeTop: kStatRowTop); kStatRowRightRoom keeps its room, so a
   long number only shrinks the capsules, never runs under "CANLI".
+  Above the map (owner's picture, 23.11.2026, later): the counters' line
+  (stat-row) stands in the top cloud scene right under the slogan, the map
+  starts below it; "CANLI" there is a LiveCapsule (the capsules' height and
+  look, a full green border, the breathing light; still for less motion) and
+  the map draws no badge of its own (LiveMap showBadge: false); a long number
+  only shrinks the capsules. The computer is unchanged. Later the same day
+  (owner's marked picture): the counters never run past the slogan's right
+  end ("Yüklər dünya üzrə hərəkətdədir"; statRowMaxWidth = the slogan's
+  drawn width, text size included — a longer row only shrinks) and "CANLI"
+  is exactly a counter's size (StatCapsule.minWidth × height).
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the

@@ -44,7 +44,12 @@ class LiveMap extends StatefulWidget {
   /// hərəkət edən marşrutları sil"): no trucks, roads or arrival bursts, and
   /// the lights move on a calm timer (kLightsEvery) instead of every frame.
   final bool routes;
-  const LiveMap({super.key, this.liveLabel = 'CANLI', this.badgeTop = 6, this.routes = true});
+
+  /// false = no "CANLI" badge on the map itself (the phone's Loads page shows
+  /// it as a LiveCapsule on the counters' line above the map, owner 23.11.2026).
+  final bool showBadge;
+  const LiveMap(
+      {super.key, this.liveLabel = 'CANLI', this.badgeTop = 6, this.routes = true, this.showBadge = true});
 
   /// How often the lights-only map moves on (about 15 a second).
   static const kLightsEvery = Duration(milliseconds: 66);
@@ -707,6 +712,7 @@ class _LiveMapState extends State<LiveMap> with TickerProviderStateMixin {
             ),
           ),
           // "CANLI" badge with a breathing green light, top-right.
+          if (widget.showBadge)
           Positioned(
             top: widget.badgeTop,
             right: 14,
@@ -983,4 +989,83 @@ class LiveMapSpeed {
   /// 1.25 times a second.
   Duration get calmEvery =>
       Duration(microseconds: ((3 * avgGap).clamp(0.12, 0.8) * 1e6).round());
+}
+
+/// "CANLI" as a capsule on the counters' line (owner's picture, 23.11.2026):
+/// the StatCapsule look — dark ground, a full green border, the same height
+/// — with the breathing green light; a still light for less motion.
+class LiveCapsule extends StatefulWidget {
+  final String label;
+  final double height;
+
+  /// The counters' least width (owner, 23.11.2026: "canlı sayğacın boyu
+  /// digərləri ilə eyni ölçüdə olsun"); the word shrinks to fit, never cut.
+  final double? width;
+  const LiveCapsule({super.key, required this.label, this.height = 22, this.width});
+
+  @override
+  State<LiveCapsule> createState() => _LiveCapsuleState();
+}
+
+class _LiveCapsuleState extends State<LiveCapsule> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100), value: 1);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _c
+        ..stop()
+        ..value = 1;
+    } else if (!_c.isAnimating) {
+      _c.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('live-capsule'),
+      height: widget.height,
+      width: widget.width,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(widget.height / 2),
+        border: Border.all(color: _green, width: 1.6),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FadeTransition(
+            opacity: CurvedAnimation(parent: _c, curve: Curves.easeInOut).drive(Tween(begin: 0.25, end: 1.0)),
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _green,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: _green.withValues(alpha: 0.7), blurRadius: 6)],
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(widget.label,
+              style: const TextStyle(
+                  color: _green, fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 1.2, height: 1)),
+        ],
+      ),
+      ),
+    );
+  }
 }
