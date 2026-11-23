@@ -872,6 +872,9 @@ files to the owner separately (they are run by hand in the SQL editor).
   the program's days; months and years then simply go on from the
   program. The chosen month's "Köhnə hesab" row on the Ay view with ✏️
   (owner / Baş admin; both empty = taken off; audited); no direct writes.
+  The iPhone's number pad has no minus key (owner, 23.11.2026: "mənfi seçə
+  bilmirəm"): both "Köhnə hesab" fields carry a "−/+" button at their start
+  (AdbizSignButton, adbizFlipSign) that turns the typed amount's sign round.
   A saved job shows at once (owner, 20.11.2026: "yazdığı an görünmür …
   iki qeyd"): the device keeps what it just saved until the lists bring it
   (adbizJustSavedProvider, adbizMergeEntries), the jobs stand in ONE fixed
