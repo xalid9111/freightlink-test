@@ -1160,6 +1160,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   device only: toxunuşu hamarla (Flutter pointer resampling), xəritəni
   dayandır, kart şəkillərini gizlət. A poor scroll = under 25 fps or a gap
   over 100 ms (a steady 30 — battery saving / the 30 FPS choice — is not).
+  Smooth finger (owner, 23.11.2026: "sətir axıcılığını, sürüşməni pürüzsüz
+  et. Piksel-piksel keçməsin"): Flutter's pointer resampling (the old test
+  switch "toxunuşu hamarla") is ON by default on phones / tablets
+  (PerfFlags.resampleByDefault: iOS, Android; a computer's mouse not) — the
+  finger's moves are spread evenly over the screen's frames instead of
+  landing in uneven steps; the admin's switch still turns it off on his
+  device (a saved choice wins).
 - "FPS artırıcı" (owner, 16.11.2026: "1x 2x 3x və 30 / 40 / 50–60 fps"; the
   owner's iPhone measured a steady 30 = Low Power Mode, 2x 21 → 29 fps in
   emulation): Ayarlar → Görünüş for everyone (DisplaySpeedSettings,
