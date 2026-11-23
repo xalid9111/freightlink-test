@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -62,8 +63,18 @@ class PerfFlags {
   static final meter = ValueNotifier<bool>(false);
 
   /// Flutter's pointer resampling: finger moves are spread evenly over the
-  /// screen's frames (against "small steps" / trembling text).
-  static final resample = ValueNotifier<bool>(false);
+  /// screen's frames (against "small steps" / trembling text). ON by default
+  /// on phones and tablets (owner, 23.11.2026: "sətir axıcılığını,
+  /// sürüşməni pürüzsüz et. Piksel-piksel keçməsin"); the admin's switch
+  /// can still turn it off on his device.
+  static final resample = ValueNotifier<bool>(resampleByDefault());
+
+  /// Touch screens (the phone's browser / Home Screen app) smooth by
+  /// default; a computer's mouse needs no resampling.
+  static bool resampleByDefault([TargetPlatform? platform]) {
+    final p = platform ?? defaultTargetPlatform;
+    return p == TargetPlatform.iOS || p == TargetPlatform.android;
+  }
   static final mapStill = ValueNotifier<bool>(false);
   static final noImages = ValueNotifier<bool>(false);
 
@@ -77,7 +88,7 @@ class PerfFlags {
     try {
       final p = await SharedPreferences.getInstance();
       for (final e in all.entries) {
-        e.value.value = p.getBool(_keys[e.key]!) ?? false;
+        e.value.value = p.getBool(_keys[e.key]!) ?? (e.key == 'resample' && resampleByDefault());
       }
     } catch (_) {}
     _applyResample();

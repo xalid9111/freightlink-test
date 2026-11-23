@@ -2,6 +2,7 @@
 // a poor one goes to AutoFix; admins get a live meter and test switches.
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,6 +50,28 @@ void main() {
     final s = ScrollPerfStats.fromFrameTimes([12349.5, 12449.5, 12549.5, 12649.5])!;
     expect(s.fps.round(), 10);
     expect(s.poor, isTrue);
+  });
+
+  test('phones smooth the finger by default, a computer does not (owner, 23.11.2026)', () {
+    expect(PerfFlags.resampleByDefault(TargetPlatform.iOS), isTrue);
+    expect(PerfFlags.resampleByDefault(TargetPlatform.android), isTrue);
+    expect(PerfFlags.resampleByDefault(TargetPlatform.windows), isFalse);
+    expect(PerfFlags.resampleByDefault(TargetPlatform.macOS), isFalse);
+  });
+
+  testWidgets('a phone with nothing saved starts with resampling on; a saved "off" stays off', (t) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      SharedPreferences.setMockInitialValues({});
+      await PerfFlags.load();
+      expect(PerfFlags.resample.value, isTrue);
+      expect(GestureBinding.instance.resamplingEnabled, isTrue);
+      SharedPreferences.setMockInitialValues({'perf_resample': false});
+      await PerfFlags.load();
+      expect(GestureBinding.instance.resamplingEnabled, isFalse);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('switches are kept on the device; resampling follows its switch', (t) async {

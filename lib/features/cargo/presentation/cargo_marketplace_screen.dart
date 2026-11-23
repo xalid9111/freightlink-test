@@ -407,6 +407,22 @@ class _Hero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     String stat(int n) => loaded ? statCount(n) : '—';
+    // The slogan, also measured: the counters never run past its right end
+    // (owner's picture, 23.11.2026: "Yüklər dünya üzrə hərəkətdədir yazısını
+    // keçməməlidir").
+    final sloganStyle = TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2).copyWith(shadows: _readableOnMap());
+    final slogan = TextSpan(children: [
+      TextSpan(text: '${strings.t('home_hero_1')} '),
+      TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
+      TextSpan(text: ' ${strings.t('home_hero_3')}'),
+    ]);
+    final sloganWidth = statRowMaxWidth(context, slogan, sloganStyle);
+    final vLoads = stat(count);
+    final vUsers = ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—';
+    final vCarriers = ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—';
+    // One scale for the counters AND "CANLI", so all four keep one size.
+    final rowWidth = [vLoads, vUsers, vCarriers].fold<double>(10, (w, v) => w + StatCapsule.widthOf(context, v));
+    final statScale = rowWidth > sloganWidth ? sloganWidth / rowWidth : 1.0;
 
     // Title, map and counters stand in one cloud scene (the clouds above /
     // below the map are separate pictures that continue it): the owner's
@@ -449,14 +465,10 @@ class _Hero extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text.rich(
                       key: const ValueKey('home-slogan'),
-                      TextSpan(children: [
-                        TextSpan(text: '${strings.t('home_hero_1')} '),
-                        TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
-                        TextSpan(text: ' ${strings.t('home_hero_3')}'),
-                      ]),
+                      slogan,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12.5, color: AppColors.text, height: 1.2).copyWith(shadows: _readableOnMap()),
+                      style: sloganStyle,
                     ),
                   ]),
                 ),
@@ -464,67 +476,81 @@ class _Hero extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          // The counters and "CANLI" on one line right under the slogan,
+          // above the map (owner's picture, 23.11.2026: "sol tərəfə … yazının
+          // həmən altında, Canlı sağ tərəfdə eyni hizada"). Three live
+          // counters (real numbers from the database): aktiv yük · qeydiyyatlı
+          // istifadəçi · Daşıyıcılar bölməsindəki daşıyıcı (22.11.2026); never
+          // cut, a long number only shrinks the row on a very narrow phone.
+          const SizedBox(height: kStatRowTop),
+          Padding(
+            key: const ValueKey('stat-row'),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                    key: const ValueKey('stat-row-limit'),
+                    width: rowWidth * statScale,
+                    height: StatCapsule.height * statScale,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        StatCapsule(
+                          key: const ValueKey('stat-loads'),
+                          icon: Icons.local_shipping,
+                          color: AppColors.accent,
+                          value: vLoads,
+                          label: strings.t('home_stat_active'),
+                          onTap: () => _scrollToFeed(),
+                        ),
+                        const SizedBox(width: 5),
+                        StatCapsule(
+                          key: const ValueKey('stat-users'),
+                          icon: Icons.groups_2_outlined,
+                          color: AppColors.blue,
+                          value: vUsers,
+                          label: strings.t('home_stat_users'),
+                        ),
+                        const SizedBox(width: 5),
+                        StatCapsule(
+                          key: const ValueKey('stat-carriers'),
+                          icon: Icons.local_shipping_outlined,
+                          color: AppColors.online,
+                          value: vCarriers,
+                          label: strings.t('et_section_carriers'),
+                          onTap: () {
+                            ref.read(loadsSectionProvider.notifier).state = LoadsSection.carriers;
+                            _scrollToFeed();
+                          },
+                        ),
+                      ]),
+                    ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: StatCapsule.minWidth * statScale,
+                  height: StatCapsule.height * statScale,
+                  child: FittedBox(
+                    child: LiveCapsule(label: strings.t('map_live_badge'), height: StatCapsule.height, width: StatCapsule.minWidth),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
             ]),
             ),
           ),
           // Full width, edge to edge; edges fade into the page colour.
-          Stack(children: [
-            // Only the city lights blink (owner, 17.11.2026: "animasiyanı azalt,
-            // sadəcə şəhərlərdə işıqlar yanıb sönsün, hərəkət edən marşrutları sil").
-            // "CANLI" on the counters' line, on the right (owner, 23.11.2026).
-            LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: kStatRowTop, routes: false),
-            // Three live counters (all real numbers from the database),
-            // top-right above "CANLI" (owner, 28.10.2026). The owner's
-            // capsules (22.11.2026): aktiv yük · qeydiyyatlı istifadəçi ·
-            // Daşıyıcılar bölməsindəki daşıyıcı; never cut, a long number
-            // only shrinks the row on a very narrow phone.
-            // Left, right under the slogan and from its left edge (owner,
-            // 23.11.2026: "sol tərəfə … yazının həmən altında"); room is kept
-            // on the right for "CANLI" on the same line.
-            Positioned(
-              top: kStatRowTop,
-              left: 16,
-              right: kStatRowRightRoom,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    StatCapsule(
-                      key: const ValueKey('stat-loads'),
-                      icon: Icons.local_shipping,
-                      color: AppColors.accent,
-                      value: stat(count),
-                      label: strings.t('home_stat_active'),
-                      onTap: () => _scrollToFeed(),
-                    ),
-                    const SizedBox(width: 5),
-                    StatCapsule(
-                      key: const ValueKey('stat-users'),
-                      icon: Icons.groups_2_outlined,
-                      color: AppColors.blue,
-                      value: ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—',
-                      label: strings.t('home_stat_users'),
-                    ),
-                    const SizedBox(width: 5),
-                    StatCapsule(
-                      key: const ValueKey('stat-carriers'),
-                      icon: Icons.local_shipping_outlined,
-                      color: AppColors.online,
-                      value: ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—',
-                      label: strings.t('et_section_carriers'),
-                      onTap: () {
-                        ref.read(loadsSectionProvider.notifier).state = LoadsSection.carriers;
-                        _scrollToFeed();
-                      },
-                    ),
-                  ]),
-                ),
-              ),
-            ),
-          ]),
+          // Only the city lights blink (owner, 17.11.2026: "animasiyanı azalt,
+          // sadəcə şəhərlərdə işıqlar yanıb sönsün, hərəkət edən marşrutları sil").
+          LiveMap(liveLabel: strings.t('map_live_badge'), routes: false, showBadge: false),
           _CloudScene(
             asset: '${scene}_bottom.jpg',
             alignment: Alignment.topCenter,
@@ -679,10 +705,23 @@ class _AddLoadButton extends StatelessWidget {
 /// the left and the number in white on the right. Its size on the picture is
 /// the least it takes (a short number keeps it); a longer number widens it.
 /// The name shows on a long press / hover (Tooltip) and to screen readers.
-/// The counters' line on the map: its top (the capsules and "CANLI" share
-/// it) and the room kept for "CANLI" on the right.
-const double kStatRowTop = 6;
-const double kStatRowRightRoom = 108;
+/// The gap between the slogan and the counters' line (the capsules and
+/// "CANLI" share it, above the map; owner 23.11.2026).
+const double kStatRowTop = 5;
+
+/// How wide the counters may be: the slogan's own width (as drawn, with the
+/// page's font and text size), so they never run past its right end.
+double statRowMaxWidth(BuildContext context, InlineSpan slogan, TextStyle style) {
+  final tp = TextPainter(
+    text: TextSpan(style: DefaultTextStyle.of(context).style.merge(style), children: [slogan]),
+    textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final w = tp.width;
+  tp.dispose();
+  return w;
+}
 
 class StatCapsule extends StatelessWidget {
   final IconData icon;
@@ -694,6 +733,22 @@ class StatCapsule extends StatelessWidget {
 
   static const double height = 22;
   static const double minWidth = 66;
+  static const _valueStyle =
+      TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, height: 1, fontFeatures: [FontFeature.tabularFigures()]);
+
+  /// The capsule's width for [value] as drawn (paddings 3 + 9, border 2 ×
+  /// 1.6, icon 16, gap 5, the number), never under [minWidth].
+  static double widthOf(BuildContext context, String value) {
+    final tp = TextPainter(
+      text: TextSpan(text: value, style: DefaultTextStyle.of(context).style.merge(_valueStyle)),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final w = tp.width;
+    tp.dispose();
+    return math.max(minWidth, 3 + 9 + 3.2 + 16 + 5 + w);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -729,12 +784,7 @@ class StatCapsule extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: minWidth - 3 - 9 - 16 - 5 - 3.2),
                   child: Text(value,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text,
-                        height: 1,
-                        fontFeatures: const [FontFeature.tabularFigures()])),
+                    style: _valueStyle.copyWith(color: AppColors.text)),
                 ),
               ],
             ),

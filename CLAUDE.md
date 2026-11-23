@@ -270,6 +270,16 @@ files to the owner separately (they are run by hand in the SQL editor).
   right under it (kStatRowTop), "CANLI" stands on the same line on the right
   (LiveMap badgeTop: kStatRowTop); kStatRowRightRoom keeps its room, so a
   long number only shrinks the capsules, never runs under "CANLI".
+  Above the map (owner's picture, 23.11.2026, later): the counters' line
+  (stat-row) stands in the top cloud scene right under the slogan, the map
+  starts below it; "CANLI" there is a LiveCapsule (the capsules' height and
+  look, a full green border, the breathing light; still for less motion) and
+  the map draws no badge of its own (LiveMap showBadge: false); a long number
+  only shrinks the capsules. The computer is unchanged. Later the same day
+  (owner's marked picture): the counters never run past the slogan's right
+  end ("Yüklər dünya üzrə hərəkətdədir"; statRowMaxWidth = the slogan's
+  drawn width, text size included — a longer row only shrinks) and "CANLI"
+  is exactly a counter's size (StatCapsule.minWidth × height).
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the
@@ -1055,6 +1065,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   sees a browser move to a higher Flutter history number (forward), stops
   it before Flutter and goes one step back instead (at the first page it
   stays). Pages opened by a tap are unchanged (never_forward_nav_test.dart).
+- The iPhone home bar (owner, 23.11.2026: "uygulama dəyişdirmək
+  istədiyimdə səhifə öz özünə hərəkət edir"): the app-switch swipe from the
+  very bottom edge no longer scrolls the page — web/pwa_guard.js keeps a
+  touch that STARTS in the home-bar strip (below the floating bar: the
+  safe-area inset − 12, at least 12 px; only where there is an inset) from
+  Flutter from its start to its end; nothing is prevented (iOS still
+  switches apps), every other touch and the bar's tabs are untouched
+  (home_bar_swipe_test.dart).
 - Message sound only for messages that arrive while the site is open (owner,
   15.11.2026: "saytı açarkən bildiriş səsi gəlir"): MessageSoundRule — a
   new id AND written after this visit started (2 min clock grace); old
@@ -1142,6 +1160,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   device only: toxunuşu hamarla (Flutter pointer resampling), xəritəni
   dayandır, kart şəkillərini gizlət. A poor scroll = under 25 fps or a gap
   over 100 ms (a steady 30 — battery saving / the 30 FPS choice — is not).
+  Smooth finger (owner, 23.11.2026: "sətir axıcılığını, sürüşməni pürüzsüz
+  et. Piksel-piksel keçməsin"): Flutter's pointer resampling (the old test
+  switch "toxunuşu hamarla") is ON by default on phones / tablets
+  (PerfFlags.resampleByDefault: iOS, Android; a computer's mouse not) — the
+  finger's moves are spread evenly over the screen's frames instead of
+  landing in uneven steps; the admin's switch still turns it off on his
+  device (a saved choice wins).
 - "FPS artırıcı" (owner, 16.11.2026: "1x 2x 3x və 30 / 40 / 50–60 fps"; the
   owner's iPhone measured a steady 30 = Low Power Mode, 2x 21 → 29 fps in
   emulation): Ayarlar → Görünüş for everyone (DisplaySpeedSettings,
