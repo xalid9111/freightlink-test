@@ -265,6 +265,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   long press (Tooltip). A tap: loads → the list, carriers → Daşıyıcılar.
   The computer's three stats follow the same order and data (its look
   unchanged). The old "Son 24 saat" counter is gone.
+  Place (owner, 23.11.2026: "sol tərəfə … yazının həmən altında, Canlı sağ
+  tərəfdə eyni hizada"): the capsules start at the slogan's left edge (16)
+  right under it (kStatRowTop), "CANLI" stands on the same line on the right
+  (LiveMap badgeTop: kStatRowTop); kStatRowRightRoom keeps its room, so a
+  long number only shrinks the capsules, never runs under "CANLI".
   Daşıyıcılar cards (owner's picture 1, 17.11.2026 — replaces the rows
   there; the Loads rows unchanged): EmptyTruckCarrierCard — the carrier's
   own picture (profile photo / company logo via UserAvatar, else the
