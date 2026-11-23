@@ -1065,6 +1065,14 @@ files to the owner separately (they are run by hand in the SQL editor).
   sees a browser move to a higher Flutter history number (forward), stops
   it before Flutter and goes one step back instead (at the first page it
   stays). Pages opened by a tap are unchanged (never_forward_nav_test.dart).
+- The iPhone home bar (owner, 23.11.2026: "uygulama dəyişdirmək
+  istədiyimdə səhifə öz özünə hərəkət edir"): the app-switch swipe from the
+  very bottom edge no longer scrolls the page — web/pwa_guard.js keeps a
+  touch that STARTS in the home-bar strip (below the floating bar: the
+  safe-area inset − 12, at least 12 px; only where there is an inset) from
+  Flutter from its start to its end; nothing is prevented (iOS still
+  switches apps), every other touch and the bar's tabs are untouched
+  (home_bar_swipe_test.dart).
 - Message sound only for messages that arrive while the site is open (owner,
   15.11.2026: "saytı açarkən bildiriş səsi gəlir"): MessageSoundRule — a
   new id AND written after this visit started (2 min clock grace); old

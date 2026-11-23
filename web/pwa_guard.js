@@ -151,4 +151,57 @@
   try {
     if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { setTimeout(unshift, 150); });
   } catch (e) {}
+
+  // 6) The iPhone home bar (owner, 23.11.2026: "uygulama dəyişdirmək
+  //    istədiyimdə səhifə öz özünə hərəkət edir"): the swipe up from the
+  //    very bottom edge that switches apps reached Flutter too, so the list
+  //    under it scrolled. A touch that STARTS in the home-bar strip (below
+  //    the floating bar: the safe-area inset − 12, at least 12 px; only on a
+  //    phone that has a home bar, i.e. an inset) is kept from Flutter from
+  //    its start to its end. Nothing is prevented: iOS still switches apps;
+  //    every other touch (the bar's tabs too) is untouched.
+  var probe = null;
+  function homeBarInset() {
+    try {
+      if (!probe) {
+        probe = document.createElement('div');
+        probe.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;' +
+          'pointer-events:none;padding-bottom:env(safe-area-inset-bottom)';
+        (document.body || document.documentElement).appendChild(probe);
+      }
+      return parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+    } catch (e) { return 0; }
+  }
+  function inHomeBar(y) {
+    var s = homeBarInset();
+    if (s <= 0) return false;
+    return y >= window.innerHeight - Math.max(12, s - 12);
+  }
+  var heldPointers = {};
+  var heldTouch = false;
+  window.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch' || !inHomeBar(e.clientY)) return;
+    heldPointers[e.pointerId] = true;
+    e.stopImmediatePropagation();
+  }, true);
+  ['pointermove', 'pointerup', 'pointercancel'].forEach(function (type) {
+    window.addEventListener(type, function (e) {
+      if (!heldPointers[e.pointerId]) return;
+      e.stopImmediatePropagation();
+      if (type !== 'pointermove') delete heldPointers[e.pointerId];
+    }, true);
+  });
+  window.addEventListener('touchstart', function (e) {
+    var t = e.touches;
+    heldTouch = !!t && t.length === 1 && inHomeBar(t[0].clientY);
+    if (heldTouch) e.stopImmediatePropagation();
+  }, true);
+  ['touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
+    window.addEventListener(type, function (e) {
+      if (!heldTouch) return;
+      e.stopImmediatePropagation();
+      if (type !== 'touchmove') heldTouch = false;
+    }, true);
+  });
+  window.flHomeBarGuard = true;
 })();
