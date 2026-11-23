@@ -1548,14 +1548,22 @@ class _AdbizOldMonthDialogState extends State<AdbizOldMonthDialog> {
               key: const ValueKey('adb-old-net'),
               controller: _net,
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(labelText: s.t('adb_old_net'), suffixText: 'AZN'),
+              decoration: InputDecoration(
+                labelText: s.t('adb_old_net'),
+                suffixText: 'AZN',
+                prefixIcon: AdbizSignButton(key: const ValueKey('adb-old-net-sign'), controller: _net),
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
               key: const ValueKey('adb-old-gap'),
               controller: _gap,
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(labelText: s.t('adb_old_gap'), suffixText: 'AZN'),
+              decoration: InputDecoration(
+                labelText: s.t('adb_old_gap'),
+                suffixText: 'AZN',
+                prefixIcon: AdbizSignButton(key: const ValueKey('adb-old-gap-sign'), controller: _gap),
+              ),
             ),
             if (_error != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_error!, style: TextStyle(color: AppColors.danger))),
           ]),
@@ -1571,6 +1579,35 @@ class _AdbizOldMonthDialogState extends State<AdbizOldMonthDialog> {
           TextButton(onPressed: () => Navigator.pop(context), child: Text(s.t('common_cancel'))),
           FilledButton(key: const ValueKey('adb-old-save'), onPressed: _ok, child: Text(s.t('adb_save'))),
         ],
+      );
+}
+
+/// "-215" ↔ "215": the sign of a typed amount turned round.
+String adbizFlipSign(String text) {
+  final t = text.trim();
+  if (t.startsWith('-') || t.startsWith('−')) return t.substring(1).trimLeft();
+  return '-$t';
+}
+
+/// The iPhone's number pad has no minus key (owner, 23.11.2026: "yazı
+/// klaviaturasında mənfi görünmür, mənfi seçə bilmirəm"): a "−/+" button at
+/// the start of the field turns the amount's sign round.
+class AdbizSignButton extends StatelessWidget {
+  final TextEditingController controller;
+  const AdbizSignButton({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) => TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          minimumSize: const Size(44, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+        ),
+        onPressed: () {
+          final t = adbizFlipSign(controller.text);
+          controller.value = TextEditingValue(text: t, selection: TextSelection.collapsed(offset: t.length));
+        },
+        child: const Text('−/+', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
       );
 }
 
