@@ -193,6 +193,14 @@ class AuthRepositoryImpl implements AuthRepository {
         final row = await _client.from('users').select().eq('id', authUser.id).single();
         return _cachedUser = _mapRow(row);
       } on PostgrestException {
+        // Coming back to the app (owner, 23.11.2026, iPhone Home Screen app:
+        // "geri qayıdanda səhifə öz-özünə yuxarı sürüşür"): the token is
+        // renewed and this read can fail (a token that expired while the app
+        // slept, the network not back yet). The SAME signed-in user stays
+        // signed in — reporting "signed out" for a moment emptied every list
+        // and re-read it, so the page jumped back to the top.
+        final known = userAfterFailedRead(_cachedUser, authUser.id);
+        if (known != null) return known;
         // Expected to be unreachable in normal operation: the
         // migration 0005 trigger creates the public.users row
         // synchronously inside the same transaction as the
@@ -202,6 +210,11 @@ class AuthRepositoryImpl implements AuthRepository {
         // treat it as signed out rather than crash the stream, so the
         // failure is visible (stuck on /login) instead of silent.
         return null;
+      } catch (_) {
+        // Any other failure (network) for the same user: keep him as well.
+        final known = userAfterFailedRead(_cachedUser, authUser.id);
+        if (known != null) return known;
+        rethrow;
       }
     }).transform(StreamTransformer<AppUser?, AppUser?>.fromHandlers(handleError: (e, st, sink) {
       // An expired / other-browser e-mail link (AutoFix, 15.11.2026): the
@@ -264,3 +277,9 @@ Set<String> oauthProvidersFromSettings(String body) {
     return const {};
   }
 }
+
+/// Who is signed in when the users row could not be read for [sessionUserId]:
+/// the user already known for that same session id, never a sign-out; null
+/// when nobody (or somebody else) was known.
+AppUser? userAfterFailedRead(AppUser? known, String sessionUserId) =>
+    known != null && known.id == sessionUserId ? known : null;
