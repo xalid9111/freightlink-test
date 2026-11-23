@@ -206,7 +206,7 @@ void main() {
     expect(m, contains('JobCenterMapButton(strings: strings)'));
     expect(m, contains("_AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create'))"), reason: '"Yük əlavə et" under the map (was "Yük hovuzu")');
     // The map back (owner, 17.11.2026, later): only the city lights blink.
-    expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false)"));
+    expect(m, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: kStatRowTop, routes: false)"));
     expect(RegExp(r'StatCapsule\(\s+key:').allMatches(m).length, 3, reason: 'the three real counters');
     final lm = src('lib/features/cargo/presentation/widgets/live_map.dart');
     expect(lm, contains('if (!routes) return;'), reason: 'no trucks / roads / bursts');

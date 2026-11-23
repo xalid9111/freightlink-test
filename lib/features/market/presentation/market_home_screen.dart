@@ -582,27 +582,39 @@ class _MarketFilterSheetState extends State<MarketFilterSheet> {
               ),
               const SizedBox(height: 10),
             ],
-            TextField(
-              controller: _brand,
-              // Typed brand → the popular tile above shows it.
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                labelText: s.t('mk_brand'),
-                isDense: true,
-                // Pick from the list or type any brand.
-                suffixIcon: PopupMenuButton<String>(
-                  icon: const Icon(Icons.arrow_drop_down),
-                  onSelected: (v) => setState(() {
-                    _brand.text = v;
-                    _model.clear();
-                  }),
-                  itemBuilder: (_) => [for (final b in brands) PopupMenuItem(value: b, child: Text(b))],
-                ),
-              ),
+            // Marka and Model are only picked, never typed (owner,
+            // 23.11.2026: "yalnız seçilə bilər, yazılması düz deyil").
+            DropdownButtonFormField<String?>(
+              key: ValueKey('mk-filter-brand:${picked ?? ''}'),
+              initialValue: picked,
+              isExpanded: true,
+              menuMaxHeight: 420,
+              decoration: InputDecoration(labelText: s.t('mk_brand'), isDense: true),
+              items: [
+                DropdownMenuItem(value: null, child: Text(s.t('svc_all'))),
+                // A brand from an earlier search that is not in this list stays.
+                for (final b in [if (picked != null && !brands.contains(picked)) picked, ...brands])
+                  DropdownMenuItem(value: b, child: Text(b)),
+              ],
+              onChanged: (v) => setState(() {
+                _brand.text = v ?? '';
+                _model.clear();
+              }),
             ),
             const SizedBox(height: 10),
             if (models.isEmpty)
-              field(_model, s.t('mk_model'))
+              // No catalogue models (or no brand yet): a closed choice, no typing.
+              DropdownButtonFormField<String?>(
+                key: ValueKey('mk-filter-model-${picked ?? ''}'),
+                initialValue: typedModel,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: s.t('mk_model'), isDense: true),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(s.t('svc_all'))),
+                  if (typedModel != null) DropdownMenuItem(value: typedModel, child: Text(typedModel)),
+                ],
+                onChanged: typedModel == null ? null : (v) => setState(() => _model.text = v ?? ''),
+              )
             else ...[
               label('mk_model'),
               Wrap(key: const ValueKey('mk-filter-models'), spacing: 6, runSpacing: 6, children: [

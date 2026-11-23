@@ -209,7 +209,7 @@ void main() {
     // Owner, 28.10.2026: İş Mərkəzi under the map where the counters were
     // (left of "Yük hovuzu"), the counters top-right above "CANLI".
     expect(loads, contains('JobCenterMapButton(strings: strings),\n                const SizedBox(width: 8),'));
-    expect(loads, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),"));
+    expect(loads, contains("LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: kStatRowTop, routes: false),"));
     final hero = loads.substring(loads.indexOf('LiveMap(liveLabel'), loads.indexOf('_CloudScene(', loads.indexOf('LiveMap(liveLabel')));
     expect(RegExp('StatCapsule\\(').allMatches(hero).length, 3, reason: 'all three counters on the map');
     expect(hero.contains('JobCenterMapButton'), isFalse);

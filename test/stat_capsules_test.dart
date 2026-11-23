@@ -46,6 +46,10 @@ void main() {
     expect(m, contains('truckAdsCountProvider'));
     expect(m, contains('LoadsSection.carriers'), reason: 'a tap on carriers opens Daşıyıcılar');
     expect(m, contains('fit: BoxFit.scaleDown'), reason: 'never cut on a narrow phone');
+    // Left under the slogan, "CANLI" on the same line on the right (owner, 23.11.2026).
+    expect(m, contains('top: kStatRowTop,\n              left: 16,\n              right: kStatRowRightRoom,'));
+    expect(m, contains('badgeTop: kStatRowTop'));
+    expect(m, contains('alignment: Alignment.centerLeft,\n                child: FittedBox('));
     final p = File('lib/features/cargo/presentation/providers/cargo_providers.dart').readAsStringSync();
     expect(p, contains(".from('empty_truck_ads')"));
     expect(p, contains(".eq('status', 'active')"));

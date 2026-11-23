@@ -472,21 +472,25 @@ class _Hero extends ConsumerWidget {
           Stack(children: [
             // Only the city lights blink (owner, 17.11.2026: "animasiyanı azalt,
             // sadəcə şəhərlərdə işıqlar yanıb sönsün, hərəkət edən marşrutları sil").
-            LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: 32, routes: false),
+            // "CANLI" on the counters' line, on the right (owner, 23.11.2026).
+            LiveMap(liveLabel: strings.t('map_live_badge'), badgeTop: kStatRowTop, routes: false),
             // Three live counters (all real numbers from the database),
             // top-right above "CANLI" (owner, 28.10.2026). The owner's
             // capsules (22.11.2026): aktiv yük · qeydiyyatlı istifadəçi ·
             // Daşıyıcılar bölməsindəki daşıyıcı; never cut, a long number
             // only shrinks the row on a very narrow phone.
+            // Left, right under the slogan and from its left edge (owner,
+            // 23.11.2026: "sol tərəfə … yazının həmən altında"); room is kept
+            // on the right for "CANLI" on the same line.
             Positioned(
-              top: 6,
-              right: 14,
-              left: 14,
+              top: kStatRowTop,
+              left: 16,
+              right: kStatRowRightRoom,
               child: Align(
-                alignment: Alignment.centerRight,
+                alignment: Alignment.centerLeft,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     StatCapsule(
                       key: const ValueKey('stat-loads'),
@@ -675,6 +679,11 @@ class _AddLoadButton extends StatelessWidget {
 /// the left and the number in white on the right. Its size on the picture is
 /// the least it takes (a short number keeps it); a longer number widens it.
 /// The name shows on a long press / hover (Tooltip) and to screen readers.
+/// The counters' line on the map: its top (the capsules and "CANLI" share
+/// it) and the room kept for "CANLI" on the right.
+const double kStatRowTop = 6;
+const double kStatRowRightRoom = 108;
+
 class StatCapsule extends StatelessWidget {
   final IconData icon;
   final Color color;
