@@ -153,54 +153,54 @@
   } catch (e) {}
 
   // 6) The iPhone home bar (owner, 23.11.2026: "uygulama dəyişdirmək
-  //    istədiyimdə səhifə öz özünə hərəkət edir"): the swipe up from the
-  //    very bottom edge that switches apps reached Flutter too, so the list
-  //    under it scrolled. A touch that STARTS in the home-bar strip (below
-  //    the floating bar: the safe-area inset − 12, at least 12 px; only on a
-  //    phone that has a home bar, i.e. an inset) is kept from Flutter from
-  //    its start to its end. Nothing is prevented: iOS still switches apps;
-  //    every other touch (the bar's tabs too) is untouched.
-  var probe = null;
-  function homeBarInset() {
-    try {
-      if (!probe) {
-        probe = document.createElement('div');
-        probe.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;' +
-          'pointer-events:none;padding-bottom:env(safe-area-inset-bottom)';
-        (document.body || document.documentElement).appendChild(probe);
-      }
-      return parseFloat(getComputedStyle(probe).paddingBottom) || 0;
-    } catch (e) { return 0; }
-  }
+  //    istədiyimdə səhifə öz özünə hərəkət edir"; later: "aşağıdan yuxarı
+  //    sürüşdürüb səhifəni qaldıranda yük kartları ... hərəkətə başlayır"):
+  //    the swipe up from the very bottom edge that switches apps reached
+  //    Flutter too, so the list under it scrolled. The first version read
+  //    the home-bar height from env(safe-area-inset-bottom), but Flutter
+  //    replaces the viewport tag without viewport-fit=cover, so it was 0 on
+  //    the iPhone and the guard never ran. Now a fixed strip of the bottom
+  //    edge (HOME_STRIP px, on touch screens): a touch that STARTS there is
+  //    held back from Flutter; if it moves (the app-switch swipe) nothing of
+  //    it ever reaches the page; if it ends as a tap it is handed to Flutter
+  //    then (down + up), so a button that reaches the edge still works.
+  //    Nothing is prevented: iOS / Android still switch apps; every touch
+  //    that starts above the strip is untouched.
+  var HOME_STRIP = 28;
+  var TAP_SLOP = 8;
   function inHomeBar(y) {
-    var s = homeBarInset();
-    if (s <= 0) return false;
-    return y >= window.innerHeight - Math.max(12, s - 12);
+    return y >= window.innerHeight - HOME_STRIP;
   }
-  var heldPointers = {};
-  var heldTouch = false;
+  var held = {}; // pointerId -> { down: PointerEvent, moved: bool }
+  var replaying = false;
   window.addEventListener('pointerdown', function (e) {
-    if (e.pointerType !== 'touch' || !inHomeBar(e.clientY)) return;
-    heldPointers[e.pointerId] = true;
+    if (replaying || e.pointerType !== 'touch' || !inHomeBar(e.clientY)) return;
+    held[e.pointerId] = { down: e, moved: false };
     e.stopImmediatePropagation();
   }, true);
-  ['pointermove', 'pointerup', 'pointercancel'].forEach(function (type) {
-    window.addEventListener(type, function (e) {
-      if (!heldPointers[e.pointerId]) return;
-      e.stopImmediatePropagation();
-      if (type !== 'pointermove') delete heldPointers[e.pointerId];
-    }, true);
-  });
-  window.addEventListener('touchstart', function (e) {
-    var t = e.touches;
-    heldTouch = !!t && t.length === 1 && inHomeBar(t[0].clientY);
-    if (heldTouch) e.stopImmediatePropagation();
+  window.addEventListener('pointermove', function (e) {
+    var h = held[e.pointerId];
+    if (replaying || !h) return;
+    if (Math.abs(e.clientY - h.down.clientY) > TAP_SLOP || Math.abs(e.clientX - h.down.clientX) > TAP_SLOP) h.moved = true;
+    e.stopImmediatePropagation();
   }, true);
-  ['touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
+  ['pointerup', 'pointercancel'].forEach(function (type) {
     window.addEventListener(type, function (e) {
-      if (!heldTouch) return;
+      var h = held[e.pointerId];
+      if (replaying || !h) return;
+      delete held[e.pointerId];
       e.stopImmediatePropagation();
-      if (type !== 'touchmove') heldTouch = false;
+      if (type !== 'pointerup' || h.moved) return;
+      // A plain tap in the strip: hand it to Flutter now.
+      try {
+        replaying = true;
+        var t = h.down.target || document.elementFromPoint(h.down.clientX, h.down.clientY);
+        t.dispatchEvent(new PointerEvent('pointerdown', h.down));
+        t.dispatchEvent(new PointerEvent('pointerup', e));
+      } catch (x) {
+      } finally {
+        replaying = false;
+      }
     }, true);
   });
   window.flHomeBarGuard = true;
