@@ -1,7 +1,7 @@
 {
   "name": "TırLink — Yük Marketpleysi",
   "short_name": "TırLink",
-  "description": "AI-powered freight marketplace connecting cargo owners with carriers.",
+  "description": "TırLink — yük və daşıyıcı platforması",
   "start_url": ".",
   "scope": "/",
   "display": "standalone",
