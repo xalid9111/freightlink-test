@@ -1073,6 +1073,15 @@ files to the owner separately (they are run by hand in the SQL editor).
   Flutter from its start to its end; nothing is prevented (iOS still
   switches apps), every other touch and the bar's tabs are untouched
   (home_bar_swipe_test.dart).
+  Fixed later the same day (owner: "aşağıdan yuxarı sürüşdürüb səhifəni
+  qaldıranda yük kartları … hərəkətə başlayır"): the inset was always 0 —
+  Flutter replaces the viewport tag without viewport-fit=cover — so the
+  guard never ran. Now a fixed strip (HOME_STRIP = 28 px from the bottom,
+  every touch screen): a touch starting there that moves never reaches the
+  page; one that ends as a tap is handed to Flutter then (down + up), so the
+  bar's lower edge still opens its tab. Checked in Chromium with real touch
+  events (bottom-edge swipe = page still, the live site moved; swipes
+  higher up scroll).
 - Message sound only for messages that arrive while the site is open (owner,
   15.11.2026: "saytı açarkən bildiriş səsi gəlir"): MessageSoundRule — a
   new id AND written after this visit started (2 min clock grace); old
