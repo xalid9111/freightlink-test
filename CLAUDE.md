@@ -449,6 +449,11 @@ files to the owner separately (they are run by hand in the SQL editor).
   Satışdadır / Sifarişlə (empty = in stock), wheel formula (not for
   trailers), equipment (Retarder · ADR · Kondisioner · Yataq), Vuruğu
   yoxdur / var — in the form, the filter, the ad page and on the computer.
+  In the filter sheet Marka and Model are only picked, never typed (owner,
+  23.11.2026: "yalnız seçilə bilər, yazılması düz deyil"): Marka is a closed
+  list (Hamısı + the type's brands; a brand from an earlier search stays),
+  the popular tiles set it; Model = the brand's model chips, or a closed list
+  when the catalogue has none. The search page (Marka → Model) is unchanged.
 - Admin → "Test məlumatlarını sil" (owner, 02.11.2026, 0083): admins
   only (server `_require_admin`, typed SİL) delete fake test profiles,
   loads, services, TIR Bazarı sale ads, job ads and TIR parks (0084) for good. A user goes
