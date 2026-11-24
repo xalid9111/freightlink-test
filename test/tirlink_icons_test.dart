@@ -61,10 +61,10 @@ void main() {
     final manifest = jsonDecode(src('web/manifest.json')) as Map<String, dynamic>;
     final icons = [for (final i in manifest['icons'] as List) i as Map<String, dynamic>];
     expect(icons.map((i) => i['src']), [
-      'icons/tirlink-icon-v3-192.png',
-      'icons/tirlink-icon-v3-512.png',
-      'icons/tirlink-icon-v3-maskable-192.png',
-      'icons/tirlink-icon-v3-maskable-512.png',
+      'icons/tirlink-icon-v4-192.png',
+      'icons/tirlink-icon-v4-512.png',
+      'icons/tirlink-icon-v4-maskable-192.png',
+      'icons/tirlink-icon-v4-maskable-512.png',
     ]);
     for (final i in icons) {
       final (w, h, type) = png('web/${i['src']}');
@@ -72,8 +72,28 @@ void main() {
       expect(type, 2, reason: '${i['src']} has no transparency');
     }
     final html = src('web/index.html');
-    expect(html, contains('<link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v3.png">'));
-    expect(png('web/icons/tirlink-apple-touch-v3.png'), (180, 180, 2));
+    expect(html, contains('<link rel="apple-touch-icon" sizes="180x180" href="icons/tirlink-apple-touch-v4.png">'));
+    expect(png('web/icons/tirlink-apple-touch-v4.png'), (180, 180, 2));
+    // The new TırLink "t" icon (owner, 24.11.2026): every old icon file name
+    // holds the new picture too, so no old icon stays as a fallback anywhere
+    // (notifications use Icon-192.png).
+    for (final (old, now) in [
+      ('tirlink-icon-v3-192.png', 'tirlink-icon-v4-192.png'),
+      ('tirlink-icon-v3-512.png', 'tirlink-icon-v4-512.png'),
+      ('tirlink-icon-v3-maskable-192.png', 'tirlink-icon-v4-maskable-192.png'),
+      ('tirlink-icon-v3-maskable-512.png', 'tirlink-icon-v4-maskable-512.png'),
+      ('tirlink-apple-touch-v3.png', 'tirlink-apple-touch-v4.png'),
+      ('apple-touch-icon.png', 'tirlink-apple-touch-v4.png'),
+      ('Icon-192.png', 'tirlink-icon-v4-192.png'),
+      ('Icon-512.png', 'tirlink-icon-v4-512.png'),
+      ('Icon-maskable-192.png', 'tirlink-icon-v4-maskable-192.png'),
+      ('Icon-maskable-512.png', 'tirlink-icon-v4-maskable-512.png'),
+      ('tirlink-favicon-v3-48.png', 'tirlink-favicon-t-48.png'),
+    ]) {
+      expect(File('web/icons/$old').readAsBytesSync(), File('web/icons/$now').readAsBytesSync(), reason: old);
+    }
+    expect(File('web/favicon.png').readAsBytesSync(), File('web/icons/tirlink-favicon-t-32.png').readAsBytesSync());
+    expect(File('web/favicon-v3.png').readAsBytesSync(), File('web/icons/tirlink-favicon-t-32.png').readAsBytesSync());
     // Favicon from the new T logo (owner, 22.11.2026): square, no transparency.
     expect(html, contains('<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48"/>'));
     for (final (file, size) in [
@@ -128,14 +148,16 @@ void main() {
   });
 
   // Owner, 15.11.2026: "kənarlarında qara xətt olmasın" — the icon fills the
-  // square edge to edge; no dark ground on its sides or in the corners that
-  // iPhone / Android keep after their own rounding.
-  testWidgets('icons have no dark rim', (t) async {
+  // square edge to edge. Since 24.11.2026 the icon is the new TırLink "t" on
+  // its own dark ground (the owner's IMG_8528): edges and corners are that
+  // ground — never the white corners of the rounded source picture, never a
+  // frame of another colour.
+  testWidgets('icons fill the square with their own ground (no white corners, no frame)', (t) async {
     await t.runAsync(() async {
       for (final p in [
-        'web/icons/tirlink-apple-touch-v3.png',
-        'web/icons/tirlink-icon-v3-512.png',
-        'web/icons/tirlink-icon-v3-maskable-512.png'
+        'web/icons/tirlink-apple-touch-v4.png',
+        'web/icons/tirlink-icon-v4-512.png',
+        'web/icons/tirlink-icon-v4-maskable-512.png'
       ]) {
         final codec = await ui.instantiateImageCodec(File(p).readAsBytesSync());
         final img = (await codec.getNextFrame()).image;
@@ -157,7 +179,7 @@ void main() {
           (0.08, 0.92),
           (0.92, 0.92)
         ]) {
-          expect(light(x, y), greaterThan(60), reason: '$p at ($x, $y) is not the dark ground');
+          expect(light(x, y), lessThan(120), reason: '$p at ($x, $y): no white corner / frame');
         }
       }
     });
