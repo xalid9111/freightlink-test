@@ -166,6 +166,7 @@ const kRpcMigration = <String, String>{
   'admin_user_login_allowed_set': '0134_login_allowlist.sql',
   'user_block_set': '0135_user_blocks.sql',
   'user_block_state': '0135_user_blocks.sql',
+  'user_blocked_me_ids': '0136_user_blocks_silent.sql',
   'job_seekers_list': '0069_job_center.sql',
   'job_vacancies_list': '0069_job_center.sql',
   'admin_job_set_hidden': '0069_job_center.sql',

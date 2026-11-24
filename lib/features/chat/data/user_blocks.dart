@@ -39,6 +39,19 @@ final userBlockStateProvider = FutureProvider.autoDispose.family<UserBlockState,
   }
 });
 
+/// The accounts that blocked me (0136): the Mesajlar list shows them
+/// without picture or presence. One read; a server without 0136 = none.
+final blockedMeIdsProvider = FutureProvider.autoDispose<Set<String>>((ref) async {
+  final me = ref.watch(currentUserIdProvider);
+  if (me == null) return const <String>{};
+  try {
+    final r = await SupabaseConfig.client.rpc('user_blocked_me_ids').timeout(const Duration(seconds: 15));
+    return {for (final id in (r as List? ?? const [])) '$id'};
+  } catch (_) {
+    return const <String>{};
+  }
+});
+
 /// "Blok et" / "Blokdan çıxar" — always asked first. True = done.
 Future<bool> confirmAndSetUserBlock({
   required BuildContext context,

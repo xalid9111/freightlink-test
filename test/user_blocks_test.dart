@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freightlink/core/localization/app_strings.dart';
 import 'package:freightlink/features/chat/data/user_blocks.dart';
+import 'package:freightlink/features/chat/presentation/providers/chat_providers.dart' show withoutBlockedDrops;
+import 'package:freightlink/models/message_model.dart';
 
 /// Users block one another (owner, 24.11.2026, SQL 0135): Mesajlar → the
 /// name → the profile → "Blok et" at its end, always asked first.
@@ -42,11 +44,39 @@ void main() {
     expect(find.byKey(const ValueKey('user-block-confirm')), findsNothing);
   });
 
+  test('a message from someone I blocked is never counted or rung (0136)', () {
+    MessageModel m(String id, {bool drop = false}) => MessageModel.fromJson({
+          'id': id, 'conversation_id': 'c', 'sender_id': 'b', 'receiver_id': 'a',
+          'message': 'x', 'created_at': '2026-11-24T10:00:00Z', 'blocked_drop': drop,
+        });
+    expect(m('1', drop: true).blockedDrop, isTrue);
+    expect(m('2').blockedDrop, isFalse);
+    expect(withoutBlockedDrops([m('1', drop: true), m('2')]).map((e) => e.id), ['2']);
+  });
+
+  test('silent for the blocked one: no notice, his view of the blocker is empty (owner, 24.11.2026)', () {
+    final chat = File('lib/features/chat/presentation/conversation_thread_screen.dart').readAsStringSync();
+    expect(chat, contains('if (block.iBlocked && otherId != null)'), reason: 'the bar only for the blocker');
+    expect(chat.contains('block.any && otherId'), isFalse);
+    expect(chat, contains('if (!(m.blockedDrop && m.receiverId == me))'));
+    expect(chat, contains('imageUrl: hiddenFromMe ? null'));
+    final prof = File('lib/features/ads/presentation/public_profile_screen.dart').readAsStringSync();
+    expect(prof, contains("ValueKey('profile-empty-for-blocked')"));
+    final list = File('lib/features/chat/presentation/conversations_screen.dart').readAsStringSync();
+    expect(list, contains('imageUrl: hidden ? null : profile?.avatarUrl'));
+    final prov = File('lib/features/chat/presentation/providers/chat_providers.dart').readAsStringSync();
+    expect(prov, contains('.map(withoutBlockedDrops)'));
+    final sql = File('supabase/migrations/0136_user_blocks_silent.sql').readAsStringSync();
+    expect(sql, contains('new.blocked_drop := true;'));
+    expect(sql, contains('if coalesce(new.blocked_drop, false) then return new; end if;'), reason: 'no push');
+    expect(sql.contains('drop table'), isFalse);
+  });
+
   test('wired: the profile\'s last row, the chat bar, the server, texts in 6 languages', () {
     final prof = File('lib/features/ads/presentation/public_profile_screen.dart').readAsStringSync();
     expect(prof, contains("ValueKey('profile-block')"));
     expect(prof, contains('if (!isMe && me != null)'), reason: 'never on one\'s own profile / for a visitor');
-    expect(prof.indexOf("ValueKey('profile-block')"), greaterThan(prof.indexOf('profile_open_loads')),
+    expect(prof.lastIndexOf("ValueKey('profile-block')"), greaterThan(prof.indexOf('profile_open_loads')),
         reason: 'at the end of the profile');
     final chat = File('lib/features/chat/presentation/conversation_thread_screen.dart').readAsStringSync();
     expect(chat, contains('ChatBlockedBar('));

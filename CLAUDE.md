@@ -1391,6 +1391,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   place of the field ("Bu istifadəçini blokladınız" + Blokdan çıxar / "Bu
   istifadəçiyə mesaj göndərmək mümkün deyil"); old chats and messages stay,
   nothing deleted; without 0135 nothing changes (user_blocks_test.dart, SQL 172).
+  Silent for the blocked one (owner, 24.11.2026, SQL 0136: "bloka atılan
+  istifadəçi bloklayanın səhifəsini boş görməlidir … bloklanma barəsində
+  bildiriş verilməməlidir … profil şəkli … erişimi sınırlansın"): he gets
+  NO notice — his field stays, his messages are saved with
+  messages.blocked_drop (set only by the trigger, never changed later) and
+  never reach the blocker (not shown, no unread count / sound, no push, do
+  not move the chat up in my_chat_activity; still dropped after an
+  unblock); only the blocker sees ChatBlockedBar. The blocker's page is
+  EMPTY for him (profile-empty-for-blocked: the plain cover, initials, the
+  name, Mesaj yaz, Blok et — no picture, cover, presence, badge, age,
+  country, phone, catalogue, services or loads); the chat header and the
+  Mesajlar list show no picture / presence (user_blocked_me_ids), the call
+  and WhatsApp buttons get no number. A visitor's public view is unchanged.
 - "WhatsApp ilə davam et" (owner's picture, 24.11.2026: "fayl göndər
   basdıqda … WhatsApp birbaşa istifadəçinin WhatsApp mesaj bölməsini açsın …
   ikonu ən başda 1-ci olsun"): the FIRST row of a direct chat's attach sheet

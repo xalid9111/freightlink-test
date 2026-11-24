@@ -62,6 +62,8 @@ class MessageModel {
   final DateTime? deletedAt;
   /// Deleted by the founder without a trace (0048): not shown at all.
   final bool deletedSilent;
+  /// Written to me by someone I blocked (0136): never shown, never counted.
+  final bool blockedDrop;
 
   bool get hasAttachment => attachmentPath != null && attachmentPath!.isNotEmpty;
   bool get isDeleted => deletedAt != null;
@@ -82,6 +84,7 @@ class MessageModel {
     required this.createdAt,
     this.deletedAt,
     this.deletedSilent = false,
+    this.blockedDrop = false,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> j) => MessageModel(
@@ -100,5 +103,6 @@ class MessageModel {
         createdAt: DateTime.parse(j['created_at'] as String),
         deletedAt: j['deleted_at'] is String ? DateTime.tryParse(j['deleted_at'] as String) : null,
         deletedSilent: j['deleted_silent'] == true,
+        blockedDrop: j['blocked_drop'] == true,
       );
 }

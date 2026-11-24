@@ -1,4 +1,4 @@
--- USERS BLOCK ONE ANOTHER — 0135. Rolled back.
+-- USERS BLOCK ONE ANOTHER — 0135, silent for the blocked one (0136). Rolled back.
 \set admin  '''a0000000-0000-4000-8000-000000000001'''
 \set u1     '''a0000000-0000-4000-8000-000000000021'''
 \set u2     '''a0000000-0000-4000-8000-000000000011'''
@@ -33,14 +33,31 @@ select tests.check((select (public.user_block_state(:u1) ->> 'blocked_me')::bool
                        and not (public.user_block_state(:u1) ->> 'i_blocked')::boolean), 'B7 the blocked one learns only "blocked me"');
 select tests.check((select count(*) = 0 from public.user_blocks), 'B8 …and cannot read the blocker''s list');
 select tests.check(tests.err(format($$ insert into public.messages (conversation_id, sender_id, receiver_id, message)
-  values (%L, %L, %L, 'x') $$, (select id from ids where k='d'), :u2, :u1)) like '%user_blocked%',
-  'B9 the blocked one cannot write');
+  values (%L, %L, %L, 'x') $$, (select id from ids where k='d'), :u2, :u1)) is null,
+  'B9 the blocked one is told nothing: his message is accepted (0136)');
+select tests.check((select count(*) = 1 from public.messages where conversation_id = (select id from ids where k='d') and blocked_drop),
+  'B9a …kept, marked dropped');
+select tests.err(format($$ update public.messages set blocked_drop = false where conversation_id = %L $$,
+  (select id from ids where k='d')));
+select tests.check((select count(*) = 1 from public.messages where conversation_id = (select id from ids where k='d') and blocked_drop),
+  'B9b nobody takes the mark off');
+select tests.check((select :u1::uuid = any (public.user_blocked_me_ids())), 'B7b …and who blocked him, for the empty profile');
 select tests.check(tests.err(format($$ select public.user_block_set(%L, false) $$, :u1)) is null
                    and (select (public.user_block_state(:u1) ->> 'blocked_me')::boolean),
   'B10 he cannot lift somebody else''s block');
-select tests.check((select count(*) = 1 from public.messages where conversation_id = (select id from ids where k='d')),
+select tests.check((select count(*) = 1 from public.messages where conversation_id = (select id from ids where k='d') and not blocked_drop),
   'B11 the old messages stay');
 
+reset role;
+select tests.check(not exists (select 1 from public.push_outbox where user_id = :u1 and kind = 'message'
+                                  and created_at = now()), 'B11b a dropped message rings nothing for the blocker');
+set role authenticated;
+select tests.login(:u1);
+select tests.check((select count(*) = 1 from public.messages m where m.conversation_id = (select id from ids where k='d')
+                       and m.receiver_id = :u1 and m.blocked_drop), 'B11c the mark is there for the app to skip');
+select tests.check((select a.last_message_at from public.my_chat_activity() a where a.conversation_id = (select id from ids where k='d'))
+                   = (select max(created_at) from public.messages where conversation_id = (select id from ids where k='d') and not blocked_drop),
+  'B11d the dropped message does not move the blocker''s chat up');
 select tests.login(:u3);
 insert into ids select 'e', (public.get_or_create_direct_conversation(:u2)).id;
 insert into public.messages (conversation_id, sender_id, receiver_id, message)
@@ -52,12 +69,12 @@ select tests.login(:u1);
 select public.user_block_set(:u2, false);
 insert into public.messages (conversation_id, sender_id, receiver_id, message)
 values ((select id from ids where k='d'), :u1, :u2, 'Yenə salam');
-select tests.check((select count(*) = 2 from public.messages where conversation_id = (select id from ids where k='d'))
+select tests.check((select count(*) = 2 from public.messages where conversation_id = (select id from ids where k='d') and not blocked_drop)
                    and not (public.user_block_state(:u2) ->> 'i_blocked')::boolean, 'B13 unblocked: writing again');
 reset role;
 set role anon;
 select tests.login(null);
 select tests.check(tests.err(format($$ select public.user_block_set(%L, true) $$, :u2)) like '%permission denied%', 'B14 a visitor cannot block');
 reset role;
-select tests.summary('USER BLOCKS (0135)');
+select tests.summary('USER BLOCKS (0135 + 0136)');
 rollback;

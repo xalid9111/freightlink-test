@@ -114,7 +114,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final services = ref.watch(ownedServicesProvider(widget.userId)).valueOrNull ?? const <OwnedService>[];
     final loads = ref.watch(userOpenCargoProvider(widget.userId));
     final isMe = me == widget.userId;
-    final blocked = !isMe && (ref.watch(userBlockStateProvider(widget.userId)).valueOrNull?.iBlocked ?? false);
+    final blockState = isMe ? UserBlockState.none : (ref.watch(userBlockStateProvider(widget.userId)).valueOrNull ?? UserBlockState.none);
+    final blocked = blockState.iBlocked;
+    // Blocked by him (owner, 24.11.2026): his page is empty for me — no
+    // picture, cover, presence, details, phone, catalogue or loads; nothing
+    // says why. "Mesaj yaz" stays (it never reaches him, 0136).
+    final emptyForMe = blockState.blockedMe;
     // Phone only when the server releases it (advertiser, open load, chat…).
     final contact = isMe ? null : ref.watch(userContactProvider(widget.userId)).valueOrNull;
     final contactPhone = contact?.phone?.trim();
@@ -144,7 +149,62 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                     _TitleRow(title: s.t('profile_title'), onBack: _back),
                     Expanded(child: Center(child: Text(s.t('profile_not_found')))),
                   ])
-                : RefreshIndicator(
+                : emptyForMe
+                    ? ListView(
+                        key: const ValueKey('profile-empty-for-blocked'),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                        children: [
+                          _TitleRow(title: s.t('profile_title'), onBack: _back),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.line),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                              const SizedBox(height: _coverHeight, child: ProfileCoverPlaceholder()),
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Row(children: [
+                                  VerifiedCornerAvatar(imageUrl: null, initials: p.initials, verified: false),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(p.fullName.isEmpty ? '—' : p.fullName,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.text)),
+                                  ),
+                                ]),
+                              ),
+                            ]),
+                          ),
+                          const SizedBox(height: 14),
+                          _MenuCard(children: [
+                            _MenuRow(
+                              icon: Icons.chat_bubble_outline,
+                              iconColor: AppColors.online,
+                              title: s.t('detail_message_button'),
+                              subtitle: s.t('pf_message_sub'),
+                              busy: _opening,
+                              onTap: _opening ? null : _message,
+                            ),
+                          ]),
+                          const SizedBox(height: 14),
+                          _MenuCard(children: [
+                            _MenuRow(
+                              key: const ValueKey('profile-block'),
+                              icon: blocked ? Icons.lock_open_outlined : Icons.block,
+                              iconColor: blocked ? AppColors.online : AppColors.danger,
+                              title: s.t(blocked ? 'ub_unblock' : 'ub_block'),
+                              subtitle: s.t(blocked ? 'ub_unblock_sub' : 'ub_block_sub'),
+                              onTap: () => confirmAndSetUserBlock(
+                                  context: context, ref: ref, s: s, userId: widget.userId, block: !blocked, name: p.fullName),
+                            ),
+                          ]),
+                        ],
+                      )
+                    : RefreshIndicator(
                     onRefresh: () async {
                       ref.invalidate(publicProfileProvider(widget.userId));
                       ref.invalidate(profileDetailsProvider(widget.userId));
