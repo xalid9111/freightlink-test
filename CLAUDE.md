@@ -1345,6 +1345,17 @@ files to the owner separately (they are run by hand in the SQL editor).
   token renewal only while the site is closed (no registration then either);
   any error inside lets the token through; the app says "Sayt hazırda
   bağlıdır …" (error_site_closed). An open site: everybody as before.
+- The about page in six languages (owner, 24.11.2026, SEO): plain HTML
+  pages GitHub Pages serves directly (no app, no #/ route) — AZ stays at
+  /haqqimizda/ (its text, canonical and JSON-LD unchanged; only the hreflang
+  links and the language links added), TR /tr/hakkimizda/, EN /en/about/,
+  RU /ru/o-nas/, KA /ka/about/, ZH /zh/about/ (hreflang zh-Hans). Each: the
+  full text in its language with the app's own section names, its own
+  title / description / canonical, a WebPage JSON-LD (the same publisher as
+  the Organization), the same reciprocal hreflang set + x-default =
+  /en/about/, plain links to the other languages, no redirect, no meta
+  keywords, no unproven claims. sitemap.xml lists them with xhtml:link
+  alternates; no app pages, ads or #/ routes (seo_pages_test.dart).
 - Messages tab lists only chats the user is part of (even for admins).
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText
