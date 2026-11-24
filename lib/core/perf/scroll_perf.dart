@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -63,23 +62,22 @@ class PerfFlags {
   static final meter = ValueNotifier<bool>(false);
 
   /// Flutter's pointer resampling: finger moves are spread evenly over the
-  /// screen's frames (against "small steps" / trembling text). ON by default
-  /// on phones and tablets (owner, 23.11.2026: "sətir axıcılığını,
-  /// sürüşməni pürüzsüz et. Piksel-piksel keçməsin"); the admin's switch
-  /// can still turn it off on his device.
+  /// screen's frames. OFF by default again (owner, 24.11.2026: "sürüşmə
+  /// çox yavaşdır … sətirlərdə ilişmə olur"): it draws the list 38 ms behind
+  /// the finger (Flutter's samplingOffset), and switched on at a scroll's
+  /// start it held the first moves back — a catch at every start. The
+  /// admin's test switch can still turn it on on his own device.
   static final resample = ValueNotifier<bool>(resampleByDefault());
 
-  /// Touch screens (the phone's browser / Home Screen app) smooth by
-  /// default; a computer's mouse needs no resampling.
-  static bool resampleByDefault([TargetPlatform? platform]) {
-    final p = platform ?? defaultTargetPlatform;
-    return p == TargetPlatform.iOS || p == TargetPlatform.android;
-  }
+  /// No device resamples unless its admin's switch says so.
+  static bool resampleByDefault([TargetPlatform? platform]) => false;
   static final mapStill = ValueNotifier<bool>(false);
   static final noImages = ValueNotifier<bool>(false);
 
 
-  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample', 'map': 'perf_map_still', 'img': 'perf_no_img'};
+  // perf_resample_v2: a choice saved under the old key (when it was on by
+  // default) is not carried over — every device starts with it off.
+  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample_v2', 'map': 'perf_map_still', 'img': 'perf_no_img'};
 
   static Map<String, ValueNotifier<bool>> get all =>
       {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages};

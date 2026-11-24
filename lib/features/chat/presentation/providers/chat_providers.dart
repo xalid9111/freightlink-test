@@ -77,8 +77,11 @@ final receivedMessagesProvider = StreamProvider<List<MessageModel>>((ref) {
   // new message when the realtime message was late / lost) — the badge and
   // the sound follow the unread count, which no longer waits for realtime.
   // Opened on Yüklər: starts 1.5 s after the first screen (StartupSteps).
+  // A message from someone I blocked (0136) is not mine to see: no badge,
+  // no sound.
   return StartupSteps.after(
-      1, () => liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid), every: const Duration(seconds: 20)));
+      1, () => liveWithResync(ref, () => repo.watchReceived(uid), () => repo.fetchReceived(uid), every: const Duration(seconds: 20))
+          .map(withoutBlockedDrops));
 });
 
 /// Keeps the last value while the stream re-subscribes (no badge flicker
@@ -109,3 +112,7 @@ final unreadByConversationProvider = Provider<AsyncValue<Map<String, int>>>((ref
     return counts;
   });
 });
+
+/// Leaves out what was written to me by someone I blocked (0136).
+List<MessageModel> withoutBlockedDrops(List<MessageModel> list) =>
+    list.any((m) => m.blockedDrop) ? [for (final m in list) if (!m.blockedDrop) m] : list;

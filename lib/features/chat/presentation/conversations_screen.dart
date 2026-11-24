@@ -13,6 +13,7 @@ import '../../../core/widgets/user_avatar.dart';
 import '../../../models/group_models.dart';
 import '../../../repositories/profile_repository.dart';
 import '../data/chat_delete_repository.dart';
+import '../data/user_blocks.dart';
 import '../data/group_repository.dart';
 import 'chat_list_logic.dart';
 import 'providers/chat_providers.dart';
@@ -445,7 +446,9 @@ class _ConversationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(publicProfileProvider(otherUserId)).valueOrNull;
-    final online = ref.watch(isUserOnlineProvider(otherUserId));
+    // Blocked by him (0136): no picture, no presence.
+    final hidden = ref.watch(blockedMeIdsProvider).valueOrNull?.contains(otherUserId) ?? false;
+    final online = !hidden && ref.watch(isUserOnlineProvider(otherUserId));
     final name = (profile?.fullName.isNotEmpty ?? false) ? profile!.fullName : roleLabel;
 
     return Card(
@@ -460,7 +463,7 @@ class _ConversationTile extends ConsumerWidget {
                 customBorder: const CircleBorder(),
                 onTap: () => context.pushOnce('/user/$otherUserId'),
                 child: UserAvatar(
-                  imageUrl: profile?.avatarUrl,
+                  imageUrl: hidden ? null : profile?.avatarUrl,
                   initials: profile?.initials ?? '?',
                   radius: 24,
                   online: online,

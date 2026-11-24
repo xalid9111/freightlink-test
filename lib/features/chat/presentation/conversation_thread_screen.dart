@@ -241,6 +241,8 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
         for (final m in (a.valueOrNull ?? const <MessageModel>[]))
           if (!m.deletedSilent && visibleToMe(id: m.id, chatId: m.conversationId, createdAt: m.createdAt, hidden: hidden, clears: clears, local: localDel) &&
               (cutoff == null || !m.createdAt.isBefore(cutoff)))
+            // Written to me by someone I blocked (0136): never shown.
+            if (!(m.blockedDrop && m.receiverId == me))
             m,
     ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
@@ -269,10 +271,12 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
 
     final otherProfile = otherId == null ? null : ref.watch(publicProfileProvider(otherId)).valueOrNull;
     final otherName = otherProfile?.fullName;
-    // Read ahead for "WhatsApp ilə davam et" (the server decides, 0019 / 0122).
-    final waPhone = otherId == null ? null : ref.watch(userContactProvider(otherId)).valueOrNull?.phone;
     final block = otherId == null ? UserBlockState.none : (ref.watch(userBlockStateProvider(otherId)).valueOrNull ?? UserBlockState.none);
-    final otherOnline = otherId != null && ref.watch(isUserOnlineProvider(otherId));
+    // Read ahead for "WhatsApp ilə davam et" (the server decides, 0019 / 0122).
+    final waPhone = otherId == null || block.blockedMe ? null : ref.watch(userContactProvider(otherId)).valueOrNull?.phone;
+    // Blocked by him: his picture and presence are not shown (0136).
+    final hiddenFromMe = block.blockedMe;
+    final otherOnline = !hiddenFromMe && otherId != null && ref.watch(isUserOnlineProvider(otherId));
 
     final loading = (topics.isEmpty && (allAsync.isLoading || (opened?.isLoading ?? false))) ||
         (topics.isNotEmpty && !anyData && !anyError);
@@ -326,6 +330,8 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                   return;
                 }
                 if (!context.mounted) return;
+                // Blocked by him (0136): his number is not given out.
+                if (block.blockedMe) phone = null;
                 if (phone == null || phone.trim().isEmpty) {
                   messenger.showSnackBar(SnackBar(content: Text(strings.t('chat_no_phone'))));
                   return;
@@ -342,7 +348,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                 onTap: () => context.pushOnce('/user/$otherId'),
                 child: Row(
                   children: [
-                    UserAvatar(imageUrl: otherProfile?.avatarUrl, initials: _initials(otherName), online: otherOnline),
+                    UserAvatar(imageUrl: hiddenFromMe ? null : otherProfile?.avatarUrl, initials: _initials(otherName), online: otherOnline),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -357,7 +363,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
                               ),
-                              if (otherProfile?.isVerified == true) ...[
+                              if (!hiddenFromMe && otherProfile?.isVerified == true) ...[
                                 const SizedBox(width: 4),
                                 const VerifiedTick(),
                               ],
@@ -368,7 +374,7 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
                             key: const ValueKey('chat-last-seen'),
                             otherOnline
                                 ? strings.t('chat_online')
-                                : (otherProfile?.lastSeenAt != null
+                                : (!hiddenFromMe && otherProfile?.lastSeenAt != null
                                     ? strings.t('chat_last_seen', {'time': _lastSeen(otherProfile!.lastSeenAt!, strings)})
                                     : strings.t('chat_offline')),
                             style: TextStyle(
@@ -453,7 +459,9 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
             // request). Messages go to the latest topic by default; tapping a
             // topic marker in the timeline still switches where you write.
             // A block either way: no field, the reason instead (0135).
-            if (block.any && otherId != null)
+            // Only the blocker is told (owner, 24.11.2026): the blocked one
+            // writes as usual, his messages never reach the blocker (0136).
+            if (block.iBlocked && otherId != null)
               ChatBlockedBar(otherId: otherId, otherName: otherName, state: block)
             else
               ChatInputBar(

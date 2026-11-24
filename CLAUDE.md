@@ -1202,6 +1202,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   GestureBinding.resamplingEnabled is on only from a finger's
   ScrollStartNotification to the finger lifting (PerfFlags.fingerScroll,
   set in ScrollPerfScope); a tap is never resampled (scroll_perf_test.dart).
+  OFF by default again (owner, 24.11.2026: "sürüşmə çox yavaşdır …
+  sətirlərdə ilişmə olur"): resampling draws the list 38 ms behind the
+  finger (Flutter's samplingOffset) and, switched on at a scroll's start,
+  held the first moves back — a catch at every start. resampleByDefault =
+  false on every device; the saved choice moved to perf_resample_v2 so an
+  old "on" is not carried over; only the admin's test switch turns it on.
 - "FPS artırıcı" (owner, 16.11.2026: "1x 2x 3x və 30 / 40 / 50–60 fps"; the
   owner's iPhone measured a steady 30 = Low Power Mode, 2x 21 → 29 fps in
   emulation): Ayarlar → Görünüş for everyone (DisplaySpeedSettings,
@@ -1385,6 +1391,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   place of the field ("Bu istifadəçini blokladınız" + Blokdan çıxar / "Bu
   istifadəçiyə mesaj göndərmək mümkün deyil"); old chats and messages stay,
   nothing deleted; without 0135 nothing changes (user_blocks_test.dart, SQL 172).
+  Silent for the blocked one (owner, 24.11.2026, SQL 0136: "bloka atılan
+  istifadəçi bloklayanın səhifəsini boş görməlidir … bloklanma barəsində
+  bildiriş verilməməlidir … profil şəkli … erişimi sınırlansın"): he gets
+  NO notice — his field stays, his messages are saved with
+  messages.blocked_drop (set only by the trigger, never changed later) and
+  never reach the blocker (not shown, no unread count / sound, no push, do
+  not move the chat up in my_chat_activity; still dropped after an
+  unblock); only the blocker sees ChatBlockedBar. The blocker's page is
+  EMPTY for him (profile-empty-for-blocked: the plain cover, initials, the
+  name, Mesaj yaz, Blok et — no picture, cover, presence, badge, age,
+  country, phone, catalogue, services or loads); the chat header and the
+  Mesajlar list show no picture / presence (user_blocked_me_ids), the call
+  and WhatsApp buttons get no number. A visitor's public view is unchanged.
 - "WhatsApp ilə davam et" (owner's picture, 24.11.2026: "fayl göndər
   basdıqda … WhatsApp birbaşa istifadəçinin WhatsApp mesaj bölməsini açsın …
   ikonu ən başda 1-ci olsun"): the FIRST row of a direct chat's attach sheet
@@ -1393,6 +1412,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   the number is the one the server releases (get_user_contact, read when the
   chat opens); hidden / not released / no country code = greyed with the
   reason. Groups have no such row (chat_whatsapp_row_test.dart).
+  Straight into WhatsApp (owner, 24.11.2026: "bir başa WhatsApp profilini
+  açsın"): on a phone the row opens whatsapp://send?phone=… in the same
+  window inside the tap (core/utils/whatsapp_open.dart openWhatsAppChat) —
+  no wa.me "Continue to chat" page; if the app did not open within 1.6 s
+  (not installed) a notice offers "Brauzerdə aç" (wa.me) with a new tap; a
+  computer keeps wa.me.
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText
   (core/widgets/marquee_text.dart) — when it does not fit it rests 1.6 s,

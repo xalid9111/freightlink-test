@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "Продолжить в WhatsApp",
   "chat_attach_whatsapp_hint": "Откроется чат WhatsApp с этим пользователем",
   "chat_attach_whatsapp_none": "Номер недоступен — пишите здесь",
+  "chat_whatsapp_not_opened": "WhatsApp не открылся. Установлен ли WhatsApp?",
+  "chat_whatsapp_open_web": "Открыть в браузере",
   "chat_attach_photo": "Фото",
   "chat_call": "Позвонить",
   "chat_call_phone": "Позвонить по телефону",

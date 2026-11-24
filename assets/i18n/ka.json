@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "WhatsApp-ით გაგრძელება",
   "chat_attach_whatsapp_hint": "გაიხსნება ამ მომხმარებლის WhatsApp ჩატი",
   "chat_attach_whatsapp_none": "ნომერი მიუწვდომელია — მისწერეთ აქ",
+  "chat_whatsapp_not_opened": "WhatsApp არ გაიხსნა. დაინსტალირებულია WhatsApp?",
+  "chat_whatsapp_open_web": "ბრაუზერში გახსნა",
   "chat_attach_photo": "ფოტო",
   "chat_call": "დარეკვა",
   "chat_call_phone": "ტელეფონით დარეკვა",
