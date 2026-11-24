@@ -73,14 +73,18 @@ class PerfFlags {
   static bool resampleByDefault([TargetPlatform? platform]) => false;
   static final mapStill = ValueNotifier<bool>(false);
   static final noImages = ValueNotifier<bool>(false);
+  /// Test (owner, 24.11.2026: "proqramlar arasında o kəsik"): the iPhone's
+  /// status bar see-through in Neumorf at night, the graphite under the
+  /// clock (index.html applies it at the next start; this device only).
+  static final translucentBar = ValueNotifier<bool>(false);
 
 
   // perf_resample_v2: a choice saved under the old key (when it was on by
   // default) is not carried over — every device starts with it off.
-  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample_v2', 'map': 'perf_map_still', 'img': 'perf_no_img'};
+  static const _keys = {'meter': 'perf_meter', 'resample': 'perf_resample_v2', 'map': 'perf_map_still', 'img': 'perf_no_img', 'bar': 'perf_translucent_bar'};
 
   static Map<String, ValueNotifier<bool>> get all =>
-      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages};
+      {'meter': meter, 'resample': resample, 'map': mapStill, 'img': noImages, 'bar': translucentBar};
 
   static Future<void> load() async {
     try {

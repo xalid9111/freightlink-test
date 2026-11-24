@@ -206,6 +206,7 @@ class SettingsScreen extends ConsumerWidget {
                   ('resample', 'Sınaq: toxunuşu hamarla (titrəməyə qarşı)'),
                   ('map', 'Sınaq: xəritəni dayandır'),
                   ('img', 'Sınaq: kart şəkillərini gizlət'),
+                  ('bar', 'Sınaq: saat zolağı şəffaf (Neumorf, gecə; yenidən açın)'),
                 ])
                   ValueListenableBuilder<bool>(
                     valueListenable: PerfFlags.all[key]!,

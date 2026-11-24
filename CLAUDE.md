@@ -190,7 +190,7 @@ files to the owner separately (they are run by hand in the SQL editor).
 - "Neumorf" look (owner's pictures, 24.11.2026, SQL 0137: "bu rəng tonları
   və kartla dizayn et … Dizayn və Rənglər bölməsindən aktiv edilə və
   söndürülə bilsin … gecə və gündüz"): AppPalette.neuDark (graphite
-  #2A2D31) / neuLight (#E8EBF0), orange accent, AppColors.neumorph; the
+  #20262F) / neuLight (#E8EBF0), orange accent, AppColors.neumorph; the
   theme's cards, fields, buttons, chips, sheets and dialogs become soft
   raised / pressed-in (AppTheme._neumorph), the floating capsule is raised
   and the chosen tab's icon stands white in an orange circle, load rows /
@@ -228,11 +228,38 @@ files to the owner separately (they are run by hand in the SQL editor).
   orange price with the Premium / VIP marks on the picture.
   The top (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the page ground
   under the app is the Neumorf colour too (index.html html.neu, theme-color
-  #2A2D31 / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the
+  #20262F / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the
   first paint), and at night NeuTopBlend (main.dart builder) lays a 28 pt
   soft shade at the top so the iPhone's solid black status bar runs into the
   graphite; the bar stays "black" (a see-through bar moved every tap,
   24.10.2026).
+  Profil and Mesajlar (owner's approved pictures, 24.11.2026): Profil —
+  round raised header buttons (bell · heart · gear), the card raised with
+  three pressed-in tiles Yüklərim (my loads) · Maşınlarım (my own trucks) ·
+  Online (real numbers, "—" until known; a tap opens /my-cargo · /fleet),
+  every menu entry its own raised card with a round icon and a round ›,
+  "Hesabdan çıxış" the big orange button (still asked first). Mesajlar — no
+  AppBar: "Mesajlar" + "n oxunmamış söhbət" (chats with something unread),
+  bell · heart · the round orange + (new group, as before), a pressed-in
+  search, the tabs Şəxsi · Qruplar (a dot when a group is unread) ·
+  Bəyəndiklərim (liked chats), rows = raised round picture, name (bolder
+  when unread), the old line under it, the time (HH:mm / Dünən / 3 noy) and
+  the unread count or a round ›; an unread row pressed in. Swipe-to-delete,
+  long press, people search and every tap as before.
+  The black strip in the app switcher (owner, 24.11.2026: "proqramlar
+  arasında o kəsik sadəcə bizim tətbiqdə var"): a TEST on the admin's own
+  device first — Ayarlar → Sürətölçən → "saat zolağı şəffaf" (PerfFlags
+  translucentBar, perf_translucent_bar): in Neumorf at night index.html
+  makes the status bar black-translucent, keeps viewport-fit=cover on the
+  viewport (Flutter's tag drops it — the cause of the 24.10.2026 tap shift)
+  and gives the app the bar's height (window.flStatusBarRoom), drawn as
+  graphite room on top (NeuTopBlend). Everybody else keeps the solid bar
+  until the owner confirms taps land right.
+  Livelier night (owner's picture, 24.11.2026, task 3: "daha canlı və daha
+  gözəldir"): neuDark = blue-tinted graphite #20262F, cards #242A33, a
+  hotter orange (accent #FF5A12 / fill #FF3A00, gradients to it), bluish
+  soft text #96A6BE, online #14E86E; neuShade / neuLight follow. Day and
+  the classic look unchanged.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
   Night colours (owner, 29.10.2026, 0076): only the admin changes them,

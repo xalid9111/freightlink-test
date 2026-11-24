@@ -34,7 +34,7 @@ void main() {
     expect(AppColors.neuRaised().length, 2);
     final neu = AppTheme.current;
     expect(neu.cardTheme.elevation, greaterThan(0));
-    expect(neu.scaffoldBackgroundColor, const Color(0xFF2A2D31));
+    expect(neu.scaffoldBackgroundColor, const Color(0xFF20262F));
     AppColors.use(AppPalette.neuLight);
     expect(AppTheme.current.scaffoldBackgroundColor, const Color(0xFFE8EBF0));
   });
@@ -92,9 +92,30 @@ void main() {
     expect(await shown(AppPalette.neuLight), isFalse, reason: 'day: the light bar');
     expect(await shown(AppPalette.neuDark), isTrue);
     final index = File('web/index.html').readAsStringSync();
-    expect(index, contains('html.neu, html.neu body, html.neu #app-loading { background: #2A2D31; }'));
+    expect(index, contains('html.neu, html.neu body, html.neu #app-loading { background: #20262F; }'));
     expect(index, contains("localStorage.getItem('flutter.ui_neumorph_preview')"));
     expect(index, contains('<meta name="apple-mobile-web-app-status-bar-style" content="black">'),
         reason: 'the solid bar stays (a see-through one moved every tap, 24.10.2026)');
+  });
+
+  test('Profil and Mesajlar in Neumorf (owner approved pictures); the classic look kept', () {
+    final prof = File('lib/features/auth/presentation/profile_screen.dart').readAsStringSync();
+    expect(prof, contains("ValueKey('pf-neu-stats')"), reason: 'Yüklərim · Maşınlarım · Online, real numbers');
+    expect(prof, contains("ValueKey('pf-neu-primary')"), reason: 'Hesabdan çıxış = the orange button');
+    expect(prof, contains('primary: true,'));
+    expect(prof, contains('if (await confirmSignOut(context, strings))'), reason: 'still asks first');
+    final chats = File('lib/features/chat/presentation/conversations_screen.dart').readAsStringSync();
+    expect(chats, contains("ValueKey('msg-neu-header')"));
+    expect(chats, contains('appBar: neu ? null : AppBar('));
+    expect(chats, contains('if (_tab == 0 ? !e.group : (_tab == 1 ? e.group : e.favorite)) e'));
+    expect(chats, contains("onTap: () => context.pushOnce('/messages/new-group')"));
+  });
+
+  test('the see-through status bar is a test on this device only (24.10.2026 tap shift)', () {
+    final index = File('web/index.html').readAsStringSync();
+    expect(index, contains("localStorage.getItem('flutter.perf_translucent_bar') === 'true'"));
+    expect(index, contains('viewport-fit=cover'));
+    expect(index, contains('<meta name="apple-mobile-web-app-status-bar-style" content="black">'), reason: 'everybody else: solid');
+    expect(File('lib/core/perf/scroll_perf.dart').readAsStringSync(), contains("'bar': 'perf_translucent_bar'"));
   });
 }
