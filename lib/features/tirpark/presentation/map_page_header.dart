@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/neu_surface.dart';
 import '../../../core/widgets/tirlink_wordmark.dart';
 import '../../cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
 import '../../favorites/favorites.dart' show openFavorites, FavTab;
@@ -67,9 +68,14 @@ class MapFleetSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Neumorf (0137): a pressed-in track, the chosen half raised (approved
+    // picture); the same keys and taps.
+    final neu = AppColors.neumorph;
     Widget half(String key, IconData icon, String label, bool on, VoidCallback tap) => Expanded(
           child: Material(
-            color: on ? AppColors.accentFill : Colors.transparent,
+            color: neu ? (on ? AppColors.card : Colors.transparent) : (on ? AppColors.accentFill : Colors.transparent),
+            elevation: neu && on ? 4 : 0,
+            shadowColor: neu ? AppColors.neuShade : null,
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               key: ValueKey(key),
@@ -78,13 +84,16 @@ class MapFleetSwitch extends StatelessWidget {
               child: SizedBox(
                 height: 42,
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(icon, size: 20, color: on ? Colors.white : AppColors.text),
+                  Icon(icon, size: 20, color: neu ? (on ? AppColors.accent : AppColors.textSoft) : (on ? Colors.white : AppColors.text)),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                            color: neu ? (on ? AppColors.text : AppColors.textSoft) : (on ? Colors.white : AppColors.text))),
                   ),
                 ]),
               ),
@@ -95,12 +104,14 @@ class MapFleetSwitch extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: Container(
         key: const ValueKey('map-fleet-switch'),
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(19),
-          border: Border.all(color: AppColors.line),
-        ),
+        padding: EdgeInsets.all(neu ? 5 : 3),
+        decoration: neu
+            ? neuInsetDecoration(radius: 20)
+            : BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(19),
+                border: Border.all(color: AppColors.line),
+              ),
         child: Row(children: [
           half('switch-map', Icons.place, s.t('nav_map'), !fleet, onMap),
           const SizedBox(width: 4),

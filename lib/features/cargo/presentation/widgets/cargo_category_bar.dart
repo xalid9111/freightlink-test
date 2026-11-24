@@ -1,3 +1,4 @@
+import '../../../../core/widgets/neu_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -77,6 +78,8 @@ class _CargoTypeTilesState extends ConsumerState<CargoTypeTiles> {
       child: MouseDragScroll(child: ListView.separated(
           controller: _scroll,
           scrollDirection: Axis.horizontal,
+          // Neumorf (0137): room for the raised tiles' shadows.
+          padding: AppColors.neumorph ? const EdgeInsets.fromLTRB(4, 6, 4, 2) : null,
           itemCount: kCategoryChoices.length,
           // 4½ choices fit a phone: the cut one shows there is more to the side.
           separatorBuilder: (_, __) => const SizedBox(width: _gap),
@@ -108,6 +111,35 @@ class CargoTypeChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected ? AppColors.accent : AppColors.text;
+    // Neumorf (0137): a raised square with the picture, pressed in when
+    // chosen; the name under it (owner's approved picture).
+    if (AppColors.neumorph) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: SizedBox(
+          width: 62,
+          child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+            Container(
+              key: ValueKey('cat-neu-$code'),
+              width: 58,
+              height: 58,
+              decoration: selected ? neuInsetDecoration(radius: 18) : neuRaisedDecoration(radius: 18, depth: 0.8),
+              padding: const EdgeInsets.all(9),
+              child: RetryAssetImage(categoryIconAsset(code, night: !AppColors.isDay),
+                  fit: BoxFit.contain, color: color, colorBlendMode: BlendMode.srcIn),
+            ),
+            const SizedBox(height: 7),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: selected ? AppColors.accent : AppColors.textSoft)),
+            ),
+          ]),
+        ),
+      );
+    }
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: onTap,

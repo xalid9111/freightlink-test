@@ -1,3 +1,4 @@
+import '../../../core/widgets/neu_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -262,7 +263,9 @@ class MarketFeedCard extends ConsumerWidget {
     // The last line also holds the Premium / VIP marks (18 high).
     final last = line(12) > 18 ? line(12) : 18.0;
     final h = 140 + 8 + line(17) + 2 + line(14.5) + line(13) + 2 + last + 6;
-    return h > extent ? h : extent;
+    // Neumorf (0137): the raised card's own padding (10 all round).
+    final neu = AppColors.neumorph ? 22.0 : 0.0;
+    return (h > extent ? h : extent) + neu;
   }
 
   @override
@@ -275,7 +278,8 @@ class MarketFeedCard extends ConsumerWidget {
     final (agoKey, agoN) = marketAgo(l.publishedAt ?? l.createdAt);
     final when = s.t(agoKey, {'n': '$agoN'});
     final details = marketCardDetails(l);
-    return InkWell(
+    final neu = AppColors.neumorph;
+    final card = InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () => context.pushOnce('/market/l/${l.id}'),
       child: Column(
@@ -292,6 +296,8 @@ class MarketFeedCard extends ConsumerWidget {
                   // at the end of the city line (owner, 25.10.2026, 0066).
                   MarketPhoto(url: l.cover, light: true),
                   Positioned(right: 6, top: 6, child: FavoriteHeart(id: l.id, size: 18)),
+                  // Neumorf: the Premium / VIP marks on the picture (approved picture B).
+                  if (neu) Positioned(left: 8, top: 8, child: MarketPromoMarks(l, key: const ValueKey('feed-marks'))),
                   if (l.onOrder) Positioned(left: 8, bottom: 8, child: MarketOnOrderTag(s: s)),
                   if (l.status == MarketStatus.sold)
                     Container(
@@ -304,9 +310,24 @@ class MarketFeedCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
+          // Neumorf (approved picture B): name, details, then the orange price.
+          if (neu) ...[
+            Text([l.brand, l.model].whereType<String>().join(' '),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w400, fontSize: 15)),
+            if (details.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
+              ),
+            const SizedBox(height: 6),
+            Text(marketPrice(l.price, l.currency),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 18)),
+          ] else ...[
           Text(marketPrice(l.price, l.currency),
               maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 17)),
+              style: TextStyle(color: neu ? AppColors.accent : AppColors.text, fontWeight: FontWeight.w600, fontSize: 17)),
           const SizedBox(height: 2),
           Text([l.brand, l.model].whereType<String>().join(' '),
               maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -321,8 +342,18 @@ class MarketFeedCard extends ConsumerWidget {
             ),
             MarketPromoMarks(l, key: const ValueKey('feed-marks')),
           ]),
+          ],
         ],
       ),
+    );
+    // Neumorf (0137): a raised card around the same content (approved
+    // picture); taps, heart and marks unchanged.
+    if (!neu) return card;
+    return Container(
+      key: const ValueKey('mk-feed-neu'),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 2),
+      decoration: neuRaisedDecoration(radius: 22, depth: 0.8),
+      child: card,
     );
   }
 }

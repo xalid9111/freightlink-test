@@ -1,3 +1,4 @@
+import '../../../core/widgets/neu_surface.dart';
 import '../../favorites/favorites.dart' show openFavorites, FavTab;
 import '../../notices/notices.dart' show NoticeBell;
 import 'dart:math' as math;
@@ -192,7 +193,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             SliverToBoxAdapter(
-                child: _Hero(
+                child: (AppColors.neumorph ? _NeuHero.new : _Hero.new)(
                     strings: strings,
                     count: usePages ? (feed.count ?? 0) : cargoList.length,
                     loaded: usePages ? feed.count != null : marketplaceAsync.hasValue)),
@@ -201,7 +202,9 @@ class CargoMarketplaceScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
+                child: AppColors.neumorph
+                    ? CargoTypeTiles(strings: strings, tileHeight: 96, onChanged: _scrollToFeed)
+                    : CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
               ),
             ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
@@ -223,7 +226,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(strings.t(carriers ? 'et_list_title' : 'home_open_loads'),
-                          maxLines: 1, overflow: TextOverflow.ellipsis, style: AppFonts.display(size: 22, color: AppColors.text)),
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: AppFonts.display(size: AppColors.neumorph ? 18 : 22, color: AppColors.text)),
                     ),
                     if (anyFilter)
                       TextButton(
@@ -595,6 +598,170 @@ class _Hero extends ConsumerWidget {
   }
 }
 
+/// Neumorf (0137) top of the phone's Loads page — the owner's approved
+/// picture B (24.11.2026): TırLink + slogan with the round buttons, the
+/// three live counters and "CANLI" as raised capsules, the live map kept in
+/// a pressed-in frame with İş Mərkəzi and "Yük əlavə et +" on it. The same
+/// widgets, numbers, keys and taps as [_Hero]; only the look differs.
+class _NeuHero extends ConsumerWidget {
+  final AppStrings strings;
+  final int count;
+  final bool loaded;
+  const _NeuHero({required this.strings, required this.count, required this.loaded});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String stat(int n) => loaded ? statCount(n) : '—';
+    final vLoads = stat(count);
+    final vUsers = ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—';
+    final vCarriers = ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—';
+    final carriers = ref.watch(loadsSectionProvider) == LoadsSection.carriers;
+    final topPad = MediaQuery.of(context).padding.top + 12;
+    return Padding(
+      key: const ValueKey('neu-hero'),
+      padding: EdgeInsets.fromLTRB(16, topPad, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              const FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: TirLinkWordmark(size: 20, showLogo: true),
+              ),
+              const SizedBox(height: 3),
+              Text.rich(
+                key: const ValueKey('home-slogan'),
+                TextSpan(children: [
+                  TextSpan(text: '${strings.t('home_hero_1')} '),
+                  TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
+                  TextSpan(text: ' ${strings.t('home_hero_3')}'),
+                ]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12.5, color: AppColors.textSoft),
+              ),
+            ]),
+          ),
+          HeaderCircles(strings: strings),
+        ]),
+        const SizedBox(height: 16),
+        // The live counters + CANLI (real numbers, same taps).
+        SizedBox(
+          key: const ValueKey('stat-row'),
+          height: 46,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              _NeuStat(key: const ValueKey('stat-loads'), dot: AppColors.accent, value: vLoads, unit: strings.t('neu_unit_loads'), label: strings.t('home_stat_active'), onTap: _scrollToFeed),
+              const SizedBox(width: 10),
+              _NeuStat(key: const ValueKey('stat-users'), dot: AppColors.blue, value: vUsers, unit: strings.t('neu_unit_users'), label: strings.t('home_stat_users')),
+              const SizedBox(width: 10),
+              _NeuStat(
+                key: const ValueKey('stat-carriers'),
+                dot: AppColors.online,
+                value: vCarriers,
+                unit: strings.t('neu_unit_carriers'),
+                label: strings.t('et_section_carriers'),
+                onTap: () {
+                  ref.read(loadsSectionProvider.notifier).state = LoadsSection.carriers;
+                  _scrollToFeed();
+                },
+              ),
+              const SizedBox(width: 10),
+              _NeuStat(dot: AppColors.online, value: strings.t('map_live_badge'), label: strings.t('map_live_badge'), live: true),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // The live map in a pressed-in frame (kept, owner's choice B).
+        Container(
+          key: const ValueKey('neu-map-frame'),
+          padding: const EdgeInsets.all(8),
+          decoration: neuInsetDecoration(radius: 24),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Stack(children: [
+              LiveMap(liveLabel: strings.t('map_live_badge'), routes: false, showBadge: false),
+              Positioned(left: 10, bottom: 10, child: JobCenterMapButton(strings: strings)),
+              Positioned(
+                right: 10,
+                bottom: 10,
+                child: carriers
+                    ? _AddLoadButton(
+                        key: const ValueKey('add-empty-truck'),
+                        label: strings.t('et_add_button'),
+                        onTap: () => context.pushOnce('/trucks/new'))
+                    : _AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create')),
+              ),
+            ]),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// One raised counter capsule of [_NeuHero]: a coloured dot and the number
+/// (the name as a tooltip / for screen readers, as before).
+class _NeuStat extends StatelessWidget {
+  final Color dot;
+  final String value;
+  final String label;
+  final String? unit;
+  final VoidCallback? onTap;
+  final bool live;
+  const _NeuStat({super.key, required this.dot, required this.value, required this.label, this.unit, this.onTap, this.live = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: live ? label : '$label: $value',
+        child: Container(
+          height: 38,
+          decoration: neuRaisedDecoration(radius: 19, depth: 0.7),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(19),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: dot,
+                      shape: BoxShape.circle,
+                      boxShadow: live ? [BoxShadow(color: dot.withValues(alpha: 0.7), blurRadius: 6)] : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(value,
+                      style: TextStyle(
+                        fontSize: live ? 13 : 15,
+                        fontWeight: FontWeight.w600,
+                        color: live ? dot : AppColors.text,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      )),
+                  if (unit != null) ...[
+                    const SizedBox(width: 5),
+                    Text(unit!, style: TextStyle(fontSize: 11.5, color: AppColors.textSoft)),
+                  ],
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// [child] drawn on a cloud picture shown at the screen width ([alignment]
 /// = the edge that touches the map, so the clouds continue the map's own).
 class _CloudScene extends StatelessWidget {
@@ -665,12 +832,14 @@ class _AddLoadButton extends StatelessWidget {
               padding: const EdgeInsets.only(right: 20),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(14, 8, 26, 8),
-                decoration: BoxDecoration(
-                  color: AppColors.card.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(23),
-                  border: Border.all(color: AppColors.line),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
-                ),
+                decoration: AppColors.neumorph
+                    ? neuRaisedDecoration(radius: 23, depth: 0.7)
+                    : BoxDecoration(
+                        color: AppColors.card.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(23),
+                        border: Border.all(color: AppColors.line),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 12, offset: const Offset(0, 4))],
+                      ),
                 // One line ("Yük hovuzu" side by side); shrinks instead of wrapping.
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -976,6 +1145,65 @@ class _RouteSearch extends ConsumerWidget {
     return '${part(f.from, f.fromCity)} → ${part(f.to, f.toCity)}';
   }
 
+  /// Neumorf: the route menu (saved routes, save this one, clear).
+  void _routeMenu(BuildContext context, WidgetRef ref, String lang) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Consumer(builder: (ctx, ref, _) {
+        final filter = ref.watch(routeFilterProvider);
+        final saved = ref.watch(savedRoutesProvider);
+        final isSaved = saved.contains(filter.key);
+        return SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text(strings.t('route_my_routes'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+            ),
+            for (final k in saved)
+              ListTile(
+                key: ValueKey('route-saved-$k'),
+                leading: Icon(k == filter.key ? Icons.star : Icons.route_outlined, color: AppColors.accent),
+                title: Text(_short(k, lang)),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: AppColors.textSoft),
+                  onPressed: () => ref.read(savedRoutesProvider.notifier).remove(k),
+                ),
+                onTap: () {
+                  final f = RouteFilter.fromKey(k);
+                  if (f != null) ref.read(routeFilterProvider.notifier).state = f;
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            if (filter.isActive) ...[
+              ListTile(
+                leading: Icon(isSaved ? Icons.star : Icons.star_border, color: AppColors.accent),
+                title: Text(strings.t(isSaved ? 'route_saved' : 'route_save')),
+                onTap: () {
+                  final n = ref.read(savedRoutesProvider.notifier);
+                  isSaved ? n.remove(filter.key) : n.add(filter.key);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.close, color: AppColors.textSoft),
+                title: Text(strings.t('route_clear')),
+                onTap: () {
+                  ref.read(routeFilterProvider.notifier).state = const RouteFilter();
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+            if (saved.isEmpty && !filter.isActive)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                child: Text(strings.t('route_search_title'), style: TextStyle(color: AppColors.textSoft)),
+              ),
+            const SizedBox(height: 8),
+          ]),
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(currentLocaleProvider).languageCode;
@@ -1015,6 +1243,65 @@ class _RouteSearch extends ConsumerWidget {
             ),
           ),
         ),
+      );
+    }
+
+    // Neumorf (0137): one pressed-in pill — 🔍 Haradan ⇄ Haraya (owner's
+    // approved picture); the same pickers, swap, clear and saved routes.
+    if (AppColors.neumorph) {
+      Widget side({required bool isFrom}) {
+        final code = isFrom ? filter.from : filter.to;
+        final city = isFrom ? filter.fromCity : filter.toCity;
+        return Expanded(
+          child: InkWell(
+            key: ValueKey(isFrom ? 'route-from' : 'route-to'),
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _pick(context, ref, isFrom: isFrom),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                code == null ? strings.t(isFrom ? 'route_from' : 'route_to') : _label(code, city, lang, strings.t('route_any_country')),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 15, color: code == null ? AppColors.textSoft : AppColors.text),
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Container(
+            key: const ValueKey('route-search-neu'),
+            height: 54,
+            padding: const EdgeInsets.only(left: 16, right: 6),
+            decoration: neuInsetDecoration(radius: 18),
+            child: Row(children: [
+              Icon(Icons.search, size: 20, color: AppColors.textSoft),
+              const SizedBox(width: 10),
+              side(isFrom: true),
+              IconButton(
+                tooltip: strings.t('route_swap'),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => ref.read(routeFilterProvider.notifier).state = filter.swapped,
+                icon: Icon(Icons.swap_horiz, color: AppColors.accent, size: 20),
+              ),
+              side(isFrom: false),
+              // The round button of the approved picture: the route's menu —
+              // my saved routes, save this one, clear (the same actions as
+              // the classic card's buttons and chips).
+              NeuRoundButton(
+                key: const ValueKey('route-menu'),
+                size: 42,
+                tooltip: strings.t('neu_route_menu'),
+                onTap: () => _routeMenu(context, ref, lang),
+                child: Icon(Icons.tune, size: 19, color: filter.isActive ? AppColors.accent : AppColors.textSoft),
+              ),
+            ]),
+          ),
+        ]),
       );
     }
 

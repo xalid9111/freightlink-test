@@ -1,3 +1,4 @@
+import '../../../../core/widgets/neu_surface.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -412,7 +413,7 @@ class CargoTile extends ConsumerWidget {
           ]),
         );
 
-    return Material(
+    return NeuSurface(radius: 14, child: Material(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
@@ -474,7 +475,7 @@ class CargoTile extends ConsumerWidget {
           ]),
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -562,7 +563,7 @@ class CargoListRow extends ConsumerWidget {
     // Owner's design (21.11.2026, "qarışıqlığı aradan qaldır"): the heart and
     // "Paylaş" stand on the card's upper right edge; the route runs the whole
     // width; the poster's picture stands left of the second line.
-    final card = Material(
+    final card = NeuSurface(radius: 16, child: Material(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
@@ -630,7 +631,7 @@ class CargoListRow extends ConsumerWidget {
           ]),
         ),
       ),
-    );
+    ));
 
     Widget roundButton({required Key key, required Widget child, String? tooltip}) => Container(
           key: key,
@@ -658,6 +659,107 @@ class CargoListRow extends ConsumerWidget {
             price: '${_num(cargo.offeredPrice)} ${cargo.currency}',
           ),
         );
+
+    // Neumorf (0137), the owner's approved picture B: the route with the
+    // heart and "Paylaş" as round raised buttons on its line, a thin line,
+    // the poster's picture, "22 T | Ref | 30 noy" and the orange price; a
+    // VIP / Premium load framed in orange with its gold mark on the top edge.
+    // Same keys, taps, heart and share as the classic row.
+    if (AppColors.neumorph) {
+      final premium = cargo.isPremiumAt(now);
+      final isVip = vip || cargo.isVipAt(now);
+      final marked = premium || isVip;
+      final neuCard = Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: AppColors.neuRaised(depth: 0.9),
+          border: marked ? Border.all(color: AppColors.accent.withValues(alpha: 0.55), width: 1.2) : null,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            key: ValueKey('cargo-row-${cargo.id}'),
+            borderRadius: BorderRadius.circular(22),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                Row(children: [
+                  Expanded(
+                    child: Text(
+                      routeText,
+                      key: const ValueKey('row-route'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.25),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  NeuRoundButton(
+                    key: const ValueKey('row-heart-neu'),
+                    size: 36,
+                    child: CargoFavoriteHeart(cargoId: cargo.id, size: CargoListRow.kRowHeartSize),
+                  ),
+                  const SizedBox(width: 8),
+                  NeuRoundButton(
+                    key: ValueKey('row-share-${cargo.id}'),
+                    size: 36,
+                    tooltip: strings.t('row_share'),
+                    onTap: share,
+                    child: Icon(Icons.ios_share, key: const ValueKey('row-share'), size: 17, color: AppColors.textSoft),
+                  ),
+                ]),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Container(height: 1, color: AppColors.line),
+                ),
+                Row(children: [
+                  Container(
+                    key: const ValueKey('row-poster'),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.5)),
+                    child: UserAvatar(imageUrl: poster?.avatarUrl, initials: _initialsOf(posterName), radius: 15),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: DefaultTextStyle.merge(style: TextStyle(color: AppColors.textSoft), child: metaLine)),
+                  const SizedBox(width: 8),
+                  Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 96),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(_num(cargo.offeredPrice), style: AppFonts.display(size: 21, color: AppColors.accent, height: 1.1)),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(cargo.currency, style: TextStyle(fontSize: 12.5, color: AppColors.textSoft)),
+                  ]),
+                ]),
+              ]),
+            ),
+          ),
+        ),
+      );
+      if (!marked) return neuCard;
+      return Stack(clipBehavior: Clip.none, children: [
+        Padding(padding: const EdgeInsets.only(top: 10), child: neuCard),
+        Positioned(
+          top: 0,
+          right: 18,
+          child: Container(
+            key: const ValueKey('row-marks-neu'),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: AppColors.promoPremium,
+            ),
+            child: Text(premium ? 'PREMIUM' : 'VIP',
+                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.plateInk, letterSpacing: 0.4)),
+          ),
+        ),
+      ]);
+    }
 
     // The buttons half over the card's top edge: the row keeps room for them
     // so they are tapped, never cut off.

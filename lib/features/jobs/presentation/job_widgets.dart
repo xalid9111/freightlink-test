@@ -40,8 +40,14 @@ class JobCenterMapButton extends StatelessWidget {
       button: true,
       label: strings.t('job_center'),
       child: Material(
-        color: AppColors.isDay ? AppColors.tileBg.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.72),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: AppColors.tileLine)),
+        color: AppColors.neumorph
+            ? AppColors.card
+            : (AppColors.isDay ? AppColors.tileBg.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.72)),
+        // Neumorf (0137): raised, no hard frame.
+        elevation: AppColors.neumorph ? 4 : 0,
+        shadowColor: AppColors.neumorph ? AppColors.neuShade : null,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18), side: AppColors.neumorph ? BorderSide.none : BorderSide(color: AppColors.tileLine)),
         child: InkWell(
           key: const ValueKey('map-job-center'),
           borderRadius: BorderRadius.circular(18),

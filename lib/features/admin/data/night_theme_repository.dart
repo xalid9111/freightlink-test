@@ -57,6 +57,24 @@ class NightThemeRepository {
       });
 }
 
+/// Thrown while migration 0137 has not been run in Supabase.
+class NeumorphNotReady implements Exception {
+  const NeumorphNotReady();
+}
+
+/// The "Neumorf" look on / off for everybody (0137, admins only, logged).
+Future<void> setNeumorphForAll(bool on) async {
+  try {
+    await SupabaseConfig.client.rpc('admin_ui_style_set', params: {'p_neumorph': on});
+  } on PostgrestException catch (e) {
+    if (e.code == 'PGRST202' || e.code == '42883' || e.code == 'PGRST205' || e.code == '42P01') throw const NeumorphNotReady();
+    rethrow;
+  }
+}
+
+/// What everybody sees now (null = 0137 not run / not reachable).
+final publishedNeumorphProvider = FutureProvider.autoDispose<bool?>((ref) => fetchNeumorphOn());
+
 final nightThemeRepositoryProvider = Provider<NightThemeRepository>((ref) => NightThemeRepository());
 
 final publishedNightThemeProvider = FutureProvider.autoDispose<PublishedNightTheme?>((ref) => ref.watch(nightThemeRepositoryProvider).current());

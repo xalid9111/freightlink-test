@@ -164,6 +164,8 @@ const kRpcMigration = <String, String>{
   'admin_night_theme_restore': '0076_night_theme.sql',
   'admin_set_site_status': '0068_site_access.sql',
   'admin_user_login_allowed_set': '0134_login_allowlist.sql',
+  'admin_ui_style_set': '0137_ui_style_neumorph.sql',
+  'ui_style_current': '0137_ui_style_neumorph.sql',
   'user_block_set': '0135_user_blocks.sql',
   'user_block_state': '0135_user_blocks.sql',
   'user_blocked_me_ids': '0136_user_blocks_silent.sql',

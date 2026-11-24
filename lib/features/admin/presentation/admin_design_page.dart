@@ -81,6 +81,30 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
     }
   }
 
+  /// "Neumorf" for everybody (0137): asked first, logged on the server.
+  Future<void> _setNeumorph(bool on) async {
+    final ok = await _confirm(
+      on ? 'Neumorf görünüşü hamı üçün aktiv edilsin?' : 'Neumorf görünüş söndürülsün?',
+      on
+          ? 'Bütün istifadəçilərdə gecə və gündüz rejimi Neumorf görünüşə keçəcək (növbəti açılışda). İstədiyiniz vaxt söndürə bilərsiniz.'
+          : 'Bütün istifadəçilərdə əvvəlki görünüş qayıdacaq (növbəti açılışda).',
+    );
+    if (!ok) return;
+    setState(() => _busy = true);
+    try {
+      await setNeumorphForAll(on);
+      ref.invalidate(publishedNeumorphProvider);
+      _snack(on ? 'Neumorf aktiv edildi ✓' : 'Neumorf söndürüldü ✓');
+      await applyNeumorph(on);
+    } on NeumorphNotReady {
+      _snack('Əvvəlcə Supabase-də SQL 0137 işə salınmalıdır.');
+    } catch (_) {
+      _snack('Alınmadı. Yenidən cəhd edin.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _save() async {
     final ctrl = TextEditingController(text: _name ?? '');
     final name = await showDialog<String>(
@@ -206,6 +230,14 @@ class _AdminDesignPageState extends ConsumerState<AdminDesignPage> {
               icon: const Icon(Icons.visibility_off_outlined),
               label: const Text('Bu cihazda önizləməni bitir'),
             ),
+          ),
+        const SizedBox(height: 16),
+        _NeumorphCard(busy: _busy, onSet: _setNeumorph),
+        if (AppColors.neumorph)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Neumorf aktiv olduğu müddətdə aşağıdakı gecə rəngləri görünmür — Neumorf söndürüləndə yenə işləyir.',
+                key: const ValueKey('design-neu-note'), style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
           ),
         const SizedBox(height: 16),
         Wrap(spacing: 8, runSpacing: 8, children: [
@@ -524,6 +556,71 @@ class NightThemePreview extends StatelessWidget {
                 ),
             ]),
           ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Admin → Dizayn və Rənglər: the "Neumorf" look (0137) for everybody,
+/// night and day — Önizlə on this device, Aktiv et / Söndür for all.
+class _NeumorphCard extends ConsumerWidget {
+  final bool busy;
+  final Future<void> Function(bool on) onSet;
+  const _NeumorphCard({required this.busy, required this.onSet});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pub = ref.watch(publishedNeumorphProvider);
+    final on = pub.valueOrNull ?? false;
+    final notReady = pub.hasValue && pub.value == null;
+    return Card(
+      key: const ValueKey('design-neumorph'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.blur_on, color: AppColors.accent),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text('Neumorf görünüş · gecə və gündüz',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text))),
+            Text(on ? 'Aktiv' : 'Söndürülüb',
+                key: const ValueKey('design-neu-state'),
+                style: TextStyle(color: on ? AppColors.online : AppColors.textSoft, fontWeight: FontWeight.w500)),
+          ]),
+          const SizedBox(height: 6),
+          Text('Yumşaq qabarıq kartlar, içə basılmış sahələr və narıncı vurğu. Yalnız görünüş dəyişir — funksiyalar, keçidlər və məlumatlar olduğu kimi qalır.',
+              style: TextStyle(color: AppColors.textSoft, fontSize: 13)),
+          if (notReady)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('SQL 0137 hələ işə salınmayıb — Aktiv et ondan sonra işləyəcək (Önizlə indi də işləyir).',
+                  style: TextStyle(color: AppColors.danger, fontSize: 13)),
+            ),
+          const SizedBox(height: 12),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            if (neumorphPreviewActive)
+              OutlinedButton.icon(
+                key: const ValueKey('design-neu-preview-end'),
+                onPressed: busy ? null : endNeumorphPreview,
+                icon: const Icon(Icons.visibility_off_outlined),
+                label: const Text('Önizləməni bitir'),
+              )
+            else
+              OutlinedButton.icon(
+                key: const ValueKey('design-neu-preview'),
+                onPressed: busy ? null : () => startNeumorphPreview(!AppColors.neumorph),
+                icon: const Icon(Icons.visibility_outlined),
+                label: Text(AppColors.neumorph ? 'Bu cihazda köhnə görünüşə bax' : 'Bu cihazda önizlə'),
+              ),
+            FilledButton.icon(
+              key: const ValueKey('design-neu-set'),
+              onPressed: busy || notReady ? null : () => onSet(!on),
+              icon: Icon(on ? Icons.toggle_off_outlined : Icons.toggle_on_outlined),
+              label: Text(on ? 'Hamı üçün söndür' : 'Hamı üçün aktiv et'),
+            ),
+          ]),
         ]),
       ),
     );
