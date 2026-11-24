@@ -78,4 +78,23 @@ void main() {
     expect(src('lib/features/market/presentation/market_card.dart'), contains("ValueKey('mk-feed-neu')"));
     expect(src('lib/features/tirpark/presentation/map_page_header.dart'), contains('neuInsetDecoration(radius: 20)'));
   });
+
+  testWidgets('the top of the page blends into the iPhone\'s black bar only in Neumorf at night', (t) async {
+    Future<bool> shown(AppPalette p) async {
+      AppColors.use(p);
+      await t.pumpWidget(MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: Directionality(textDirection: TextDirection.ltr, child: NeuTopBlend(key: UniqueKey(), child: const SizedBox.expand()))));
+      return find.byKey(const ValueKey('neu-top-blend')).evaluate().isNotEmpty;
+    }
+
+    expect(await shown(AppPalette.dark), isFalse, reason: 'classic: nothing added');
+    expect(await shown(AppPalette.neuLight), isFalse, reason: 'day: the light bar');
+    expect(await shown(AppPalette.neuDark), isTrue);
+    final index = File('web/index.html').readAsStringSync();
+    expect(index, contains('html.neu, html.neu body, html.neu #app-loading { background: #2A2D31; }'));
+    expect(index, contains("localStorage.getItem('flutter.ui_neumorph_preview')"));
+    expect(index, contains('<meta name="apple-mobile-web-app-status-bar-style" content="black">'),
+        reason: 'the solid bar stays (a see-through one moved every tap, 24.10.2026)');
+  });
 }

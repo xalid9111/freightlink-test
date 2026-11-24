@@ -226,6 +226,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   on one line, the type pills, the popular brands as round raised logos
   (_NeuBrand, the filter's own list and choice), ad cards name · details ·
   orange price with the Premium / VIP marks on the picture.
+  The top (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the page ground
+  under the app is the Neumorf colour too (index.html html.neu, theme-color
+  #2A2D31 / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the
+  first paint), and at night NeuTopBlend (main.dart builder) lays a 28 pt
+  soft shade at the top so the iPhone's solid black status bar runs into the
+  graphite; the bar stays "black" (a see-through bar moved every tap,
+  24.10.2026).
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
   Night colours (owner, 29.10.2026, 0076): only the admin changes them,
