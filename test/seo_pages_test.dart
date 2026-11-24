@@ -158,6 +158,14 @@ void main() {
       expect(File(file).existsSync(), isTrue, reason: '$l → $file');
     }
     expect(_src('web/robots.txt'), contains('Sitemap: https://tirlink.app/sitemap.xml'));
+    // Sitemap 0.9 order inside <url>: loc, then lastmod (ISO date), then the
+    // xhtml:link alternates; no changefreq / priority (owner, 24.11.2026).
+    for (final m in RegExp(r'<url>([\s\S]*?)</url>').allMatches(xml)) {
+      final b = m.group(1)!.trim();
+      expect(b, matches(RegExp(r'^<loc>[^<]+</loc>\s*<lastmod>\d{4}-\d{2}-\d{2}</lastmod>(\s*<xhtml:link [^>]+/>)*$')),
+          reason: b.split('\n').first);
+    }
+    expect(xml.contains('<changefreq>') || xml.contains('<priority>'), isFalse);
   });
 
   test('the brand on the plain pages: TırLink, no FreightLink, no "AI-powered"', () {
