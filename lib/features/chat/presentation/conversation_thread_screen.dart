@@ -15,6 +15,7 @@ import '../../../repositories/profile_repository.dart';
 import '../../../models/message_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/chat_delete_repository.dart';
+import '../data/user_blocks.dart';
 import '../domain/message_repository.dart';
 import 'providers/chat_providers.dart';
 import 'widgets/attachment_view.dart';
@@ -268,6 +269,9 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
 
     final otherProfile = otherId == null ? null : ref.watch(publicProfileProvider(otherId)).valueOrNull;
     final otherName = otherProfile?.fullName;
+    // Read ahead for "WhatsApp ilə davam et" (the server decides, 0019 / 0122).
+    final waPhone = otherId == null ? null : ref.watch(userContactProvider(otherId)).valueOrNull?.phone;
+    final block = otherId == null ? UserBlockState.none : (ref.watch(userBlockStateProvider(otherId)).valueOrNull ?? UserBlockState.none);
     final otherOnline = otherId != null && ref.watch(isUserOnlineProvider(otherId));
 
     final loading = (topics.isEmpty && (allAsync.isLoading || (opened?.isLoading ?? false))) ||
@@ -448,11 +452,17 @@ class _ConversationThreadScreenState extends ConsumerState<ConversationThreadScr
             // The "Mövzu:" chip row under the chat was removed (owner's
             // request). Messages go to the latest topic by default; tapping a
             // topic marker in the timeline still switches where you write.
-            ChatInputBar(
-              strings: strings,
-              onSendText: _sendText,
-              onSendAttachment: _sendAttachment,
-            ),
+            // A block either way: no field, the reason instead (0135).
+            if (block.any && otherId != null)
+              ChatBlockedBar(otherId: otherId, otherName: otherName, state: block)
+            else
+              ChatInputBar(
+                strings: strings,
+                onSendText: _sendText,
+                onSendAttachment: _sendAttachment,
+                whatsappPhone: waPhone,
+                offerWhatsApp: true,
+              ),
           ],
         ),
       ),
