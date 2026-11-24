@@ -8,10 +8,12 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/autofix/autofix.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/phone_utils.dart';
 import 'location_message.dart';
 
 typedef SendAttachment = Future<void> Function({
@@ -31,7 +33,22 @@ class ChatInputBar extends StatefulWidget {
   final Future<void> Function(String text) onSendText;
   final SendAttachment onSendAttachment;
 
-  const ChatInputBar({super.key, required this.strings, required this.onSendText, required this.onSendAttachment});
+  /// The other person's number as the server released it (get_user_contact);
+  /// null = not (yet) known / hidden. Read before the sheet opens, so the
+  /// WhatsApp row opens wa.me inside the tap (iPhone needs that).
+  final String? whatsappPhone;
+
+  /// Only a person-to-person chat offers WhatsApp (not a group).
+  final bool offerWhatsApp;
+
+  const ChatInputBar({
+    super.key,
+    required this.strings,
+    required this.onSendText,
+    required this.onSendAttachment,
+    this.whatsappPhone,
+    this.offerWhatsApp = false,
+  });
 
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
@@ -159,6 +176,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // "WhatsApp ilə davam et" first (owner, 24.11.2026): the other
+            // person's WhatsApp chat opens at once (wa.me), inside the tap.
+            if (widget.offerWhatsApp)
+              ChatWhatsAppRow(strings: s, phone: widget.whatsappPhone, onDone: () => Navigator.of(ctx).pop()),
             ListTile(
               leading: Icon(Icons.photo_outlined, color: AppColors.accent),
               title: Text(s.t('chat_attach_photo')),
@@ -430,4 +451,45 @@ class _VoiceNote {
   final ({String name, String mime}) format;
   final int durationMs;
   const _VoiceNote(this.bytes, this.format, this.durationMs);
+}
+
+/// The attach sheet's first row: "WhatsApp ilə davam et" → wa.me/<number>.
+/// No number (hidden, not released, no country code) = greyed with the
+/// reason; nothing is sent from TırLink.
+class ChatWhatsAppRow extends StatelessWidget {
+  final AppStrings strings;
+  final String? phone;
+  final VoidCallback onDone;
+  const ChatWhatsAppRow({super.key, required this.strings, required this.phone, required this.onDone});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = strings;
+    final hasPhone = (phone ?? '').trim().isNotEmpty;
+    final wa = whatsappDigits(phone);
+    return ListTile(
+      key: const ValueKey('chat-attach-whatsapp'),
+      enabled: wa != null,
+      leading: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: wa != null ? AppColors.whatsapp : AppColors.textSoft,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.chat, size: 17, color: Colors.white),
+      ),
+      title: Text(s.t('chat_attach_whatsapp')),
+      subtitle: Text(s.t(wa != null
+          ? 'chat_attach_whatsapp_hint'
+          : (hasPhone ? 'call_no_whatsapp' : 'chat_attach_whatsapp_none'))),
+      onTap: wa == null
+          ? null
+          : () {
+              // Opened first, in the same tap; then the sheet closes.
+              launchUrl(Uri.parse('https://wa.me/$wa'), mode: LaunchMode.externalApplication);
+              onDone();
+            },
+    );
+  }
 }

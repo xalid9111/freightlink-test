@@ -1373,6 +1373,26 @@ files to the owner separately (they are run by hand in the SQL editor).
   keywords, no unproven claims. sitemap.xml lists them with xhtml:link
   alternates; no app pages, ads or #/ routes (seo_pages_test.dart).
 - Messages tab lists only chats the user is part of (even for admins).
+- Users block one another (owner, 24.11.2026, SQL 0135: "istifadəçilər bir
+  birlərini blok edə bilsinlər … Mesajlar → ada basılaraq profilə keçilir və
+  sonda Blok et"): another person's profile ends with "Blok et" (signed in,
+  never one's own; "Blokdan çıxar" once blocked), always asked first
+  ("{name} bloklansın?" Xeyr · "Bəli, blok et"; confirmAndSetUserBlock,
+  chat/data/user_blocks.dart). Server: user_blocks (read only by the
+  blocker, written only through user_block_set), user_block_state ({i_blocked,
+  blocked_me}); a trigger refuses every private message across a block, both
+  ways ('user_blocked'; admins still write). The chat shows ChatBlockedBar in
+  place of the field ("Bu istifadəçini blokladınız" + Blokdan çıxar / "Bu
+  istifadəçiyə mesaj göndərmək mümkün deyil"); old chats and messages stay,
+  nothing deleted; without 0135 nothing changes (user_blocks_test.dart, SQL 172).
+- "WhatsApp ilə davam et" (owner's picture, 24.11.2026: "fayl göndər
+  basdıqda … WhatsApp birbaşa istifadəçinin WhatsApp mesaj bölməsini açsın …
+  ikonu ən başda 1-ci olsun"): the FIRST row of a direct chat's attach sheet
+  (above Şəkil · Kamera · Olduğum məkan · Fayl; ChatWhatsAppRow, a green
+  round icon) opens wa.me/<the other person's number> inside the tap (iPhone);
+  the number is the one the server releases (get_user_contact, read when the
+  chat opens); hidden / not released / no country code = greyed with the
+  reason. Groups have no such row (chat_whatsapp_row_test.dart).
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText
   (core/widgets/marquee_text.dart) — when it does not fit it rests 1.6 s,

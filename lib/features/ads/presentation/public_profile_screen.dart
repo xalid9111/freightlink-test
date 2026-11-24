@@ -18,6 +18,7 @@ import '../../../repositories/profile_repository.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../cargo/presentation/widgets/cargo_card.dart';
 import '../../chat/data/group_repository.dart';
+import '../../chat/data/user_blocks.dart';
 import '../../chat/presentation/providers/chat_providers.dart';
 import '../../chat/presentation/widgets/call_options.dart';
 import 'ads_providers.dart';
@@ -113,6 +114,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     final services = ref.watch(ownedServicesProvider(widget.userId)).valueOrNull ?? const <OwnedService>[];
     final loads = ref.watch(userOpenCargoProvider(widget.userId));
     final isMe = me == widget.userId;
+    final blocked = !isMe && (ref.watch(userBlockStateProvider(widget.userId)).valueOrNull?.iBlocked ?? false);
     // Phone only when the server releases it (advertiser, open load, chat…).
     final contact = isMe ? null : ref.watch(userContactProvider(widget.userId)).valueOrNull;
     final contactPhone = contact?.phone?.trim();
@@ -390,6 +392,22 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                   ),
                           ),
                         ),
+                        // "Blok et" at the end (owner, 24.11.2026, 0135).
+                        if (!isMe && me != null) ...[
+                          const SizedBox(height: 14),
+                          _MenuCard(children: [
+                            _MenuRow(
+                              key: const ValueKey('profile-block'),
+                              icon: blocked ? Icons.lock_open_outlined : Icons.block,
+                              iconColor: blocked ? AppColors.online : AppColors.danger,
+                              title: s.t(blocked ? 'ub_unblock' : 'ub_block'),
+                              subtitle: s.t(blocked ? 'ub_unblock_sub' : 'ub_block_sub'),
+                              onTap: () => confirmAndSetUserBlock(
+                                  context: context, ref: ref, s: s, userId: widget.userId, block: !blocked, name: p.fullName),
+                            ),
+                          ]),
+                        ],
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -543,7 +561,7 @@ class _MenuRow extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onTap;
   final bool busy;
-  const _MenuRow({required this.icon, required this.iconColor, required this.title, this.subtitle, this.onTap, this.busy = false});
+  const _MenuRow({super.key, required this.icon, required this.iconColor, required this.title, this.subtitle, this.onTap, this.busy = false});
 
   @override
   Widget build(BuildContext context) {
