@@ -65,18 +65,54 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       await PerfFlags.load();
       expect(PerfFlags.resample.value, isTrue);
-      expect(GestureBinding.instance.resamplingEnabled, isTrue);
+      expect(GestureBinding.instance.resamplingEnabled, isFalse, reason: 'never for a tap');
+      PerfFlags.fingerScroll(true);
+      expect(GestureBinding.instance.resamplingEnabled, isTrue, reason: 'while a finger scrolls');
+      PerfFlags.fingerScroll(false);
+      expect(GestureBinding.instance.resamplingEnabled, isFalse);
       SharedPreferences.setMockInitialValues({'perf_resample': false});
       await PerfFlags.load();
+      PerfFlags.fingerScroll(true);
       expect(GestureBinding.instance.resamplingEnabled, isFalse);
+      PerfFlags.fingerScroll(false);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
   });
 
+  testWidgets('a tap is never resampled (iPhone opens the photo picker only inside the touch); a finger scroll is', (t) async {
+    await PerfFlags.set('resample', true);
+    var tapped = 0;
+    final seen = <bool>[];
+    await t.pumpWidget(MaterialApp(
+      home: ScrollPerfScope(
+        child: NotificationListener<ScrollUpdateNotification>(
+          onNotification: (n) {
+            if (n.dragDetails != null) seen.add(GestureBinding.instance.resamplingEnabled);
+            return false;
+          },
+          child: ListView(children: [
+            TextButton(onPressed: () => tapped++, child: const Text('pick')),
+            for (var i = 0; i < 60; i++) SizedBox(height: 80, child: Text('$i')),
+          ]),
+        ),
+      ),
+    ));
+    await t.tap(find.text('pick'));
+    expect(GestureBinding.instance.resamplingEnabled, isFalse, reason: 'the tap went through at once');
+    expect(tapped, 1);
+    await t.drag(find.byType(ListView), const Offset(0, -400));
+    await t.pumpAndSettle();
+    expect(seen, contains(true), reason: 'resampled while the finger scrolls');
+    expect(GestureBinding.instance.resamplingEnabled, isFalse, reason: 'off again once the finger is up');
+    await PerfFlags.set('resample', false);
+  });
+
   testWidgets('switches are kept on the device; resampling follows its switch', (t) async {
     await PerfFlags.set('resample', true);
+    PerfFlags.fingerScroll(true);
     expect(GestureBinding.instance.resamplingEnabled, isTrue);
+    PerfFlags.fingerScroll(false);
     expect(PerfFlags.summary, 'resample');
     final p = await SharedPreferences.getInstance();
     expect(p.getBool('perf_resample'), isTrue);

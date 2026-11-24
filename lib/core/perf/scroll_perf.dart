@@ -102,9 +102,24 @@ class PerfFlags {
     } catch (_) {}
   }
 
+  /// A finger is scrolling a list right now.
+  static bool _fingerScroll = false;
+
+  /// Resampling runs ONLY while a finger scrolls a list (owner, 24.11.2026:
+  /// "loqolar üçün şəkil yükləmək olmur" — the gallery did not open). A
+  /// resampled tap reaches the app a frame late, outside the touch itself,
+  /// and the iPhone opens the photo picker (and other things that need a
+  /// real tap: share sheet, links) only inside the touch. So a tap is never
+  /// resampled; a scroll still is (when the switch is on).
+  static void fingerScroll(bool on) {
+    if (_fingerScroll == on) return;
+    _fingerScroll = on;
+    _applyResample();
+  }
+
   static void _applyResample() {
     try {
-      GestureBinding.instance.resamplingEnabled = resample.value;
+      GestureBinding.instance.resamplingEnabled = resample.value && _fingerScroll;
     } catch (_) {}
   }
 
@@ -168,6 +183,12 @@ class _ScrollPerfScopeState extends State<ScrollPerfScope> {
   }
 
   bool _onScroll(ScrollNotification n) {
+    // Smooth finger only while the finger drags a list (never for a tap).
+    if (n is ScrollStartNotification && n.dragDetails != null) {
+      PerfFlags.fingerScroll(true);
+    } else if ((n is ScrollUpdateNotification && n.dragDetails == null) || n is ScrollEndNotification) {
+      PerfFlags.fingerScroll(false);
+    }
     if (n.metrics.axis != Axis.vertical) return false;
     if (n is ScrollStartNotification) {
       // A scroll whose end never came (its page closed mid-scroll) never
