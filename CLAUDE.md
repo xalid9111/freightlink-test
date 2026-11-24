@@ -349,6 +349,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   sign-in banned; never for admins / the Founder; audited).
   "Hesabı sil" is shown to admins too; for them a tap only says that an
   admin's account is not deleted this way (owner, 13.11.2026).
+  "Hesabdan çıxış" asks first (owner, 24.11.2026: "basan kimi anidən
+  çıxmasın"): "Hesabdan çıxmaq istəyirsiniz?" with Xeyr · "Bəli, çıx"
+  (confirmSignOut, widgets/sign_out_confirm.dart); only Bəli signs out, Xeyr
+  / a tap outside / back stays (sign_out_confirm_test.dart).
 - Reset-password e-mail (owner, 13.11.2026): the Supabase "Reset password"
   template links to https://tirlink.app/#/reset-password?token_hash=…&type=
   recovery (docs/RESET_PASSWORD_EMAIL.md) so the link works in any browser

@@ -29,6 +29,7 @@ import 'providers/auth_providers.dart';
 import '../domain/app_user.dart';
 import 'widgets/activity_buttons.dart';
 import 'widgets/profile_cover.dart';
+import 'widgets/sign_out_confirm.dart';
 import '../../ads/presentation/public_profile_screen.dart' show ProfileCoverPlaceholder;
 import '../../../repositories/profile_page_repository.dart';
 import '../data/activities_repository.dart';
@@ -263,7 +264,11 @@ class ProfileScreen extends ConsumerWidget {
                     iconColor: AppColors.danger,
                     title: strings.t('pf_sign_out'),
                     titleColor: AppColors.danger,
-                    onTap: () => ref.read(authRepositoryProvider).signOut(),
+                    onTap: () async {
+                      if (await confirmSignOut(context, strings)) {
+                        await ref.read(authRepositoryProvider).signOut();
+                      }
+                    },
                   ),
                 ]),
               ],
