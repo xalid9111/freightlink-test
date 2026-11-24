@@ -1179,6 +1179,13 @@ files to the owner separately (they are run by hand in the SQL editor).
   finger's moves are spread evenly over the screen's frames instead of
   landing in uneven steps; the admin's switch still turns it off on his
   device (a saved choice wins).
+  Only while a finger scrolls a list (owner, 24.11.2026: "loqolar üçün şəkil
+  yükləmək olmur" — the gallery stopped opening): a resampled tap reached
+  the app a frame late, outside the touch, and the iPhone opens the photo
+  picker (also the share sheet, links) only inside the touch. Now
+  GestureBinding.resamplingEnabled is on only from a finger's
+  ScrollStartNotification to the finger lifting (PerfFlags.fingerScroll,
+  set in ScrollPerfScope); a tap is never resampled (scroll_perf_test.dart).
 - "FPS artırıcı" (owner, 16.11.2026: "1x 2x 3x və 30 / 40 / 50–60 fps"; the
   owner's iPhone measured a steady 30 = Low Power Mode, 2x 21 → 29 fps in
   emulation): Ayarlar → Görünüş for everyone (DisplaySpeedSettings,
