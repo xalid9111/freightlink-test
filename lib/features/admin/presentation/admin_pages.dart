@@ -657,6 +657,7 @@ Future<void> showUserDetail(BuildContext context, String id) {
             AdminChip(roleLabel(u['role']), color: AppColors.blue),
             if (founder) AdminChip('Founder 🔒', color: AppColors.accent),
             if (u['is_verified'] == true) AdminChip('Təsdiqli ✓', color: AppColors.online),
+            if (u['login_allowed'] == true) AdminChip('Bağlı saytda giriş ✓', color: AppColors.online),
             if (blocked) AdminChip('Bloklu', color: AppColors.danger),
             if (!active) AdminChip('Deaktiv', color: AppColors.danger),
           ]),
@@ -816,6 +817,8 @@ Future<void> _editUser(BuildContext context, JsonRow u, {bool chief = false}) as
   final phone = TextEditingController(text: '${u['phone'] ?? ''}');
   var role = '${u['role']}';
   var verified = u['is_verified'] == true;
+  final wasAllowed = u['login_allowed'] == true;
+  var allowed = wasAllowed;
   final save = await showDialog<bool>(
     context: context,
     builder: (ctx) => StatefulBuilder(
@@ -844,6 +847,15 @@ Future<void> _editUser(BuildContext context, JsonRow u, {bool chief = false}) as
                   value: verified,
                   onChanged: (v) => setState(() => verified = v),
                 ),
+              // Who stays in while the site is closed (owner, 24.11.2026, 0134).
+              SwitchListTile(
+                key: const ValueKey('admin-user-login-allowed'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Bağlı saytda girişə icazə'),
+                subtitle: const Text('Sayt bağlı olanda bu istifadəçi də girə bilər'),
+                value: allowed,
+                onChanged: (v) => setState(() => allowed = v),
+              ),
             ],
           ),
         ),
@@ -871,6 +883,10 @@ Future<void> _editUser(BuildContext context, JsonRow u, {bool chief = false}) as
           if (chief) 'is_verified': verified,
         }),
       );
+    }
+    if (allowed != wasAllowed && context.mounted) {
+      await runAdmin(context, () => _repo(context).setLoginAllowed(u['id'] as String, allowed),
+          success: allowed ? 'Bağlı saytda girişə icazə verildi' : 'Bağlı saytda giriş icazəsi götürüldü');
     }
   }
   name.dispose();
@@ -1605,7 +1621,7 @@ class _SiteAccessCardState extends ConsumerState<SiteAccessCard> {
     }
     setState(() => _busy = true);
     await runAdmin(context, () => setSiteStatus(closed: close, message: message),
-        success: close ? 'Sayt bağlandı — yalnız adminlər girə bilər' : 'Sayt açıldı');
+        success: close ? 'Sayt bağlandı — yalnız adminlər və icazəli istifadəçilər girə bilər' : 'Sayt açıldı');
     ref.invalidate(siteStatusProvider);
     if (mounted) setState(() => _busy = false);
   }
@@ -1625,7 +1641,7 @@ class _SiteAccessCardState extends ConsumerState<SiteAccessCard> {
             Icon(closed ? Icons.lock_outline : Icons.lock_open_outlined, color: color),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(closed ? 'Sayt bağlıdır (yalnız adminlər)' : 'Sayt açıqdır',
+              child: Text(closed ? 'Sayt bağlıdır (adminlər və icazəli istifadəçilər)' : 'Sayt açıqdır',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
             ),
             if (_busy)
@@ -1641,7 +1657,8 @@ class _SiteAccessCardState extends ConsumerState<SiteAccessCard> {
           Text(
               closed
                   ? 'Girməyə çalışanlar bu qeydi görür: ${st.message ?? 'Saytda texniki işlər aparılır.'}'
-                  : 'Bağlayanda yalnız administratorlar girə bilər; başqalarına sizin yazdığınız qeyd göstərilir.',
+                  : 'Bağlayanda yalnız adminlər, Baş admin və "Bağlı saytda girişə icazə" verdiyiniz istifadəçilər '
+                      'girə bilər; başqalarına sizin yazdığınız qeyd göstərilir. İcazə: İstifadəçilər → Redaktə et.',
               style: TextStyle(color: AppColors.textSoft, fontSize: 12.5)),
         ]),
       ),

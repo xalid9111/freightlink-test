@@ -1331,6 +1331,20 @@ files to the owner separately (they are run by hand in the SQL editor).
   (userAfterFailedRead; another account or nobody known = as before), so
   the lists, the page and its scroll place stay; a real sign-out still
   clears them (auth_resume_test.dart). Android uses the same path.
+- Who stays in a closed site (owner, 24.11.2026, SQL 0134: "sayt bağlıdır
+  aktiv etdiyimdə sadəcə icazə girişi olan istifadəçilər saytda qala bilir:
+  admin, Baş admin və icazə verilən istifadəçi"): Admin → İstifadəçilər →
+  Redaktə et has "Bağlı saytda girişə icazə" (users.login_allowed, empty =
+  no; admin_user_login_allowed_set, admins only, Audit Log; a trigger stops
+  anybody giving it to himself). While the site is closed (0068) admins, the
+  Baş admin and the allowed accounts use the app (site_status 'allowed',
+  SiteStatus.blocks); everybody else, visitors too, sees the notice as
+  before; its button reads "Giriş" (allowed accounts sign in there). Server:
+  login_allowlist_hook — a Supabase "Customize Access Token" hook the owner
+  switches on in Authentication → Hooks — refuses a not-allowed sign-in /
+  token renewal only while the site is closed (no registration then either);
+  any error inside lets the token through; the app says "Sayt hazırda
+  bağlıdır …" (error_site_closed). An open site: everybody as before.
 - Messages tab lists only chats the user is part of (even for admins).
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText

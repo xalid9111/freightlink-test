@@ -1253,7 +1253,7 @@
   "site_closed_title": "Site geçici olarak kapalı",
   "site_closed_default": "Sitede bakım çalışması yapılıyor. Lütfen biraz sonra tekrar deneyin.",
   "site_closed_retry": "Tekrar dene",
-  "site_closed_admin_login": "Yönetici girişi",
+  "site_closed_admin_login": "Giriş yap",
   "site_closed_sign_out": "Çıkış",
   "job_center": "İş Merkezi",
   "job_center_sub": "Şoförler ve işverenler için iş pazarı",
@@ -2537,5 +2537,6 @@
   "fl_link_none": "Bu isimde hesap bulunamadı",
   "fl_link_by_code": "Kodla bağlanma",
   "pw_link_used": "Bu bağlantı artık çalışmıyor: süresi dolmuş veya zaten açılmış. Her yeni istek eski bağlantıları iptal eder — yalnızca en son gelen e-postadaki bağlantıyı açın. Yeni bağlantı için aşağıdaki düğmeye basın.",
-  "pw_link_new": "Yeni bağlantı gönder"
+  "pw_link_new": "Yeni bağlantı gönder",
+  "error_site_closed": "Site şu anda kapalı. Yalnızca izni olan hesaplar girebilir."
 }

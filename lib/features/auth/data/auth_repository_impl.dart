@@ -241,6 +241,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
   String _friendlyAuthMessage(AuthException e) {
+    if (isSiteClosedAuthError(e.message)) return 'Sayt hazırda bağlıdır.';
     switch (e.statusCode) {
       case '400':
         return 'Məlumatlar yanlışdır. Yenidən yoxlayın.';
@@ -255,6 +256,7 @@ class AuthRepositoryImpl implements AuthRepository {
   /// see core/localization/app_strings.dart) instead of keying off
   /// Supabase's raw HTTP statusCode strings directly in the UI layer.
   String _authErrorCode(AuthException e) {
+    if (isSiteClosedAuthError(e.message)) return 'site_closed';
     switch (e.statusCode) {
       case '400':
         return 'invalid_input';
@@ -283,3 +285,7 @@ Set<String> oauthProvidersFromSettings(String body) {
 /// when nobody (or somebody else) was known.
 AppUser? userAfterFailedRead(AppUser? known, String sessionUserId) =>
     known != null && known.id == sessionUserId ? known : null;
+
+/// The Auth hook of 0134 refused the sign-in: the site is closed and this
+/// account has no permission.
+bool isSiteClosedAuthError(String message) => message.contains('site_closed');

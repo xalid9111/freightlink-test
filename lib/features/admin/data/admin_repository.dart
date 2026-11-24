@@ -59,6 +59,11 @@ class AdminRepository {
   }
 
   // Users
+  /// Who stays in while the site is closed (0134; admins only, logged).
+  Future<void> setLoginAllowed(String id, bool allowed) async {
+    await _c.rpc('admin_user_login_allowed_set', params: {'p_user': id, 'p_allowed': allowed});
+  }
+
   Future<void> updateUser(String id, Map<String, dynamic> patch) async {
     await _c.rpc('admin_update_user', params: {'p_user': id, 'p_patch': patch});
   }
