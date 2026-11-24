@@ -1052,6 +1052,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   the corners the phones round off filled with the logo's own colours
   (blurred), the maskable ones the logo in the safe centre on the same
   colours; tested at the edges and inside the iOS corners.
+  The new TırLink "t" icon (owner, 24.11.2026: Google showed the old icon):
+  the Home Screen / manifest / apple-touch icons are the owner's IMG_8528
+  (the white "t" with the chart and the orange arrow on its dark ground),
+  cut square inside its rounded corners (no white corner), under new names
+  tirlink-icon-v4-* / tirlink-apple-touch-v4.png; the maskable ones hold
+  the logo at 80 % on its own blurred ground. Every old icon name (v3,
+  Icon-*, apple-touch-icon, favicon.png / -v3) now holds the new picture,
+  so no old icon is a fallback anywhere (notifications too). favicon.ico /
+  tirlink-favicon-t-* and the Organization logo (tirlink-logo-org-512, T on
+  white) were already the new T logo. Admin → Loqolar shows this built-in
+  icon for "Telefon ikonu" (kBuiltInAppIcon); a logo the Baş admin chose
+  still wins. The start-up logo and the in-app logo are unchanged.
 - AutoFix self-healing (owner, 15.11.2026: "bunları həll et və avtomatik
   həll yolunu tap"): a realtime / socket drop fails several chat streams at
   once — ONE reconnect covers them all and each is counted as recovered

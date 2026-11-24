@@ -27,6 +27,10 @@ class LogoPlace {
   const LogoPlace(this.slot, this.title, this.where, this.size, {this.opaque = false});
 }
 
+/// The phone / tab icon used when the Baş admin has not chosen one: the
+/// published file (web/icons, the same as manifest.json / apple-touch-icon).
+const kBuiltInAppIcon = 'icons/tirlink-icon-v4-192.png';
+
 const kLogoPlaces = [
   LogoPlace('app_icon', 'Telefon ikonu', 'iPhone / Android "Ana ekrana əlavə et" ikonu və brauzer sekməsi', 512,
       opaque: true),
@@ -151,7 +155,13 @@ class _LogoCardState extends ConsumerState<_LogoCard> {
         valueListenable: SiteLogos.of(p.slot),
         builder: (context, url, _) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _Preview(
-            image: url != null ? NetworkImage(url) as ImageProvider : const AssetImage(TirLinkWordmark.logoAsset),
+            image: url != null
+                ? NetworkImage(url) as ImageProvider
+                // The phone icon's built-in picture is the site's own icon
+                // file (owner, 24.11.2026: the new TırLink "t" icon).
+                : p.slot == 'app_icon'
+                    ? const NetworkImage(kBuiltInAppIcon) as ImageProvider
+                    : const AssetImage(TirLinkWordmark.logoAsset),
             icon: p.opaque,
           ),
           const SizedBox(width: 14),
