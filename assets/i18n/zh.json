@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "在 WhatsApp 继续",
   "chat_attach_whatsapp_hint": "打开与该用户的 WhatsApp 聊天",
   "chat_attach_whatsapp_none": "号码不可用 — 请在此留言",
+  "chat_whatsapp_not_opened": "WhatsApp 未打开。手机上安装了 WhatsApp 吗？",
+  "chat_whatsapp_open_web": "在浏览器中打开",
   "chat_attach_photo": "照片",
   "chat_call": "通话",
   "chat_call_phone": "电话通话",

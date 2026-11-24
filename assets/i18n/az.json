@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "WhatsApp ilə davam et",
   "chat_attach_whatsapp_hint": "Bu istifadəçinin WhatsApp söhbəti açılır",
   "chat_attach_whatsapp_none": "Nömrə əlçatan deyil — mesajı burada yazın",
+  "chat_whatsapp_not_opened": "WhatsApp açılmadı. Telefonda WhatsApp quraşdırılıb?",
+  "chat_whatsapp_open_web": "Brauzerdə aç",
   "chat_attach_photo": "Şəkil",
   "chat_call": "Zəng et",
   "chat_call_phone": "Telefonla zəng",

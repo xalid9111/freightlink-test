@@ -14,6 +14,7 @@ import '../../../../core/autofix/autofix.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/phone_utils.dart';
+import '../../../../core/utils/whatsapp_open.dart';
 import 'location_message.dart';
 
 typedef SendAttachment = Future<void> Function({
@@ -486,8 +487,20 @@ class ChatWhatsAppRow extends StatelessWidget {
       onTap: wa == null
           ? null
           : () {
-              // Opened first, in the same tap; then the sheet closes.
-              launchUrl(Uri.parse('https://wa.me/$wa'), mode: LaunchMode.externalApplication);
+              // The WhatsApp app itself, in the same tap (no wa.me page in
+              // between); then the sheet closes. Not installed = wa.me is
+              // offered with a new tap.
+              final messenger = ScaffoldMessenger.maybeOf(context);
+              openWhatsAppChat(wa, onNotOpened: () {
+                messenger?.showSnackBar(SnackBar(
+                  key: const ValueKey('chat-whatsapp-fallback'),
+                  content: Text(s.t('chat_whatsapp_not_opened')),
+                  action: SnackBarAction(
+                    label: s.t('chat_whatsapp_open_web'),
+                    onPressed: () => launchUrl(whatsAppWebUri(wa), mode: LaunchMode.externalApplication),
+                  ),
+                ));
+              });
               onDone();
             },
     );

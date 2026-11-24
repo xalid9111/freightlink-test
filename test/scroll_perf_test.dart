@@ -52,25 +52,29 @@ void main() {
     expect(s.poor, isTrue);
   });
 
-  test('phones smooth the finger by default, a computer does not (owner, 23.11.2026)', () {
-    expect(PerfFlags.resampleByDefault(TargetPlatform.iOS), isTrue);
-    expect(PerfFlags.resampleByDefault(TargetPlatform.android), isTrue);
-    expect(PerfFlags.resampleByDefault(TargetPlatform.windows), isFalse);
-    expect(PerfFlags.resampleByDefault(TargetPlatform.macOS), isFalse);
+  test('no device resamples by default (owner, 24.11.2026: slow, a catch at every start)', () {
+    for (final p in TargetPlatform.values) {
+      expect(PerfFlags.resampleByDefault(p), isFalse, reason: '$p');
+    }
   });
 
-  testWidgets('a phone with nothing saved starts with resampling on; a saved "off" stays off', (t) async {
+  testWidgets('nothing saved = resampling off, also while scrolling; the admin\'s "on" works only while a finger scrolls', (t) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       SharedPreferences.setMockInitialValues({});
       await PerfFlags.load();
-      expect(PerfFlags.resample.value, isTrue);
+      expect(PerfFlags.resample.value, isFalse);
+      PerfFlags.fingerScroll(true);
+      expect(GestureBinding.instance.resamplingEnabled, isFalse, reason: 'the list follows the finger at once');
+      PerfFlags.fingerScroll(false);
+      SharedPreferences.setMockInitialValues({'perf_resample_v2': true});
+      await PerfFlags.load();
       expect(GestureBinding.instance.resamplingEnabled, isFalse, reason: 'never for a tap');
       PerfFlags.fingerScroll(true);
-      expect(GestureBinding.instance.resamplingEnabled, isTrue, reason: 'while a finger scrolls');
+      expect(GestureBinding.instance.resamplingEnabled, isTrue, reason: 'the admin\'s test switch');
       PerfFlags.fingerScroll(false);
       expect(GestureBinding.instance.resamplingEnabled, isFalse);
-      SharedPreferences.setMockInitialValues({'perf_resample': false});
+      SharedPreferences.setMockInitialValues({'perf_resample_v2': false});
       await PerfFlags.load();
       PerfFlags.fingerScroll(true);
       expect(GestureBinding.instance.resamplingEnabled, isFalse);
@@ -115,7 +119,7 @@ void main() {
     PerfFlags.fingerScroll(false);
     expect(PerfFlags.summary, 'resample');
     final p = await SharedPreferences.getInstance();
-    expect(p.getBool('perf_resample'), isTrue);
+    expect(p.getBool('perf_resample_v2'), isTrue);
     await PerfFlags.set('resample', false);
     expect(GestureBinding.instance.resamplingEnabled, isFalse);
     expect(PerfFlags.summary, '');

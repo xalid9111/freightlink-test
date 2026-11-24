@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "WhatsApp ile devam et",
   "chat_attach_whatsapp_hint": "Bu kullanıcının WhatsApp sohbeti açılır",
   "chat_attach_whatsapp_none": "Numara erişilebilir değil — mesajı buraya yazın",
+  "chat_whatsapp_not_opened": "WhatsApp açılmadı. Telefonda WhatsApp yüklü mü?",
+  "chat_whatsapp_open_web": "Tarayıcıda aç",
   "chat_attach_photo": "Fotoğraf",
   "chat_call": "Ara",
   "chat_call_phone": "Telefonla ara",

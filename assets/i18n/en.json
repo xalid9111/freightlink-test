@@ -235,6 +235,8 @@
   "chat_attach_whatsapp": "Continue on WhatsApp",
   "chat_attach_whatsapp_hint": "Opens this user's WhatsApp chat",
   "chat_attach_whatsapp_none": "Number not available — write here",
+  "chat_whatsapp_not_opened": "WhatsApp did not open. Is WhatsApp installed?",
+  "chat_whatsapp_open_web": "Open in browser",
   "chat_attach_photo": "Photo",
   "chat_call": "Call",
   "chat_call_phone": "Phone call",
