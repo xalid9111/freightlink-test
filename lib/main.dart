@@ -1,3 +1,4 @@
+import 'core/widgets/neu_surface.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -164,10 +165,10 @@ class FreightLinkApp extends ConsumerWidget {
       scaffoldMessengerKey: appMessengerKey,
       // Scroll smoothness meter + poor-scroll reports (owner, 16.11.2026).
       builder: (context, child) => ScrollPerfScope(
-          child: AuthLinkNotice(
+          child: NeuTopBlend(child: AuthLinkNotice(
           router: router,
           child: NightPreviewBadge(
-              child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child)))))),
+              child: SiteGate(child: applyDesktopPreview(context, desktopPreview, applyUiScale(context, uiScale, child))))))),
       locale: locale,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

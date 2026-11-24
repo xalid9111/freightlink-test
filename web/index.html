@@ -119,6 +119,11 @@
     /* Day mode (Settings → Görünüş): light splash, no dark flash. */
     html.day, html.day body, html.day #app-loading { background: #FFFFFF; color: #0F1B2D; }
     html.day #app-loading .spinner { border-color: rgba(15,27,45,0.15); border-top-color: #FF5A1F; }
+    /* Neumorf (0137, owner 24.11.2026): the page ground under / around the
+       app is the Neumorf colour too, so nothing black shows at the top or
+       when the page is pulled (graphite at night, light grey by day). */
+    html.neu, html.neu body, html.neu #app-loading { background: #20262F; }
+    html.neu.day, html.neu.day body, html.neu.day #app-loading { background: #E8EBF0; }
   </style>
   <script>
     // The app keeps the choice in localStorage (SharedPreferences key
@@ -128,6 +133,44 @@
         document.documentElement.classList.add('day');
         document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FFFFFF');
         document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute('content', 'default');
+      }
+    } catch (e) {}
+    // Neumorf (0137): this device's try-out first, else the kept answer.
+    try {
+      var neuPrev = localStorage.getItem('flutter.ui_neumorph_preview');
+      var neu = (neuPrev !== null ? neuPrev : localStorage.getItem('flutter.ui_neumorph')) === 'true';
+      if (neu) {
+        var dayNeu = document.documentElement.classList.contains('day');
+        document.documentElement.classList.add('neu');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', dayNeu ? '#E8EBF0' : '#20262F');
+        // Test (admin's switch, this device only, owner 24.11.2026): the
+        // status bar see-through at night so the graphite runs under the
+        // clock like other apps. The page then starts under the bar, so the
+        // viewport keeps viewport-fit=cover (Flutter's own tag drops it —
+        // the 24.10.2026 tap shift) and the app gets the bar's height as
+        // room on top (window.flStatusBar).
+        if (!dayNeu && localStorage.getItem('flutter.perf_translucent_bar') === 'true') {
+          document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute('content', 'black-translucent');
+          var keepCover = function () {
+            var m = document.querySelector('meta[name="viewport"]');
+            if (m && (m.getAttribute('content') || '').indexOf('viewport-fit=cover') < 0) {
+              m.setAttribute('content', (m.getAttribute('content') || '') + ', viewport-fit=cover');
+            }
+          };
+          new MutationObserver(keepCover).observe(document.head, { childList: true, subtree: true, attributes: true });
+          var probe = null;
+          window.flStatusBarRoom = function () {
+            try {
+              keepCover();
+              if (!probe) {
+                probe = document.createElement('div');
+                probe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);pointer-events:none;visibility:hidden';
+                document.documentElement.appendChild(probe);
+              }
+              return probe.getBoundingClientRect().height || 0;
+            } catch (e) { return 0; }
+          };
+        }
       }
     } catch (e) {}
   </script>

@@ -1,3 +1,7 @@
+import '../../../core/widgets/neu_surface.dart';
+import '../../cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
+import '../../cargo/presentation/providers/cargo_providers.dart' show myCargoProvider;
+import '../../fleet/presentation/fleet_providers.dart' show fleetProvider;
 import '../../adbiz/presentation/adbiz_providers.dart';
 import '../../notices/notices.dart' show NoticeBell;
 import '../../adbiz/presentation/adbiz_widgets.dart';
@@ -109,6 +113,27 @@ class ProfileScreen extends ConsumerWidget {
                       child: Text(strings.t('profile_title'),
                           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
                     ),
+                    // Neumorf (0137): the same three buttons, raised round.
+                    if (AppColors.neumorph) ...[
+                      NoticeBell(
+                        strings: strings,
+                        size: 21,
+                        frame: (icon, onTap, tip) => HeaderCircle(key: const ValueKey('notice-bell'), tooltip: tip, onTap: onTap, child: icon),
+                      ),
+                      const SizedBox(width: 10),
+                      HeaderCircle(
+                        key: const ValueKey('profile-favorites'),
+                        tooltip: strings.t('fav_title'),
+                        onTap: () => openFavorites(context, FavTab.profiles),
+                        child: Icon(Icons.favorite, size: 20, color: AppColors.accent),
+                      ),
+                      const SizedBox(width: 10),
+                      HeaderCircle(
+                        tooltip: strings.t('settings_title'),
+                        onTap: () => context.pushOnce('/settings'),
+                        child: Icon(Icons.settings_outlined, size: 21, color: AppColors.textSoft),
+                      ),
+                    ] else ...[
                     // "Bildirişlər" left of the heart (owner, 17.11.2026).
                     NoticeBell(
                       strings: strings,
@@ -149,6 +174,7 @@ class ProfileScreen extends ConsumerWidget {
                         onPressed: () => context.pushOnce('/settings'),
                       ),
                     ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -264,6 +290,7 @@ class ProfileScreen extends ConsumerWidget {
                     iconColor: AppColors.danger,
                     title: strings.t('pf_sign_out'),
                     titleColor: AppColors.danger,
+                    primary: true,
                     onTap: () async {
                       if (await confirmSignOut(context, strings)) {
                         await ref.read(authRepositoryProvider).signOut();
@@ -1079,11 +1106,13 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
     const textLeft = avatarLeft + _avatarRadius * 2 + 14;
     return Container(
       key: const ValueKey('profile-summary'),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.line),
-      ),
+      decoration: AppColors.neumorph
+          ? neuRaisedDecoration(radius: 24)
+          : BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.line),
+            ),
       clipBehavior: Clip.antiAlias,
       child: Stack(children: [
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1160,6 +1189,9 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
               ]),
             ),
           ),
+          // Neumorf (approved picture): my loads · my trucks · online, real
+          // numbers only ("—" until known).
+          if (AppColors.neumorph) _NeuProfileStats(strings: strings),
         ]),
         // The photo, half over the cover's edge; the camera changes it (as before).
         Positioned(
@@ -1543,6 +1575,23 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Neumorf (0137, owner's approved picture): every entry its own raised
+    // card; "Hesabdan çıxış" the orange button; a group title stays plain.
+    if (AppColors.neumorph) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (var i = 0; i < children.length; i++)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 12),
+            child: (children[i] is _GroupTitle || (children[i] is _MenuRow && (children[i] as _MenuRow).primary))
+                ? children[i]
+                : Container(
+                    decoration: neuRaisedDecoration(radius: 22, depth: 0.85),
+                    clipBehavior: Clip.antiAlias,
+                    child: Material(type: MaterialType.transparency, child: children[i]),
+                  ),
+          ),
+      ]);
+    }
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -1564,6 +1613,8 @@ class _MenuRow extends StatelessWidget {
   final VoidCallback onTap;
   /// A red count before the arrow (0 = none).
   final int badge;
+  /// Neumorf: drawn as the big orange button ("Hesabdan çıxış").
+  final bool primary;
   const _MenuRow({
     super.key,
     required this.icon,
@@ -1573,10 +1624,73 @@ class _MenuRow extends StatelessWidget {
     this.subtitle,
     this.titleColor,
     this.badge = 0,
+    this.primary = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (AppColors.neumorph) {
+      if (primary) {
+        return Container(
+          key: const ValueKey('pf-neu-primary'),
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(colors: [AppColors.accent, AppColors.accentFill]),
+            boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.45), blurRadius: 18, offset: const Offset(0, 6))],
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: onTap,
+              child: Center(
+                child: Text(title.toUpperCase(),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 0.6)),
+              ),
+            ),
+          ),
+        );
+      }
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+          child: Row(children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.6)),
+              child: Icon(icon, color: iconColor == AppColors.text ? AppColors.accent : iconColor, size: 23),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: titleColor ?? AppColors.text)),
+                if ((subtitle ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!, style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                ],
+              ]),
+            ),
+            if (badge > 0)
+              Container(
+                key: const ValueKey('pf-badge'),
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
+                child: Text('$badge', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+              ),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.45)),
+              child: Icon(Icons.chevron_right, size: 20, color: AppColors.textSoft),
+            ),
+          ]),
+        ),
+      );
+    }
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1618,6 +1732,54 @@ class _MenuRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Neumorf Profil card (owner's approved picture): three pressed-in tiles —
+/// Yüklərim (my loads), Maşınlarım (my own trucks), Online — with the real
+/// numbers; a tap opens the list.
+class _NeuProfileStats extends ConsumerWidget {
+  final AppStrings strings;
+  const _NeuProfileStats({required this.strings});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uid = ref.watch(currentUserIdProvider);
+    final loads = ref.watch(myCargoProvider).valueOrNull?.length;
+    final fleet = ref.watch(fleetProvider).valueOrNull;
+    final trucks = fleet?.trucks.where((t) => t.isOwner(uid)).length;
+    Widget tile(String key, Widget top, String label, VoidCallback? onTap) => Expanded(
+          child: InkWell(
+            key: ValueKey(key),
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Container(
+              height: 66,
+              decoration: neuInsetDecoration(radius: 16),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                top,
+                const SizedBox(height: 3),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSoft)),
+              ]),
+            ),
+          ),
+        );
+    TextStyle big() => TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text);
+    return Padding(
+      key: const ValueKey('pf-neu-stats'),
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+      child: Row(children: [
+        tile('pf-neu-loads', Text(loads == null ? '—' : '$loads', style: big()), strings.t('pf_my_loads'),
+            () => context.pushOnce('/my-cargo')),
+        const SizedBox(width: 10),
+        tile('pf-neu-trucks', Text(trucks == null ? '—' : '$trucks', style: big()), strings.t('fl_title'),
+            () => context.go('/fleet')),
+        const SizedBox(width: 10),
+        tile('pf-neu-online',
+            Container(width: 10, height: 10, decoration: BoxDecoration(color: AppColors.online, shape: BoxShape.circle)),
+            strings.t('presence_online'), null),
+      ]),
     );
   }
 }

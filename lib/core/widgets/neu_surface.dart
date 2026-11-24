@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../perf/status_bar_stub.dart' if (dart.library.js_interop) '../perf/status_bar_web.dart' as status_bar;
 import '../theme/app_theme.dart';
 
 /// The "Neumorf" look (0137): a raised surface — shade lower right, light
@@ -91,5 +92,54 @@ class NeuInsetFrame extends StatelessWidget {
       decoration: neuInsetDecoration(radius: radius),
       child: ClipRRect(borderRadius: BorderRadius.circular(radius - 6), child: child),
     );
+  }
+}
+
+/// Neumorf at night (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the
+/// iPhone draws its status bar black above the app (a solid bar on purpose —
+/// a see-through one moved every tap, owner 24.10.2026). A short soft shade
+/// at the very top of the page lets that black run into the graphite
+/// instead of ending in a hard line. Touches pass through; off / by day /
+/// on the computer nothing is added.
+class NeuTopBlend extends StatelessWidget {
+  final Widget child;
+  const NeuTopBlend({super.key, required this.child});
+
+  static const double height = 28;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!AppColors.neumorph || AppColors.isDay || MediaQuery.sizeOf(context).width >= 900) return child;
+    // The see-through status bar test (admin, this device): the graphite
+    // already runs under the clock — no shade needed.
+    final room = status_bar.statusBarRoom();
+    if (room > 0) {
+      return ColoredBox(
+        key: const ValueKey('neu-status-room'),
+        color: AppColors.background,
+        child: Padding(padding: EdgeInsets.only(top: room), child: child),
+      );
+    }
+    return Stack(children: [
+      child,
+      Positioned(
+        left: 0,
+        right: 0,
+        top: 0,
+        height: height,
+        child: IgnorePointer(
+          child: DecoratedBox(
+            key: const ValueKey('neu-top-blend'),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [AppColors.neuShade, AppColors.background.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ]);
   }
 }

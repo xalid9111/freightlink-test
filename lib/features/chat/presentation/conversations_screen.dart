@@ -1,3 +1,6 @@
+import 'package:intl/intl.dart';
+import '../../cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
+import '../../../core/widgets/neu_surface.dart';
 import '../../favorites/favorites.dart';
 import '../../notices/notices.dart' show NoticeBell;
 import 'package:flutter/material.dart';
@@ -38,12 +41,17 @@ class _Entry {
   final Widget tile;
   /// A liked chat (owner, 07.11.2026, 0106): stands at the top.
   final bool favorite;
-  const _Entry(this.time, this.tile, {this.favorite = false});
+  /// Neumorf tabs (owner's approved picture): a group chat / unread count.
+  final bool group;
+  final int unread;
+  const _Entry(this.time, this.tile, {this.favorite = false, this.group = false, this.unread = 0});
 }
 
 class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  /// Neumorf: Şəxsi (0) · Qruplar (1) · Bəyəndiklərim (2).
+  int _tab = 0;
   String? _opening; // user id whose direct chat is being opened
 
   @override
@@ -108,12 +116,16 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       if (cleared != null && !last.isAfter(cleared)) continue;
       entries.add(_Entry(
         last,
+        group: true,
+        unread: groupUnread[g.id] ?? 0,
         deletable(
           key: 'g${g.id}',
           targetId: g.id,
           kind: 'group',
           child: _GroupTile(
             group: g,
+            time: last,
+            yesterday: strings.t('chat_yesterday'),
             unread: groupUnread[g.id] ?? 0,
             label: strings.t('chat_group'),
             onTap: () => context.pushOnce('/messages/group/${g.id}'),
@@ -175,11 +187,13 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       entries.add(_Entry(
         last,
         favorite: fav,
+        unread: unread,
         deletable(
           key: 'u$otherId',
           targetId: otherId,
           kind: 'direct',
           child: _ConversationTile(
+            time: last,
             otherUserId: otherId,
             route: route,
             roleLabel: strings.t(subtitleKey),
@@ -197,8 +211,20 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     // People search (whole platform) while typing
     final people = _query.length >= 2 ? ref.watch(userSearchProvider(_query)) : null;
 
+    // Neumorf (0137, owner's approved picture): own header (title, the
+    // unread chats' count, round buttons), a pressed-in search, the tabs
+    // Şəxsi · Qruplar · Bəyəndiklərim; the same chats, taps and actions.
+    final neu = AppColors.neumorph;
+    final unreadChats = entries.where((e) => e.unread > 0).length;
+    final groupsUnread = entries.where((e) => e.group && e.unread > 0).length;
+    final shown = !neu
+        ? entries
+        : [
+            for (final e in entries)
+              if (_tab == 0 ? !e.group : (_tab == 1 ? e.group : e.favorite)) e
+          ];
     return Scaffold(
-      appBar: AppBar(
+      appBar: neu ? null : AppBar(
         title: Text(strings.t('messages_placeholder_title')),
         actions: [
           // "Bildirişlər" left of the heart (owner, 17.11.2026).
@@ -243,7 +269,21 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           ),
         ),
       ),
-      body: RefreshIndicator(
+      body: _NeuChatsFrame(
+        on: neu,
+        header: neu
+            ? _NeuChatsHeader(
+                strings: strings,
+                unreadChats: unreadChats,
+                groupsUnread: groupsUnread,
+                tab: _tab,
+                onTab: (i) => setState(() => _tab = i),
+                search: _searchCtrl,
+                query: _query,
+                onQuery: (v) => setState(() => _query = v.trim()),
+              )
+            : null,
+        child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myConversationsProvider);
           ref.invalidate(myGroupsProvider);
@@ -273,7 +313,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                         ],
                       ),
                     ),
-                  for (final e in entries) Padding(padding: const EdgeInsets.only(bottom: 6), child: e.tile),
+                  for (final e in shown) Padding(padding: EdgeInsets.only(bottom: neu ? 4 : 6), child: e.tile),
                   if (people != null) ...[
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
@@ -316,8 +356,250 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                 ],
               ),
       ),
+      ),
     );
   }
+}
+
+/// Neumorf: the header above the list on the phone (none in the classic look).
+class _NeuChatsFrame extends StatelessWidget {
+  final bool on;
+  final Widget? header;
+  final Widget child;
+  const _NeuChatsFrame({required this.on, required this.header, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!on || header == null) return child;
+    return SafeArea(bottom: false, child: Column(children: [header!, Expanded(child: child)]));
+  }
+}
+
+/// Neumorf Mesajlar header (owner's approved picture): "Mesajlar" + the
+/// count of chats with something unread, the bell, the heart and the round
+/// orange + (a new group, as before), the pressed-in search and the tabs.
+class _NeuChatsHeader extends StatelessWidget {
+  final AppStrings strings;
+  final int unreadChats;
+  final int groupsUnread;
+  final int tab;
+  final ValueChanged<int> onTab;
+  final TextEditingController search;
+  final String query;
+  final ValueChanged<String> onQuery;
+  const _NeuChatsHeader({
+    required this.strings,
+    required this.unreadChats,
+    required this.groupsUnread,
+    required this.tab,
+    required this.onTab,
+    required this.search,
+    required this.query,
+    required this.onQuery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget half(int i, String label, {bool dot = false}) {
+      final on = tab == i;
+      return Expanded(
+        child: InkWell(
+          key: ValueKey('msg-tab-$i'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => onTab(i),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            height: 42,
+            decoration: on ? neuRaisedDecoration(radius: 14, depth: 0.7) : const BoxDecoration(),
+            alignment: Alignment.center,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w500, color: on ? AppColors.text : AppColors.textSoft)),
+              ),
+              if (dot) ...[
+                const SizedBox(width: 5),
+                Container(width: 7, height: 7, decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle)),
+              ],
+            ]),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      key: const ValueKey('msg-neu-header'),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text(strings.t('messages_placeholder_title'),
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text)),
+              if (unreadChats > 0)
+                Text(strings.t('neu_unread_chats', {'n': '$unreadChats'}),
+                    key: const ValueKey('msg-neu-unread'), style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
+            ]),
+          ),
+          NoticeBell(
+            strings: strings,
+            size: 21,
+            frame: (icon, onTap, tip) => HeaderCircle(tooltip: tip, onTap: onTap, child: icon),
+          ),
+          const SizedBox(width: 10),
+          HeaderCircle(
+            key: const ValueKey('msg-favorites'),
+            tooltip: strings.t('fav_title'),
+            onTap: () => openFavorites(context, FavTab.chats),
+            child: Icon(Icons.favorite, size: 20, color: AppColors.accent),
+          ),
+          const SizedBox(width: 10),
+          Tooltip(
+            message: strings.t('chat_new_group'),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [AppColors.accent, AppColors.accentFill]),
+                boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.45), blurRadius: 14, offset: const Offset(0, 5))],
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  key: const ValueKey('msg-neu-new-group'),
+                  customBorder: const CircleBorder(),
+                  onTap: () => context.pushOnce('/messages/new-group'),
+                  child: const Icon(Icons.add, color: Colors.white, size: 26),
+                ),
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 16),
+        Container(
+          decoration: neuInsetDecoration(radius: 18),
+          child: TextField(
+            controller: search,
+            onChanged: onQuery,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              filled: false,
+              isDense: true,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              prefixIcon: Icon(Icons.search, color: AppColors.textSoft),
+              hintText: strings.t('chat_search_hint'),
+              suffixIcon: query.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        search.clear();
+                        onQuery('');
+                      },
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: neuInsetDecoration(radius: 18),
+          child: Row(children: [
+            half(0, strings.t('neu_tab_direct')),
+            half(1, strings.t('neu_tab_groups'), dot: groupsUnread > 0),
+            half(2, strings.t('fav_title')),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Neumorf chat row (owner's approved picture): a raised round picture, the
+/// name (bolder when unread), the line under it, the time and the unread
+/// count or a round ›; an unread row pressed in.
+class _NeuChatRow extends StatelessWidget {
+  final Widget avatar;
+  final Widget title;
+  final String subtitle;
+  final DateTime time;
+  final int unread;
+  final VoidCallback onTap;
+  final String yesterdayLabel;
+  const _NeuChatRow({
+    required this.yesterdayLabel,
+    required this.avatar,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.unread,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final t = time.toLocal();
+    final today = t.year == now.year && t.month == now.month && t.day == now.day;
+    final y = now.subtract(const Duration(days: 1));
+    final yesterday = t.year == y.year && t.month == y.month && t.day == y.day;
+    final lang = Localizations.localeOf(context).languageCode;
+    final when = today
+        ? DateFormat('HH:mm').format(t)
+        : (yesterday ? _cap(yesterdayLabel) : DateFormat('d MMM', lang).format(t));
+    return Container(
+      decoration: unread > 0 ? neuInsetDecoration(radius: 22) : null,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+            child: Row(children: [
+              Container(
+                decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.6)),
+                padding: const EdgeInsets.all(2),
+                child: avatar,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  title,
+                  const SizedBox(height: 3),
+                  Text(subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13.5, color: unread > 0 ? AppColors.text : AppColors.textSoft)),
+                ]),
+              ),
+              const SizedBox(width: 8),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+                Text(when, style: TextStyle(fontSize: 12, color: unread > 0 ? AppColors.accent : AppColors.textSoft)),
+                const SizedBox(height: 6),
+                unread > 0
+                    ? _UnreadBadge(unread)
+                    : Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.4)),
+                        child: Icon(Icons.chevron_right, size: 17, color: AppColors.textSoft),
+                      ),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _cap(String v) => v.isEmpty ? v : v[0].toUpperCase() + v.substring(1);
 }
 
 /// Swipe left (WhatsApp-style) shows a red "Delete" area; releasing asks
@@ -384,10 +666,31 @@ class _GroupTile extends StatelessWidget {
   final int unread;
   final String label;
   final VoidCallback onTap;
-  const _GroupTile({required this.group, required this.unread, required this.label, required this.onTap});
+  final DateTime time;
+  final String yesterday;
+  const _GroupTile(
+      {required this.group, required this.unread, required this.label, required this.onTap, required this.time, required this.yesterday});
 
   @override
   Widget build(BuildContext context) {
+    if (AppColors.neumorph) {
+      return _NeuChatRow(
+        yesterdayLabel: yesterday,
+        avatar: CircleAvatar(
+          radius: 24,
+          backgroundColor: AppColors.routeSoft,
+          child: Icon(Icons.groups_2_outlined, color: AppColors.route),
+        ),
+        title: Text(group.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 16, fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w500, color: AppColors.text)),
+        subtitle: label,
+        time: time,
+        unread: unread,
+        onTap: onTap,
+      );
+    }
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -434,7 +737,9 @@ class _ConversationTile extends ConsumerWidget {
   final int unread;
   final VoidCallback onTap;
   final bool favorite;
+  final DateTime time;
   const _ConversationTile({
+    required this.time,
     required this.otherUserId,
     required this.route,
     required this.roleLabel,
@@ -450,6 +755,34 @@ class _ConversationTile extends ConsumerWidget {
     final hidden = ref.watch(blockedMeIdsProvider).valueOrNull?.contains(otherUserId) ?? false;
     final online = !hidden && ref.watch(isUserOnlineProvider(otherUserId));
     final name = (profile?.fullName.isNotEmpty ?? false) ? profile!.fullName : roleLabel;
+
+    if (AppColors.neumorph) {
+      return _NeuChatRow(
+        yesterdayLabel: ref.watch(stringsProvider).t('chat_yesterday'),
+        avatar: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => context.pushOnce('/user/$otherUserId'),
+          child: UserAvatar(imageUrl: hidden ? null : profile?.avatarUrl, initials: profile?.initials ?? '?', radius: 24, online: online),
+        ),
+        title: Row(children: [
+          Flexible(
+            child: Text(name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16, fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w500, color: AppColors.text)),
+          ),
+          if (!hidden && profile?.isVerified == true) ...[const SizedBox(width: 4), const VerifiedTick()],
+          if (favorite) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.favorite, key: ValueKey('msg-fav-$otherUserId'), size: 14, color: AppColors.accent),
+          ],
+        ]),
+        subtitle: route,
+        time: time,
+        unread: unread,
+        onTap: onTap,
+      );
+    }
 
     return Card(
       child: InkWell(

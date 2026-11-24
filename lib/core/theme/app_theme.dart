@@ -105,25 +105,27 @@ class AppPalette {
   /// ground, raised graphite cards, orange accent.
   static const neuDark = AppPalette(
     brightness: Brightness.dark,
-    background: Color(0xFF2A2D31),
-    hero: Color(0xFF26292D),
-    card: Color(0xFF2D3035),
-    cardAlt: Color(0xFF232529),
-    line: Color(0xFF383C42),
-    lineSoft: Color(0xFF32353A),
-    text: Color(0xFFE3E5E8),
-    textSoft: Color(0xFF9A9FA7),
-    accent: Color(0xFFFF7A2A),
-    accentFill: Color(0xFFE2470F),
-    myBubble: Color(0xFFC93D0C),
+    // Livelier night (owner's picture, 24.11.2026: "daha canlı və daha
+    // gözəldir"): a blue-tinted graphite, a hotter orange, bluish soft text.
+    background: Color(0xFF20262F),
+    hero: Color(0xFF1C222A),
+    card: Color(0xFF242A33),
+    cardAlt: Color(0xFF1B2028),
+    line: Color(0xFF323A46),
+    lineSoft: Color(0xFF2A313B),
+    text: Color(0xFFF2F5FA),
+    textSoft: Color(0xFF96A6BE),
+    accent: Color(0xFFFF5A12),
+    accentFill: Color(0xFFFF3A00),
+    myBubble: Color(0xFFD93A06),
     route: Color(0xFF2BB3A9),
-    routeSoft: Color(0xFF24383A),
+    routeSoft: Color(0xFF1E3438),
     blue: Color(0xFF4C9BFF),
-    online: Color(0xFF3CCF7A),
+    online: Color(0xFF14E86E),
     danger: Color(0xFFFF6B6B),
-    urgentBg: Color(0xFF3A2A22),
+    urgentBg: Color(0xFF3A241C),
     urgentFg: Color(0xFFFF8A5C),
-    newBg: Color(0xFF24383A),
+    newBg: Color(0xFF1E3438),
     newFg: Color(0xFF5FD4C9),
     custom: true,
     neumorph: true,
@@ -174,8 +176,8 @@ class AppColors {
   static bool get neumorph => _p.neumorph;
   /// Neumorf: the shade (lower right) and the light (upper left) of a
   /// raised card.
-  static Color get neuShade => isDay ? const Color(0xFFC3C9D3) : const Color(0xFF1B1D20);
-  static Color get neuLight => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF363A40);
+  static Color get neuShade => isDay ? const Color(0xFFC3C9D3) : const Color(0xFF12161C);
+  static Color get neuLight => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF2E3642);
   /// A raised neumorf surface's two shadows (Neumorf only; empty otherwise).
   static List<BoxShadow> neuRaised({double depth = 1}) => !neumorph
       ? const []
