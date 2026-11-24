@@ -17,6 +17,11 @@ class AppPalette {
   /// follow it). All three are 0 / false for the classic night and day.
   final double gradient, glow;
   final bool custom;
+
+  /// The "Neumorf" look (owner, 24.11.2026, SQL 0137): soft grey raised
+  /// cards, pressed-in fields and an orange accent, at night and by day.
+  /// Switched on / off by the admin (Dizayn və Rənglər); off = as before.
+  final bool neumorph;
   const AppPalette({
     required this.brightness,
     required this.background,
@@ -42,6 +47,7 @@ class AppPalette {
     this.gradient = 0,
     this.glow = 0,
     this.custom = false,
+    this.neumorph = false,
   });
 
   /// Night (the existing look, unchanged).
@@ -95,6 +101,61 @@ class AppPalette {
     newFg: Color(0xFF0F766E),
   );
 
+  /// Neumorf at night (owner's approved picture, 24.11.2026): graphite
+  /// ground, raised graphite cards, orange accent.
+  static const neuDark = AppPalette(
+    brightness: Brightness.dark,
+    background: Color(0xFF2A2D31),
+    hero: Color(0xFF26292D),
+    card: Color(0xFF2D3035),
+    cardAlt: Color(0xFF232529),
+    line: Color(0xFF383C42),
+    lineSoft: Color(0xFF32353A),
+    text: Color(0xFFE3E5E8),
+    textSoft: Color(0xFF9A9FA7),
+    accent: Color(0xFFFF7A2A),
+    accentFill: Color(0xFFE2470F),
+    myBubble: Color(0xFFC93D0C),
+    route: Color(0xFF2BB3A9),
+    routeSoft: Color(0xFF24383A),
+    blue: Color(0xFF4C9BFF),
+    online: Color(0xFF3CCF7A),
+    danger: Color(0xFFFF6B6B),
+    urgentBg: Color(0xFF3A2A22),
+    urgentFg: Color(0xFFFF8A5C),
+    newBg: Color(0xFF24383A),
+    newFg: Color(0xFF5FD4C9),
+    custom: true,
+    neumorph: true,
+  );
+
+  /// Neumorf by day (owner's approved picture, 24.11.2026): light grey
+  /// ground, raised light cards with white light and grey shade.
+  static const neuLight = AppPalette(
+    brightness: Brightness.light,
+    background: Color(0xFFE8EBF0),
+    hero: Color(0xFFE8EBF0),
+    card: Color(0xFFEDF0F4),
+    cardAlt: Color(0xFFDFE3E9),
+    line: Color(0xFFD3D8DF),
+    lineSoft: Color(0xFFDDE2E8),
+    text: Color(0xFF262A31),
+    textSoft: Color(0xFF656C77),
+    accent: Color(0xFFE8521A),
+    accentFill: Color(0xFFE8521A),
+    myBubble: Color(0xFFE8521A),
+    route: Color(0xFF12998F),
+    routeSoft: Color(0xFFD9EEEB),
+    blue: Color(0xFF1F7FE0),
+    online: Color(0xFF16A34A),
+    danger: Color(0xFFDC2626),
+    urgentBg: Color(0xFFFFE2D3),
+    urgentFg: Color(0xFFC2410C),
+    newBg: Color(0xFFD9EEEB),
+    newFg: Color(0xFF0F766E),
+    neumorph: true,
+  );
+
   bool get isDay => brightness == Brightness.light;
 }
 
@@ -108,6 +169,20 @@ class AppColors {
   static AppPalette get palette => _p;
   static bool get isDay => _p.isDay;
   static void use(AppPalette p) => _p = p;
+
+  /// The "Neumorf" look is on (0137).
+  static bool get neumorph => _p.neumorph;
+  /// Neumorf: the shade (lower right) and the light (upper left) of a
+  /// raised card.
+  static Color get neuShade => isDay ? const Color(0xFFC3C9D3) : const Color(0xFF1B1D20);
+  static Color get neuLight => isDay ? const Color(0xFFFFFFFF) : const Color(0xFF363A40);
+  /// A raised neumorf surface's two shadows (Neumorf only; empty otherwise).
+  static List<BoxShadow> neuRaised({double depth = 1}) => !neumorph
+      ? const []
+      : [
+          BoxShadow(color: neuShade, offset: Offset(5 * depth, 5 * depth), blurRadius: 12 * depth),
+          BoxShadow(color: neuLight, offset: Offset(-4 * depth, -4 * depth), blurRadius: 10 * depth),
+        ];
 
   /// Load-type tiles on the Loads page and the load form (owner,
   /// 21.10.2026). Day: a white tile, dark navy picture and text, a thin
@@ -329,7 +404,8 @@ class AppTheme {
     final bars = AppColors.gradient > 0 ? Color.lerp(AppColors.hero, AppColors.accentFill, AppColors.gradient * 0.22)! : AppColors.hero;
     final glow = AppColors.glow;
 
-    return base.copyWith(
+    final neu = AppColors.neumorph;
+    final themed = base.copyWith(
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.background,
       textTheme: textTheme,
@@ -422,6 +498,73 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(backgroundColor: AppColors.card, surfaceTintColor: Colors.transparent),
       dialogTheme: DialogThemeData(backgroundColor: AppColors.card, surfaceTintColor: Colors.transparent),
       snackBarTheme: SnackBarThemeData(backgroundColor: AppColors.cardAlt, contentTextStyle: TextStyle(color: AppColors.text)),
+    );
+    return neu ? _neumorph(themed) : themed;
+  }
+
+  /// The "Neumorf" look (0137) over the same theme: raised cards without
+  /// a hard border, pressed-in fields, round soft buttons with the orange
+  /// accent. Only the look changes — every widget, route and action stays.
+  static ThemeData _neumorph(ThemeData t) {
+    final radius = BorderRadius.circular(20);
+    final noLine = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none);
+    return t.copyWith(
+      cardTheme: CardThemeData(
+        elevation: 5,
+        shadowColor: AppColors.neuShade,
+        surfaceTintColor: Colors.transparent,
+        color: AppColors.card,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: radius, side: BorderSide(color: AppColors.neuLight.withValues(alpha: 0.35), width: 0.6)),
+      ),
+      appBarTheme: t.appBarTheme.copyWith(backgroundColor: AppColors.background, shape: const Border()),
+      inputDecorationTheme: t.inputDecorationTheme.copyWith(
+        fillColor: AppColors.cardAlt,
+        border: noLine,
+        enabledBorder: noLine,
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.accent, width: 1.2)),
+      ),
+      // The same buttons (text, size), only rounder with a soft shadow.
+      filledButtonTheme: FilledButtonThemeData(
+        style: t.filledButtonTheme.style?.copyWith(
+          elevation: const WidgetStatePropertyAll(6),
+          shadowColor: WidgetStatePropertyAll(AppColors.accent.withValues(alpha: 0.55)),
+          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: t.outlinedButtonTheme.style?.copyWith(
+          backgroundColor: WidgetStatePropertyAll(AppColors.card),
+          elevation: const WidgetStatePropertyAll(4),
+          shadowColor: WidgetStatePropertyAll(AppColors.neuShade),
+          side: WidgetStatePropertyAll(BorderSide(color: AppColors.neuLight.withValues(alpha: 0.4), width: 0.6)),
+          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.accentFill,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        shape: const CircleBorder(),
+      ),
+      chipTheme: t.chipTheme.copyWith(
+        backgroundColor: AppColors.card,
+        side: BorderSide.none,
+        elevation: 3,
+        shadowColor: AppColors.neuShade,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      dividerTheme: DividerThemeData(color: AppColors.lineSoft),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
     );
   }
 

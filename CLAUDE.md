@@ -187,6 +187,45 @@ files to the owner separately (they are run by hand in the SQL editor).
   by day on a light ground "Tır" is dark; under it small www.tirlink.app
   in the colour of "Tır" (not in the admin header). Internal names
   (package, FreightLinkSans fonts, classes) stay.
+- "Neumorf" look (owner's pictures, 24.11.2026, SQL 0137: "bu rəng tonları
+  və kartla dizayn et … Dizayn və Rənglər bölməsindən aktiv edilə və
+  söndürülə bilsin … gecə və gündüz"): AppPalette.neuDark (graphite
+  #2A2D31) / neuLight (#E8EBF0), orange accent, AppColors.neumorph; the
+  theme's cards, fields, buttons, chips, sheets and dialogs become soft
+  raised / pressed-in (AppTheme._neumorph), the floating capsule is raised
+  and the chosen tab's icon stands white in an orange circle, load rows /
+  tiles carry NeuSurface (two shadows). Only the look — every widget,
+  route, action and datum stays. Admin → Dizayn və Rənglər → "Neumorf
+  görünüş": Bu cihazda önizlə (ui_neumorph_preview) · Hamı üçün aktiv et /
+  söndür (admin_ui_style_set, admins only, Audit Log; ui_style_current read
+  by everybody). While on it goes before an admin's night colours (0076).
+  Off (default) = exactly the classic night / day (neumorph_theme_test).
+  The device keeps the answer (ui_neumorph) for the next start; only a NEW
+  device waits for it (≤ 1.5 s, together with the night colours).
+  Stage 2 (owner's picture B, approved 24.11.2026: "B … xəritə və banner
+  qalsın"): Yüklər top = _NeuHero (TırLink + slogan, raised round header
+  buttons, the counters + CANLI as raised capsules, the live map KEPT in a
+  pressed-in frame with İş Mərkəzi and "Yük əlavə et +" on it), load types
+  as raised squares (pressed in when chosen), the route search one pressed-
+  in pill (Haradan ⇄ Haraya, the same pickers / swap / clear / saved
+  routes), "Yüklər | Daşıyıcılar" a pressed-in track with the chosen half
+  raised; the floating bar's chosen tab a big orange circle standing above
+  the capsule. TIR Bazarı: round header buttons, the banner KEPT in a
+  pressed-in frame (NeuInsetFrame), the sell card raised, category pills
+  raised (chosen = orange), the search pressed in, ad cards raised with an
+  orange price. Xəritə | Maşınlarım a pressed-in track. Every key, tap and
+  number as in the classic look, which stays exactly as it was.
+  Matched to the picture (owner, 24.11.2026: "eynidirsə təsdiqləyirəm"):
+  counters with their unit (neu_unit_*: yük · üzv · daşıyıcı); the route
+  pill's round ⚙ = the route menu (saved routes, save, clear — the classic
+  chips' actions); "Açıq yüklər" 18; a load row = route + heart + Paylaş as
+  round raised buttons on its line, a thin line, picture · "22 T | Ref |
+  30 noy" · orange price, VIP / Premium = orange frame + gold mark on the top
+  edge (row-heart-neu / row-marks-neu; the classic row keeps its keys); TIR
+  Bazarı = title + "Al və sat", search + "+ Elan yerləşdir" (mk_new_ad_short)
+  on one line, the type pills, the popular brands as round raised logos
+  (_NeuBrand, the filter's own list and choice), ad cards name · details ·
+  orange price with the Premium / VIP marks on the picture.
 - Night (dark) theme is the default and its look never changes; Day
   mode (owner, 18.10.2026) is chosen in Settings and kept on the device.
   Night colours (owner, 29.10.2026, 0076): only the admin changes them,

@@ -220,6 +220,26 @@ class HeaderCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glass = AppColors.isDay ? AppColors.tileBg.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.82);
+    // Neumorf (0137): the same button, raised (owner's approved picture).
+    if (AppColors.neumorph) {
+      return Tooltip(
+        message: tooltip,
+        child: Container(
+          key: const ValueKey('header-circle-neu'),
+          width: size,
+          height: size,
+          decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.8)),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Padding(padding: EdgeInsets.all(padding), child: Center(child: child)),
+            ),
+          ),
+        ),
+      );
+    }
     return Tooltip(
       message: tooltip,
       child: Material(

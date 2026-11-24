@@ -7,7 +7,7 @@ import 'app_theme.dart';
 import 'night_theme.dart';
 import 'night_theme_remote.dart';
 
-export 'night_theme_remote.dart' show PublishedNightTheme, fetchPublishedNightTheme;
+export 'night_theme_remote.dart' show PublishedNightTheme, fetchPublishedNightTheme, fetchNeumorphOn;
 
 /// Day / night mode chosen in Settings, kept on this device
 /// (SharedPreferences; nothing is stored on the server). Night is the
@@ -22,8 +22,22 @@ const kThemeNight = 'night';
 const kNightThemeCacheKey = 'night_theme_cache';
 const kNightThemePreviewKey = 'night_theme_preview';
 
-AppPalette paletteFor(String? saved, {NightThemeSpec? night}) =>
-    saved == kThemeDay ? AppPalette.light : (night?.toPalette() ?? AppPalette.dark);
+AppPalette paletteFor(String? saved, {NightThemeSpec? night, bool neumorph = false}) => neumorph
+    ? (saved == kThemeDay ? AppPalette.neuLight : AppPalette.neuDark)
+    : (saved == kThemeDay ? AppPalette.light : (night?.toPalette() ?? AppPalette.dark));
+
+/// The "Neumorf" look (0137) the admin switched on, kept on the device so
+/// the next start shows it at once; and an admin's own try-out on this
+/// device only ("Önizlə"). It counts at night and by day and goes before
+/// an admin's night colours (0076) while it is on.
+const kNeumorphCacheKey = 'ui_neumorph';
+const kNeumorphPreviewKey = 'ui_neumorph_preview';
+/// Set once the server was asked on this device (also without an answer),
+/// so later starts never wait for it.
+const kNeumorphCheckedKey = 'ui_neumorph_checked';
+
+/// True while an admin tries the Neumorf look on this device.
+bool neumorphPreviewActive = false;
 
 /// True while an admin tries a palette on this device ("Önizlə").
 bool nightPreviewActive = false;
@@ -53,17 +67,38 @@ Future<void> loadSavedTheme({Future<void>? serverReady}) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     final mode = prefs.getString(kThemeModeKey);
+    // Neumorf (0137): this device's try-out, else the copy kept from the
+    // last start; the server's answer is kept for the NEXT start (never
+    // changes an open screen), and on a device's first start it is waited
+    // for as briefly as the night colours.
+    final neuPreview = prefs.getBool(kNeumorphPreviewKey);
+    neumorphPreviewActive = neuPreview != null;
+    final neuCached = prefs.getBool(kNeumorphCacheKey);
+    final neuRefresh = _refreshNeumorph(prefs, serverReady);
+    // Both answers are asked for at the same time (one short wait at most).
+    final refresh = mode == kThemeDay ? null : _refreshPublishedNightTheme(prefs, serverReady);
+    var neu = neuPreview ?? neuCached ?? false;
+    // Waited for only on a NEW device (nothing kept yet); a device that
+    // already ran the app keeps its start as fast as before and gets the
+    // answer on its next start.
+    final newDevice = mode == null &&
+        prefs.getString(kNightThemeCacheKey) == null &&
+        !(prefs.getBool(kNightThemeCheckedKey) ?? false) &&
+        !(prefs.getBool(kNeumorphCheckedKey) ?? false);
+    if (neuPreview == null && neuCached == null && newDevice) {
+      neu = (await neuRefresh.timeout(const Duration(milliseconds: 1500), onTimeout: () => null)) ?? false;
+    }
     if (mode == kThemeDay) {
-      AppColors.use(AppPalette.light);
+      AppColors.use(paletteFor(mode, neumorph: neu));
       return;
     }
     final preview = _specFrom(prefs.getString(kNightThemePreviewKey));
     nightPreviewActive = preview != null;
     final cached = prefs.getString(kNightThemeCacheKey);
     final night = preview ?? _specFrom(cached);
-    AppColors.use(paletteFor(mode, night: night));
+    AppColors.use(paletteFor(mode, night: night, neumorph: neu));
     final known = cached != null || (prefs.getBool(kNightThemeCheckedKey) ?? false);
-    final refresh = _refreshPublishedNightTheme(prefs, serverReady);
+    if (neu || refresh == null) return;
     if (known) return; // kept for the next start
     // First start: put it on screen only if it arrives within the short
     // wait (a later answer is kept for the next start, never shown live).
@@ -73,6 +108,41 @@ Future<void> loadSavedTheme({Future<void>? serverReady}) async {
     // Offline, slow or 0076 not run yet: what is already in use stays
     // (the copy from the last start, or the classic night).
   }
+}
+
+/// Asks the server whether the Neumorf look is on and keeps the answer on
+/// the device. Null = could not ask (0137 not run, offline).
+Future<bool?> _refreshNeumorph(SharedPreferences prefs, Future<void>? serverReady) async {
+  try {
+    if (serverReady != null) await serverReady;
+    final on = await fetchNeumorphOn();
+    if (on != null) await prefs.setBool(kNeumorphCacheKey, on);
+    await prefs.setBool(kNeumorphCheckedKey, true);
+    return on;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// "Önizlə" of the Neumorf look on this device only (the admin).
+Future<void> startNeumorphPreview(bool on) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(kNeumorphPreviewKey, on);
+  platform.reloadPage();
+}
+
+Future<void> endNeumorphPreview() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(kNeumorphPreviewKey);
+  platform.reloadPage();
+}
+
+/// After the admin switched it: this device follows at once.
+Future<void> applyNeumorph(bool on) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(kNeumorphCacheKey, on);
+  await prefs.remove(kNeumorphPreviewKey);
+  platform.reloadPage();
 }
 
 /// Asks the server for the published night palette and keeps it on the
@@ -129,6 +199,8 @@ Future<void> chooseTheme({required bool day}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(kThemeModeKey, day ? kThemeDay : kThemeNight);
   } catch (_) {}
-  AppColors.use(day ? AppPalette.light : AppPalette.dark);
+  AppColors.use(day
+      ? (AppColors.neumorph ? AppPalette.neuLight : AppPalette.light)
+      : (AppColors.neumorph ? AppPalette.neuDark : AppPalette.dark));
   platform.reloadPage();
 }

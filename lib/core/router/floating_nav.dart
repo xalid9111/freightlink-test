@@ -156,6 +156,8 @@ class FloatingNavBar extends StatelessWidget {
     // (measured on a weak phone: 13 → 16 fps); a slightly denser glass keeps
     // it readable instead.
     final glass = day ? AppColors.card.withValues(alpha: 0.92) : AppColors.hero.withValues(alpha: 0.92);
+    // Neumorf (0137): a raised capsule of the card colour, no hard border.
+    final neu = AppColors.neumorph;
     return SizedBox(
       height: FloatingNav.space(safeBottom),
       child: IgnorePointer(
@@ -178,23 +180,31 @@ class FloatingNavBar extends StatelessWidget {
                     key: const ValueKey('floating-nav'),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(FloatingNav.height / 2),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withValues(alpha: day ? 0.14 : 0.38),
-                            blurRadius: 22,
-                            offset: const Offset(0, 8)),
-                      ],
+                      boxShadow: neu
+                          ? [
+                              BoxShadow(color: AppColors.neuShade, blurRadius: 24, offset: const Offset(0, 9)),
+                              BoxShadow(color: AppColors.neuLight, blurRadius: 10, offset: const Offset(-3, -3)),
+                            ]
+                          : [
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: day ? 0.14 : 0.38),
+                                  blurRadius: 22,
+                                  offset: const Offset(0, 8)),
+                            ],
                     ),
                     child: ClipRRect(
+                      // Neumorf: the chosen tab's circle stands above the
+                      // capsule (owner's approved picture), so no clip.
+                      clipBehavior: neu ? Clip.none : Clip.antiAlias,
                       borderRadius: BorderRadius.circular(FloatingNav.height / 2),
                       child: Material(
                         type: MaterialType.transparency,
                         child: Container(
                           height: FloatingNav.height,
                           decoration: BoxDecoration(
-                            color: glass,
+                            color: neu ? AppColors.card : glass,
                             borderRadius: BorderRadius.circular(FloatingNav.height / 2),
-                            border: Border.all(color: AppColors.line.withValues(alpha: day ? 1 : 0.9)),
+                            border: neu ? null : Border.all(color: AppColors.line.withValues(alpha: day ? 1 : 0.9)),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           child: Row(
@@ -217,7 +227,34 @@ class FloatingNavBar extends StatelessWidget {
 
   Widget _slot(FloatingNavItem it, bool selected) {
     final color = selected ? AppColors.accent : AppColors.textSoft;
-    Widget icon = Icon(selected ? it.selectedIcon : it.icon, color: color, size: selected ? 28 : 24);
+    // Neumorf (0137): the chosen tab's icon stands white in an orange
+    // circle (owner's approved picture); the slot keeps its size.
+    final neuOn = selected && AppColors.neumorph;
+    Widget icon = neuOn
+        ? OverflowBox(
+            maxWidth: 56,
+            maxHeight: 56,
+            child: Transform.translate(
+              offset: const Offset(0, -16),
+              child: Container(
+                key: const ValueKey('nav-neu-selected'),
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.accent, AppColors.accentFill]),
+                  border: Border.all(color: AppColors.background, width: 3.5),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.accent.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6)),
+                    BoxShadow(color: AppColors.neuLight, blurRadius: 8, offset: const Offset(-3, -3)),
+                  ],
+                ),
+                child: Icon(it.selectedIcon, color: Colors.white, size: 25),
+              ),
+            ),
+          )
+        : Icon(selected ? it.selectedIcon : it.icon, color: color, size: selected ? 28 : 24);
     if (it.badge > 0) {
       icon = Badge(label: Text(it.badge > 99 ? '99+' : '${it.badge}'), child: icon);
     }

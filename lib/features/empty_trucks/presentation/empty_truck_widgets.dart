@@ -1,3 +1,4 @@
+import '../../../core/widgets/neu_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -45,6 +46,43 @@ class LoadsSectionSwitch extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(loadsSectionProvider);
+    // Neumorf (0137): one pressed-in track, the chosen half raised (owner's
+    // approved picture); same keys and taps.
+    if (AppColors.neumorph) {
+      Widget half(LoadsSection v, String label) {
+        final on = now == v;
+        return Expanded(
+          child: InkWell(
+            key: ValueKey('loads-section-${v.name}'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              if (on) return;
+              ref.read(loadsSectionProvider.notifier).state = v;
+              onChanged?.call();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              height: 44,
+              decoration: on ? neuRaisedDecoration(radius: 14, depth: 0.7) : const BoxDecoration(),
+              alignment: Alignment.center,
+              child: Text(label,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: on ? AppColors.text : AppColors.textSoft)),
+            ),
+          ),
+        );
+      }
+
+      return Container(
+        key: const ValueKey('loads-section-neu'),
+        padding: const EdgeInsets.all(5),
+        decoration: neuInsetDecoration(radius: 18),
+        child: Row(children: [
+          half(LoadsSection.loads, strings.t('et_section_loads')),
+          const SizedBox(width: 6),
+          half(LoadsSection.carriers, strings.t('et_section_carriers')),
+        ]),
+      );
+    }
     Widget button(LoadsSection v, String label) {
       final on = now == v;
       return Expanded(

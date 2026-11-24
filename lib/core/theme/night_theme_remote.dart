@@ -29,3 +29,15 @@ class PublishedNightTheme {
   const PublishedNightTheme({this.spec, this.name, this.updatedAt, this.hasPrevious = false});
 }
 
+
+/// Whether the admin switched the "Neumorf" look on (0137). Null when the
+/// server does not have it (0137 not run) or cannot be asked.
+Future<bool?> fetchNeumorphOn() async {
+  try {
+    final res = await SupabaseConfig.client.rpc('ui_style_current');
+    if (res is! Map) return null;
+    return res['neumorph'] == true;
+  } catch (_) {
+    return null;
+  }
+}

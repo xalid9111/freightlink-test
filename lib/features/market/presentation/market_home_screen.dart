@@ -1,3 +1,5 @@
+import '../../../core/widgets/neu_surface.dart';
+import '../../cargo/presentation/widgets/cargo_picture.dart' show HeaderCircle;
 import '../../favorites/favorites.dart' show openFavorites, FavTab;
 import '../../notices/notices.dart' show NoticeBell;
 import 'package:flutter/material.dart';
@@ -145,41 +147,100 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                   sliver: SliverList.list(children: [
                     Row(
                       children: [
+                        if (!AppColors.neumorph) ...[
                         Icon(Icons.local_shipping, color: AppColors.accent, size: 26),
                         const SizedBox(width: 10),
+                        ],
                         Expanded(
-                          child: Text(s.t('nav_market'),
-                              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.text)),
+                          child: AppColors.neumorph
+                              ? Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                                  Text(s.t('nav_market'),
+                                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.text)),
+                                  Text(s.t('mk_buy_sell'), style: TextStyle(fontSize: 13.5, color: AppColors.textSoft)),
+                                ])
+                              : Text(s.t('nav_market'),
+                                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: AppColors.text)),
                         ),
                         // "Bildirişlər" left of the heart (owner, 17.11.2026).
+                        // Neumorf (0137): the same two buttons, raised round.
+                        if (AppColors.neumorph) ...[
+                          NoticeBell(
+                            strings: s,
+                            size: 21,
+                            frame: (icon, onTap, tip) => HeaderCircle(tooltip: tip, onTap: onTap, child: icon),
+                          ),
+                          const SizedBox(width: 10),
+                          HeaderCircle(
+                            tooltip: s.t('mk_favorites'),
+                            onTap: () => openFavorites(context, FavTab.market),
+                            child: Icon(Icons.favorite, size: 20, color: AppColors.accent),
+                          ),
+                        ] else ...[
                         NoticeBell(strings: s, size: 28, frame: NoticeBell.plain),
                         IconButton(
                           tooltip: s.t('mk_favorites'),
                           onPressed: () => openFavorites(context, FavTab.market),
                           icon: const Icon(Icons.favorite_border, size: 28),
                         ),
+                        ],
                       ],
                     ),
                     // Banner (owner, 21.10.2026): the same as on the computer,
                     // night / day picture, the admin changes it here too.
                     const SizedBox(height: 8),
-                    PageHeroBanner(
-                      page: 'market',
-                      strings: s,
-                      kicker: s.t('nav_market'),
-                      defaultTitle: s.t('mk_hero_title'),
-                      defaultAccent: s.t('mk_hero_accent'),
-                      defaultSubtitle: s.t('mk_hero_subtitle'),
-                      icon: Icons.local_shipping,
-                      height: 150,
+                    // Neumorf (0137): the banner in a pressed-in frame (kept, B).
+                    NeuInsetFrame(
+                      child: PageHeroBanner(
+                        page: 'market',
+                        strings: s,
+                        kicker: s.t('nav_market'),
+                        defaultTitle: s.t('mk_hero_title'),
+                        defaultAccent: s.t('mk_hero_accent'),
+                        defaultSubtitle: s.t('mk_hero_subtitle'),
+                        icon: Icons.local_shipping,
+                        height: 150,
+                      ),
                     ),
                     const SizedBox(height: 14),
+                    // Neumorf (0137), approved picture B: the search and
+                    // "+ Elan yerləşdir" on one line (the same field and the
+                    // same button), then the types and the popular brands.
+                    if (AppColors.neumorph) ...[
+                      Row(children: [
+                        Expanded(
+                          child: _SearchBox(
+                            controller: _search,
+                            hint: s.t('mk_search_hint'),
+                            highlighted: filter.hasDetails,
+                            onOpen: () => _openSearch(context, s, filter),
+                            onClear: filter.brand != null || filter.model != null || (filter.q ?? '').isNotEmpty
+                                ? () => _setFilter(filter.copyWith(q: () => null, brand: () => null, model: () => null))
+                                : null,
+                            onFilters: () => _openFilters(context, s, filter),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          key: const ValueKey('mk-new-ad'),
+                          onPressed: () => openNewMarketAd(context, ref, s),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 52),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          child: Text('+ ${s.t('mk_new_ad_short')}'),
+                        ),
+                      ]),
+                      const SizedBox(height: 14),
+                    ] else ...[
                     MarketSellBanner(s: s, onTap: () => openNewMarketAd(context, ref, s)),
                     const SizedBox(height: 14),
+                    ],
                     SizedBox(
-                      height: 44,
+                      height: AppColors.neumorph ? 56 : 44,
                       child: MouseDragScroll(child: ListView(
                         scrollDirection: Axis.horizontal,
+                        padding: AppColors.neumorph ? const EdgeInsets.fromLTRB(2, 4, 2, 8) : null,
                         children: [
                           for (final c in MarketCategory.values)
                             Padding(
@@ -199,6 +260,35 @@ class _MarketHomeScreenState extends ConsumerState<MarketHomeScreen> {
                       )),
                     ),
                     const SizedBox(height: 12),
+                    if (AppColors.neumorph)
+                      // The popular brands as round raised buttons (the same
+                      // list and choice as the filter's popular brands).
+                      SizedBox(
+                        key: const ValueKey('mk-neu-brands'),
+                        height: 96,
+                        child: MouseDragScroll(child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.fromLTRB(2, 4, 2, 4),
+                          children: [
+                            for (final b in [
+                              for (final b in kMarketPopularBrands)
+                                if (filter.category == null || marketBrands(filter.category!).contains(b)) b
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.only(right: 14),
+                                child: _NeuBrand(
+                                  brand: b,
+                                  selected: filter.brand == b,
+                                  onTap: () => _setFilter(filter.copyWith(
+                                    brand: () => filter.brand == b ? null : b,
+                                    model: () => null,
+                                  )),
+                                ),
+                              ),
+                          ],
+                        )),
+                      )
+                    else
                     _SearchBox(
                       controller: _search,
                       hint: s.t('mk_search_hint'),
@@ -353,11 +443,13 @@ class MarketSellBanner extends StatelessWidget {
     final truck = Icon(Icons.local_shipping_outlined, color: AppColors.accent);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line),
-      ),
+      decoration: AppColors.neumorph
+          ? neuRaisedDecoration(radius: 20)
+          : BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line),
+            ),
       // Owner, 14.11.2026: in a long language at a big text size the button
       // left the title one letter wide (written downwards). When the title
       // and the button do not fit side by side, the title goes on top and
@@ -415,6 +507,28 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = selected ? AppColors.accent : AppColors.text;
+    // Neumorf (0137): a raised pill; the chosen one orange (approved picture).
+    if (AppColors.neumorph) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: selected
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(colors: [AppColors.accent, AppColors.accentFill]),
+                  boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
+                )
+              : neuRaisedDecoration(radius: 16, depth: 0.6),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : AppColors.textSoft),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(color: selected ? Colors.white : AppColors.text, fontWeight: FontWeight.w400)),
+          ]),
+        ),
+      );
+    }
     return Material(
       color: selected ? AppColors.accent.withValues(alpha: 0.10) : AppColors.card,
       borderRadius: BorderRadius.circular(14),
@@ -456,7 +570,9 @@ class _SearchBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    final neu = AppColors.neumorph;
+    final noLine = OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none);
+    Widget field = Focus(
       child: TextField(
         key: const ValueKey('mk-search-box'),
         controller: controller,
@@ -478,15 +594,19 @@ class _SearchBox extends StatelessWidget {
               onPressed: onFilters,
             ),
           ]),
-          filled: true,
+          filled: !neu,
           fillColor: AppColors.card,
-          border: OutlineInputBorder(
+          border: neu ? noLine : OutlineInputBorder(
               borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.line)),
-          enabledBorder: OutlineInputBorder(
+          enabledBorder: neu ? noLine : OutlineInputBorder(
               borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.line)),
+          focusedBorder: neu ? noLine : null,
         ),
       ),
     );
+    // Neumorf (0137): the search field pressed in (approved picture).
+    if (neu) field = Container(key: const ValueKey('mk-search-neu'), decoration: neuInsetDecoration(radius: 18), child: field);
+    return field;
   }
 }
 
@@ -802,6 +922,43 @@ class _PopularBrand extends StatelessWidget {
             ),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+/// Neumorf (0137): a popular brand as a round raised button with its logo
+/// (or letters) and its name under it; pressed in and orange when chosen.
+class _NeuBrand extends StatelessWidget {
+  final String brand;
+  final bool selected;
+  final VoidCallback onTap;
+  const _NeuBrand({required this.brand, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: ValueKey('mk-neu-brand-$brand'),
+      borderRadius: BorderRadius.circular(30),
+      onTap: onTap,
+      child: SizedBox(
+        width: 62,
+        child: Column(children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: selected
+                ? neuInsetDecoration(radius: 29)
+                : BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.7)),
+            alignment: Alignment.center,
+            child: ClipOval(child: BrandBadge(brand, size: 38)),
+          ),
+          const SizedBox(height: 6),
+          Text(brand,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, color: selected ? AppColors.accent : AppColors.textSoft)),
+        ]),
       ),
     );
   }
