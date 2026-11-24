@@ -1253,7 +1253,7 @@
   "site_closed_title": "网站暂时关闭",
   "site_closed_default": "网站正在维护，请稍后再试。",
   "site_closed_retry": "重试",
-  "site_closed_admin_login": "管理员登录",
+  "site_closed_admin_login": "登录",
   "site_closed_sign_out": "退出",
   "job_center": "工作中心",
   "job_center_sub": "司机与雇主的招聘市场",
@@ -2537,5 +2537,6 @@
   "fl_link_none": "未找到此姓名的账户",
   "fl_link_by_code": "用代码加入",
   "pw_link_used": "此链接已失效：已过期或已被打开过。每次新的请求都会使旧链接失效——请只打开最新邮件中的链接。点击下方按钮获取新链接。",
-  "pw_link_new": "发送新链接"
+  "pw_link_new": "发送新链接",
+  "error_site_closed": "网站目前已关闭。只有获得许可的账户可以登录。"
 }

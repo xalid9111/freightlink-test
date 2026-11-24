@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://tirlink.app/</loc>
     <lastmod>2026-11-22</lastmod>
@@ -8,7 +9,79 @@
   </url>
   <url>
     <loc>https://tirlink.app/haqqimizda/</loc>
-    <lastmod>2026-11-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tirlink.app/tr/hakkimizda/</loc>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tirlink.app/en/about/</loc>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tirlink.app/ru/o-nas/</loc>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tirlink.app/ka/about/</loc>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tirlink.app/zh/about/</loc>
+    <xhtml:link rel="alternate" hreflang="az" href="https://tirlink.app/haqqimizda/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://tirlink.app/tr/hakkimizda/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tirlink.app/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://tirlink.app/ru/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://tirlink.app/ka/about/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://tirlink.app/zh/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tirlink.app/en/about/"/>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

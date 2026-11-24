@@ -163,6 +163,7 @@ const kRpcMigration = <String, String>{
   'admin_night_theme_publish': '0076_night_theme.sql',
   'admin_night_theme_restore': '0076_night_theme.sql',
   'admin_set_site_status': '0068_site_access.sql',
+  'admin_user_login_allowed_set': '0134_login_allowlist.sql',
   'job_seekers_list': '0069_job_center.sql',
   'job_vacancies_list': '0069_job_center.sql',
   'admin_job_set_hidden': '0069_job_center.sql',

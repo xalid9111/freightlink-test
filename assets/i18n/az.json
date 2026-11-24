@@ -1253,7 +1253,7 @@
   "site_closed_title": "Sayt müvəqqəti bağlıdır",
   "site_closed_default": "Saytda texniki işlər aparılır. Bir az sonra yenidən yoxlayın.",
   "site_closed_retry": "Yenidən yoxla",
-  "site_closed_admin_login": "Admin girişi",
+  "site_closed_admin_login": "Giriş",
   "site_closed_sign_out": "Çıxış",
   "job_center": "İş Mərkəzi",
   "job_center_sub": "Sürücülər və sahibkarlar üçün iş bazarı",
@@ -2537,5 +2537,6 @@
   "fl_link_none": "Belə adda hesab tapılmadı",
   "fl_link_by_code": "Kodla qoşulma",
   "pw_link_used": "Bu link artıq işləmir: vaxtı keçib və ya artıq açılıb. Hər yeni sorğu köhnə linkləri ləğv edir — yalnız ən son gələn məktubdakı linki açın. Yeni link üçün aşağıdakı düyməyə basın.",
-  "pw_link_new": "Yeni link göndər"
+  "pw_link_new": "Yeni link göndər",
+  "error_site_closed": "Sayt hazırda bağlıdır. Yalnız icazəsi olan hesablar girə bilər."
 }

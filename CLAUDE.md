@@ -1331,6 +1331,31 @@ files to the owner separately (they are run by hand in the SQL editor).
   (userAfterFailedRead; another account or nobody known = as before), so
   the lists, the page and its scroll place stay; a real sign-out still
   clears them (auth_resume_test.dart). Android uses the same path.
+- Who stays in a closed site (owner, 24.11.2026, SQL 0134: "sayt bağlıdır
+  aktiv etdiyimdə sadəcə icazə girişi olan istifadəçilər saytda qala bilir:
+  admin, Baş admin və icazə verilən istifadəçi"): Admin → İstifadəçilər →
+  Redaktə et has "Bağlı saytda girişə icazə" (users.login_allowed, empty =
+  no; admin_user_login_allowed_set, admins only, Audit Log; a trigger stops
+  anybody giving it to himself). While the site is closed (0068) admins, the
+  Baş admin and the allowed accounts use the app (site_status 'allowed',
+  SiteStatus.blocks); everybody else, visitors too, sees the notice as
+  before; its button reads "Giriş" (allowed accounts sign in there). Server:
+  login_allowlist_hook — a Supabase "Customize Access Token" hook the owner
+  switches on in Authentication → Hooks — refuses a not-allowed sign-in /
+  token renewal only while the site is closed (no registration then either);
+  any error inside lets the token through; the app says "Sayt hazırda
+  bağlıdır …" (error_site_closed). An open site: everybody as before.
+- The about page in six languages (owner, 24.11.2026, SEO): plain HTML
+  pages GitHub Pages serves directly (no app, no #/ route) — AZ stays at
+  /haqqimizda/ (its text, canonical and JSON-LD unchanged; only the hreflang
+  links and the language links added), TR /tr/hakkimizda/, EN /en/about/,
+  RU /ru/o-nas/, KA /ka/about/, ZH /zh/about/ (hreflang zh-Hans). Each: the
+  full text in its language with the app's own section names, its own
+  title / description / canonical, a WebPage JSON-LD (the same publisher as
+  the Organization), the same reciprocal hreflang set + x-default =
+  /en/about/, plain links to the other languages, no redirect, no meta
+  keywords, no unproven claims. sitemap.xml lists them with xhtml:link
+  alternates; no app pages, ads or #/ routes (seo_pages_test.dart).
 - Messages tab lists only chats the user is part of (even for admins).
 - The chat header's "son görülmə: …" (owner, 22.11.2026: "axıcı olsun və
   avtomatik sürüşərək geridə qalan qismi görünsün"): MarqueeText

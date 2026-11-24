@@ -17,7 +17,11 @@ class SiteStatus {
   final bool closed;
   final String? message;
   final bool admin;
-  const SiteStatus({this.closed = false, this.message, this.admin = false});
+
+  /// An admin, the Baş admin or an account the admins gave the permission
+  /// (owner, 24.11.2026, migration 0134): he keeps using a closed site.
+  final bool allowed;
+  const SiteStatus({this.closed = false, this.message, this.admin = false, this.allowed = false});
 
   static const open = SiteStatus();
 
@@ -25,10 +29,11 @@ class SiteStatus {
         closed: j['closed'] == true,
         message: (j['message'] as String?)?.trim().isEmpty ?? true ? null : (j['message'] as String).trim(),
         admin: j['admin'] == true,
+        allowed: j['allowed'] == true,
       );
 
   /// Whether this person must see the notice instead of the app.
-  bool get blocks => closed && !admin;
+  bool get blocks => closed && !admin && !allowed;
 }
 
 /// How often an open app checks again (a closed site reaches people who

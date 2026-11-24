@@ -1253,7 +1253,7 @@
   "site_closed_title": "The site is temporarily closed",
   "site_closed_default": "Maintenance is in progress. Please try again a little later.",
   "site_closed_retry": "Try again",
-  "site_closed_admin_login": "Admin sign-in",
+  "site_closed_admin_login": "Sign in",
   "site_closed_sign_out": "Sign out",
   "job_center": "Job Center",
   "job_center_sub": "A job market for drivers and employers",
@@ -2537,5 +2537,6 @@
   "fl_link_none": "No account found with this name",
   "fl_link_by_code": "Join with a code",
   "pw_link_used": "This link no longer works: it has expired or was already opened. Every new request cancels the older links — open only the link in the newest e-mail. Tap the button below for a new link.",
-  "pw_link_new": "Send a new link"
+  "pw_link_new": "Send a new link",
+  "error_site_closed": "The site is closed right now. Only accounts with permission can sign in."
 }
