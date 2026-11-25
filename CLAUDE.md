@@ -1158,6 +1158,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   white) were already the new T logo. Admin → Loqolar shows this built-in
   icon for "Telefon ikonu" (kBuiltInAppIcon); a logo the Baş admin chose
   still wins. The start-up logo and the in-app logo are unchanged.
+  The start-up logo has rounded corners like the app icon (owner,
+  25.11.2026: "loqo kənarları dairə şəklində olsun, kvadrat deyil"):
+  index.html #app-loading img border-radius 16 px (of 72), the built-in and
+  an admin's Yüklənmə səhifəsi logo alike.
 - AutoFix self-healing (owner, 15.11.2026: "bunları həll et və avtomatik
   həll yolunu tap"): a realtime / socket drop fails several chat streams at
   once — ONE reconnect covers them all and each is counted as recovered

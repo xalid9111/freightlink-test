@@ -61,6 +61,9 @@ void main() {
     final html = src('web/index.html');
     final script = html.indexOf('<script id="site-logos">');
     expect(script, greaterThan(html.indexOf('<div id="app-loading">')), reason: 'after the start-up logo');
+    // Rounded like the app icon, never a hard square (owner, 25.11.2026).
+    final imgRule = html.substring(html.indexOf('#app-loading img {'), html.indexOf('#app-loading .spinner {'));
+    expect(imgRule, contains('border-radius: 16px;'));
     expect(script, lessThan(html.indexOf('flutter_bootstrap.js')), reason: 'before the app');
     expect(html, contains("var KEY = 'fl_site_logos';"));
     expect(html, contains('window.flLogos = {'));
