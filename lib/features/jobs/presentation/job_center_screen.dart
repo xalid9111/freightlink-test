@@ -7,6 +7,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/country_picker.dart';
+import '../../../core/widgets/neu_surface.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/jobs_repository.dart';
 import '../domain/job_applications.dart';
@@ -86,8 +87,15 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
+    final neu = AppColors.neumorph;
+    final filterIcon = Badge(isLabelVisible: _filter.count > 0, label: Text('${_filter.count}'), child: const Icon(Icons.tune));
     return Scaffold(
-      appBar: AppBar(
+      // Neumorf (0137, owner 25.11.2026: "mövcud dizayna uyğunlaşdır"): no
+      // AppBar — a round back button, the title, the bell and the filter as
+      // round raised buttons (the same taps).
+      appBar: neu
+          ? null
+          : AppBar(
         centerTitle: true,
         title: Text(s.t('job_center'), style: const TextStyle(fontWeight: FontWeight.w600)),
         actions: [
@@ -96,11 +104,52 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
             key: const ValueKey('job-filter-top'),
             tooltip: s.t('job_filter'),
             onPressed: _openFilter,
-            icon: Badge(isLabelVisible: _filter.count > 0, label: Text('${_filter.count}'), child: const Icon(Icons.tune)),
+            icon: filterIcon,
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: neu
+          ? SafeArea(
+              bottom: false,
+              child: Column(children: [
+                Padding(
+                  key: const ValueKey('job-neu-header'),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                  child: Row(children: [
+                    if (Navigator.of(context).canPop()) ...[
+                      NeuRoundButton(
+                        key: const ValueKey('job-neu-back'),
+                        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: Icon(Icons.chevron_left, size: 28, color: AppColors.text),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(s.t('job_center'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text)),
+                    ),
+                    _NoticeBell(s: s),
+                    const SizedBox(width: 10),
+                    NeuRoundButton(
+                      key: const ValueKey('job-filter-top'),
+                      tooltip: s.t('job_filter'),
+                      onTap: _openFilter,
+                      child: IconTheme(data: IconThemeData(color: AppColors.text, size: 22), child: filterIcon),
+                    ),
+                  ]),
+                ),
+                Expanded(child: _body(s)),
+              ]),
+            )
+          : _body(s),
+    );
+  }
+
+  Widget _body(AppStrings s) {
+    return RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myJobProfileProvider);
           ref.invalidate(myVacanciesProvider);
@@ -179,8 +228,7 @@ class _JobCenterScreenState extends ConsumerState<JobCenterScreen> {
             ],
           );
         }),
-      ),
-    );
+      );
   }
 }
 
@@ -322,13 +370,20 @@ class _KindTabs extends ConsumerWidget {
     Widget one(JobFeedKind k, IconData icon, String title, String sub) {
       final on = tab == k;
       final locked = !roles.allows(k);
+      final neu = AppColors.neumorph;
       return Expanded(
         child: Opacity(
           opacity: locked ? 0.5 : 1,
+          // Neumorf (0137): the chosen side raised in the pressed-in track.
           child: Material(
-            color: on && !locked ? AppColors.blue.withValues(alpha: AppColors.isDay ? 0.10 : 0.22) : AppColors.card,
+            color: neu
+                ? (on && !locked ? AppColors.card : Colors.transparent)
+                : (on && !locked ? AppColors.blue.withValues(alpha: AppColors.isDay ? 0.10 : 0.22) : AppColors.card),
+            elevation: neu && on && !locked ? 3 : 0,
+            shadowColor: neu ? AppColors.neuShade : null,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14), side: BorderSide(color: on && !locked ? AppColors.blue : AppColors.line, width: on ? 1.5 : 1)),
+                borderRadius: BorderRadius.circular(14),
+                side: neu ? BorderSide.none : BorderSide(color: on && !locked ? AppColors.blue : AppColors.line, width: on ? 1.5 : 1)),
             child: InkWell(
               key: ValueKey('job-tab-${k.name}'),
               borderRadius: BorderRadius.circular(14),
@@ -362,13 +417,15 @@ class _KindTabs extends ConsumerWidget {
       );
     }
 
-    return IntrinsicHeight(
+    final row = IntrinsicHeight(
       child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         one(JobFeedKind.vacancies, Icons.local_shipping_outlined, s.t('job_tab_need'), s.t('job_tab_need_sub')),
-        const SizedBox(width: 10),
+        SizedBox(width: AppColors.neumorph ? 6 : 10),
         one(JobFeedKind.drivers, Icons.person_outline, s.t('job_tab_seek'), s.t('job_tab_seek_sub')),
       ]),
     );
+    if (!AppColors.neumorph) return row;
+    return Container(key: const ValueKey('job-tabs-neu'), padding: const EdgeInsets.all(5), decoration: neuInsetDecoration(radius: 18), child: row);
   }
 }
 
@@ -400,11 +457,13 @@ class _SuggestionsState extends ConsumerState<_Suggestions> {
     return Container(
       key: const ValueKey('job-suggestions'),
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
-      ),
+      decoration: AppColors.neumorph
+          ? neuRaisedDecoration(radius: 20)
+          : BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.line),
+            ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           Icon(Icons.auto_awesome, color: AppColors.blue, size: 26),
@@ -704,9 +763,11 @@ class _MyAdsCard extends ConsumerWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _SectionHead(title: s.t('job_my_ads'), linkKey: 'job-my-all', link: s.t('catalog_see_all'), onLink: open),
         const SizedBox(height: 8),
-        Material(
+        NeuSurface(
+          child: Material(
           color: AppColors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16), side: AppColors.neumorph ? BorderSide.none : BorderSide(color: AppColors.line)),
           child: InkWell(
             key: const ValueKey('job-my-card'),
             borderRadius: BorderRadius.circular(16),
@@ -742,6 +803,7 @@ class _MyAdsCard extends ConsumerWidget {
               ]),
             ),
           ),
+        ),
         ),
       ]),
     );
@@ -969,6 +1031,24 @@ class _NoticeBell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = (ref.watch(jobNoticesProvider).valueOrNull ?? const <JobNotice>[]).where((n) => !n.isRead).length;
+    Future<void> open() async {
+      await context.pushOnce('/jobs/notifications');
+      ref.invalidate(jobNoticesProvider);
+    }
+
+    if (AppColors.neumorph) {
+      return NeuRoundButton(
+        key: const ValueKey('job-bell'),
+        tooltip: s.t('job_ntf_title'),
+        onTap: open,
+        child: Badge(
+          isLabelVisible: unread > 0,
+          label: Text(unread > 99 ? '99+' : '$unread'),
+          backgroundColor: AppColors.danger,
+          child: Icon(Icons.notifications_none, color: AppColors.text),
+        ),
+      );
+    }
     return IconButton(
       key: const ValueKey('job-bell'),
       tooltip: s.t('job_ntf_title'),

@@ -215,7 +215,14 @@ void main() {
     expect(src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart'), contains("LiveMap(liveLabel: strings.t('map_live_badge'))"),
         reason: 'the computer keeps its moving map');
     // The load types open on the page again (owner, 17.11.2026); no filter button.
-    expect(m, contains('CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed)'));
+    expect(m, contains('CargoTypeTiles(strings: strings, tileHeight: 64)'));
+    // A tap on a load type / Yüklər | Daşıyıcılar never scrolls the page
+    // (owner, 25.11.2026: "istifadəçi istədiyində aşağı sürüşdürsün").
+    for (final f in ['lib/features/cargo/presentation/cargo_marketplace_screen.dart', 'lib/features/cargo/presentation/cargo_marketplace_desktop.dart']) {
+      final c = src(f);
+      expect(RegExp(r'CargoTypeTiles\([^)]*onChanged').hasMatch(c), isFalse, reason: f);
+      expect(RegExp(r'LoadsSectionSwitch\([^)]*onChanged').hasMatch(c), isFalse, reason: f);
+    }
     expect(m.contains('_TypeFilterButton'), isFalse);
     expect(m.contains("ValueKey('add-cargo-top')"), isFalse, reason: 'no second add button over the list (owner, 17.11.2026)');
     expect(m, contains('HeaderCircles(strings: strings)'), reason: 'heart + profile picture');

@@ -8,6 +8,7 @@ import '../../../core/router/guest_access.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/birth_date_field.dart' show monthName;
+import '../../../core/widgets/neu_surface.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../tirpark/presentation/map_page_header.dart';
 import '../data/fleet_repository.dart';
@@ -222,7 +223,9 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         key: const ValueKey('fl-empty'),
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.line)),
+        decoration: AppColors.neumorph
+            ? neuRaisedDecoration(radius: 18)
+            : BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.line)),
         child: Column(children: [
           Icon(Icons.local_shipping_outlined, size: 40, color: AppColors.textSoft),
           const SizedBox(height: 8),
@@ -240,7 +243,10 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.line)),
+        // Neumorf (0137): a raised capsule like the Yüklər counters.
+        decoration: AppColors.neumorph
+            ? neuRaisedDecoration(radius: 22, depth: 0.7)
+            : BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.line)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           if (icon != null) Icon(icon, size: 18, color: AppColors.text),
           if (dot != null) Container(width: 9, height: 9, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
@@ -258,9 +264,15 @@ class _Tabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final neu = AppColors.neumorph;
+    // Neumorf (0137): a pressed-in track, the chosen half raised with its
+    // icon and word in the accent colour (as "Yüklər | Daşıyıcılar").
+    Color fg(bool on) => on ? (neu ? AppColors.accent : Colors.white) : AppColors.text;
     Widget half(String key, IconData icon, String label, bool on, bool value) => Expanded(
           child: Material(
-            color: on ? AppColors.accentFill : Colors.transparent,
+            color: on ? (neu ? AppColors.card : AppColors.accentFill) : Colors.transparent,
+            elevation: neu && on ? 3 : 0,
+            shadowColor: neu ? AppColors.neuShade : null,
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               key: ValueKey(key),
@@ -269,13 +281,13 @@ class _Tabs extends StatelessWidget {
               child: SizedBox(
                 height: 44,
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(icon, size: 20, color: on ? Colors.white : AppColors.text),
+                  Icon(icon, size: 20, color: fg(on)),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+                        style: TextStyle(fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: fg(on))),
                   ),
                 ]),
               ),
@@ -283,8 +295,11 @@ class _Tabs extends StatelessWidget {
           ),
         );
     return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(19), border: Border.all(color: AppColors.line)),
+      key: neu ? const ValueKey('fl-tabs-neu') : null,
+      padding: EdgeInsets.all(neu ? 5 : 3),
+      decoration: neu
+          ? neuInsetDecoration(radius: 20)
+          : BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(19), border: Border.all(color: AppColors.line)),
       child: Row(children: [
         half('fl-tab-trucks', Icons.local_shipping_outlined, s.t('fl_tab_trucks'), !plan, false),
         const SizedBox(width: 4),
@@ -310,7 +325,9 @@ class _FilterButton extends StatelessWidget {
         itemBuilder: (_) => [for (final f in FleetFilter.values) PopupMenuItem(value: f, child: Text(_label(f)))],
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
+          decoration: AppColors.neumorph
+              ? neuRaisedDecoration(radius: 16, depth: 0.7)
+              : BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(Icons.filter_alt_outlined, size: 18, color: AppColors.text),
             const SizedBox(width: 6),
@@ -346,10 +363,13 @@ class FleetTotalsCard extends StatelessWidget {
         if (income.containsKey(c) || spent.containsKey(c)) c
     ];
     final glow = AppColors.blue;
+    final neu = AppColors.neumorph;
     return Container(
       key: const ValueKey('fl-totals'),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+      // Neumorf (0137): a raised card, the three amounts in pressed-in tiles
+      // (same numbers and colours); the classic keeps the approved glow.
+      decoration: neu ? neuRaisedDecoration(radius: 20) : BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: glow.withValues(alpha: 0.53)),
@@ -364,14 +384,14 @@ class FleetTotalsCard extends StatelessWidget {
           for (final c in currencies) ...[
             if (c != currencies.first) const SizedBox(height: 10),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: _tile(ValueKey('fl-tot-income-$c'), s.t('fl_income'), income[c] ?? 0, c, AppColors.text, glow: glow)),
+              Expanded(child: _tile(ValueKey('fl-tot-income-$c'), s.t('fl_income'), income[c] ?? 0, c, AppColors.text, glow: neu ? null : glow)),
               const SizedBox(width: 8),
               Expanded(child: _tile(ValueKey('fl-tot-spent-$c'), s.t('fl_expenses'), -(spent[c] ?? 0), c, AppColors.accentFill)),
               const SizedBox(width: 8),
               Expanded(
                   child: _tile(ValueKey('fl-tot-profit-$c'), s.t('fl_profit_short'), profit[c] ?? 0, c,
                       (profit[c] ?? 0) < 0 ? AppColors.danger : AppColors.online,
-                      bold: true, glow: glow)),
+                      bold: true, glow: neu ? null : glow)),
             ]),
           ],
       ]),
@@ -384,7 +404,9 @@ class FleetTotalsCard extends StatelessWidget {
         // The tile keeps the card's own ground: a web glow lies only OUTSIDE
         // the box, while Flutter paints the shadow under it too — without a
         // ground the tile turned blue inside (owner, 21.11.2026).
-        decoration: BoxDecoration(
+        decoration: AppColors.neumorph
+            ? neuInsetDecoration(radius: 12)
+            : BoxDecoration(
           color: glow == null ? null : AppColors.card,
           borderRadius: BorderRadius.circular(12),
           border: glow == null ? null : Border.all(color: glow.withValues(alpha: 0.53)),
@@ -415,9 +437,12 @@ class FleetTruckCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = busy ? AppColors.accent : AppColors.online;
-    return Material(
+    final neu = AppColors.neumorph;
+    return NeuSurface(
+      radius: 20,
+      child: Material(
       color: AppColors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: AppColors.line)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: neu ? BorderSide.none : BorderSide(color: AppColors.line)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: ValueKey('fl-truck-${truck.id}'),
@@ -429,7 +454,9 @@ class FleetTruckCard extends StatelessWidget {
               Container(
                 width: 74,
                 height: 74,
-                decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)),
+                decoration: neu
+                    ? neuInsetDecoration(radius: 16)
+                    : BoxDecoration(color: AppColors.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)),
                 child: Icon(Icons.local_shipping, size: 40, color: AppColors.accent),
               ),
               const SizedBox(width: 12),
@@ -469,7 +496,9 @@ class FleetTruckCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.line)),
+                      decoration: neu
+                          ? neuInsetDecoration(radius: 8)
+                          : BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.line)),
                       child: Text(truck.plate!, style: TextStyle(fontSize: 14, color: AppColors.text, letterSpacing: 0.5)),
                     ),
                   ],
@@ -536,6 +565,7 @@ class FleetTruckCard extends StatelessWidget {
           ]),
         ),
       ),
+    ),
     );
   }
 }
@@ -555,9 +585,11 @@ class FleetJobRow extends StatelessWidget {
     final when = sameDay ? fleetTime(job.startAt) : '${fleetDayLabel(s, job.startAt, lang)} ${fleetTime(job.startAt)}';
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
+      child: NeuSurface(
+        child: Material(
         color: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16), side: AppColors.neumorph ? BorderSide.none : BorderSide(color: AppColors.line)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: ValueKey('fl-job-${job.id}'),
@@ -585,6 +617,7 @@ class FleetJobRow extends StatelessWidget {
             ]),
           ),
         ),
+      ),
       ),
     );
   }
@@ -641,7 +674,9 @@ class FleetTodayCard extends ConsumerWidget {
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
+          decoration: AppColors.neumorph
+              ? neuRaisedDecoration(radius: 16)
+              : BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.line)),
           child: Row(children: [
             Container(
               width: 46,

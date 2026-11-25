@@ -95,7 +95,7 @@ class _DesktopMarketplace extends ConsumerWidget {
               child: _DeskBody(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 24),
-                  child: CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
+                  child: CargoTypeTiles(strings: strings, tileHeight: 64),
                 ),
               ),
             ),
@@ -110,7 +110,7 @@ class _DesktopMarketplace extends ConsumerWidget {
                     alignment: Alignment.centerLeft,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 520),
-                      child: LoadsSectionSwitch(strings: strings, onChanged: _scrollToFeed),
+                      child: LoadsSectionSwitch(strings: strings),
                     ),
                   ),
                 ),

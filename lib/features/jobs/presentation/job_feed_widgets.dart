@@ -5,6 +5,7 @@ import '../../../core/constants/countries.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/neu_surface.dart';
 import '../domain/job_feed.dart';
 import '../domain/job_match.dart';
 import '../domain/job_models.dart';
@@ -100,9 +101,11 @@ class JobFeedCard extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14.5, color: AppColors.text))),
         ]);
-    return Material(
+    return NeuSurface(
+      child: Material(
       color: AppColors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16), side: AppColors.neumorph ? BorderSide.none : BorderSide(color: AppColors.line)),
       child: InkWell(
         key: ValueKey('job-feed-${item.isVacancy ? 'v' : 'd'}-${item.id}'),
         borderRadius: BorderRadius.circular(16),
@@ -151,6 +154,7 @@ class JobFeedCard extends StatelessWidget {
           ]),
         ),
       ),
+    ),
     );
   }
 }
@@ -191,9 +195,11 @@ class JobFeedTile extends StatelessWidget {
         );
     return ConstrainedBox(
         constraints: BoxConstraints(minHeight: minHeight),
-        child: Material(
+        child: NeuSurface(
+          child: Material(
           color: AppColors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.line)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16), side: AppColors.neumorph ? BorderSide.none : BorderSide(color: AppColors.line)),
           child: InkWell(
             key: ValueKey('job-feed-${item.isVacancy ? 'v' : 'd'}-${item.id}'),
             borderRadius: BorderRadius.circular(16),
@@ -236,6 +242,7 @@ class JobFeedTile extends StatelessWidget {
               ]),
             ),
           ),
+        ),
         ),
       );
   }
