@@ -203,8 +203,8 @@ class CargoMarketplaceScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: AppColors.neumorph
-                    ? CargoTypeTiles(strings: strings, tileHeight: 96, onChanged: _scrollToFeed)
-                    : CargoTypeTiles(strings: strings, tileHeight: 64, onChanged: _scrollToFeed),
+                    ? CargoTypeTiles(strings: strings, tileHeight: 96)
+                    : CargoTypeTiles(strings: strings, tileHeight: 64),
               ),
             ),
             SliverToBoxAdapter(child: _RouteSearch(strings: strings)),
@@ -212,7 +212,7 @@ class CargoMarketplaceScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                child: LoadsSectionSwitch(strings: strings, onChanged: _scrollToFeed),
+                child: LoadsSectionSwitch(strings: strings),
               ),
             ),
             // QRUPAJ (small loads): the carrier's own road → loads on the way.

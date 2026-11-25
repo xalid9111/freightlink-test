@@ -230,6 +230,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   is a raised card on the counters' line on the right (the counters only
   shrink beside it), the map carries only "Yük əlavə et +" on its lower right
   edge (the + a little past the frame); the map's size is unchanged.
+  No page jump on a choice (owner, 25.11.2026: "ref tent … basıldıqda
+  səhifə aşağı avtomatik sürüşür … istifadəçi istədiyində sürüşdürsün"): a
+  tap on a load type or on "Yüklər | Daşıyıcılar" (phone and computer) only
+  filters — the page stays where it is; only the counters' own tap (aktiv
+  yük / daşıyıcı = "go to the list") still brings the list into view.
+  İş Mərkəzi + Maşınlarım in Neumorf (owner, approved 25.11.2026): İş Mərkəzi
+  without AppBar (round back · title · bell · filter), the Sürücü axtarılır |
+  İş axtarıram track pressed in with the chosen side raised, cards raised;
+  Maşınlarım counters raised, Ümumi raised with pressed-in tiles (the
+  classic keeps its approved glow), Maşınlar | İş cədvəli a pressed-in track,
+  truck / job cards raised. The NeuTopBlend shade at the top is gone (owner,
+  25.11.2026: "kölgə effektini sil"); the see-through status bar is still
+  the admin's test only.
   The top (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the page ground
   under the app is the Neumorf colour too (index.html html.neu, theme-color
   #20262F / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the
