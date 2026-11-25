@@ -89,7 +89,7 @@ void main() {
     expect(src('lib/features/tirpark/presentation/map_page_header.dart'), contains('neuInsetDecoration(radius: 20)'));
   });
 
-  testWidgets('the top of the page blends into the iPhone\'s black bar only in Neumorf at night', (t) async {
+  testWidgets('no shade at the top of the page any more (owner, 25.11.2026)', (t) async {
     Future<bool> shown(AppPalette p) async {
       AppColors.use(p);
       await t.pumpWidget(MediaQuery(
@@ -100,12 +100,28 @@ void main() {
 
     expect(await shown(AppPalette.dark), isFalse, reason: 'classic: nothing added');
     expect(await shown(AppPalette.neuLight), isFalse, reason: 'day: the light bar');
-    expect(await shown(AppPalette.neuDark), isTrue);
+    expect(await shown(AppPalette.neuDark), isFalse, reason: 'the shade is gone at night too');
     final index = File('web/index.html').readAsStringSync();
     expect(index, contains('html.neu, html.neu body, html.neu #app-loading { background: #20262F; }'));
     expect(index, contains("localStorage.getItem('flutter.ui_neumorph_preview')"));
     expect(index, contains('<meta name="apple-mobile-web-app-status-bar-style" content="black">'),
         reason: 'the solid bar stays (a see-through one moved every tap, 24.10.2026)');
+  });
+
+  test('İş Mərkəzi and Maşınlarım in Neumorf (owner, 25.11.2026); the classic look kept', () {
+    String src(String p) => File(p).readAsStringSync();
+    final jobs = src('lib/features/jobs/presentation/job_center_screen.dart');
+    expect(jobs, contains("ValueKey('job-neu-header')"));
+    expect(jobs, contains("ValueKey('job-tabs-neu')"));
+    expect(jobs, contains('appBar: neu\n          ? null\n          : AppBar('), reason: 'the classic AppBar kept');
+    expect(RegExp("ValueKey\\('job-filter-top'\\)").allMatches(jobs).length, 2, reason: 'the same filter in both looks');
+    expect(src('lib/features/jobs/presentation/job_feed_widgets.dart'), contains('NeuSurface('));
+    final fleet = src('lib/features/fleet/presentation/fleet_screen.dart');
+    expect(fleet, contains("ValueKey('fl-tabs-neu')"));
+    expect(fleet, contains('neuRaisedDecoration(radius: 22, depth: 0.7)'), reason: 'the counters raised');
+    expect(fleet, contains('decoration: neu ? neuRaisedDecoration(radius: 20) : BoxDecoration('), reason: 'Ümumi raised');
+    expect(fleet, contains('boxShadow: [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: kFleetGlowBlur)],'),
+        reason: 'the classic glow kept');
   });
 
   test('Profil and Mesajlar in Neumorf (owner approved pictures); the classic look kept', () {
