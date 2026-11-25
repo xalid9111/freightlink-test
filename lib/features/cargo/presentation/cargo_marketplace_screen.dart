@@ -646,8 +646,12 @@ class _NeuHero extends ConsumerWidget {
           HeaderCircles(strings: strings),
         ]),
         const SizedBox(height: 16),
-        // The live counters + CANLI (real numbers, same taps).
-        SizedBox(
+        // The live counters + CANLI (real numbers, same taps); İş Mərkəzi
+        // stands on their line on the right (owner's picture, 25.11.2026),
+        // the counters only shrink beside it.
+        Row(children: [
+          Expanded(
+            child: SizedBox(
           key: const ValueKey('stat-row'),
           height: 46,
           child: FittedBox(
@@ -674,30 +678,35 @@ class _NeuHero extends ConsumerWidget {
             ]),
           ),
         ),
-        const SizedBox(height: 16),
-        // The live map in a pressed-in frame (kept, owner's choice B).
-        Container(
-          key: const ValueKey('neu-map-frame'),
-          padding: const EdgeInsets.all(8),
-          decoration: neuInsetDecoration(radius: 24),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Stack(children: [
-              LiveMap(liveLabel: strings.t('map_live_badge'), routes: false, showBadge: false),
-              Positioned(left: 10, bottom: 10, child: JobCenterMapButton(strings: strings)),
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: carriers
-                    ? _AddLoadButton(
-                        key: const ValueKey('add-empty-truck'),
-                        label: strings.t('et_add_button'),
-                        onTap: () => context.pushOnce('/trucks/new'))
-                    : _AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create')),
-              ),
-            ]),
           ),
-        ),
+          const SizedBox(width: 10),
+          JobCenterMapButton(strings: strings),
+        ]),
+        const SizedBox(height: 16),
+        // The live map in a pressed-in frame (kept, owner's choice B); only
+        // "Yük əlavə et +" on it, sitting on its lower right edge (owner's
+        // picture, 25.11.2026).
+        Stack(clipBehavior: Clip.none, children: [
+          Container(
+            key: const ValueKey('neu-map-frame'),
+            padding: const EdgeInsets.all(8),
+            decoration: neuInsetDecoration(radius: 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: LiveMap(liveLabel: strings.t('map_live_badge'), routes: false, showBadge: false),
+            ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: 0,
+            child: carriers
+                ? _AddLoadButton(
+                    key: const ValueKey('add-empty-truck'),
+                    label: strings.t('et_add_button'),
+                    onTap: () => context.pushOnce('/trucks/new'))
+                : _AddLoadButton(label: strings.t('home_add_load'), onTap: () => context.pushOnce('/cargo/create')),
+          ),
+        ]),
       ]),
     );
   }
