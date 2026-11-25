@@ -226,6 +226,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   on one line, the type pills, the popular brands as round raised logos
   (_NeuBrand, the filter's own list and choice), ad cards name · details ·
   orange price with the Premium / VIP marks on the picture.
+  Yüklər top re-placed (owner's picture, approved 25.11.2026): İş Mərkəzi
+  is a raised card on the counters' line on the right (the counters only
+  shrink beside it), the map carries only "Yük əlavə et +" on its lower right
+  edge (the + a little past the frame); the map's size is unchanged.
   The top (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the page ground
   under the app is the Neumorf colour too (index.html html.neu, theme-color
   #20262F / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the

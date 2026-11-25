@@ -67,6 +67,16 @@ void main() {
     final loads = src('lib/features/cargo/presentation/cargo_marketplace_screen.dart');
     expect(loads, contains('(AppColors.neumorph ? _NeuHero.new : _Hero.new)('));
     expect(loads, contains("ValueKey('neu-map-frame')"), reason: 'the live map kept (B)');
+    // Owner's picture, 25.11.2026: İş Mərkəzi on the counters' line on the
+    // right, only "Yük əlavə et +" on the map, on its lower right edge.
+    final neu = loads.substring(loads.indexOf('class _NeuHero'), loads.indexOf('class _NeuStat'));
+    final stats = neu.indexOf("ValueKey('stat-row')");
+    final job = neu.indexOf('JobCenterMapButton(strings: strings)');
+    final frame = neu.indexOf("ValueKey('neu-map-frame')");
+    expect(stats > 0 && stats < job && job < frame, isTrue, reason: 'İş Mərkəzi beside the counters, above the map');
+    expect(RegExp('JobCenterMapButton').allMatches(neu).length, 1, reason: 'no İş Mərkəzi on the map');
+    expect(neu, contains('Stack(clipBehavior: Clip.none, children: ['));
+    expect(neu.indexOf("strings.t('home_add_load')") > frame, isTrue);
     expect(loads, contains("ValueKey('route-search-neu')"));
     expect(loads, contains("key: ValueKey(isFrom ? 'route-from' : 'route-to')"));
     expect(src('lib/features/empty_trucks/presentation/empty_truck_widgets.dart'), contains("ValueKey('loads-section-neu')"));
