@@ -547,7 +547,9 @@ class AppTheme {
         backgroundColor: AppColors.accentFill,
         foregroundColor: Colors.white,
         elevation: 8,
-        shape: const CircleBorder(),
+        // A stadium, not a circle (owner, 27.11.2026: "Yeni şirkət" was cut):
+        // a plain FAB is still round, an extended one keeps its label inside.
+        shape: const StadiumBorder(),
       ),
       chipTheme: t.chipTheme.copyWith(
         backgroundColor: AppColors.card,

@@ -39,6 +39,26 @@ void main() {
     expect(AppTheme.current.scaffoldBackgroundColor, const Color(0xFFE8EBF0));
   });
 
+  testWidgets('an extended FAB ("Yeni şirkət") keeps its label inside in Neumorf (owner, 27.11.2026)', (t) async {
+    for (final p in [AppPalette.neuDark, AppPalette.neuLight]) {
+      AppColors.use(p);
+      expect(AppTheme.current.floatingActionButtonTheme.shape, isA<StadiumBorder>());
+      await t.pumpWidget(MaterialApp(
+        key: UniqueKey(),
+        theme: AppTheme.current,
+        home: Scaffold(
+          floatingActionButton: FloatingActionButton.extended(
+              key: const ValueKey('fab'), onPressed: () {}, icon: const Icon(Icons.add_business_outlined), label: const Text('Yeni şirkət')),
+        ),
+      ));
+      final fab = t.getRect(find.byKey(const ValueKey('fab')));
+      final label = t.getRect(find.text('Yeni şirkət'));
+      expect(fab.left <= label.left && label.right <= fab.right, isTrue, reason: '$p: the label stays inside the button');
+      expect(fab.width, greaterThan(fab.height), reason: 'a capsule, not a circle');
+    }
+    AppColors.use(AppPalette.dark);
+  });
+
   testWidgets('NeuSurface adds nothing when off', (t) async {
     AppColors.use(AppPalette.dark);
     await t.pumpWidget(const Directionality(textDirection: TextDirection.ltr, child: NeuSurface(child: SizedBox(width: 10, height: 10))));
