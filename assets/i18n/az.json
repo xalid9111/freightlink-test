@@ -2546,6 +2546,7 @@
   "adb_month_this": "Bu ay",
   "adb_month_days": "{n} iş günü",
   "adb_month_target": "Aylıq hədəf",
+  "adb_month_target_none": "Təyin edilməyib — ✏️ ilə yazın (ay bu hədəfdən mənfi başlayır)",
   "adb_daily_from_month": "Gündəlik hədəf: {month} / {days} = {day}",
   "adb_month_collected": "Toplanan",
   "adb_month_gap": "Ümumi mənfi",

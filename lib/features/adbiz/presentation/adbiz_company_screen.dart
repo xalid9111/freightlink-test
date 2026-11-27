@@ -592,7 +592,10 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
               ]),
             ),
             // The monthly target (0133): set by the Baş admin from this month on.
-            if (monthTarget != null) ...[
+            // Shown to the Baş admin also while none is set (owner, 27.11.2026:
+            // Neuro Reklam had none, so its month did not start at −6110 and
+            // the card — the only place to set it — was hidden).
+            if (monthTarget != null || chief) ...[
               const SizedBox(height: 10),
               AdbizGlass(
                 key: const ValueKey('adb-month-target-card'),
@@ -603,15 +606,19 @@ class _AdbizCompanyScreenState extends ConsumerState<AdbizCompanyScreen> {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(s.t('adb_month_target'), style: TextStyle(fontSize: 15, color: AppColors.adbText)),
-                      Text(adbizAmount(monthTarget), key: const ValueKey('adb-month-target-value'),
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.adbText)),
+                      if (monthTarget == null)
+                        Text(s.t('adb_month_target_none'), key: const ValueKey('adb-month-target-none'),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.danger))
+                      else
+                        Text(adbizAmount(monthTarget), key: const ValueKey('adb-month-target-value'),
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.adbText)),
                     ]),
                   ),
                   if (chief)
                     IconButton(
                       key: const ValueKey('adb-month-target-edit'),
                       icon: Icon(Icons.edit_outlined, color: AppColors.adbText),
-                      onPressed: _busy ? null : () => _editMonthTarget(s, monthTarget),
+                      onPressed: _busy ? null : () => _editMonthTarget(s, monthTarget ?? (company.dailyTarget * kAdbizWorkDays).roundToDouble()),
                     ),
                 ]),
               ),

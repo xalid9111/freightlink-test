@@ -624,6 +624,26 @@ void main() {
       expect(repo.saves.single.$1, 'c');
     });
 
+    testWidgets('no monthly target yet: the Baş admin still sees the card and sets it (owner, 27.11.2026: Neuro Reklam)', (t) async {
+      final repo = await pumpPanel(t, chief: true);
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-target-none')), findsOneWidget, reason: '"Təyin edilməyib", not a hidden card');
+      await t.tap(find.byKey(const ValueKey('adb-month-target-edit')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      await t.tap(find.byKey(const ValueKey('adb-month-target-save')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(repo.targetsSet.single.$1.month, _today.month);
+      expect(repo.targetsSet.single.$2, greaterThan(0), reason: 'the field starts at the daily target × 26');
+    });
+
+    testWidgets('no monthly target: the owner (not the Baş admin) sees no card', (t) async {
+      await pumpPanel(t);
+      await t.pump();
+      expect(find.byKey(const ValueKey('adb-month-target-card')), findsNothing);
+    });
+
     test('the daily target = the monthly one / 26 (owner: 6110 → 235, 7000 → 269.23)', () {
       expect(kAdbizWorkDays, 26);
       expect(adbizDailyFromMonthly(6110), 235);

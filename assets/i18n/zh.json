@@ -2546,6 +2546,7 @@
   "adb_month_this": "本月",
   "adb_month_days": "{n} 个工作日",
   "adb_month_target": "月目标",
+  "adb_month_target_none": "未设置 — 点击 ✏️（本月从该金额的负数开始）",
   "adb_daily_from_month": "每日目标：{month} / {days} = {day}",
   "adb_month_collected": "已收",
   "adb_month_gap": "总差额",
