@@ -2546,6 +2546,7 @@
   "adb_month_this": "ეს თვე",
   "adb_month_days": "{n} სამუშაო დღე",
   "adb_month_target": "თვის მიზანი",
+  "adb_month_target_none": "არ არის დაყენებული — დააჭირეთ ✏️ (თვე ამ თანხის მინუსით იწყება)",
   "adb_daily_from_month": "დღიური მიზანი: {month} / {days} = {day}",
   "adb_month_collected": "შეგროვდა",
   "adb_month_gap": "საერთო მინუსი",

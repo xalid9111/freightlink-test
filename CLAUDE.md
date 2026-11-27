@@ -1036,6 +1036,10 @@ files to the owner separately (they are run by hand in the SQL editor).
   day 1 with 235 → −5875, day 2 with 260 − 25 rasxod → −5640. In Neumorf
   the "Yeni şirkət" button (an extended FAB) is a capsule, not a circle
   (FloatingActionButtonThemeData StadiumBorder; a plain FAB stays round).
+  A company with NO monthly target (owner, 27.11.2026: Neuro Reklam had
+  none — its month did not start at −6110): the panel's "Aylıq hədəf" card
+  shows to the Baş admin also then ("Təyin edilməyib", adb_month_target_none)
+  with ✏️ prefilled with the daily target × 26; the owner sees no card.
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam
