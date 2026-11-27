@@ -11,6 +11,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/mouse_drag_scroll.dart';
+import '../../../core/widgets/neu_surface.dart';
 import '../../../core/widgets/page_hero.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../cargo/domain/vip_rows.dart' show vipRotation;
@@ -250,10 +251,8 @@ class _Hero extends ConsumerWidget {
           ],
         ),
       );
-      return Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
+      final clip = ClipRRect(
+          borderRadius: BorderRadius.circular(AppColors.neumorph ? 20 : 22),
           child: SizedBox(
             height: h,
             child: Stack(
@@ -297,7 +296,17 @@ class _Hero extends ConsumerWidget {
               ],
             ),
           ),
-        ),
+        );
+      // Neumorf (owner approved 27.11.2026): the banner kept in a pressed-in frame.
+      return Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: AppColors.neumorph
+            ? Container(
+                key: const ValueKey('desk-mk-banner-neu'),
+                padding: const EdgeInsets.all(10),
+                decoration: neuInsetDecoration(radius: 28),
+                child: clip)
+            : clip,
       );
     });
   }
@@ -332,7 +341,7 @@ class _HeroSearchState extends State<_HeroSearch> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: DeskHeaderActions.pill(),
+      decoration: DeskHeaderActions.searchBox(),
       child: TextField(
         key: const ValueKey('desk-market-search'),
         controller: _text,
@@ -372,7 +381,34 @@ class _BrandChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brands = marketBrands(filter.category ?? MarketCategory.truck);
-    Widget chip(String label, IconData icon, bool on, VoidCallback tap, {Key? key}) => Padding(
+    final neu = AppColors.neumorph;
+    // Neumorf: raised pills, the chosen one orange (as on the phone).
+    Widget chip(String label, IconData icon, bool on, VoidCallback tap, {Key? key}) => neu
+        ? Padding(
+            padding: const EdgeInsets.fromLTRB(2, 6, 12, 10),
+            child: Container(
+              decoration: neuRaisedDecoration(radius: 24, depth: 0.6, color: on ? AppColors.accentFill : null),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  key: key,
+                  customBorder: const StadiumBorder(),
+                  onTap: tap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(icon, size: 19, color: on ? Colors.white : AppColors.textSoft),
+                      const SizedBox(width: 8),
+                      Text(label,
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: on ? FontWeight.w500 : FontWeight.w400, color: on ? Colors.white : AppColors.text)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          )
+        : Padding(
           padding: const EdgeInsets.only(right: 10),
           child: Material(
             color: on ? AppColors.accentFill.withValues(alpha: AppColors.isDay ? 0.12 : 0.16) : AppColors.card,
@@ -395,7 +431,7 @@ class _BrandChips extends StatelessWidget {
           ),
         );
     return SizedBox(
-      height: 48,
+      height: neu ? 62 : 48,
       child: MouseDragScroll(child: ListView(
         scrollDirection: Axis.horizontal,
         children: [

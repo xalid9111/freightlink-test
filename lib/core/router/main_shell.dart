@@ -12,6 +12,7 @@ import '../../features/chat/presentation/providers/group_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../repositories/profile_repository.dart';
 import '../theme/app_theme.dart';
+import '../widgets/neu_surface.dart';
 import '../theme/theme_mode.dart';
 import '../layout/desktop_layout.dart';
 import '../../features/auth/presentation/settings_screen.dart' show showLanguagePicker;
@@ -247,14 +248,22 @@ class _SideNav extends ConsumerWidget {
     final lang = ref.watch(currentLocaleProvider).languageCode;
     final day = AppColors.isDay;
     final ground = day ? AppColors.background : Color.lerp(AppColors.background, AppColors.card, 0.4)!;
-    BoxDecoration box() => BoxDecoration(
-          color: day ? AppColors.card : AppColors.cardAlt.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
-        );
+    final neu = AppColors.neumorph;
+    // Neumorf (0137, owner approved 27.11.2026): the sidebar on the page
+    // ground, the theme / language boxes raised, no frame line.
+    BoxDecoration box() => neu
+        ? neuRaisedDecoration(radius: 16, depth: 0.7)
+        : BoxDecoration(
+            color: day ? AppColors.card : AppColors.cardAlt.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.line),
+          );
     return Container(
+      key: neu ? const ValueKey('desk-side-neu') : null,
       width: 236,
-      decoration: BoxDecoration(color: ground, border: Border(right: BorderSide(color: AppColors.line))),
+      decoration: neu
+          ? BoxDecoration(color: AppColors.background)
+          : BoxDecoration(color: ground, border: Border(right: BorderSide(color: AppColors.line))),
       child: SafeArea(
         right: false,
         child: Column(
@@ -342,6 +351,7 @@ class _SideNav extends ConsumerWidget {
   }
 
   Widget _item(_NavItem it, bool selected) {
+    if (AppColors.neumorph) return _neuItem(it, selected);
     final color = selected ? AppColors.accent : AppColors.text;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
@@ -379,6 +389,58 @@ class _SideNav extends ConsumerWidget {
                         style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                   ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Neumorf: every item's icon in a round raised button; the chosen item a
+  /// raised card with its icon and word in the accent colour.
+  Widget _neuItem(_NavItem it, bool selected) {
+    final color = selected ? AppColors.accent : AppColors.textSoft;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: it.label,
+        child: Container(
+          decoration: selected ? neuRaisedDecoration(radius: 18, depth: 0.8) : null,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              key: ValueKey('desk-nav-${it.branch}'),
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => onTap(it.branch),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle, boxShadow: AppColors.neuRaised(depth: 0.6)),
+                      child: Icon(selected ? it.selectedIcon : it.icon, color: color, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(it.label,
+                          style: TextStyle(fontSize: 16, fontWeight: selected ? FontWeight.w500 : FontWeight.w400, color: selected ? color : AppColors.text)),
+                    ),
+                    if (it.badge > 0)
+                      Container(
+                        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: AppColors.accentFill, borderRadius: BorderRadius.circular(11)),
+                        child: Text(it.badge > 99 ? '99+' : '${it.badge}',
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

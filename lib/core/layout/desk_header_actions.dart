@@ -9,6 +9,7 @@ import '../../features/notices/notices.dart' show NoticeBell;
 import '../../repositories/profile_repository.dart';
 import '../localization/app_strings.dart';
 import '../theme/app_theme.dart';
+import '../widgets/neu_surface.dart';
 import '../widgets/user_avatar.dart';
 
 /// Computer view, top right of a page: a search field (optional), the
@@ -19,12 +20,17 @@ class DeskHeaderActions extends ConsumerWidget {
   final Widget? search;
   const DeskHeaderActions({super.key, required this.strings, this.search});
 
-  /// Glass pill behind the header controls.
-  static BoxDecoration pill() => BoxDecoration(
+  /// Glass pill behind the header controls (Neumorf: raised, no frame).
+  static BoxDecoration pill() => AppColors.neumorph
+      ? neuRaisedDecoration(radius: 28, depth: 0.8)
+      : BoxDecoration(
         color: AppColors.isDay ? Colors.white.withValues(alpha: 0.92) : AppColors.card.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppColors.line),
       );
+
+  /// The search field's ground (Neumorf: pressed in).
+  static BoxDecoration searchBox() => AppColors.neumorph ? neuInsetDecoration(radius: 28) : pill();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
