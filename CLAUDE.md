@@ -243,6 +243,19 @@ files to the owner separately (they are run by hand in the SQL editor).
   truck / job cards raised. The NeuTopBlend shade at the top is gone (owner,
   25.11.2026: "kölgə effektini sil"); the see-through status bar is still
   the admin's test only.
+  The computer in Neumorf (owner's picture, approved 27.11.2026: "komputerə
+  əlavə et … bütün bölmələr eyni dizayn xəttinə uyğun olsun"): the sidebar
+  on the page ground, every item's icon in a round raised button, the chosen
+  item a raised card in the accent colour, the theme / language boxes raised;
+  Yüklər = _DeskNeuHero (title, pressed-in search, round bell · heart ·
+  profile; the counters + CANLI capsules with İş Mərkəzi on the right; the
+  moving live map in a pressed-in frame with "Yük əlavə et +" on its edge),
+  the load types as the phone's raised squares with their own pictures, the
+  route search one pressed-in pill + orange "Yükləri axtar", the loads as
+  the phone's rows in raised cards (2–4 a row, VIP order kept); TIR Bazarı =
+  the banner in a pressed-in frame, the header search pressed in, raised
+  bell / heart / account, raised brand pills (chosen orange). Same keys,
+  taps and data; classic computer unchanged.
   The top (owner, 24.11.2026: "fonun üstü yarımçıqdır"): the page ground
   under the app is the Neumorf colour too (index.html html.neu, theme-color
   #20262F / #E8EBF0, read from ui_neumorph_preview / ui_neumorph before the

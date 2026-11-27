@@ -144,6 +144,31 @@ void main() {
         reason: 'the classic glow kept');
   });
 
+  test('the computer in Neumorf (owner approved 27.11.2026); the classic computer look kept', () {
+    String src(String p) => File(p).readAsStringSync();
+    final side = src('lib/core/router/main_shell.dart');
+    expect(side, contains("ValueKey('desk-side-neu')"));
+    expect(side, contains('if (AppColors.neumorph) return _neuItem(it, selected);'));
+    expect(side, contains("key: ValueKey('desk-nav-\${it.branch}'),"), reason: 'the same keys / taps');
+    final desk = src('lib/features/cargo/presentation/cargo_marketplace_desktop.dart');
+    expect(desk, contains('? _DeskNeuHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)'));
+    expect(desk, contains(': _DeskHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)'), reason: 'classic kept');
+    expect(desk, contains("ValueKey('desk-neu-map')"), reason: 'the live map in a pressed-in frame');
+    expect(desk, contains("ValueKey('desk-route-neu')"));
+    expect(desk, contains("ValueKey('desk-neu-rows')"), reason: 'the phone rows as cards');
+    expect(desk, contains('CargoTypeTiles(strings: strings, tileHeight: AppColors.neumorph ? 92 : 64)'), reason: 'the real type pictures');
+    final neuHero = desk.substring(desk.indexOf('class _DeskNeuHero'), desk.indexOf('/// Big counter pill of the desktop hero'));
+    for (final k in ['stat-loads', 'stat-users', 'stat-carriers', 'desk-job-center', 'desk-add-load']) {
+      expect(neuHero, contains("ValueKey('$k')"), reason: k);
+    }
+    expect(neuHero.indexOf("ValueKey('stat-carriers')") < neuHero.indexOf("ValueKey('desk-job-center')"), isTrue,
+        reason: 'İş Mərkəzi on the counters\' line, right');
+    final market = src('lib/features/market/presentation/market_home_desktop.dart');
+    expect(market, contains("ValueKey('desk-mk-banner-neu')"));
+    expect(market, contains('decoration: DeskHeaderActions.searchBox(),'));
+    expect(src('lib/core/layout/desk_header_actions.dart'), contains('AppColors.neumorph ? neuInsetDecoration(radius: 28) : pill()'));
+  });
+
   test('Profil and Mesajlar in Neumorf (owner approved pictures); the classic look kept', () {
     final prof = File('lib/features/auth/presentation/profile_screen.dart').readAsStringSync();
     expect(prof, contains("ValueKey('pf-neu-stats')"), reason: 'Yüklərim · Maşınlarım · Online, real numbers');

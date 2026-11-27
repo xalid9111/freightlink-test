@@ -199,7 +199,7 @@ class _DesktopMarketplace extends ConsumerWidget {
                             // Neumorf (owner approved 27.11.2026): the phone's load
                             // rows as raised cards, three (two to four) in a row.
                             if (AppColors.neumorph) {
-                              final n = (c.maxWidth / 420).floor().clamp(2, 4);
+                              final n = (c.maxWidth / 360).floor().clamp(2, 4);
                               return Padding(
                                 key: const ValueKey('desk-neu-rows'),
                                 padding: const EdgeInsets.only(top: 6),
