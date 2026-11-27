@@ -1030,6 +1030,12 @@ files to the owner separately (they are run by hand in the SQL editor).
   report, month / year cards and expenses; the panel reads again every 20 s
   and when the owner comes back from a worker's notebook. The four amounts
   stand in one size (adbizFitSize). Checked end to end in SQL test 170.
+  The owner's own example checked (27.11.2026: "ayın əvvəli -6110 … gün
+  sonunda gəlir 235 → -5875"): SQL test 174 — a fresh company, monthly
+  target 6110: the month starts at −6110 on the panel and in the notebook,
+  day 1 with 235 → −5875, day 2 with 260 − 25 rasxod → −5640. In Neumorf
+  the "Yeni şirkət" button (an extended FAB) is a capsule, not a circle
+  (FloatingActionButtonThemeData StadiumBorder; a plain FAB stays round).
   Görülən işlər (owner, 16.11.2026): the newest job on top, each keeps its
   number (12, 11 … 1) — the worker's notebook and the owner's / Baş admin's
   view of it alike. A company is deleted by a long press in "Reklam
