@@ -89,13 +89,17 @@ class _DesktopMarketplace extends ConsumerWidget {
         },
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _DeskHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
+            SliverToBoxAdapter(
+                child: AppColors.neumorph
+                    ? _DeskNeuHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)
+                    : _DeskHero(strings: strings, cargoList: cargoList, loaded: marketplaceAsync.hasValue)),
             // "Populyar marşrutlar" → the load-type choices (owner, 21.10.2026).
             SliverToBoxAdapter(
               child: _DeskBody(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 24),
-                  child: CargoTypeTiles(strings: strings, tileHeight: 64),
+                  // Neumorf: the phone's raised squares with the types' own pictures.
+                  child: CargoTypeTiles(strings: strings, tileHeight: AppColors.neumorph ? 92 : 64),
                 ),
               ),
             ),
@@ -192,6 +196,26 @@ class _DesktopMarketplace extends ConsumerWidget {
                           // Same picture tiles as the phone (owner, 22.10.2026),
                           // as many as fit at about 200 px each.
                           builder: (context, c) {
+                            // Neumorf (owner approved 27.11.2026): the phone's load
+                            // rows as raised cards, three (two to four) in a row.
+                            if (AppColors.neumorph) {
+                              final n = (c.maxWidth / 360).floor().clamp(2, 4);
+                              return Padding(
+                                key: const ValueKey('desk-neu-rows'),
+                                padding: const EdgeInsets.only(top: 6),
+                                child: _DeskLoadGrid(
+                                  columns: n,
+                                  gap: 22,
+                                  rows: buildLoadRows(list, columns: n),
+                                  buildLoad: (i, vip) => CargoListRow(
+                                    cargo: list[i],
+                                    strings: strings,
+                                    vip: vip,
+                                    onTap: () => context.pushOnce('/cargo/${list[i].id}'),
+                                  ),
+                                ),
+                              );
+                            }
                             final columns = ((c.maxWidth - 2 * kTileGap + kTileGap) / (200 + kTileGap)).floor().clamp(3, 8);
                             // No panel behind the tiles (owner, 24.10.2026).
                             return Padding(
@@ -276,18 +300,19 @@ class _DeskLoadGrid extends StatelessWidget {
   final int columns;
   final List<List<LoadCell>> rows;
   final Widget Function(int index, bool vip) buildLoad;
-  const _DeskLoadGrid({required this.columns, required this.rows, required this.buildLoad});
+  final double gap;
+  const _DeskLoadGrid({required this.columns, required this.rows, required this.buildLoad, this.gap = kTileGap});
 
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       for (final r in rows)
         Padding(
-          padding: const EdgeInsets.only(bottom: kTileGap),
+          padding: EdgeInsets.only(bottom: gap),
           child: IntrinsicHeight(
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               for (var k = 0; k < columns; k++) ...[
-                if (k > 0) const SizedBox(width: kTileGap),
+                if (k > 0) SizedBox(width: gap),
                 Expanded(child: k < r.length ? buildLoad(r[k].index, r[k].vip) : const SizedBox.shrink()),
               ],
             ]),
@@ -458,6 +483,147 @@ class _DeskHero extends ConsumerWidget {
   }
 }
 
+/// Neumorf top of the computer's Yüklər page (owner's picture, approved
+/// 27.11.2026): the title, a pressed-in search, the round bell · heart ·
+/// profile picture; the counters + CANLI as raised capsules with İş
+/// Mərkəzi on the right; the live map in a pressed-in frame with "Yük
+/// əlavə et +" on its lower right edge. Same numbers, keys and taps.
+class _DeskNeuHero extends ConsumerWidget {
+  final AppStrings strings;
+  final List<CargoModel> cargoList;
+  final bool loaded;
+  const _DeskNeuHero({required this.strings, required this.cargoList, required this.loaded});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String stat(int n) => loaded ? statCount(n) : '—';
+    final carriers = ref.watch(loadsSectionProvider) == LoadsSection.carriers;
+    return _DeskBody(
+      child: Padding(
+        key: const ValueKey('desk-neu-hero'),
+        padding: const EdgeInsets.only(top: 26),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Expanded(
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(text: '${strings.t('home_hero_1')} '),
+                  TextSpan(text: strings.t('home_hero_2'), style: TextStyle(color: AppColors.accent)),
+                  TextSpan(text: ' ${strings.t('home_hero_3')}'),
+                ]),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600, color: AppColors.text, height: 1.2),
+              ),
+            ),
+            const SizedBox(width: 24),
+            Flexible(child: _DeskTopBar(strings: strings, hint: 'desk_search_loads_hint')),
+          ]),
+          const SizedBox(height: 22),
+          Row(children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    _NeuStat(
+                        key: const ValueKey('stat-loads'),
+                        dot: AppColors.accent,
+                        value: stat(cargoList.length),
+                        unit: strings.t('neu_unit_loads'),
+                        label: strings.t('home_stat_active'),
+                        onTap: _scrollToFeed),
+                    const SizedBox(width: 14),
+                    _NeuStat(
+                        key: const ValueKey('stat-users'),
+                        dot: AppColors.blue,
+                        value: ref.watch(registeredUsersCountProvider).whenOrNull(data: statCount) ?? '—',
+                        unit: strings.t('neu_unit_users'),
+                        label: strings.t('home_stat_users')),
+                    const SizedBox(width: 14),
+                    _NeuStat(
+                      key: const ValueKey('stat-carriers'),
+                      dot: AppColors.online,
+                      value: ref.watch(truckAdsCountProvider).whenOrNull(data: statCount) ?? '—',
+                      unit: strings.t('neu_unit_carriers'),
+                      label: strings.t('et_section_carriers'),
+                      onTap: () {
+                        ref.read(loadsSectionProvider.notifier).state = LoadsSection.carriers;
+                        _scrollToFeed();
+                      },
+                    ),
+                    const SizedBox(width: 14),
+                    _NeuStat(dot: AppColors.online, value: strings.t('map_live_badge'), label: strings.t('map_live_badge'), live: true),
+                  ]),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // İş Mərkəzi as a raised card on the counters' line.
+            Tooltip(
+              message: strings.t('job_center'),
+              child: Container(
+                decoration: neuRaisedDecoration(radius: 22, depth: 0.8),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    key: const ValueKey('desk-job-center'),
+                    borderRadius: BorderRadius.circular(22),
+                    onTap: () => context.pushOnce('/jobs'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const JobCenterIcon(height: 30),
+                        const SizedBox(width: 10),
+                        Text(strings.t('job_center'), style: TextStyle(color: AppColors.text, fontSize: 15)),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 22),
+          LayoutBuilder(builder: (context, c) {
+            final h = (c.maxWidth * 0.26).clamp(240.0, 360.0);
+            return Stack(clipBehavior: Clip.none, children: [
+              Container(
+                key: const ValueKey('desk-neu-map'),
+                padding: const EdgeInsets.all(10),
+                decoration: neuInsetDecoration(radius: 28),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: SizedBox(
+                    height: h,
+                    width: double.infinity,
+                    // The whole map's width, its middle shown (cover).
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      clipBehavior: Clip.hardEdge,
+                      child: SizedBox(width: c.maxWidth, child: LiveMap(liveLabel: strings.t('map_live_badge'), showBadge: false)),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: -4,
+                bottom: -2,
+                child: _AddLoadButton(
+                  key: const ValueKey('desk-add-load'),
+                  label: strings.t(carriers ? 'et_add_button' : 'home_add_load'),
+                  onTap: () => context.pushOnce(carriers ? '/trucks/new' : '/cargo/create'),
+                ),
+              ),
+            ]);
+          }),
+        ]),
+      ),
+    );
+  }
+}
+
 /// Big counter pill of the desktop hero (tinted, icon + number).
 class _DeskStat extends StatelessWidget {
   final IconData icon;
@@ -549,6 +715,55 @@ class _DeskTopBarState extends ConsumerState<_DeskTopBar> {
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: AppColors.line),
         );
+    if (AppColors.neumorph) {
+      // Neumorf (owner approved 27.11.2026): a pressed-in search, the bell,
+      // the heart and the profile picture as round raised buttons
+      // (HeaderCircles, as on the phone); İş Mərkəzi on the counters' line.
+      return Row(
+        key: const ValueKey('desk-topbar-neu'),
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Container(
+                decoration: neuInsetDecoration(radius: 26),
+                child: TextField(
+                  key: const ValueKey('desk-search'),
+                  controller: _text,
+                  onChanged: (v) => ref.read(_deskQueryProvider.notifier).state = v,
+                  onSubmitted: (_) => _scrollToFeed(),
+                  style: TextStyle(fontSize: 15, color: AppColors.text),
+                  decoration: InputDecoration(
+                    filled: false,
+                    isDense: true,
+                    hintText: s.t(widget.hint),
+                    hintStyle: TextStyle(color: AppColors.textSoft, fontSize: 15),
+                    prefixIcon: Icon(Icons.search, color: AppColors.textSoft, size: 24),
+                    suffixIcon: _text.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: s.t('route_clear'),
+                            icon: Icon(Icons.close, color: AppColors.textSoft),
+                            onPressed: () {
+                              _text.clear();
+                              ref.read(_deskQueryProvider.notifier).state = '';
+                            },
+                          ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          HeaderCircles(strings: s),
+        ],
+      );
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -726,6 +941,122 @@ class _DeskRouteSearch extends ConsumerWidget {
             ),
           ),
         ),
+      );
+    }
+
+    if (AppColors.neumorph) {
+      // Neumorf (owner approved 27.11.2026): Haradan ⇄ Haraya as one
+      // pressed-in pill and the orange "Yükləri axtar"; the same pickers,
+      // swap, save / clear and saved routes.
+      Widget neuField({required bool isFrom}) {
+        final code = isFrom ? filter.from : filter.to;
+        final city = isFrom ? filter.fromCity : filter.toCity;
+        return Expanded(
+          child: InkWell(
+            key: ValueKey(isFrom ? 'desk-from' : 'desk-to'),
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => mobile._pick(context, ref, isFrom: isFrom),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(children: [
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: '${strings.t(isFrom ? 'route_from' : 'route_to')} · ', style: TextStyle(color: AppColors.textSoft)),
+                      TextSpan(
+                          text: mobile._label(code, city, lang, strings.t('route_any_country')),
+                          style: TextStyle(color: code != null ? AppColors.accent : AppColors.text)),
+                    ]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        );
+      }
+
+      return Padding(
+        key: const ValueKey('desk-route-neu'),
+        padding: const EdgeInsets.only(top: 24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Expanded(
+              child: Container(
+                height: 62,
+                padding: const EdgeInsets.only(left: 18, right: 8),
+                decoration: neuInsetDecoration(radius: 31),
+                child: Row(children: [
+                  Icon(Icons.search, color: AppColors.textSoft, size: 22),
+                  const SizedBox(width: 6),
+                  neuField(isFrom: true),
+                  IconButton(
+                    tooltip: strings.t('route_swap'),
+                    onPressed: () => ref.read(routeFilterProvider.notifier).state = filter.swapped,
+                    icon: Icon(Icons.swap_horiz, color: AppColors.accent, size: 26),
+                  ),
+                  neuField(isFrom: false),
+                  if (filter.isActive) ...[
+                    IconButton(
+                      tooltip: strings.t(isSaved ? 'route_saved' : 'route_save'),
+                      onPressed: () {
+                        final n = ref.read(savedRoutesProvider.notifier);
+                        isSaved ? n.remove(filter.key) : n.add(filter.key);
+                      },
+                      icon: Icon(isSaved ? Icons.star : Icons.star_border, color: AppColors.accent),
+                    ),
+                    IconButton(
+                      tooltip: strings.t('route_clear'),
+                      onPressed: () => ref.read(routeFilterProvider.notifier).state = const RouteFilter(),
+                      icon: Icon(Icons.close, color: AppColors.textSoft),
+                    ),
+                  ],
+                ]),
+              ),
+            ),
+            const SizedBox(width: 18),
+            SizedBox(
+              width: 240,
+              child: FilledButton.icon(
+                key: const ValueKey('desk-find-loads'),
+                onPressed: _scrollToFeed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.accentFill,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 58),
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                ),
+                icon: const Icon(Icons.search, size: 24),
+                label: Text(strings.t('desk_find_loads'), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ]),
+          if (saved.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(strings.t('route_my_routes'), style: TextStyle(fontSize: 13, color: AppColors.textSoft)),
+                for (final k in saved)
+                  InputChip(
+                    label: Text(mobile._short(k, lang)),
+                    selected: k == filter.key,
+                    selectedColor: AppColors.accent.withValues(alpha: 0.2),
+                    onPressed: () {
+                      final f = RouteFilter.fromKey(k);
+                      if (f != null) ref.read(routeFilterProvider.notifier).state = f;
+                    },
+                    onDeleted: () => ref.read(savedRoutesProvider.notifier).remove(k),
+                  ),
+              ],
+            ),
+          ],
+        ]),
       );
     }
 
