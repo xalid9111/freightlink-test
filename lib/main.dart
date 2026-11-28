@@ -2,6 +2,8 @@ import 'core/widgets/neu_surface.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import 'core/auth/session_guard.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -81,6 +83,9 @@ Future<void> main() async {
   // 6. Yüklər: the open-loads request leaves now (it waits for the network
   // while the rest starts); the page takes this answer (CargoFeedPrefetch).
   await supabaseReady;
+  // A sign-out the user did not ask for (another window, a refused refresh):
+  // the sign-in is offered back once and the reason goes to AutoFix.
+  SessionGuard.start(SupabaseConfig.client.auth);
   if (CargoFeedPrefetch.opensOnLoads(Uri.base)) {
     CargoFeedPrefetch.start(CargoRepositoryImpl(), SupabaseConfig.client.auth.currentUser?.id);
   }

@@ -4,6 +4,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/auth/session_guard.dart';
 import '../../../core/config/app_base_url_stub.dart' if (dart.library.js_interop) '../../../core/config/app_base_url_web.dart';
 import '../../../core/config/env.dart';
 import '../../../core/config/supabase_config.dart';
@@ -177,6 +179,7 @@ class AuthRepositoryImpl implements AuthRepository {
     // Web Push (0121): this device stops getting notifications for this
     // account (best effort, at most 3 s; never blocks signing out).
     await pushLeaveOnSignOut();
+    SessionGuard.userSignsOut(); // asked for: never offered back
     await _client.auth.signOut();
     _cachedUser = null;
   }
