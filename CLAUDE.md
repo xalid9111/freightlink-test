@@ -1470,6 +1470,18 @@ files to the owner separately (they are run by hand in the SQL editor).
   (userAfterFailedRead; another account or nobody known = as before), so
   the lists, the page and its scroll place stay; a real sign-out still
   clears them (auth_resume_test.dart). Android uses the same path.
+- A sign-out the user did not ask for (owner, 28.11.2026: on the computer —
+  the TırLink app window with Chrome and Edge open — "daxil oluram, 10–15
+  saniyə sonra giriş səhifəsinə qaytarır"): every window of the site shares
+  the session and hears the others (Supabase's BroadcastChannel), so an old
+  window whose own refresh failed signed every window out. SessionGuard
+  (core/auth/session_guard.dart, started in main.dart) offers this window's
+  last refresh token back to the server once (at most once a minute) after
+  such a sign-out: a really signed-out / deleted / blocked account is
+  refused and stays out; "Hesabdan çıxış" (SessionGuard.userSignsOut) is
+  never offered back. Each one goes to AutoFix ("gözlənilməz çıxış":
+  reason = another window / sessionExpired, restored, the local clock's
+  difference from the server's in seconds).
 - Who stays in a closed site (owner, 24.11.2026, SQL 0134: "sayt bağlıdır
   aktiv etdiyimdə sadəcə icazə girişi olan istifadəçilər saytda qala bilir:
   admin, Baş admin və icazə verilən istifadəçi"): Admin → İstifadəçilər →
